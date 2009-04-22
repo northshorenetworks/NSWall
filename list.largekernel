@@ -1,0 +1,35 @@
+# $Id: list.largekernel,v 1.1.1.1 2008/08/01 07:56:18 root Exp $
+
+# This list is added on top of the existing list for the large kernel
+
+COPY	${DESTDIR}/var/named/etc/named.conf		var/named/etc/named.conf
+COPY	${DESTDIR}/var/named/standard/localhost		var/named/standard/localhost
+COPY	${DESTDIR}/var/named/standard/loopback		var/named/standard/loopback
+COPY	${DESTDIR}/var/named/standard/loopback6.arpa	var/named/standard/loopback6.arpa
+COPY	${DESTDIR}/var/named/standard/root.hint 	var/named/standard/root.hint
+
+COPY	${DESTDIR}/usr/sbin/named		usr/sbin/named
+COPY	${DESTDIR}/usr/sbin/rndc		usr/sbin/rndc
+COPY	${DESTDIR}/usr/sbin/rndc-confgen	usr/sbin/rndc-confgen
+COPY	${DESTDIR}/usr/sbin/dig			usr/sbin/dig
+
+COPY	${DESTDIR}/usr/bin/ldd			usr/bin/ldd
+
+#COPY	${DESTDIR}/usr/sbin/portmap		usr/sbin/portmap
+#COPY	${DESTDIR}/usr/sbin/rarpd		usr/sbin/rarpd
+#COPY	${DESTDIR}/usr/sbin/rpc.bootparamd	usr/sbin/rpc.bootparamd
+
+COPY	${DESTDIR}/sbin/mount_msdos		sbin/mount_msdos
+COPY	${DESTDIR}/sbin/kbd			sbin/kbd
+
+COPY	${DESTDIR}/usr/lib/libssl.so.11.0	usr/lib/libssl.so.11.0
+COPY	${DESTDIR}/usr/lib/libkvm.so.9.0	usr/lib/libkvm.so.9.0
+COPY	${DESTDIR}/usr/lib/libwrap.so.4.0	usr/lib/libwrap.so.4.0
+COPY	${DESTDIR}/usr/lib/libpthread.so.8.0	usr/lib/libpthread.so.8.0
+
+# Create mountpoint for cdrom
+SPECIAL mkdir ./cd
+
+# Generate flashboot.mtree again.
+SPECIAL mtree -s2121 -x -c -k mode,nlink,size,link,cksum -p ./ > etc/flashboot.mtree
+

@@ -1,0 +1,4 @@
+export CVSROOT=/usr/local/CVSREPOSITORY;
+cd ..;
+cvs update Waffle;
+cd Waffle/;

@@ -1,0 +1,14 @@
+Following are listed in my order of priority
+
+upgrade build server to 4.3 and start building images with that.
+pptp
+dhcpd to be a pxe boot server with a ~10MB partition to serve up netboot images.
+squid transparent proxy
+Carp Support
+OpenBGPd/OpenOSPFd support
+Chat Room for website
+Wizards
+
+Goal is to be around 6.0 megs, only webui configurable..
+
+
