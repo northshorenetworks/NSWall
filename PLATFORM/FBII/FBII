@@ -1,0 +1,140 @@
+#	$OpenBSD: GENERIC,v 1.568 2007/08/05 17:01:25 mglocker Exp $
+#
+# For further information on compiling OpenBSD kernels, see the config(8)
+# man page.
+#
+# For further information on hardware support for this architecture, see
+# the intro(4) man page.  For further information about kernel options
+# for this architecture, see the options(4) man page.  For an explanation
+# of each device driver in this file see the section 4 man page for the
+# device.
+
+machine		i386
+include		"../../../conf/GENERIC"
+maxusers	32			# estimated number of users
+
+option		I586_CPU
+
+option		USER_PCICONF	# user-space PCI configuration
+
+#option		VM86		# Virtual 8086 emulation
+option		KVM86		# Kernel Virtual 8086 emulation
+option		USER_LDT	# user-settable LDT; see i386_set_ldt(2)
+#option		APERTURE	# in-kernel aperture driver for XFree86
+
+#option		KGDB		# Remote debugger support; exclusive of DDB
+#option		"KGDB_DEVNAME=\"com\"",KGDBADDR=0x2f8,KGDBRATE=9600
+
+#option		COMPAT_SVR4	# binary compatibility with SVR4
+#option		COMPAT_IBCS2	# binary compatibility with SCO and ISC
+#option		COMPAT_LINUX	# binary compatibility with Linux
+#option		COMPAT_FREEBSD	# binary compatibility with FreeBSD
+#option		COMPAT_BSDOS	# binary compatibility with BSD/OS
+#option		COMPAT_AOUT	# a.out binaries are emulated
+
+#option		PROCFS		# /proc
+#option		NTFS		# Experimental NTFS support
+
+# or use		root on nfs swap on nfs
+option          RAMDISK_HOOKS
+option          MINIROOTSIZE=40960              # disktab.12mb
+option          NKPTP=8
+config          bsd     root on rd0a swap on rd0b and wd0b and wd1b
+pseudo-device   rd              1
+
+mainbus0 at root
+
+cpu0	at mainbus?
+bios0	at mainbus0
+pcibios0 at bios0 flags 0x0000	# use 0x30 for a total verbose
+ipmi0	at mainbus?		# IPMI
+esm0	at mainbus? 		# Dell Embedded Server Management
+
+isa0	at piixpcib?
+pci*	at mainbus0
+
+#option		ACPIVERBOSE
+#option		ACPI_ENABLE
+
+option		PCIVERBOSE
+option		EISAVERBOSE
+option		USBVERBOSE
+
+pchb*	at pci?			# PCI-Host bridges
+piixpcib* at pci?               # Intel PIIX4 PCI-ISA bridge
+
+#isagpio0 at isa? port 0x78		# ISA I/O mapped as GPIO
+#isagpio1 at isa? port 0x80
+
+# ISA PCMCIA controllers
+#option PCMCIAVERBOSE
+pcic0	at isa? port 0x3e0 iomem 0xd0000 iosiz 0x10000
+pcic1	at isa? port 0x3e2 iomem 0xe0000 iosiz 0x4000
+pcic2	at isa? port 0x3e4 iomem 0xe0000 iosiz 0x4000
+tcic0	at isa? disable port 0x240 iomem 0xd0000 iosiz 0x10000
+
+# ISA Plug-and-Play PCMCIA controllers
+#option DEBUG_ISAPNP
+pcic*	at isapnp?
+
+# PCI PCMCIA controllers
+pcic*	at pci?
+
+# PCMCIA bus support
+pcmcia*	at pcic?
+pcmcia* at tcic?
+
+# CardBus bus support
+cardbus*	at cardslot?
+pcmcia*		at cardslot?
+cbb*		at pci?
+cardslot*	at cbb?
+
+sdhc*	at pci?			# SD Host Controller
+sdmmc*	at sdhc?		# SD/MMC bus
+scsibus* at sdmmc?		# SCSI emulation
+
+npx0	at isa? port 0xf0 irq 13	# math coprocessor
+isadma0	at isa?
+isapnp0	at isa?
+
+#option	VESAFB			# VESA bios framebuffer support for X11
+
+pcppi0		at isa?
+
+com0	at isa? port 0x3f8 irq 4	# standard PC serial ports
+com1	at isa? port 0x2f8 irq 3
+com2	at isa? port 0x3e8 irq 5
+
+lpt0	at isa? port 0x378 irq 7	# standard PC parallel ports
+lpt1	at isa? port 0x278
+lpt2	at isa? port 0x3bc
+
+# IDE controllers
+pciide* at pci? flags 0x0000
+
+wdc0	at isa? port 0x1f0 irq 14 flags 0x00
+wdc1	at isa? port 0x170 irq 15 flags 0x00
+wdc*	at pcmcia?
+wdc*	at isapnp?
+
+# IDE hard drives
+wd*	at wdc? flags 0x0000
+wd*	at pciide? flags 0x0000
+
+# Networking devices
+dc*	at pci?				# 21143, "tulip" clone ethernet
+
+# Media Independent Interface (mii) drivers
+lxtphy* at mii?                         # Level1 LXT970 PHYs
+
+pseudo-device	pctr		1
+pseudo-device	mtrr		1	# Memory range attributes control
+pseudo-device	nvram		1
+pseudo-device	sequencer	1
+#pseudo-device	raid		4	# RAIDframe disk driver
+pseudo-device	hotplug		1	# devices hot plugging
+
+# mouse & keyboard multiplexor pseudo-devices
+pseudo-device	wsmux		2
+pseudo-device	crypto		1

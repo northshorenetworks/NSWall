@@ -1,0 +1,42 @@
+diff -ur sys-orig/dev/ata/ata_wdc.c sys/dev/ata/ata_wdc.c
+--- sys-orig/dev/ata/ata_wdc.c	2008-03-18 14:29:01.335512500 +0900
++++ sys/dev/ata/ata_wdc.c	2008-03-18 16:43:23.349080800 +0900
+@@ -344,8 +344,13 @@
+ 			wdc_ata_bio_done(chp, xfer);
+ 			return;
+ 		}
++		wdc_disable_intr(drvp->chnl_softc);
++		(void)wdc_default_read_reg(drvp->chnl_softc, wdr_sector);
++		(void)wdc_default_read_reg(drvp->chnl_softc, wdr_sector);
++		(void)wdc_default_read_reg(drvp->chnl_softc, wdr_sector);
+ 		wdc_output_bytes(drvp, (char *)xfer->databuf + xfer->c_skip,
+ 		    ata_bio->nbytes);
++		wdc_enable_intr(drvp->chnl_softc);
+ 	}
+ 
+ intr:	/* Wait for IRQ (either real or polled) */
+@@ -453,8 +458,13 @@
+ 			wdc_ata_bio_done(chp, xfer);
+ 			return 1;
+ 		}
++		wdc_disable_intr(drvp->chnl_softc);
++		(void)wdc_default_read_reg(drvp->chnl_softc, wdr_sector);
++		(void)wdc_default_read_reg(drvp->chnl_softc, wdr_sector);
++		(void)wdc_default_read_reg(drvp->chnl_softc, wdr_sector);
+ 		wdc_input_bytes(drvp, (char *)xfer->databuf + xfer->c_skip,
+ 		    ata_bio->nbytes);
++		wdc_enable_intr(drvp->chnl_softc);
+ 	}
+ end:
+ 	ata_bio->blkno += ata_bio->nblks;
+diff -ur sys-orig/dev/ic/dc.c sys/dev/ic/dc.c
+--- sys-orig/dev/ic/dc.c	2008-03-18 14:29:11.585512500 +0900
++++ sys/dev/ic/dc.c	2008-03-18 14:32:32.804262500 +0900
+@@ -1664,7 +1664,6 @@
+ 	switch(sc->dc_type) {
+ 	case DC_TYPE_98713:
+ 	case DC_TYPE_98713A:
+-	case DC_TYPE_987x5:
+ 	case DC_TYPE_PNICII:
+ 		dc_read_eeprom(sc, (caddr_t)&mac_offset,
+ 		    (DC_EE_NODEADDR_OFFSET / 2), 1, 0);

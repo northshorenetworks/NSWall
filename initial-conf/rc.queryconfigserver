@@ -1,0 +1,79 @@
+#!/bin/php -f
+<?php
+/*
+	$Id: rc.queryconfigserver,v 1.1 2009/04/21 21:44:30 jrecords Exp $
+	part of m0n0wall (http://m0n0.ch/wall)
+	
+	Copyright (C) 2003-2006 Manuel Kasper <mk@neon1.net>.
+	All rights reserved.
+	
+	Redistribution and use in source and binary forms, with or without
+	modification, are permitted provided that the following conditions are met:
+	
+	1. Redistributions of source code must retain the above copyright notice,
+	   this list of conditions and the following disclaimer.
+	
+	2. Redistributions in binary form must reproduce the above copyright
+	   notice, this list of conditions and the following disclaimer in the
+	   documentation and/or other materials provided with the distribution.
+	
+	THIS SOFTWARE IS PROVIDED ``AS IS'ERROR' AND ANY EXPRESS OR IMPLIED WARRANTIES,
+	INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
+	AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+	AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
+	OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+	SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+	INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+	CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+	ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+	POSSIBILITY OF SUCH DAMAGE.
+*/
+
+        require_once("functions.inc");
+	global $config, $g;
+
+	/* Get an array of config area md5sums from the config server */
+	$remotemd5s = decode_array(config_sync_policy_server_request('getmd5', ''));
+
+	/* Build an array of local config area md5sums */
+        $rules = md5(encode_array(sync_config_area('rules', 'get', '')));
+        $aliases = md5(encode_array(sync_config_area('aliases', 'get', '')));
+        $relays = md5(encode_array(sync_config_area('relays', 'get', '')));
+        $nats = md5(encode_array(sync_config_area('nats', 'get', '')));
+        $pfoptions = md5(encode_array(sync_config_area('pfoptions', 'get', '')));
+        $altq = md5(encode_array(sync_config_area('altq', 'get', '')));
+        $dhcpd = md5(encode_array(sync_config_area('dhcpd', 'get', '')));
+        $staticroutes = md5(encode_array(sync_config_area('staticroutes', 'get', '')));
+        $ipsec = md5(encode_array(sync_config_area('ipsec', 'get', '')));
+        $dnsmasq = md5(encode_array(sync_config_area('dnsmasq', 'get', '')));
+        $certmgr = md5(encode_array(sync_config_area('certmgr', 'get', '')));
+        $accounts = md5(encode_array(sync_config_area('accounts', 'get', '')));
+        $networking = md5(encode_array(sync_config_area('networking', 'get', '')));
+        $general = md5(encode_array(sync_config_area('general', 'get', '')));
+
+        $md5s = array('rules' => $rules,
+                        'aliases' => $aliases,
+                        'relays' => $relays,
+                        'nats' => $nats,
+                        'pfoptions' => $pfoptions,
+                        'altq' => $altq,
+                        'dhcpd' => $dhcpd,
+                        'staticroutes' => $staticroutes,
+                        'ipsec' => $ipsec,
+                        'dnsmasq' => $dnsmasq,
+                        'certmgr' => $certmgr,
+                        'accounts' => $accounts,
+                        'networking' => $networking,
+                        'general' => $general
+                );
+        reset($md5s);
+	
+	/* Get an array of config area's that don't match */ 
+	$result = array_diff_assoc($md5s, $remotemd5s);
+ 	reset($result);
+        while (list($key, $val) = each($result)) {
+		$newconfig = decode_array(config_sync_policy_server_request('getconfig', $key));
+		sync_config_area($key, 'set', $newconfig);
+		mwexec("/usr/bin/logger -p local0.info -t sync $key out of sync, received new $key from config server");
+	}
+?>

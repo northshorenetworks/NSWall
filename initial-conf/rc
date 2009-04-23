@@ -1,0 +1,25 @@
+# $Id: rc,v 1.3 2008/09/19 07:50:23 jrecords Exp $
+#
+# Minimal rc file for flashboot
+
+if [ X"$1" = X"shutdown" ]; then
+        dd if=/dev/urandom of=/var/db/host.random bs=1024 count=64 >/dev/null 2>&1
+        chmod 600 /var/db/host.random >/dev/null 2>&1
+
+                # bring carp interfaces down gracefully
+                /sbin/ifconfig -a|grep '^carp.*:'|cut -f1 -d:|while read if
+                do
+                        /sbin/ifconfig $if down
+                done
+
+        exit 0
+fi
+
+php -q /etc/rc.bootup
+
+echo -n 'Starting PF Logging...'
+ifconfig pflog0 up
+( /usr/sbin/tcpdump -l -e -n -t -v -i pflog0 2>&1 | /usr/bin/logger -p local0.info -t pf) &
+echo -n 'done'
+
+#/etc/rc.initial

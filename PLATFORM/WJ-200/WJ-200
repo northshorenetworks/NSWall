@@ -1,0 +1,137 @@
+#$OpenBSD: GENERIC,v 1.568 2007/08/05 17:01:25 mglocker Exp $
+#
+# For further information on compiling OpenBSD kernels, see the config(8)
+# man page.
+#
+# For further information on hardware support for this architecture, see
+# the intro(4) man page.  For further information about kernel options
+# for this architecture, see the options(4) man page.  For an explanation
+# of each device driver in this file see the section 4 man page for the
+# device.
+
+machine		i386
+include		"../../../conf/GENERIC"
+maxusers	32			# estimated number of users
+
+option		I586_CPU
+
+option		USER_PCICONF	# user-space PCI configuration
+
+#option		VM86		# Virtual 8086 emulation
+option		KVM86		# Kernel Virtual 8086 emulation
+option		USER_LDT	# user-settable LDT; see i386_set_ldt(2)
+
+option		PROCFS		# /proc
+#option		NTFS		# Experimental NTFS support
+
+# or use		root on nfs swap on nfs
+option          RAMDISK_HOOKS
+option          MINIROOTSIZE=40960              # disktab.20mb
+option          NKPTP=8
+config          bsd     root on rd0a swap on rd0b and wd0b and wd1b
+pseudo-device   rd              1
+
+mainbus0 at root
+
+cpu0	at mainbus?
+bios0	at mainbus0
+apm0	at bios0 flags 0x0000	# flags 0x0101 to force protocol version 1.1
+pcibios0 at bios0 flags 0x0000	# use 0x30 for a total verbose
+ipmi0	at mainbus?		# IPMI
+
+isa0	at mainbus0
+isa0	at pcib?
+pci*	at mainbus0
+
+option		PCIVERBOSE
+option		EISAVERBOSE
+option		USBVERBOSE
+
+pchb*	at pci?			# PCI-Host bridges
+ppb*	at pci?			# PCI-PCI bridges
+pci*	at ppb?
+pci*	at pchb?
+pcib*	at pci?			# PCI-ISA bridge
+
+npx0	at isa? port 0xf0 irq 13	# math coprocessor
+isadma0	at isa?
+isapnp0	at isa?
+
+pcppi0		at isa?
+
+com0	at isa? port 0x3f8 irq 4	# standard PC serial ports
+com1	at isa? port 0x2f8 irq 3
+
+lpt0	at isa? port 0x378 irq 7	# standard PC parallel ports
+
+# IDE controllers
+pciide* at pci? flags 0x0000
+
+wdc0	at isa? port 0x1f0 irq 14 flags 0x00
+wdc1	at isa? port 0x170 irq 15 flags 0x00
+wdc*	at isapnp?
+
+# IDE hard drives
+wd*	at wdc? flags 0x0000
+wd*	at pciide? flags 0x0000
+
+# Networking devices
+rl*     at pci?                         # RealTek 81[23]9 ethernet
+
+# Wireless network cards
+acx*    at pci?                         # TI ACX100/ACX111 (802.11b/g)
+ath*    at pci?                         # Atheros AR5k (802.11a/b/g)
+atw*    at pci?                         # ADMtek ADM8211 (802.11)
+wi*     at pci?                         # WaveLAN IEEE 802.11DS
+an*     at pci?                         # Aironet IEEE 802.11DS
+an*     at isapnp?                      # Aironet IEEE 802.11DS
+ipw*    at pci?                         # Intel PRO/Wireless 2100
+iwi*    at pci?                         # Intel PRO/Wireless 2200BG/2915ABG
+wpi*    at pci?                         # Intel PRO/Wireless 3945ABG
+ral*    at pci?                         # Ralink RT2500/RT2501/RT2600
+rtw*    at pci?                         # Realtek 8180
+pgt*    at pci?                         # Prism54 (only full-mac varients)
+malo*   at pci?                         # Marvell Libertas
+mbg*    at pci?                         # Meinberg Funkuhren radio clocks
+
+# Media Independent Interface (mii) drivers
+exphy*  at mii?                         # 3Com internal PHYs
+inphy*  at mii?                         # Intel 82555 PHYs
+iophy*  at mii?                         # Intel 82553 PHYs
+icsphy* at mii?                         # ICS 1890 PHYs
+lxtphy* at mii?                         # Level1 LXT970 PHYs
+nsphy*  at mii?                         # NS and compatible PHYs
+nsphyter*       at mii?                 # NS and compatible PHYs
+qsphy*  at mii?                         # Quality Semi QS6612 PHYs
+luphy*  at mii?                         # Lucent LU6612 PHY
+sqphy*  at mii?                         # Seeq 8x220 PHYs
+rlphy* at mii?                          # RealTek 8139 internal PHYs
+mtdphy* at mii?                         # Myson MTD972 PHYs
+dcphy*  at mii?                         # Digital Clone PHYs
+acphy*  at mii?                         # Altima AC101 PHYs
+amphy*  at mii?                         # AMD 79C873 PHYs
+tqphy*  at mii?                         # TDK 78Q212x PHYs
+bmtphy* at mii?                         # Broadcom 10/100 PHYs
+brgphy* at mii?                         # Broadcom Gigabit PHYs
+eephy* at mii?                          # Marvell 88E1000 series PHY
+xmphy*  at mii?                         # XaQti XMAC-II PHYs
+nsgphy* at mii?                         # NS gigabit PHYs
+urlphy* at mii?                         # Realtek RTL8150L internal PHY
+rgephy* at mii?                         # Realtek 8169S/8110S PHY
+ciphy*  at mii?                         # Cicada CS8201 10/100/1000 copper PHY
+gentbi* at mii?                         # Generic 1000BASE-X ten-bit PHY
+ukphy*  at mii?                         # "unknown" PHYs
+
+# crypto support
+hifn*	at pci?			# Hi/fn 7751 crypto card
+
+pseudo-device	pctr		1
+pseudo-device	mtrr		1	# Memory range attributes control
+pseudo-device	nvram		1
+pseudo-device	sequencer	1
+#pseudo-device	raid		4	# RAIDframe disk driver
+pseudo-device	hotplug		1	# devices hot plugging
+
+# mouse & keyboard multiplexor pseudo-devices
+pseudo-device	wsmux		2
+pseudo-device	crypto		1

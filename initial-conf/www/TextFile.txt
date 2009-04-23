@@ -1,0 +1,18 @@
+<b>AJAX Uses HTTP Requests</b>
+In traditional JavaScript coding, if you want to get any information from a database or a file on the server, or send user information to a server, you will have to make an HTML form and GET or POST data to the server. 
+The user will have to click the "Submit" button to send/get the information, wait for the server to respond, then a new page will load with the results.
+
+Because the server returns a new page each time the user submits input, traditional web applications can run slowly and tend to be less user-friendly.
+With AJAX, your JavaScript communicates directly with the server, through the JavaScript XMLHttpRequest object
+
+With an HTTP request, a web page can make a request to, and get a response from a web server - without reloading the page. The user will stay on the same page, and he or she will not notice that scripts request pages, or send data to a server in the background.
+
+<b>AJAX Uses HTTP Requests</b>
+In traditional JavaScript coding, if you want to get any information from a database or a file on the server, or send user information to a server, you will have to make an HTML form and GET or POST data to the server. 
+The user will have to click the "Submit" button to send/get the information, wait for the server to respond, then a new page will load with the results.
+
+Because the server returns a new page each time the user submits input, traditional web applications can run slowly and tend to be less user-friendly.
+With AJAX, your JavaScript communicates directly with the server, through the JavaScript XMLHttpRequest object
+
+With an HTTP request, a web page can make a request to, and get a response from a web server - without reloading the page. The user will stay on the same page, and he or she will not notice that scripts request pages, or send data to a server in the background.
+

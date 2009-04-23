@@ -1,0 +1,51 @@
+--- wdc.c.orig	Thu Jul  3 07:56:20 2008
++++ wdc.c	Thu Apr  2 19:18:40 2009
+@@ -389,14 +389,18 @@
+ 		unsigned int i;
+ 
+ 		for (i = 0; i < nbytes; i += 4) {
++/* JM */		disable_intr();
+ 			bus_space_write_4(chp->cmd_iot, chp->cmd_ioh, 0, 0);
++/* JM */		enable_intr();
+ 		}
+ 
+ 		return;
+ 	}
+ 
++/* JM */		disable_intr();
+ 	bus_space_write_raw_multi_4(chp->cmd_iot, chp->cmd_ioh, 0,
+ 	    data, nbytes);
++/* JM */		enable_intr();
+ }
+ 
+ 
+@@ -410,14 +414,18 @@
+ 		unsigned int i;
+ 
+ 		for (i = 0; i < nbytes; i += 4) {
++/* JM */		disable_intr();
+ 			bus_space_read_4(chp->cmd_iot, chp->cmd_ioh, 0);
++/* JM */		enable_intr();
+ 		}
+ 
+ 		return;
+ 	}
+ 
++/* JM */		disable_intr();
+ 	bus_space_read_raw_multi_4(chp->cmd_iot, chp->cmd_ioh, 0,
+ 	    data, nbytes);
++/* JM */		enable_intr();
+ }
+ 
+ 
+--- dc.c.orig	Tue Dec 18 03:00:14 2007
++++ dc.c	Fri Mar  6 04:02:20 2009
+@@ -1661,7 +1661,7 @@
+ 	switch(sc->dc_type) {
+ 	case DC_TYPE_98713:
+ 	case DC_TYPE_98713A:
+-	case DC_TYPE_987x5:
++	/*case DC_TYPE_987x5:*/
+ 	case DC_TYPE_PNICII:
+ 		dc_read_eeprom(sc, (caddr_t)&mac_offset,
+ 		    (DC_EE_NODEADDR_OFFSET / 2), 1, 0);
