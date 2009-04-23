@@ -164,6 +164,7 @@ if($a_filter['scrub']['fraghandle']) {
 	$pconfig['scrub']['fraghandle'] = $a_filter['scrub']['fraghandle'];
 }
 $pconfig['scrub']['reassembletcp'] = isset($a_filter['scrub']['reassembletcp']);
+$pconfig['logging']['default'] = isset($a_filter['logging']['default']);
 
 if ($_POST) {
 
@@ -260,6 +261,9 @@ if ($_POST) {
                 if ($_POST['reassembletcp']) {
 		        $filterent['scrub']['reassembletcp'] = $_POST['reassembletcp'];
                 }
+		if ($_POST['logdefault']) {
+                        $filterent['logging']['default'] = $_POST['logdefault'] ? true : false;
+                }
 	}
 		$a_filter = $filterent;
 		
@@ -274,7 +278,7 @@ if ($_POST) {
 <?php include("fbegin.inc"); ?>
 <script language="JavaScript">
 <!--
-var tabs=new Array('tabTimeouts', 'tabLimits', 'tabOptions', 'tabNormalization');
+var tabs=new Array('tabTimeouts', 'tabLimits', 'tabOptions', 'tabNormalization', 'tabLogging');
 
 function switchtab(tab){       
         hidealltabs();
@@ -329,6 +333,8 @@ function showdiv(id) {
 <a href="javascript:switchtab('tabOptions');">Options</a>
 <a>|<a/>
 <a href="javascript:switchtab('tabNormalization');">Normalization</a>
+<a>|<a/>
+<a href="javascript:switchtab('tabLogging');">Logging</a>
 <center>
 	<div id="tabTimeouts" style="display:block">
              <form action="firewall_options_edit.php" onSubmit="return prepareSubmit()" method="post" name="iform" id="iform">
@@ -627,7 +633,7 @@ The state-policy option sets the default behaviour for states:
 		<tr>    
                   <td width="22%" valign="top" class="vncellreq">No DF</td>
                   <td width="78%" class="vtable">
-                    <input name="dfbit" type="checkbox" id="dfbit" value="yes" <?php if ($pconfig['scrub']['dfbit']) echo "checked"; ?>>
+                    <input name="dfbit" type="checkbox" id="dfbit" value="Yes" <?php if ($pconfig['scrub']['dfbit']) echo "checked"; ?>>
                     <br><span class="vexpl"><pre>
 Clears the dont-fragment bit from a matching IP packet.  Some oper-
 ating systems are known to generate fragmented packets with the
@@ -760,8 +766,35 @@ extended PAWS checks
                   </td>
                 </tr>
 		</table>
-	</form>
 	</div>
+	<div id="tabLogging" style="display:none">
+        <?php if ($savemsg) print_info_box($savemsg); ?>
+        <?php if (file_exists($d_filterconfdirty_path)): ?><p>
+        <?php print_info_box_np("The firewall option configuration has been changed.<br>You must apply the changes in order for them to take effect.");?><br>
+        <input name="apply" type="submit" class="formbtn" id="apply" value="Apply changes"></p>
+        <?php endif; ?>
+        <table width="100%" border="0" cellpadding="6" cellspacing="0">
+                <tr>
+                  <td width="22%" valign="top" class="vncellreq">Log Default rule</td>
+                  <td width="78%" class="vtable">
+                    <input name="logdefault" type="checkbox" id="logdefault" value="yes" <?php if ($pconfig['logging']['default']) echo "checked"; ?>>
+                    <br><span class="vexpl"><pre>
+        Log packets that match the default rule.
+                </pre></span></td>
+                </tr>
+		<tr>
+                  <td width="22%" valign="top">&nbsp;</td>
+                  <td width="78%">
+                    <input name="Submit" type="submit" class="formbtn" value="Save">
+                    <?php if (isset($id) && $a_filter['timeouts'][$id]): ?>
+                    <input name="id" type="hidden" value="<?=$id;?>">
+                     <?php endif; ?>
+                    <input name="after" type="hidden" value="<?=$after;?>">
+                  </td>
+                </tr>
+                </table>
+		</form>
+        </div>
 </center>
 <script language="JavaScript">
 <!--

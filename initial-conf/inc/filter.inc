@@ -633,17 +633,15 @@ function filter_rules_generate() {
 	}
 	
 	/* default block logging? */
-	if (!isset($config['syslog']['nologdefaultblock']))
-		$log = "log";
-	else
-		$log = "";
-	
+	if (isset($config['filter']['options']['logging']['default']))
+		$log = 'log ';
+	$defaultlog = $log . 'all';
 	$ipfrules .= <<<EOD
 #######################
 #### Default Policy ###
 #######################
 anchor "default" {
-	block in $log all
+	block in $defaultlog 
 	pass out all
 }
 
