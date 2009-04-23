@@ -38,45 +38,6 @@ $pconfig['expanddiags'] = isset($config['system']['webgui']['expanddiags']);
 $pconfig['bypassstaticroutes'] = isset($config['filter']['bypassstaticroutes']);
 $pconfig['noantilockout'] = isset($config['system']['webgui']['noantilockout']);
 
-if($config['system']['networking']['maxinputque']) {
-	$pconfig['maxinputque'] = $config['system']['networking']['maxinputque'];
-} else {
-        $pconfig['maxinputque'] = "512";
-}
-if($config['system']['networking']['maxicmperror']) {
-	$pconfig['maxicmperror'] = $config['system']['networking']['maxicmperror'];
-} else {
-        $pconfig['maxicmperror'] = "100";
-}
-
-$pconfig['ackonpush'] = isset($config['system']['networking']['ackonpush']);
-$pconfig['ecn'] = isset($config['system']['networking']['ecn']);
-$pconfig['tcpscaling'] = isset($config['system']['networking']['tcpscaling']);
-
-if($config['system']['networking']['tcprcv']) {
-        $pconfig['tcprcv'] = $config['system']['networking']['tcprcv'];
-} else {
-        $pconfig['tcprcv'] = "16384";
-}
-if($config['system']['networking']['tcpsnd']) {
-        $pconfig['tcpsnd'] = $config['system']['networking']['tcpsnd'];
-} else {
-        $pconfig['tcpsnd'] = "16384";
-}
-
-$pconfig['sack'] = isset($config['system']['networking']['sack']);
-
-if($config['system']['networking']['udprcv']) {
-        $pconfig['udprcv'] = $config['system']['networking']['udprcv'];
-} else {
-        $pconfig['udprcv'] = "41600";
-}
-if($config['system']['networking']['udpsnd']) {
-        $pconfig['udpsnd'] = $config['system']['networking']['udpsnd'];
-} else {
-        $pconfig['udpsnd'] = "9216";
-}
-
 if ($_POST) {
 
 	unset($input_errors);
@@ -90,17 +51,6 @@ if ($_POST) {
 		$config['system']['webgui']['noantilockout'] = $_POST['noantilockout'] ? true : false;
 		$config['filter']['bypassstaticroutes'] = $_POST['bypassstaticroutes'] ? true : false;
 		
-		$config['system']['networking']['maxinputque'] = $_POST['maxinputque'];
-		$config['system']['networking']['maxicmperror'] = $_POST['maxicmperror'];
-		$config['system']['networking']['ackonpush'] = $_POST['ackonpush'] ? true : false;
-		$config['system']['networking']['ecn'] = $_POST['system']['ecn'] ? true : false;
-		$config['system']['networking']['tcpscaling'] = $_POST['tcpscaling'] ? true : false;		
-		$config['system']['networking']['tcprcv'] = $_POST['tcprcv'];
-                $config['system']['networking']['tcpsnd'] = $_POST['tcpsnd'];
-		$config['system']['networking']['sack'] = $_POST['sack'] ? true : false;
-		$config['system']['networking']['udprcv'] = $_POST['udprcv'];
-		$config['system']['networking']['udpsnd'] = $_POST['udpsnd'];
-
 		write_config();
 	 	push_config('networking');	
 			
@@ -169,73 +119,6 @@ if ($_POST) {
 					Hint: 
 					the &quot;set LAN IP address&quot; option in the console menu  resets this setting as well.</td>
                 </tr>
-                <tr> 
-                  <td colspan="2" class="list" height="12"></td>
-                </tr>
-                <tr> 
-                  <td colspan="2" valign="top" class="listtopic">Advanced Network Settings</td>
-                </tr>
-		<tr>
-                  <td width="22%" valign="top" class="vncellreq">Max input queue length</td>
-                  <td width="78%" class="vtable">
-                    <input name="maxinputque" type="text" class="formfld" id="maxinputque" size="5" value="<?=htmlspecialchars($pconfig['maxinputque']);?>">
-                    <br> <span class="vexpl">Maximum allowed input queue length (256*number of interfaces)
-</span></td>
-                </tr>
-                <tr>
-                  <td width="22%" valign="top" class="vncellreq">Max ICMP errors</td>
-                  <td width="78%" class="vtable">
-                    <input name="maxicmperror" type="text" class="formfld" id="maxicmperror" size="5" value="<?=htmlspecialchars($pconfig['maxicmperror']);?>">
-                    <br> <span class="vexpl">Maximum number of outgoing ICMP error messages per second.</span></td>
-                </tr> 
-                <tr>
-                  <td width="22%" valign="top" class="vncellreq">Ack on push</td>
-                  <td width="78%" class="vtable">
-                    <input name="ackonpush" type="checkbox" id="ackonpush" value="yes" <?php if ($pconfig['ackonpush']) echo "checked"; ?>>
-                    <br> <span class="vexpl">ACKs for packets with teh push bit set should not be delayed</span></td>
-                </tr>
-                <tr>
-                  <td width="22%" valign="top" class="vncellreq">Enable ECN</td>
-                  <td width="78%" class="vtable">
-		    <input name="ecn" type="checkbox" id="ecn" value="yes" <?php if ($pconfig['ecn']) echo "checked"; ?>>
-                    <br> <span class="vexpl">Enable Explicit Congestion Notification</span></td>
-                </tr>   
-                <tr>
-                  <td width="22%" valign="top" class="vncellreq">TCP Window Scaling</td>
-                  <td width="78%" class="vtable">
-                   <input name="tcpscaling" type="checkbox" id="tcpscaling" value="yes" <?php if ($pconfig['tcpscaling']) echo "checked"; ?>> 
-		   <br> <span class="vexpl">RFC1323 TCP window scaling.</span></td>
-                </tr>
-                <tr>
-                  <td width="22%" valign="top" class="vncellreq">TCP receive window</td>
-                  <td width="78%" class="vtable">
-                    <input name="tcprcv" type="text" class="formfld" id="tcprcv" size="5" value="<?=htmlspecialchars($pconfig['tcprcv']);?>">
-                    <br> <span class="vexpl">TCP receive window size</span></td>
-                </tr>
-		<tr>
-                  <td width="22%" valign="top" class="vncellreq">TCP send window</td>
-                  <td width="78%" class="vtable">
-                    <input name="tcpsnd" type="text" class="formfld" id="tcpsnd" size="5" value="<?=htmlspecialchars($pconfig['tcpsnd']);?>">
-                    <br> <span class="vexpl">TCP send window size</span></td>
-                </tr>
-                <tr>
-                  <td width="22%" valign="top" class="vncellreq">TCP Selective ACK</td>
-                  <td width="78%" class="vtable">
-                  <input name="sack" type="checkbox" id="sack" value="yes" <?php if ($pconfig['sack']) echo "checked"; ?>>  
-		  <br> <span class="vexpl">Enable TCP selective ACK (SACK) packet recovery.</span></td>
-                </tr> 
-                <tr>
-                  <td width="22%" valign="top" class="vncellreq">UDP receive window</td>
-                  <td width="78%" class="vtable">
-                    <input name="udprcv" type="text" class="formfld" id="udprcv" size="5" value="<?=htmlspecialchars($pconfig['udprcv']);?>">
-                    <br> <span class="vexpl">UDP receive window size.</span></td>
-                </tr>
-                <tr>
-                  <td width="22%" valign="top" class="vncellreq">UDP send window</td>
-                  <td width="78%" class="vtable">
-                    <input name="udpsnd" type="text" class="formfld" id="udpsnd" size="5" value="<?=htmlspecialchars($pconfig['udpsnd']);?>">
-                    <br> <span class="vexpl">UDP send window size</span></td>
-                </tr>   
 		<tr> 
                   <td width="22%" valign="top">&nbsp;</td>
                   <td width="78%"> 

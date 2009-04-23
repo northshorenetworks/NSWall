@@ -106,7 +106,7 @@ $menu['System']['General setup'] = array('system.php');
 $menu['System']['Static routes'] = array('system_routes.php');
 $menu['System']['Firmware']      = array('system_firmware.php');
 $menu['System']['Advanced']      = array('system_advanced.php');
-$menu['System']['Networking']      = array('system_advanced.php');
+$menu['System']['Networking']      = array('system_networking.php');
 $menu['System']['Manage Certificates']      = array('system_camanager.php');
 if ($_SERVER['REMOTE_USER'] === $config['system']['username']) {
 	$menu['System']['User manager']  = array('system_usermanager.php');
