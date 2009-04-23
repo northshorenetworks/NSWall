@@ -145,7 +145,7 @@ function sync_config_area($area, $action, $newconfig) {
 		if($action == 'set') {
                         $relays = $newconfig;
                  	write_config();
-			$retval = relay_relayd_configure();
+			$retval = relay_relayd_reload();
 			return;
                 }
 	} elseif ($area == 'nats') {
