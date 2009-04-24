@@ -483,7 +483,7 @@ function activate(obj){
 <table width="100%" id="navigator" border="0" cellpadding="0" cellspacing="0">
 <tr><td class="tabnavtbl">
   <ul id="tabnav">
-<li class="tabinact1" id="addresstab" onclick="activate('addresstab'); switchtab('tabAddress')"><a>Addresses</a></li>
+<li class="tabact" id="addresstab" onclick="activate('addresstab'); switchtab('tabAddress')"><a>Addresses</a></li>
 <li class="tabinact" id="protocoltab" onclick="activate('protocoltab'); switchtab('tabProtocol')"><a>Protocol</a></li>
 <li class="tabinact" id="optionstab" onclick="activate('optionstab'); javascript:switchtab('tabOptions')"><a>Options<a/></li>
   </ul>

@@ -340,7 +340,7 @@ function activate(obj){
 <table width="100%" id="navigator" border="0" cellpadding="0" cellspacing="0">
 <tr><td class="tabnavtbl">
   <ul id="tabnav">
-<li class="tabinact1" id="timeouttab" onclick="activate('timeouttab'); switchtab('tabTimeouts')"><a>Timeouts</a></li>
+<li class="tabact" id="timeouttab" onclick="activate('timeouttab'); switchtab('tabTimeouts')"><a>Timeouts</a></li>
 <li class="tabinact" id="limittab" onclick="activate('limittab'); switchtab('tabLimits')"><a>Limits</a></li>
 <li class="tabinact" id="optionstab" onclick="activate('optionstab'); javascript:switchtab('tabOptions')"><a>Options<a/></li>
 <li class="tabinact" id="normalizationtab" onclick="activate('normalizationtab'); javascript:switchtab('tabNormalization')"><a>Normalization</a></li>

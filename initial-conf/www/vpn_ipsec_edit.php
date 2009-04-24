@@ -430,7 +430,7 @@ function activate(obj){
 <table width="100%" id="navigator" border="0" cellpadding="0" cellspacing="0">
 <tr><td class="tabnavtbl">
   <ul id="tabnav">
-<li class="tabinact1" id="gatewaytab" onclick="activate('gatewaytab'); switchtab('tabGateway')"><a>Gateway</a></li>
+<li class="tabact" id="gatewaytab" onclick="activate('gatewaytab'); switchtab('tabGateway')"><a>Gateway</a></li>
 <li class="tabinact" id="phase1tab" onclick="activate('phase1tab'); switchtab('tabPhase1')"><a>Phase 1</a></li>
 <li class="tabinact" id="phase2tab" onclick="activate('phase2tab'); javascript:switchtab('tabPhase2')"><a>Phase 2<a/></li>
   </ul>
