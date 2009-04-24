@@ -324,21 +324,27 @@ function showdiv(id) {
                 }
         }
 }
+
+function activate(obj){
+	links = document.getElementById('navigator').getElementsByTagName('li');
+	for(i=0;i<links.length;i++){
+		links[i].className = 'tabinact';
+		if(links[i].id==obj){
+			links[i].className='tabact';
+		}
+	}
+}
 -->
 </script>
 
-<table width="100%" border="0" cellpadding="0" cellspacing="0">
+<table width="100%" id="navigator" border="0" cellpadding="0" cellspacing="0">
 <tr><td class="tabnavtbl">
   <ul id="tabnav">
-<?php
-        $tabs = array('Timeouts' => 'javascript:switchtab(\'tabTimeouts\')',
-'Limits' => 'javascript:switchtab(\'tabLimits\')',
-'Options' => 'javascript:switchtab(\'tabOptions\')',
-'Normalization' => 'javascript:switchtab(\'tabNormalization\')',
-'Logging' => 'javascript:switchtab(\'tabLogging\')'
-);
-        dynamic_tab_menu($tabs);
-?>
+<li class="tabinact1" id="timeouttab" onclick="activate('timeouttab'); switchtab('tabTimeouts')"><a>Timeouts</a></li>
+<li class="tabinact" id="limittab" onclick="activate('limittab'); switchtab('tabLimits')"><a>Limits</a></li>
+<li class="tabinact" id="optionstab" onclick="activate('optionstab'); javascript:switchtab('tabOptions')"><a>Options<a/></li>
+<li class="tabinact" id="normalizationtab" onclick="activate('normalizationtab'); javascript:switchtab('tabNormalization')"><a>Normalization</a></li>
+<li class="tabinact" id="loggingtab" onclick="activate('loggingtab'); javascript:switchtab('tabLogging')"><a>Logging</a></li>
   </ul>
   </td></tr>
   <tr>

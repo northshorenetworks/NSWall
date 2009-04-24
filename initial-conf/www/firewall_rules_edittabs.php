@@ -468,22 +468,29 @@ function showdiv(id) {
 	}
 }
 
+function activate(obj){
+        links = document.getElementById('navigator').getElementsByTagName('li');
+        for(i=0;i<links.length;i++){
+                links[i].className = 'tabinact';
+                if(links[i].id==obj){
+                        links[i].className='tabact';
+                }
+        }
+}
 -->
 </script>
-<table width="100%" border="0" cellpadding="0" cellspacing="0">
+
+<table width="100%" id="navigator" border="0" cellpadding="0" cellspacing="0">
 <tr><td class="tabnavtbl">
   <ul id="tabnav">
-<?php
-        $tabs = array('Addresses' => 'javascript:switchtab(\'tabAddress\')',
-'Protocol' => 'javascript:switchtab(\'tabProtocol\')',
-'Options' => 'javascript:switchtab(\'tabOptions\')'
-);
-        dynamic_tab_menu($tabs);
-?>
+<li class="tabinact1" id="addresstab" onclick="activate('addresstab'); switchtab('tabAddress')"><a>Addresses</a></li>
+<li class="tabinact" id="protocoltab" onclick="activate('protocoltab'); switchtab('tabProtocol')"><a>Protocol</a></li>
+<li class="tabinact" id="optionstab" onclick="activate('optionstab'); javascript:switchtab('tabOptions')"><a>Options<a/></li>
   </ul>
   </td></tr>
   <tr>
     <td class="tabcont">
+
 <center>
 	<div id="tabAddress" style="display:block;"> 
              <form action="firewall_rules_edittabs.php" onSubmit="return prepareSubmit()" method="post" name="iform" id="iform">

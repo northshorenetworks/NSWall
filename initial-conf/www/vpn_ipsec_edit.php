@@ -415,22 +415,29 @@ function showdiv(id) {
         }
 }
 
-//-->
+function activate(obj){
+        links = document.getElementById('navigator').getElementsByTagName('li');
+        for(i=0;i<links.length;i++){
+                links[i].className = 'tabinact';
+                if(links[i].id==obj){
+                        links[i].className='tabact';
+                }
+        }
+}
+-->
 </script>
-<table width="100%" border="0" cellpadding="0" cellspacing="0">
+
+<table width="100%" id="navigator" border="0" cellpadding="0" cellspacing="0">
 <tr><td class="tabnavtbl">
   <ul id="tabnav">
-<?php
-        $tabs = array('Gateway' => 'javascript:switchtab(\'tabGateway\')',
-'Phase1' => 'javascript:switchtab(\'tabPhase1\')',
-'Phase2' => 'javascript:switchtab(\'tabPhase2\')'
-);
-        dynamic_tab_menu($tabs);
-?>
+<li class="tabinact1" id="gatewaytab" onclick="activate('gatewaytab'); switchtab('tabGateway')"><a>Gateway</a></li>
+<li class="tabinact" id="phase1tab" onclick="activate('phase1tab'); switchtab('tabPhase1')"><a>Phase 1</a></li>
+<li class="tabinact" id="phase2tab" onclick="activate('phase2tab'); javascript:switchtab('tabPhase2')"><a>Phase 2<a/></li>
   </ul>
   </td></tr>
   <tr>
     <td class="tabcont">
+
 <div id="tabGateway" style="display:block">
 <?php if ($input_errors) print_input_errors($input_errors); ?>
             <form action="vpn_ipsec_edit.php" onSubmit="return prepareSubmit()" method="post" name="iform" id="iform">
