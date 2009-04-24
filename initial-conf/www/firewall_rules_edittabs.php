@@ -470,12 +470,20 @@ function showdiv(id) {
 
 -->
 </script>
-<?php if ($input_errors) print_input_errors($input_errors); ?>
-<p><a href="javascript:switchtab('tabAddress');">Address</a>
-<a>|</a>
-<a href="javascript:switchtab('tabProtocol');">Protocols</a>
-<a>|<a/>
-<a href="javascript:switchtab('tabOptions');">Options</a>
+<table width="100%" border="0" cellpadding="0" cellspacing="0">
+<tr><td class="tabnavtbl">
+  <ul id="tabnav">
+<?php
+        $tabs = array('Addresses' => 'javascript:switchtab(\'tabAddress\')',
+'Protocol' => 'javascript:switchtab(\'tabProtocol\')',
+'Options' => 'javascript:switchtab(\'tabOptions\')'
+);
+        dynamic_tab_menu($tabs);
+?>
+  </ul>
+  </td></tr>
+  <tr>
+    <td class="tabcont">
 <center>
 	<div id="tabAddress" style="display:block;"> 
              <form action="firewall_rules_edittabs.php" onSubmit="return prepareSubmit()" method="post" name="iform" id="iform">

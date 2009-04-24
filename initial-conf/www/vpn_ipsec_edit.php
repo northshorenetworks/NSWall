@@ -417,11 +417,20 @@ function showdiv(id) {
 
 //-->
 </script>
-<p><a href="javascript:switchtab('tabGateway');">Gateway</a>
-<a>|</a>
-<a href="javascript:switchtab('tabPhase1');">Phase 1</a>
-<a>|<a/>
-<a href="javascript:switchtab('tabPhase2');">Phase 2</a>
+<table width="100%" border="0" cellpadding="0" cellspacing="0">
+<tr><td class="tabnavtbl">
+  <ul id="tabnav">
+<?php
+        $tabs = array('Gateway' => 'javascript:switchtab(\'tabGateway\')',
+'Phase1' => 'javascript:switchtab(\'tabPhase1\')',
+'Phase2' => 'javascript:switchtab(\'tabPhase2\')'
+);
+        dynamic_tab_menu($tabs);
+?>
+  </ul>
+  </td></tr>
+  <tr>
+    <td class="tabcont">
 <div id="tabGateway" style="display:block">
 <?php if ($input_errors) print_input_errors($input_errors); ?>
             <form action="vpn_ipsec_edit.php" onSubmit="return prepareSubmit()" method="post" name="iform" id="iform">
