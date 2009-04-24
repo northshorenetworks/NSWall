@@ -326,15 +326,23 @@ function showdiv(id) {
 }
 -->
 </script>
-<p><a href="javascript:switchtab('tabTimeouts');">Timeouts</a>
-<a>|</a>
-<a href="javascript:switchtab('tabLimits');">Limits</a>
-<a>|<a/>
-<a href="javascript:switchtab('tabOptions');">Options</a>
-<a>|<a/>
-<a href="javascript:switchtab('tabNormalization');">Normalization</a>
-<a>|<a/>
-<a href="javascript:switchtab('tabLogging');">Logging</a>
+
+<table width="100%" border="0" cellpadding="0" cellspacing="0">
+<tr><td class="tabnavtbl">
+  <ul id="tabnav">
+<?php
+        $tabs = array('Timeouts' => 'javascript:switchtab(\'tabTimeouts\')',
+'Limits' => 'javascript:switchtab(\'tabLimits\')',
+'Options' => 'javascript:switchtab(\'tabOptions\')',
+'Normalization' => 'javascript:switchtab(\'tabNormalization\')',
+'Logging' => 'javascript:switchtab(\'tabLogging\')'
+);
+        dynamic_tab_menu($tabs);
+?>
+  </ul>
+  </td></tr>
+  <tr>
+    <td class="tabcont">
 <center>
 	<div id="tabTimeouts" style="display:block">
              <form action="firewall_options_edit.php" onSubmit="return prepareSubmit()" method="post" name="iform" id="iform">
