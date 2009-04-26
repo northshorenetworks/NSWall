@@ -117,7 +117,7 @@ if ($_POST) {
 <?php if ($savemsg) print_info_box($savemsg); ?>
 <p><span class="vexpl"><span class="red"><strong>Note: </strong></span>the
 options on this page are intended for use by advanced users only.</span></p>
-<form action="system_advanced.php" method="post" name="iform" id="iform">
+<form action="system_networking.php" method="post" name="iform" id="iform">
 <table width="100%" border="0" cellpadding="6" cellspacing="0">
 <tr>
 <td colspan="2" class="list" height="12"></td>
