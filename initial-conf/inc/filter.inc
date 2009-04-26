@@ -107,19 +107,41 @@ function filter_configure() {
 	$pfrules .= filter_rules_generate();
 	
 	/* load pf ruleset */
-	$fd = popen("/sbin/pfctl -Fn -Fq -Fr -FT -q -f - > /dev/null 2>&1", "w");
-	if (!$fd) {
-		printf("Cannot open /sbin/pfctl in filter_configure()\n");
-		return 1;
-	}
+	if(isset($config['system']['pfdebug'])) {
+		$fd = popen("/sbin/pfctl -Fn -Fq -Fr -FT -vv -f - > /tmp/pfctl.error", "w");
+        	if (!$fd) {
+                	printf("Cannot open /sbin/pfctl in filter_configure()\n");
+                	return 1;
+        	}
+
+        	fwrite($fd, $pfrules);
+        	pclose($fd);
+ 
+  	        $debug_pfconf = fopen("/tmp/pf.conf.debug", "w+") or die("Couldn't create new file");
+        	$pfconfdebug = preg_split('/\n/', $pfrules);
+       	 	$i = 1;
+		foreach($pfconfdebug as $line) {
+	               	fwrite($debug_pfconf, "$i\t$line" . "\n");
+        		$i++;
+		}
+        	fclose($debug_pfconf);
+
+	} else {
+		$fd = popen("/sbin/pfctl -Fn -Fq -Fr -FT -q -f - > /dev/null 2>&1", "w");
+		if (!$fd) {
+			printf("Cannot open /sbin/pfctl in filter_configure()\n");
+			return 1;
+		}
 		
-	fwrite($fd, $pfrules);
-	pclose($fd);
+		fwrite($fd, $pfrules);
+		pclose($fd);
+	}
 
 	if ($g['booting'])
 		echo "done\n";
 	
 	return 0;
+
 }
 
 function filter_parse_config($config) {
@@ -1534,161 +1556,6 @@ $ipfrules .= <<<EOD
 EOD;
 }
 	return $ipfrules;
-}
-
-function carp_sync_xml($url, $password, $sections, $port = 80, $method = 'pfsense.restore_config_section', $username) {
-	global $config, $g;
-
-	/* make a copy of config */
-	$config_copy = $config;
-
-	if ($g['booting'])
-		return;
-
-	update_filter_reload_status("Syncing CARP data to {$url}");
-
-	/* strip out nosync items */
-	for ($x = 0; $x < count($config_copy['nat']['advancedoutbound']['rule']); $x++) {
-		if (isset ($config_copy['nat']['advancedoutbound']['rule'][$x]['nosync']))
-			unset ($config_copy['nat']['advancedoutbound']['rule'][$x]);
-		$config_copy['nat']['advancedoutbound']['rule'][$x]['descr'] = remove_special_characters($config_copy['nat']['advancedoutbound']['rule'][$x]['descr']);
-	}
-	for ($x = 0; $x < count($config_copy['nat']['rule']); $x++) {
-		if (isset ($config_copy['nat']['rule'][$x]['nosync']))
-			unset ($config_copy['nat']['rule'][$x]);
-		$config_copy['nat']['rule'][$x]['descr'] = remove_special_characters($config_copy['nat']['rule'][$x]['descr']);
-	}
-	for ($x = 0; $x < count($config_copy['filter']['rule']); $x++) {
-		if (isset ($config_copy['filter']['rule'][$x]['nosync']) or isset ($config_copy['filter']['rule'][$x]['subsystem']))
-			unset ($config_copy['filter']['rule'][$x]);
-		$config_copy['filter']['rule'][$x]['descr'] = remove_special_characters($config_copy['filter']['rule'][$x]['descr']);
-	}
-	for ($x = 0; $x < count($config_copy['aliases']['alias']); $x++) {
-		if (isset ($config_copy['aliases']['alias'][$x]['nosync']))
-			unset ($config_copy['aliases']['alias'][$x]);
-		$config_copy['aliases']['alias'][$x]['descr'] = remove_special_characters($config_copy['aliases']['alias'][$x]['descr']);
-	}
-/* FIXME: fatal error, not allowed to use serial offset
-	for ($x = 0; $x < count($config_copy['dnsmasq']['hosts']); $x++) {
-		if (isset ($config_copy['dnsmasq']['hosts'][$x]['nosync']))
-			unset ($config_copy['dnsmasq']['hosts'][$x]);
-		$config_copy['dnsmasq']['hosts'][$x]['descr'] = remove_special_characters($config_copy['dnsmasq']['hosts'][$x]['descr']);
-	}
-*/
-	for ($x = 0; $x < count($config_copy['virtualip']['vip']); $x++) {
-		if (isset ($config_copy['virtualip']['vip'][$x]['nosync']) or $config_copy['virtualip']['vip'][$x]['mode'] == "proxyarp")
-			unset ($config_copy['virtualip']['vip'][$x]);
-		$config_copy['virtualip']['vip'][$x]['descr'] = remove_special_characters($config_copy['virtualip']['vip'][$x]['descr']);
-	}
-	for ($x = 0; $x < count($config_copy['ipsec']['tunnel']); $x++) {
-		if (isset ($config_copy['ipsec']['tunnel'][$x]['nosync']))
-			unset ($config_copy['ipsec']['tunnel'][$x]);
-		$config_copy['ipsec']['tunnel'][$x]['descr'] = remove_special_characters($config_copy['ipsec']['tunnel'][$x]['descr']);
-	}
-
-	foreach ($sections as $section) {
-		/* we can't use array_intersect_key()
-		   due to the vip 'special case' */
-		if ($section != 'virtualip') {
-			$xml[$section] = $config_copy[$section];
-		} else {
-			$xml[$section] = backup_vip_config_section();
-		}
-	}
-
-	$params = array (
-		XML_RPC_encode($password
-	), XML_RPC_encode($xml));
-
-	$numberofruns = 0;
-	while($numberofruns < 2) {
-		log_error("Beginning XMLRPC sync to {$url}:{$port}.");
-		$msg = new XML_RPC_Message($method, $params);
-		$cli = new XML_RPC_Client('/xmlrpc.php', $url, $port);
-		$username = $config['system']['user'][0]['name'];
-		$cli->setCredentials($username, $password);
-		if($numberofruns == 1)
-			$cli->setDebug(1);
-		/* send our XMLRPC message and timeout after 240 seconds */
-		$resp = $cli->send($msg, "240");
-		if(!$resp) {
-			$error = "A communications error occured while attempting XMLRPC sync with username {$username} {$url}:{$port}.";
-			log_error($error);
-			file_notice("sync_settings", $error, "Settings Sync", "");
-		} elseif($resp->faultCode()) {
-			$error = "An error code was received while attempting XMLRPC sync with username {$username} {$url}:{$port} - Code " . $resp->faultCode() . ": " . $resp->faultString();
-			log_error($error);
-			file_notice("sync_settings", $error, "Settings Sync", "");
-		} else {
-			log_error("XMLRPC sync successfully completed with {$url}:{$port}.");
-			$numberofruns = 3;
-		}
-		$numberofruns++;
-	}
-
-}
-
-function carp_sync_client() {
-
-	global $config, $g;
-
-	if ($g['booting'])
-		return;
-
-	if (!is_array($config['installedpackages']['carpsettings']['config']))
-		return;
-
-	if(!is_array($config['installedpackages']['carpsynchosts']['config']))
-		return;
-
-	foreach ($config['installedpackages']['carpsettings']['config'] as $carp) {
-		foreach ($config['installedpackages']['carpsynchosts']['config'] as $carpsynchosts) {
-			$synchronizetoip = strtolower($carpsynchosts['protocol']) . "://" . $carpsynchosts['ip'];
-			$port = $carpsynchosts['port'];
-			$username = $carpsynchosts['username'];
-			$password = $carpsynchosts['password'];
-			$method = "pfsense.restore_config_section";
-			if ($carp['synchronizerules'] != "" and is_array($config['filter']))
-				$sections[] = 'filter';
-			if ($carp['synchronizenat'] != "" and is_array($config['nat']))
-				$sections[] = 'nat';
-			if ($carp['synchronizealiases'] != "" and is_array($config['aliases']))
-				$sections[] = 'aliases';
-			if ($carp['synchronizedhcpd'] != "" and is_array($config['dhcpd']))
-				$sections[] = 'dhcpd';
-			if ($carp['synchronizewol'] != "" and is_array($config['wol']))
-				$sections[] = 'wol';
-			if ($carp['synchronizetrafficshaper'] != "" and is_array($config['shaper']))
-				$sections[] = 'shaper';
-			if ($carp['synchronizestaticroutes'] != "" and is_array($config['staticroutes']))
-				$sections[] = 'staticroutes';
-			if ($carp['synchronizevirtualip'] != "" and is_array($config['virtualip']))
-				$sections[] = 'virtualip';
-			if ($carp['synchronizelb'] != "" and is_array($config['load_balancer']))
-				$sections[] = 'load_balancer';
-			if ($carp['synchronizeipsec'] != "" and is_array($config['ipsec']))
-				$sections[] = 'ipsec';
-			if ($carp['synchronizednsforwarder'] != "" and is_array($config['dnsmasq']))
-				$sections[] = 'dnsmasq';
-		    if($carp['synchronizeschedules'] != "" and is_array($config['schedules'])) {
-		        $sections[] = 'schedules';
-		    }
-			if (count($sections) > 0) {
-				update_filter_reload_status("Signaling CARP reload signal...");
-				carp_sync_xml($synchronizetoip, $password, $sections, $port, $method, $username);
-				$cli = new XML_RPC_Client('/xmlrpc.php', $synchronizetoip, $port);
-				$msg = new XML_RPC_Message('pfsense.filter_configure', array (
-					new XML_RPC_Value($password,
-					'string'
-				)));
-				$cli->setCredentials($username, $password);
-				$cli->send($msg, "900");
-				/* signal a carp reload */
-				$msg = new XML_RPC_Message('pfsense.interfaces_carp_configure');
-				$cli->send($msg, "900");
-			}
-		}
-	}
 }
 
 ?>
