@@ -43,6 +43,10 @@ if ($_POST['clear']) {
 	exit;
 }
 
+function resolve_logs($arr) {
+        return gethostbyaddr($arr[0]);
+}
+
 function dump_clog($logfile, $tail, $withorig = true) {
 	global $g, $config;
 
@@ -53,7 +57,12 @@ function dump_clog($logfile, $tail, $withorig = true) {
 	foreach ($logarr as $logent) {
 		$logent = preg_split("/\s+/", $logent, 6);
 		echo "<tr valign=\"top\">\n";
-		
+	
+		if (isset($config['syslog']['resolve'])) {
+			$ipaddr = '/\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/';
+                	$logent = preg_replace_callback($ipaddr, resolve_logs, $logent);
+		}
+	
 		if ($withorig) {
 			echo "<td class=\"listlr\" nowrap>" . htmlspecialchars(join(" ", array_slice($logent, 0, 3))) . "</td>\n";
 			echo "<td class=\"listr\">" . htmlspecialchars($logent[4] . " " . $logent[5]) . "</td>\n";
