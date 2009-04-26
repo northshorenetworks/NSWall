@@ -107,8 +107,7 @@ function vpn_ipsec_configure() {
                if ($g['booting'])
                 echo "done\n";
 	
-	if(!$g['booting'])
-		filter_configure();
+	filter_configure();
 
         return 0;
 }
