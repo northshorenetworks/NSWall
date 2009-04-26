@@ -63,13 +63,13 @@ function scrub_raw_log($log) {
 		$log = preg_replace('/\.(\d+):/', ' $1 ', $log);
 		/* colorize block logs */
 		if(preg_match('/block in/', $log)) {
-			echo $log;
-			$log = preg_replace('/block/', '', $log);
+			$log = preg_replace('/\d+  block in/', ' <font color="red">block</font>', $log);
                 	$ipaddr = '/\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/';
                         $log = preg_replace_callback($ipaddr, resolve_logs_red, $log);
 		}	
 		/* colorize pass logs */
 		if(preg_match('/pass in/', $log)) {
+			$log = preg_replace('/\d+  pass in/', ' <font color="chartreuse">pass</font>', $log);
 			$ipaddr = '/\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/';
 			$log = preg_replace_callback($ipaddr, resolve_logs_green, $log);	
 		}
@@ -88,6 +88,11 @@ function dump_clog($logfile, $tail, $withorig = true) {
 		$logent = preg_split("/\s+/", $logent, 6);
 		echo "<tr valign=\"top\">\n";
 	
+		/* if (isset($config['syslog']['resolve'])) {
+			$ipaddr = '/\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/';
+                	$logent = preg_replace_callback($ipaddr, resolve_logs, $logent);
+		}*/
+		
 		if ($withorig) {
                         echo scrub_raw_log("<td class=\"listlogr\" nowrap>" . htmlspecialchars(join(" ", array_slice($logent, 0, 3)) . " " . $logent[4] . " " . $logent[5]) . "</td>\n");
                 } else {
@@ -98,40 +103,5 @@ function dump_clog($logfile, $tail, $withorig = true) {
 }
 
 ?>
-<?php include("fbegin.inc"); ?>
-<script src="http://code.jquery.com/jquery-latest.js"></script>
 
-<script>
-var refreshId = setInterval(function()
-{
-     $('#rtlogs').load('dump_logs.php');
-}, 2000);
-</script>
-
-<table width="100%" border="0" cellpadding="0" cellspacing="0">
-  <tr><td class="tabnavtbl">
-  <ul id="tabnav">
-<?php 
-   	$tabs = array('System' => 'diag_logs.php',
-           		  'Settings' => 'diag_logs_settings.php');
-	dynamic_tab_menu($tabs);
-?> 
-  </ul>
-  </td></tr>
-  <tr> 
-    <td class="tabcont">
-		<table width="100%" border="0" cellspacing="0" cellpadding="0">
-		  <tr> 
-			<td colspan="2" class="listtopic"> 
-			  Last <?=$nentries;?> system log entries</td>
-		  </tr>
-		<div id="rtlogs" style="display:block; overflow:auto; max-height:500px; min-height:500px; max-width:800px; min-width:800px; background-color:black;">
-		</div>	
-		</table>
-		<br><form action="diag_logs.php" method="post">
-<input name="clear" type="submit" class="formbtn" value="Clear log">
-</form>
-	</td>
-  </tr>
-</table>
-<?php include("fend.inc"); ?>
+<?php dump_clog("all", $nentries); ?>
