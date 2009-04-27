@@ -231,7 +231,7 @@ if ($_POST) {
                   <td width="22%" valign="top" class="vncell">webGUI Certificate</td>
                   <td width="78%" class="vtable">
                     <select name="cert" class="formfld" id="cert">
-                      <?php foreach($config['system']['cert'] as $i): ?>
+                      <?php foreach($config['system']['certmgr']['cert'] as $i): ?>
                       <option value="<?=$i['name'];?>" <?php if ($i == $pconfig['cert']) echo "selected"; ?>>
                         <?=$i['name'];?>
                       </option>
@@ -257,7 +257,7 @@ if ($_POST) {
                   <td width="78%" class="vtable"> <input name="symonenabled" type="checkbox" value="symonenabled" <?php if ($pconfig['symonenabled']) echo "checked"; ?>>
                     Enable Symon Logging &nbsp;&nbsp;&nbsp;<br><br>
                   <span class="vexpl">Symux Server</span>
-                  <input name="muxip" type="text" class="formfld" id="muxip" size="15" value="<?=htmlspecialchars($pconfig['muxip']);?>">
+                  <input name="muxip" type="text" class="formfld" id="muxip" size="25" value="<?=htmlspecialchars($pconfig['muxip']);?>">
                 </td>
                 </tr>
                 <tr> 
