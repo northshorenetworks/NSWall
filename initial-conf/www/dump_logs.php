@@ -51,27 +51,33 @@ function resolve_logs_green($arr) {
         return ' <font color="chartreuse">' . gethostbyaddr($arr[0]) . '</font>';
 }
 
+function resolve_logs($arr) {
+        return gethostbyaddr($arr[0]);
+}
+
 function scrub_raw_log($log) {
 	/* scrub filter logs */ 
 	if(preg_match('/pf:/', $log)) {
 		/* strings we get scrub out of raw logs */
 		$scrubstrings = '/\&lt\;.+?\&gt\;|\[tcp sum ok\]|\/\(match\)|\[uid \d+, pid \d+\]/';
+		$ipaddr = '/\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/';
 		$log = preg_replace($scrubstrings, '', $log);
 		$log = preg_replace('/rule \d+\./', 'rule: ', $log);
 		$log = preg_replace('/\s\&gt\;\s/', ' to ', $log);
 		$log = preg_replace('/\.(\d+)\s/', ' $1 ', $log);
 		$log = preg_replace('/\.(\d+):/', ' $1 ', $log);
+		$log = preg_replace('/F\s+?\d+?:\d+?\(0\)/', ' SYN ', $log);
+		$log = preg_replace('/S\s+?\d+?:\d+?\(0\)/', ' FIN ', $log);
+		$log = preg_replace('/R\s+?\d+?:\d+?\(0\)/', ' RST ', $log);
 		/* colorize block logs */
 		if(preg_match('/block in/', $log)) {
 			$log = preg_replace('/\d+  block in/', ' <font color="red">block</font>', $log);
-                	$ipaddr = '/\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/';
                         $log = preg_replace_callback($ipaddr, resolve_logs_red, $log);
-		}	
-		/* colorize pass logs */
-		if(preg_match('/pass in/', $log)) {
+		} elseif (preg_match('/pass in/', $log)) {	
 			$log = preg_replace('/\d+  pass in/', ' <font color="chartreuse">pass</font>', $log);
-			$ipaddr = '/\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/';
 			$log = preg_replace_callback($ipaddr, resolve_logs_green, $log);	
+		} else {
+			$log = preg_replace_callback($ipaddr, resolve_logs, $log);
 		}
 	}
 	return $log;

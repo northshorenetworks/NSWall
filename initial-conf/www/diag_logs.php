@@ -121,10 +121,6 @@ var refreshId = setInterval(function()
   <tr> 
     <td class="tabcont">
 		<table width="100%" border="0" cellspacing="0" cellpadding="0">
-		  <tr> 
-			<td colspan="2" class="listtopic"> 
-			  Last <?=$nentries;?> system log entries</td>
-		  </tr>
 		<div id="rtlogs" style="display:block; overflow:auto; max-height:500px; min-height:500px; max-width:800px; min-width:800px; background-color:black;">
 		</div>	
 		</table>
