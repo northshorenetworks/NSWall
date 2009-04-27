@@ -182,6 +182,7 @@ COPY ${DESTDIR}/sbin/ttyflags			sbin/ttyflags
 COPY ${DESTDIR}/sbin/umount			sbin/umount
 #COPY ${DESTDIR}/sbin/wicontrol			sbin/wicontrol
 COPY ${BINDIR}/mini_httpd			sbin/mini_httpd
+COPY ${BINDIR}/pptp				sbin/pptp
 COPY ${DESTDIR}/usr/bin/awk			usr/bin/awk
 COPY ${DESTDIR}/usr/bin/basename		usr/bin/basename
 COPY ${DESTDIR}/usr/bin/crontab			usr/bin/crontab
