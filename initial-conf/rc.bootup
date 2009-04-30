@@ -160,7 +160,7 @@
 	system_ntp_configure();
 	
 	/* start pptpd */
-	vpn_pptpd_configure();
+	vpn_pptp_configure();
 	
 	/* start IPsec tunnels */
 	vpn_ipsec_configure();

@@ -317,6 +317,9 @@ function filter_nat_rules_generate() {
 	}
 	/* we will always have the nat anchors for ftp and relay */
                 $natrules .= 'nat-anchor "ftp-proxy/*"' . "\n";
+		
+		if(isset($config['pptp']['client']['enable']))
+			$natrules .= 'nat-anchor "pptp_client/*"' . "\n";
 	
 	/* Dynamic outbound rules - advanced or standard */
 		if (is_array($config['nat']['advancedoutbound']['rule'])) {
@@ -1261,9 +1264,10 @@ EOD;
 ##########################
 anchor "ftp-proxy/*"\n
 EOD;
-if(isset($config['relays']['pfanchor'])) {
+if(isset($config['relays']['pfanchor']))
 	$ipfrules .= 'anchor "relayd/*"' . "\n";
-}
+if(isset($config['pptp']['client']['enable']))
+	$ipfrules .= 'anchor "pptp_client/*"' . "\n";
 	
 	return $ipfrules;
 }

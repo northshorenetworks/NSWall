@@ -198,193 +198,154 @@ function vpn_generate_ipsec_conf($ipchg = false) {
 	return $ipsecconf;
 }
 
-function vpn_pptpd_configure() {
+function vpn_pptp_client_connect() {
 	global $config, $g;
+	/* kill ppp */
+        killbypid("{$g['varrun_path']}/tun0.pid");
 	
-	$syscfg = $config['system']['general'];
-	$pptpdcfg = $config['pptpd'];
+	/* wait for process to die */
+        sleep(2);        
+
+	/* startup pptp */
+        mwexec("/usr/sbin/ppp -unit0 -ddial vpn");
+
+	return 0;
+}
+
+function vpn_pptp_client_disconnect() {
+	global $config, $g;
+	/* kill ppp */
+	killbypid("{$g['varrun_path']}/tun0.pid");
+	unlink_if_exists("{$g['varrun_path']}/tun0.pid");
+	return 0;
+}
+
+function vpn_pptp_configure() {
+	global $config, $g;
+        
+	if(isset($config['pptp']['client']['enable'])) {
+	/* allow gre packets */
+	mwexec("/sbin/sysctl net.inet.gre.allow=1");
+	
+	/* bring up the tun0 interface */
+	mwexec("/sbin/ifconfig tun0 create");
+
+	$pptpcfg = $config['pptp']['client'];
 	
 	if ($g['booting']) {
-		if (!$pptpdcfg['mode'] || ($pptpdcfg['mode'] == "off"))
-			return 0;
 		
-		echo "Configuring PPTP VPN service... ";
+		echo "Configuring PPTP... ";
 	} else {	
-		/* kill mpd */
-		killbypid("{$g['varrun_path']}/mpd-vpn.pid");
+		/* kill ppp */
+		killbypid("{$g['varrun_path']}/tun0.pid");
 		
 		/* wait for process to die */
 		sleep(2);
 		
-		/* remove mpd.conf, if it exists */
-		unlink_if_exists("{$g['varetc_path']}/mpd-vpn/mpd.conf");
-		unlink_if_exists("{$g['varetc_path']}/mpd-vpn/mpd.links");
-		unlink_if_exists("{$g['varetc_path']}/mpd-vpn/mpd.secret");
+		/* remove ppp.conf, if it exists */
+		unlink_if_exists("{$g['varetc_path']}/ppp/ppp.conf");
+		unlink_if_exists("{$g['varetc_path']}/ppp/ppp.linkup");
+		unlink_if_exists("{$g['varetc_path']}/ppp/ppp.linkdown");
 	}
 		
-	/* make sure mpd-vpn directory exists */
-	if (!file_exists("{$g['varetc_path']}/mpd-vpn"))
-		mkdir("{$g['varetc_path']}/mpd-vpn");
+	/* make sure ppp directory exists */
+	if (!file_exists("{$g['varetc_path']}/ppp"))
+		mkdir("{$g['varetc_path']}/ppp");
 		
-	switch ($pptpdcfg['mode']) {
-		
-		case 'server':
+		/* write ppp.conf */
+		$fd = fopen("{$g['varetc_path']}/ppp/ppp.conf", "w");
+		if (!$fd) {
+			printf("Error: cannot open ppp.conf in vpn_pptp_configure().\n");
+			return 1;
+		}
 			
-			/* write mpd.conf */
-			$fd = fopen("{$g['varetc_path']}/mpd-vpn/mpd.conf", "w");
-			if (!$fd) {
-				printf("Error: cannot open mpd.conf in vpn_pptpd_configure().\n");
-				return 1;
-			}
-				
-			$mpdconf = <<<EOD
-pptpd:
+		$pppconf = <<<EOD
+default:
+      set log Phase Chat LCP IPCP CCP tun command
 
+vpn:
+      set device "!/sbin/pptp --nolaunchpppd {$pptpcfg['server']}"
+      set authname {$pptpcfg['username']} 
+      set authkey {$pptpcfg['password']} 
+      set mppe 128 stateless
+      disable ipv6
+EOD;
+	fwrite($fd, $pppconf);
+       	fclose($fd);
+
+	/* write ppp.linkup */
+       $fd = fopen("{$g['varetc_path']}/ppp/ppp.linkup", "w");
+       if (!$fd) {
+                printf("Error: cannot open ppp.linkup in vpn_pptp_configure().\n");
+                return 1;
+       }
+
+       $ppplinkup = <<<EOD
+
+vpn:
+
+  ! sh /etc/ppp/vpn-default-route.sh
+  add {$pptpcfg['subnet']} HISADDR
+  ! sh -c "/sbin/pfctl -a pptp_client -f /etc/ppp/pf.conf.pptp_client"
+EOD;
+	fwrite($fd, $ppplinkup);
+        fclose($fd);
+
+	/* write ppp.linkdown */
+        $fd = fopen("{$g['varetc_path']}/ppp/ppp.linkdown", "w");
+        if (!$fd) {
+                 printf("Error: cannot open ppp.linkdown in vpn_pptp_configure().\n");
+                 return 1;
+        }
+
+        $ppplinkdown = <<<EOD
+
+vpn:
+  ! sh -c "/sbin/pfctl -a pptp_client -F all"
+  delete {$pptpcfg['server']} 
+  delete {$pptpcfg['subnet']}
+EOD;
+        fwrite($fd, $ppplinkdown);
+        fclose($fd);
+
+
+	/* write pf.conf.pptp_client */
+        $fd = fopen("{$g['varetc_path']}/ppp/pf.conf.pptp_client", "w");
+        if (!$fd) {
+                 printf("Error: cannot open pf.conf.pptp_client in vpn_pptp_configure().\n");
+                 return 1;
+        }
+
+        $pfconfpptpclient = <<<EOD
+vpn_if=tun0
+
+# NAT is of course optional. The remote network needs
+# a route to our network as well if we don't do NAT.
+nat on \$vpn_if from any to {$pptpcfg['subnet']} -> (\$vpn_if)
 EOD;
 
-			for ($i = 0; $i < $g['n_pptp_units']; $i++) {
-				$mpdconf .= "	load pt{$i}\n";
-			}
-			
-			for ($i = 0; $i < $g['n_pptp_units']; $i++) {
-			
-				$clientip = long2ip(ip2long($pptpdcfg['remoteip']) + $i);
-				$ngif = "ng" . ($i+1);
-			
-				$mpdconf .= <<<EOD
+ 	fwrite($fd, $pfconfpptpclient);
+        fclose($fd);	
 
-pt{$i}:
-	new -i {$ngif} pt{$i} pt{$i}
-	set ipcp ranges {$pptpdcfg['localip']}/32 {$clientip}/32
-	load pts
+	/* write getgateway.sh */
+        $fd = fopen("{$g['varetc_path']}/ppp/getgateway.sh", "w");
+        if (!$fd) {
+                 printf("Error: cannot open pf.conf.pptp_client in vpn_pptp_configure().\n");
+                 return 1;
+        }
 
+        $getgateway = <<<EOD
+#!/bin/sh
+             gw=`netstat -rn -f inet | grep ^default | awk '{print \$2};'`
+             /sbin/route add -host {$pptpcfg['server']} \${gw}
 EOD;
-			}
-			
-			$mpdconf .= <<<EOD
+        fwrite($fd, $getgateway);
+        fclose($fd);
 
-pts:
-	set iface disable on-demand
-	set iface enable proxy-arp
-	set iface enable tcpmssfix
-	set iface idle 1800
-	set iface up-script /usr/local/sbin/vpn-linkup
-	set iface down-script /usr/local/sbin/vpn-linkdown
-	set bundle enable multilink
-	set bundle enable crypt-reqd
-	set link yes acfcomp protocomp
-	set link no pap chap
-	set link enable chap-msv2
-	set link mtu 1460
-	set link keep-alive 10 60
-	set ipcp yes vjcomp
-	set bundle enable compression
-	set ccp yes mppc
-	set ccp yes mpp-e128
-	set ccp yes mpp-stateless
-
-EOD;
-			
-			if (!isset($pptpdcfg['req128'])) {
-				$mpdconf .= <<<EOD
-	set ccp yes mpp-e40
-	set ccp yes mpp-e56
-
-EOD;
-			}
-			
-			if (is_array($pptpdcfg['dnsserver']) && ($pptpdcfg['dnsserver'][0])) {
-				$mpdconf .= "	set ipcp dns " . join(" ", $pptpdcfg['dnsserver']) . "\n";
-			} else if (isset($config['dnsmasq']['enable'])) {
-				$mpdconf .= "	set ipcp dns " . $config['interfaces']['lan']['ipaddr'];
-				if ($syscfg['dnsserver'][0])
-					$mpdconf .= " " . $syscfg['dnsserver'][0];
-				$mpdconf .= "\n";
-			} else if (is_array($syscfg['dnsserver']) && ($syscfg['dnsserver'][0])) {
-				$mpdconf .= "	set ipcp dns " . join(" ", array_slice($syscfg['dnsserver'], 0, 2)) . "\n";
-			}
-			
-			if (isset($pptpdcfg['radius']['enable'])) {
-				$mpdconf .= <<<EOD
-	set radius server {$pptpdcfg['radius']['server']} "{$pptpdcfg['radius']['secret']}"
-	set radius retries 3
-	set radius timeout 10
-	set bundle enable radius-auth
-	set bundle disable radius-fallback
-
-EOD;
-
-				if (isset($pptpdcfg['radius']['accounting'])) {
-					$mpdconf .= <<<EOD
-	set bundle enable radius-acct
-
-EOD;
-				}
-			}
-
-			fwrite($fd, $mpdconf);
-			fclose($fd);
-			
-			/* write mpd.links */
-			$fd = fopen("{$g['varetc_path']}/mpd-vpn/mpd.links", "w");
-			if (!$fd) {
-				printf("Error: cannot open mpd.links in vpn_pptpd_configure().\n");
-				return 1;
-			}
-			
-			$mpdlinks = "";
-			
-			for ($i = 0; $i < $g['n_pptp_units']; $i++) {
-				$mpdlinks .= <<<EOD
-
-pt{$i}:
-	set link type pptp
-	set pptp enable incoming
-	set pptp disable originate
-	set pptp disable windowing
-	set pptp self 127.0.0.1
-
-EOD;
-			}
-
-			fwrite($fd, $mpdlinks);
-			fclose($fd);
-			
-			/* write mpd.secret */
-			$fd = fopen("{$g['varetc_path']}/mpd-vpn/mpd.secret", "w");
-			if (!$fd) {
-				printf("Error: cannot open mpd.secret in vpn_pptpd_configure().\n");
-				return 1;
-			}
-			
-			$mpdsecret = "";
-			
-			if (is_array($pptpdcfg['user'])) {
-				foreach ($pptpdcfg['user'] as $user)
-					$mpdsecret .= "{$user['name']} \"{$user['password']}\" {$user['ip']}\n";
-			}
-
-			fwrite($fd, $mpdsecret);
-			fclose($fd);
-			chmod("{$g['varetc_path']}/mpd-vpn/mpd.secret", 0600);
-			
-			/* fire up mpd */
-			mwexec("/usr/local/sbin/mpd -b -d {$g['varetc_path']}/mpd-vpn -p {$g['varrun_path']}/mpd-vpn.pid pptpd");
-			
-			break;
-			
-		case 'redir':
-			break;
-	}
-	
-	if (!$g['booting']) {
-		/* reload the filter */
-		filter_configure();
-	}
-	
 	if ($g['booting'])
 		echo "done\n";
 	
+	}
 	return 0;
 }
 

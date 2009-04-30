@@ -962,7 +962,6 @@ function get_current_ip_address($iface) {
         }
 }
 
-
 function get_interface_mac($interface) {
         /* build interface list with netstat */
         exec("/usr/bin/netstat -I $interface -n -f inet", $linkinfo);
