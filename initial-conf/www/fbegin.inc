@@ -129,6 +129,7 @@ $menu['Services']['Config Server']      = array('services_config_server.php');
 $menu['Services']['Relayd']             = array('firewall_relayd_relays.php');
 
 $menu['VPN']['IPsec']  			= array('vpn_ipsec.php');
+$menu['VPN']['PPTP Client']             = array('vpn_pptp_client.php');
 											
 $menu['Status']['System']			= array('index.php');
 $menu['Status']['Interfaces']		= array('status_interfaces.php');

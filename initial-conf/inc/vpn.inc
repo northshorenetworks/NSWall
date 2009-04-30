@@ -258,10 +258,11 @@ function vpn_pptp_configure() {
 			printf("Error: cannot open ppp.conf in vpn_pptp_configure().\n");
 			return 1;
 		}
-			
+		if(isset($pptpcfg['lcplog']))
+			$lcp = 'LCP';		
 		$pppconf = <<<EOD
 default:
-      set log Phase Chat LCP IPCP CCP tun command
+      set log Phase Chat IPCP CCP tun command {$lcp}
 
 vpn:
       set device "!/sbin/pptp --nolaunchpppd {$pptpcfg['server']}"
@@ -280,14 +281,18 @@ EOD;
                 return 1;
        }
 
+       $dgw = get_current_default_gateway();
        $ppplinkup = <<<EOD
 
 vpn:
-
-  ! sh /etc/ppp/vpn-default-route.sh
-  add {$pptpcfg['subnet']} HISADDR
   ! sh -c "/sbin/pfctl -a pptp_client -f /etc/ppp/pf.conf.pptp_client"
+  add {$pptpcfg['server']} {$dgw} 
+
 EOD;
+	foreach ($pptpcfg['srclist'] as $route) {
+		$ppplinkup .= "  add $route HISADDR\n";
+	}
+	
 	fwrite($fd, $ppplinkup);
         fclose($fd);
 
@@ -303,8 +308,12 @@ EOD;
 vpn:
   ! sh -c "/sbin/pfctl -a pptp_client -F all"
   delete {$pptpcfg['server']} 
-  delete {$pptpcfg['subnet']}
+
 EOD;
+	foreach ($pptpcfg['srclist'] as $route) {
+                $ppplinkdown .= "  delete $route\n";
+        }
+
         fwrite($fd, $ppplinkdown);
         fclose($fd);
 
@@ -327,26 +336,8 @@ EOD;
  	fwrite($fd, $pfconfpptpclient);
         fclose($fd);	
 
-	/* write getgateway.sh */
-        $fd = fopen("{$g['varetc_path']}/ppp/getgateway.sh", "w");
-        if (!$fd) {
-                 printf("Error: cannot open pf.conf.pptp_client in vpn_pptp_configure().\n");
-                 return 1;
-        }
-
-        $getgateway = <<<EOD
-#!/bin/sh
-             gw=`netstat -rn -f inet | grep ^default | awk '{print \$2};'`
-             /sbin/route add -host {$pptpcfg['server']} \${gw}
-EOD;
-        fwrite($fd, $getgateway);
-        fclose($fd);
-
-	if ($g['booting'])
-		echo "done\n";
-	
-	}
 	return 0;
+	}
 }
 
 function vpn_localnet_determine($adr, &$sa, &$sn) {

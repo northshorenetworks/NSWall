@@ -938,6 +938,18 @@ function get_current_wan_address() {
 	}
 }
 
+function get_current_default_gateway() {
+	/* get default gateway with netstat */
+        exec("/usr/bin/netstat -rn -f inet", $routeinfo);
+
+        if (isset($routeinfo[4])) {
+               $dgw = preg_split("/\s+/", $routeinfo[4]);
+               $dgw = chop($dgw[1]);
+               return $dgw;
+        }
+        return null;
+}
+
 function get_current_ip_address($iface) {
         global $config, $g;
 

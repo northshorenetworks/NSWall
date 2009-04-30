@@ -1266,8 +1266,6 @@ anchor "ftp-proxy/*"\n
 EOD;
 if(isset($config['relays']['pfanchor']))
 	$ipfrules .= 'anchor "relayd/*"' . "\n";
-if(isset($config['pptp']['client']['enable']))
-	$ipfrules .= 'anchor "pptp_client/*"' . "\n";
 	
 	return $ipfrules;
 }
