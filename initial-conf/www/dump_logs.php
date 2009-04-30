@@ -56,16 +56,16 @@ function resolve_logs($arr) {
 }
 
 function scrub_raw_log($log) {
+	$ipaddr = '/\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/';
 	/* scrub filter logs */ 
 	if(preg_match('/pf:/', $log)) {
 		/* strings we get scrub out of raw logs */
 		$scrubstrings = '/\&lt\;.+?\&gt\;|\[tcp sum ok\]|\/\(match\)|\[uid \d+, pid \d+\]/';
-		$ipaddr = '/\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/';
 		$log = preg_replace($scrubstrings, '', $log);
 		$log = preg_replace('/rule \d+\./', 'rule: ', $log);
 		$log = preg_replace('/\s\&gt\;\s/', ' to ', $log);
 		$log = preg_replace('/\.(\d+)\s/', ' $1 ', $log);
-		$log = preg_replace('/\.(\d+):/', ' $1 ', $log);
+		$log = preg_replace('/(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})\.(\d+):/', ' $1 $2', $log);
 		$log = preg_replace('/F\s+?\d+?:\d+?\(0\)/', ' SYN ', $log);
 		$log = preg_replace('/S\s+?\d+?:\d+?\(0\)/', ' FIN ', $log);
 		$log = preg_replace('/R\s+?\d+?:\d+?\(0\)/', ' RST ', $log);
@@ -76,10 +76,9 @@ function scrub_raw_log($log) {
 		} elseif (preg_match('/pass in/', $log)) {	
 			$log = preg_replace('/\d+  pass in/', ' <font color="chartreuse">pass</font>', $log);
 			$log = preg_replace_callback($ipaddr, resolve_logs_green, $log);	
-		} else {
-			$log = preg_replace_callback($ipaddr, resolve_logs, $log);
 		}
 	}
+	$log = preg_replace_callback($ipaddr, resolve_logs, $log);
 	return $log;
 }
 

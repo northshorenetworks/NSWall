@@ -233,6 +233,12 @@ a {
 	padding-top: 4px;
 	padding-bottom: 4px;
 }
+.listlogr {
+        background-color: black;
+        color: white;
+        font-size: 10px;
+        padding: 1px;
+}
 .listlrns {
 	background-color: #FFFFFF;
 	border-right: 1px solid #999999;
