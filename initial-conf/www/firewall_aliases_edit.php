@@ -57,15 +57,15 @@ if ($_POST) {
 	$pconfig = $_POST;
 
 	/* input validation */
-	$reqdfields = explode(" ", "name members");
-	$reqdfieldsn = explode(",", "Name,Members");
+	$reqdfields = explode(" ", "name memberslist");
+	$reqdfieldsn = explode(",", "Name,Memberslist");
 	
 	do_input_validation($_POST, $reqdfields, $reqdfieldsn, &$input_errors);
 	
 	$alias = array();
         $alias['name'] = $_POST['name'];
         $alias['descr'] = $_POST['descr'];
-	$memberslist = array_reverse(explode(',', $_POST['members']));
+	$memberslist = array_reverse(explode(',', $_POST['memberslist']));
         for($i=0;$i<sizeof($memberslist); $i++) {
                 $member = 'member'."$i";
                 $prop = preg_replace("/ /", "", $memberslist[$i]);
@@ -94,124 +94,8 @@ if ($_POST) {
 }
 ?>
 <?php include("fbegin.inc"); ?>
-<script language="JavaScript">
-<!--
-var portsenabled = 1;
+<script language="javascript" src="/nss.js"></script>
 
-function addOption(selectbox,text,value)
-{
-var optn = document.createElement("OPTION");
-document.getElementById(selectbox).options.add(optn);
-text = text.replace(/\/32/g, "");
-value = value.replace(/\/32/g, "");
-text = text.replace(/:$/, "");
-value = value.replace(/:$/, "");
-optn.text = text;
-optn.value = value;
-document.iform.srchost.value="";
-document.iform.srcnet.value="";
-document.iform.srctable.value="";
-
-if (document.getElementById(selectbox).name=="MEMBERS") {
-   document.iform.members.value="";
-}
-}
-
-function removeOptions(selectbox)
-{
-var i;
-for(i=selectbox.options.length-1;i>=0;i--)
-{
-if(selectbox.options[i].selected)
-selectbox.remove(i);
-}
-}
-
-function selectAllOptions(selectbox)
-{
-var i; 
-for(i=selectbox.options.length-1;i>=0;i--)
-{
-selectbox.options[i].selected = true;
-}
-}
-
-function createProp(selectbox)
-{
-var i;
-var prop = '';
-var rdrprop ='';
-for(i=selectbox.options.length-1;i>=0;i--)
-{
-if(selectbox.options[i].selected)
-{
-prop += selectbox.options[i].value + ', ';   
-}
-}
-prop = prop.replace(/, $/,"");
-prop = prop.replace(/host:/g,"");
-prop = prop.replace(/net:/g,"");
-prop = prop.replace(/table:/g,'$');
-rdrprop = rdrprop.replace(/snat:/g,"");
-if (selectbox.name=="MEMBERS") {
-   document.iform.members.value=prop
-   }
-}
-
-function prepareSubmit()
-{
-selectAllOptions(MEMBERS);
-createProp(MEMBERS);
-}
-
-var ids=new Array('srchost','srcnet','srctable');
-
-function switchsrcid(id){       
-        hideallsrcids();
-        showdiv(id);
-}
-
-function hideallsrcids(){
-        //loop through the array and hide each element by id
-        for (var i=0;i<ids.length;i++){
-                if(ids[i].match( /^src/ )) {
-                        hidediv(ids[i]);
-                }
-        }                 
-}
-
-function hidediv(id) {
-        //safe function to hide an element with a specified id
-        if (document.getElementById) { // DOM3 = IE5, NS6
-                document.getElementById(id).style.display = 'none';
-        }
-        else {
-                if (document.layers) { // Netscape 4
-                        document.id.display = 'none';
-                }
-                else { // IE 4
-                        document.all.id.style.display = 'none';
-                }
-        }
-}
-
-function showdiv(id) {
-        //safe function to show an element with a specified id
-                  
-        if (document.getElementById) { // DOM3 = IE5, NS6
-                document.getElementById(id).style.display = 'block';
-        }
-        else {
-                if (document.layers) { // Netscape 4
-                        document.id.display = 'block';
-                }
-                else { // IE 4
-                        document.all.id.style.display = 'block';
-                }
-        }
-}
--->
-</script>
 <?php if ($input_errors) print_input_errors($input_errors); ?>
 <center>
 	<id="Address">
@@ -221,7 +105,7 @@ function showdiv(id) {
                   <td width="22%" valign="top" class="vncellreq">Name</td>
                   <td width="78%" class="vtable">
                     <input name="name" type="text" class="formfld" id="name" size="20" value="<?=htmlspecialchars($pconfig['name']);?>">
-                    <input name="members" type="hidden" value="">
+                    <input name="memberslist" type="hidden" value="">
                 </tr>
                 <tr> 
                   <td width="22%" valign="top" class="vncell">Description</td>

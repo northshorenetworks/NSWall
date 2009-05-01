@@ -105,14 +105,35 @@ function prepareSubmit()
 selectAllOptions(MEMBERS);
 createProp(MEMBERS)
 }
+
+function prepareRuleSubmit()
+{
+selectAllOptions(SRCADDR);
+createProp(SRCADDR);
+selectAllOptions(DSTADDR);
+createProp(DSTADDR);
+selectAllOptions(PROTOLIST);
+createProtoProps(PROTOLIST);
+}
  
-var ids=new Array('srchost','srcnet','srctable');
+var ids=new Array('srchost','srcnet','srcalias', 'dsthost', 'dstnet', 'dstalias', 'dstsnat', 'dstredir', 'dstrelay');
+var tabs=new Array('tabAddress', 'tabProtocol', 'tabOptions');
  
-function switchsrcid(id){
-hideallsrcids();
+function switchsrcid(id){  
+  hideallsrcids();
+  showdiv(id);
+}
+ 
+function switchdstid(id){
+hidealldstids();
 showdiv(id);
 }
  
+function switchtab(tab){
+hidealltabs();
+showdiv(tab);
+}
+
 function hideallsrcids(){
 //loop through the array and hide each element by id
 for (var i=0;i<ids.length;i++){
@@ -122,6 +143,15 @@ hidediv(ids[i]);
 }
 }
  
+function hidealltabs(){
+//loop through the array and hide each element by id
+for (var i=0;i<tabs.length;i++){
+if(tabs[i].match( /^tab/ )) {
+hidediv(tabs[i]);
+} 
+}
+}
+
 function hidediv(id) {
 //safe function to hide an element with a specified id
 if (document.getElementById) { // DOM3 = IE5, NS6
@@ -148,6 +178,16 @@ document.id.display = 'block';
 }
 else { // IE 4
 document.all.id.style.display = 'block';
+}
+}
+}
+
+function activate(obj){
+links = document.getElementById('navigator').getElementsByTagName('li');
+for(i=0;i<links.length;i++){
+links[i].className = 'tabinact';
+if(links[i].id==obj){
+links[i].className='tabact';
 }
 }
 }
