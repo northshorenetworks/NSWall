@@ -233,9 +233,8 @@ function vpn_pptp_configure() {
 	$pptpcfg = $config['pptp']['client'];
 	
 	if ($g['booting']) {
-		
 		echo "Configuring PPTP... ";
-	} else {	
+	/* } else {	
 		/* kill ppp */
 		killbypid("{$g['varrun_path']}/tun0.pid");
 		
@@ -247,6 +246,7 @@ function vpn_pptp_configure() {
 		unlink_if_exists("{$g['varetc_path']}/ppp/ppp.linkup");
 		unlink_if_exists("{$g['varetc_path']}/ppp/ppp.linkdown");
 	}
+	*/
 		
 	/* make sure ppp directory exists */
 	if (!file_exists("{$g['varetc_path']}/ppp"))
@@ -335,6 +335,13 @@ EOD;
 
  	fwrite($fd, $pfconfpptpclient);
         fclose($fd);	
+	
+	if ($g['booting']) {
+       		if(isset($config['pptp']['client']['connectonboot'])) {
+			vpn_pptp_client_connect();
+		}			 
+	        echo "done";
+	}
 
 	return 0;
 	}

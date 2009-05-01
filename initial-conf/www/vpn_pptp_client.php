@@ -49,6 +49,7 @@ if ($_POST) {
 	/* input validation */
 	if (!$input_errors) {
 		$config['pptp']['client']['enable'] = $_POST['enable'] ? true : false;
+		$config['pptp']['client']['connectonboot'] = $_POST['connectonboot'] ? true : false;
 		$config['pptp']['client']['server'] = $_POST['server'];
 		$config['pptp']['client']['username'] = $_POST['username'];
 		$config['pptp']['client']['password'] = $_POST['password'];
@@ -74,6 +75,7 @@ if ($_POST) {
 }
 
 $pconfig['enable']    = isset($config['pptp']['client']['enable']);
+$pconfig['connectonboot']    = isset($config['pptp']['client']['connectonboot']);
 $pconfig['server']    = $config['pptp']['client']['server'];
 $pconfig['username']  = $config['pptp']['client']['username'];
 $pconfig['password']  =  $config['pptp']['client']['password'];
@@ -103,6 +105,13 @@ $pconfig['lcplog']    = isset($config['pptp']['client']['lcplog']);
                   <td width="22%" valign="top" class="vncellreq">Enable PPTP Client</td>
                   <td width="78%" class="vtable">
                   <input name="enable" type="checkbox" id="enable" value="Yes" <?php if ($pconfig['enable']) echo "checked";
+?>>
+                  </span></td>
+                </tr>
+		<tr>
+                  <td width="22%" valign="top" class="vncellreq">Attempt Connection on Bootup</td>
+                  <td width="78%" class="vtable">
+                  <input name="connectonboot" type="checkbox" id="connectonboot" value="Yes" <?php if ($pconfig['connectonboot']) echo "checked";
 ?>>
                   </span></td>
                 </tr>
