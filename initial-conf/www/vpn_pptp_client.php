@@ -32,11 +32,12 @@
 $pgtitle = array("VPN", "PPTP Client");
 require("guiconfig.inc");
 
-$pconfig['enable']   = isset($config['pptp']['client']['enable']);
-$pconfig['server']   = $config['pptp']['client']['server'];
-$pconfig['username'] = $config['pptp']['client']['username'];
-$pconfig['password'] = $config['pptp']['client']['password'];
-$pconfig['subnet']   = $config['pptp']['client']['subnet'];
+$pconfig['enable']    = isset($config['pptp']['client']['enable']);
+$pconfig['server']    = $config['pptp']['client']['server'];
+$pconfig['username']  = $config['pptp']['client']['username'];
+$pconfig['password']  =  $config['pptp']['client']['password'];
+$pconfig['routelist'] =  $config['pptp']['client']['routelist'];
+$pconfig['lcplog']    = isset($config['pptp']['client']['lcplog']);
 
 if ($_POST) {
 
@@ -58,8 +59,15 @@ if ($_POST) {
 		$config['pptp']['client']['server'] = $_POST['server'];
 		$config['pptp']['client']['username'] = $_POST['username'];
 		$config['pptp']['client']['password'] = $_POST['password'];
-		$config['pptp']['client']['subnet'] = $_POST['subnet'];
-		write_config();
+		unset($config['pptp']['client']['routelist']);
+	        $routelist = array_reverse(explode(',', $_POST['memberslist']));
+		for($i=0;$i<sizeof($routelist); $i++) {
+			$member = 'route'."$i";
+			$source = preg_replace("/ /", "", $routelist[$i]);
+			$config['pptp']['client']['routelist'][$member] = $source;
+		}
+		$config['pptp']['client']['lcplog'] = $_POST['lcplog'] ? true : false;
+        	write_config();
 		vpn_pptp_configure();
 	}
 		
@@ -73,21 +81,19 @@ if ($_POST) {
 }
 ?>
 <?php include("fbegin.inc"); ?>
-<script language="JavaScript">
-<!--
-// -->
-</script>
-            <?php if ($input_errors) print_input_errors($input_errors); ?>
+    <script language="javascript" src="/nss.js"></script> 
+ 	    <?php if ($input_errors) print_input_errors($input_errors); ?>
             <?php if ($savemsg) print_info_box($savemsg); ?>
             <p><span class="vexpl"><span class="red"><strong>Note: </strong></span>the 
               options on this page are intended for use by advanced users only.</span></p>
-            <form action="vpn_pptp_client.php" method="post" name="iform" id="iform">
+            <form action="vpn_pptp_client.php" onSubmit="return prepareSubmit()" method="post" name="iform" id="iform">
  	    <?php if (!file_exists($d_pptpclient_pid)): ?><p>
 	    <input name="submit" type="submit" class="formbtn" id="Connect" value="Connect"></p>
             <?php endif; ?>
-            <?php if (file_exists($d_pptpclient_pid)): ?><p>	
-	    <input name="submit" type="submit" class="formbtn" id="Disconnect" value="Disconnect"></p>  
+            <?php if (file_exists($d_pptpclient_pid)): ?><p>
+            <input name="submit" type="submit" class="formbtn" id="Disconnect" value="Disconnect"></p>  
             <?php endif; ?> 
+            <input name="memberslist" type="hidden" value="">
             <table width="100%" border="0" cellpadding="6" cellspacing="0">
 		<tr> 
                   <td colspan="2" valign="top" class="listtopic">PPTP Server</td>
@@ -118,12 +124,67 @@ if ($_POST) {
                    </span></td>
                 </tr>
 		<tr>
-                  <td width="22%" valign="top" class="vncellreq">Subnet</td>
-                  <td width="78%" class="vtable">
-                    <input name="subnet" type="text" class="formfld" id="subnet" size="20" value="<?=htmlspecialchars($pconfig['subnet']);?>">
-                    </span></td>
+                <td width="22%" valign="top" class="vncellreq">Remote Network(s)</td>
+                <td width="78%" class="vtable">
+                <SELECT style="width: 150px; height: 100px" id="MEMBERS" NAME="MEMBERS" MULTIPLE size=6 width=30>
+                <?php for ($i = 0; $i<sizeof($pconfig['routelist']); $i++): ?>
+                <option value="<?=$pconfig['routelist']["route$i"];?>">
+                <?=$pconfig['routelist']["route$i"];?>
+                </option>
+                <?php endfor; ?>
+                <input type=button onClick="removeOptions(MEMBERS)"; value='Remove Selected'><br><br>
+                  <strong>Type</strong>
+                    <select name="srctype" class="formfld" id="srctype" onChange="switchsrcid(document.iform.srctype.value)">
+                      <option value="srchost" selected>Host</option>
+                      <option value="srcnet" >Network</option>
+                      <option value="srcalias" >Alias</option>
+                    </select><br><br>
+                <div id='srchost' style="display:block;">
+                 <strong>Address</strong>
+                  <?=$mandfldhtml;?><input name="srchost" type="text" class="formfld" id="srchost" size="16" value="<?=htmlspecialchars($pconfig['address']);?>">
+                <input type=button onClick="addOption('MEMBERS',document.iform.srchost.value + '/32','host' + ':' + document.iform.srchost.value + '/32')"; value='Add'>
+		</div>
+                <div id='srcnet' style="display:none;">
+                 <strong>Address</strong>
+                  <?=$mandfldhtml;?><input name="srcnet" type="text" class="formfld" id="srcnet" size="16" value="<?=htmlspecialchars($pconfig['address']);?>">
+                   <strong>/</strong>
+                    <select name="srcmask" class="formfld" id="srcmask">
+                      <?php for ($i = 30; $i >= 1; $i--): ?>
+                      <option value="<?=$i;?>" <?php if ($i == $pconfig['address_subnet']) echo "selected"; ?>>
+                      <?=$i;?>
+                      </option>
+                      <?php endfor; ?>
+                    </select>
+                <input type=button onClick="addOption('MEMBERS',document.iform.srcnet.value + '/' + document.iform.srcmask.value,'net' + ':' + document.iform.srcnet.value + '/' + document.iform.srcmask.value)"; value='Add'>
+		</div>
+                <div id='srcalias' style="display:none;">
+                <strong>Alias</strong>
+                    <select name="srcalias" class="formfld" id="srcalias">
+                      <?php
+                       $defaults = filter_system_aliases_names_generate();
+                       $defaults = split(' ', $defaults);
+                       foreach( $defaults as $i): ?>
+                      <option value="<?='$' . $i;?>"><?=$i;?>
+                      </option>
+                      <?php endforeach; ?>
+                      <?php foreach($config['aliases']['alias'] as $i): ?>
+                      <option value="<?='$' . $i['name'];?>" <?php if ($i == $pconfig['address_subnet']) echo "selected"; ?>>
+                        <?=$i['name'];?>
+                      </option>
+                      <?php endforeach; ?>
+                    </select>
+		<input type=button onClick="addOption('MEMBERS',document.iform.srcalias.value + '/32','net' + ':' + document.iform.srcalias.value + '/32')"; value='Add'>
+		</div>
+                </td>
                 </tr>
 		<tr> 
+		 <tr>
+                  <td width="22%" valign="top" class="vncellreq">LCP debug log</td>
+                  <td width="78%" class="vtable">
+                  <input name="lcplog" type="checkbox" id="lcplog" value="Yes" <?php if ($pconfig['lcplog']) echo "checked";
+?>>
+                  </span></td>
+                </tr>
                   <td width="22%" valign="top">&nbsp;</td>
                   <td width="78%"> 
                     <input name="submit" type="submit" class="formbtn" value="Save" onclick="enable_change(true)"> 

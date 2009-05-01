@@ -1,7 +1,7 @@
 #!/bin/php
 <?php 
 /*
-	$Id: firewall_abusive_sites.php,v 1.1 2009/04/20 06:56:52 jrecords Exp $
+	$Id: services_config_server.php,v 1.1 2009/04/20 06:59:37 jrecords Exp $
 	part of m0n0wall (http://m0n0.ch/wall)
 	
 	Copyright (C) 2003-2006 Manuel Kasper <mk@neon1.net>.
@@ -21,188 +21,66 @@
 	INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
 	AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
 	AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
-	OR CONowing conditions are met:
-	
-	1. Redistributions of source code must retain the above copyright notice,
-	   this list of conditions and the following disclaimer.
-	
-	2. Redistributions in binary form must reproduce the above copyright
-	   notice, this list of conditions and the following disclaimer in the
-	   documentation and/or othWARE, EVEN IF ADVISED OF THE
+	OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+	SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+	INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+	CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+	ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 	POSSIBILITY OF SUCH DAMAGE.
 */
 
-$pgtitle = array("Firewall", "Aliases", "Edit Alias");
+$pgtitle = array("Firewall", "Abusive Hosts");
 require("guiconfig.inc");
 
-if (!is_array($config['filter']['abusivehosts']['abusivehost']))
-	$config['filter']['abusivehosts']['abusivehost'] = array();
-
-$a_abusivehostes = &$config['filter']['abusivehost'];
+$pconfig['abusiveslist'] =  $config['filter']['abusivehosts']['abusiveslist'];
 
 if ($_POST) {
 
+	if ($_POST['submit'] == "Save") {
 	unset($input_errors);
 	$pconfig = $_POST;
 
-	do_input_validation($_POST, $reqdfields, $reqdfieldsn, &$input_errors);
-	
-	$memberslist = array_reverse(explode(',', $_POST['members']));
-        for($i=0;$i<sizeof($memberslist); $i++) {
-                $member = 'member'."$i";
-                $prop = preg_replace("/ /", "", $memberslist[$i]);
-                $abusivehost['memberlist'][$member] = $prop;
-       	} 
-        $a_abusivehostes[] = $abusivehost;
-
-	$xmlconfig = dump_xml_config($config, $g['xml_rootobj']);
-        
-        if (filter_parse_config($xmlconfig)) {
-		$input_errors[] = "Could not parse the generated config file";
-		$input_errors[] = "See log file for details";
-		$input_errors[] = "XML Config file not modified";
-	}
-
+	/* input validation */
 	if (!$input_errors) {
+		unset($config['filter']['abusivehosts']['abusiveslist']);
+	        $abusiveslist = array_reverse(explode(',', $_POST['memberslist']));
+		for($i=0;$i<sizeof($abusiveslist); $i++) {
+			$member = 'abuser'."$i";
+			$source = preg_replace("/ /", "", $abusiveslist[$i]);
+			$config['filter']['abusivehosts']['abusiveslist'][$member] = $source;
+		}
+        	write_config();
+	}
 		
-		write_config();
-	 	touch($d_filterconfdirty_path);	
-		header("Location: firewall_abusive_sites.php");
-		exit;
+		$retval = 0;
+		if (!file_exists($d_sysrebootreqd_path)) {
+			config_lock();
+			config_unlock();
+		}
+		$savemsg = get_std_save_message($retval);
 	}
 }
 ?>
 <?php include("fbegin.inc"); ?>
-<script language="JavaScript">
-<!--
-var portsenabled = 1;
+<script language="javascript" src="/nss.js"></script>
 
-function addOption(selectbox,text,value)
-{
-var optn = document.createElement("OPTION");
-document.getElementById(selectbox).options.add(optn);
-text = text.replace(/\/32/g, "");
-value = value.replace(/\/32/g, "");
-text = text.replace(/:$/, "");
-value = value.replace(/:$/, "");
-optn.text = text;
-optn.value = value;
-document.iform.srchost.value="";
-document.iform.srcnet.value="";
-document.iform.srctable.value="";
-
-if (document.getElementById(selectbox).name=="MEMBERS") {
-   document.iform.members.value="";
-}
-}
-
-function removeOptions(selectbox)
-{
-var i;
-for(i=selectbox.options.length-1;i>=0;i--)
-{
-if(selectbox.options[i].selected)
-selectbox.remove(i);
-}
-}
-
-function selectAllOptions(selectbox)
-{
-var i; 
-for(i=selectbox.options.length-1;i>=0;i--)
-{
-selectbox.options[i].selected = true;
-}
-}
-
-function createProp(selectbox)
-{
-var i;
-var prop = '';
-var rdrprop ='';
-for(i=selectbox.options.length-1;i>=0;i--)
-{
-if(selectbox.options[i].selected)
-{
-prop += selectbox.options[i].value + ', ';   
-}
-}
-prop = prop.replace(/, $/,"");
-prop = prop.replace(/host:/g,"");
-prop = prop.replace(/net:/g,"");
-prop = prop.replace(/table:/g,'$');
-rdrprop = rdrprop.replace(/snat:/g,"");
-if (selectbox.name=="MEMBERS") {
-   document.iform.members.value=prop
-   }
-}
-
-function prepareSubmit()
-{
-selectAllOptions(MEMBERS);
-createProp(MEMBERS);
-}
-
-var ids=new Array('srchost','srcnet','srctable');
-
-function switchsrcid(id){       
-        hideallsrcids();
-        showdiv(id);
-}
-
-function hideallsrcids(){
-        //loop through the array and hide each element by id
-        for (var i=0;i<ids.length;i++){
-                if(ids[i].match( /^src/ )) {
-                        hidediv(ids[i]);
-                }
-        }                 
-}
-
-function hidediv(id) {
-        //safe function to hide an element with a specified id
-        if (document.getElementById) { // DOM3 = IE5, NS6
-                document.getElementById(id).style.display = 'none';
-        }
-        else {
-                if (document.layers) { // Netscape 4
-                        document.id.display = 'none';
-                }
-                else { // IE 4
-                        document.all.id.style.display = 'none';
-                }
-        }
-}
-
-function showdiv(id) {
-        //safe function to show an element with a specified id
-                  
-        if (document.getElementById) { // DOM3 = IE5, NS6
-                document.getElementById(id).style.display = 'block';
-        }
-        else {
-                if (document.layers) { // Netscape 4
-                        document.id.display = 'block';
-                }
-                else { // IE 4
-                        document.all.id.style.display = 'block';
-                }
-        }
-}
--->
-</script>
-<?php if ($input_errors) print_input_errors($input_errors); ?>
-<center>
-	<id="Address">
-             <form action="firewall_abusive_sites.php" onSubmit="return prepareSubmit()" method="post" name="iform" id="iform">
-	      <table width="100%" border="0" cellpadding="6" cellspacing="0">
+            <?php if ($input_errors) print_input_errors($input_errors); ?>
+            <?php if ($savemsg) print_info_box($savemsg); ?>
+            <p><span class="vexpl"><span class="red"><strong>Note: </strong></span>the 
+              options on this page are intended for use by advanced users only.</span></p>
+            <form action="firewall_abusive_sites.php" onSubmit="return prepareSubmit()" method="post" name="iform" id="iform">
+            <input name="memberslist" type="hidden" value="">
+            <table width="100%" border="0" cellpadding="6" cellspacing="0">
+		<tr> 
+                  <td colspan="2" valign="top" class="listtopic">Abusive Sites</td>
+                </tr>
 		<tr>
-                <td width="22%" valign="top" class="vncellreq">Members</td>
+                <td width="22%" valign="top" class="vncellreq">Abusive Sites</td>
                 <td width="78%" class="vtable">
                 <SELECT style="width: 150px; height: 100px" id="MEMBERS" NAME="MEMBERS" MULTIPLE size=6 width=30>
-                <?php for ($i = 0; $i<sizeof($pconfig['memberlist']); $i++): ?>
-                <option value="<?=$pconfig['memberlist']["member$i"];?>">
-                <?=$pconfig['memberlist']["member$i"];?>
+                <?php for ($i = 0; $i<sizeof($pconfig['abusiveslist']); $i++): ?>
+                <option value="<?=$pconfig['abusiveslist']["abuser$i"];?>">
+                <?=$pconfig['abusiveslist']["abuser$i"];?>
                 </option>
                 <?php endfor; ?>
                 <input type=button onClick="removeOptions(MEMBERS)"; value='Remove Selected'><br><br>
@@ -210,13 +88,13 @@ function showdiv(id) {
                     <select name="srctype" class="formfld" id="srctype" onChange="switchsrcid(document.iform.srctype.value)">
                       <option value="srchost" selected>Host</option>
                       <option value="srcnet" >Network</option>
-                      <option value="srctable" >Alias</option>
-                    </select>
+                      <option value="srcalias" >Alias</option>
+                    </select><br><br>
                 <div id='srchost' style="display:block;">
                  <strong>Address</strong>
                   <?=$mandfldhtml;?><input name="srchost" type="text" class="formfld" id="srchost" size="16" value="<?=htmlspecialchars($pconfig['address']);?>">
                 <input type=button onClick="addOption('MEMBERS',document.iform.srchost.value + '/32','host' + ':' + document.iform.srchost.value + '/32')"; value='Add'>
-                </div>
+		</div>
                 <div id='srcnet' style="display:none;">
                  <strong>Address</strong>
                   <?=$mandfldhtml;?><input name="srcnet" type="text" class="formfld" id="srcnet" size="16" value="<?=htmlspecialchars($pconfig['address']);?>">
@@ -229,36 +107,37 @@ function showdiv(id) {
                       <?php endfor; ?>
                     </select>
                 <input type=button onClick="addOption('MEMBERS',document.iform.srcnet.value + '/' + document.iform.srcmask.value,'net' + ':' + document.iform.srcnet.value + '/' + document.iform.srcmask.value)"; value='Add'>
-                </div>
-                <div id='srctable' style="display:none;">
-                 <strong>Alias</strong>
-                    <select name="srctable" class="formfld" id="srctable">
-                      <?php foreach($config['tablees']['table'] as $i): ?>
+		</div>
+                <div id='srcalias' style="display:none;">
+                <strong>Alias</strong>
+                    <select name="srcalias" class="formfld" id="srcalias">
+                      <?php
+                       $defaults = filter_system_aliases_names_generate();
+                       $defaults = split(' ', $defaults);
+                       foreach( $defaults as $i): ?>
+                      <option value="<?='$' . $i;?>"><?=$i;?>
+                      </option>
+                      <?php endforeach; ?>
+                      <?php foreach($config['aliases']['alias'] as $i): ?>
                       <option value="<?='$' . $i['name'];?>" <?php if ($i == $pconfig['address_subnet']) echo "selected"; ?>>
                         <?=$i['name'];?>
                       </option>
                       <?php endforeach; ?>
                     </select>
-                <input type=button onClick="addOption('MEMBERS',document.iform.srctable.value + '/32','net' + ':' + document.iform.srctable.value + '/32')"; value='Add'>
-                </div>
+		<input type=button onClick="addOption('MEMBERS',document.iform.srcalias.value + '/32','net' + ':' + document.iform.srcalias.value + '/32')"; value='Add'>
+		</div>
                 </td>
                 </tr>
-                <tr>
-		<tr>
                   <td width="22%" valign="top">&nbsp;</td>
-                  <td width="78%">
-                    <input name="Submit" type="submit" class="formbtn" value="Save">
-                    <?php if (isset($id) && $a_abusivehostes[$id]): ?>
-                    <input name="id" type="hidden" value="<?=$id;?>">
-                     <?php endif; ?>
-                    <input name="after" type="hidden" value="<?=$after;?>">
+                  <td width="78%"> 
+                    <input name="submit" type="submit" class="formbtn" value="Save" onclick="enable_change(true)"> 
                   </td>
                 </tr>
-		</tr>
               </table>
+</form>
 <script language="JavaScript">
 <!--
+enable_change(false);
 //-->
 </script>
 <?php include("fend.inc"); ?>
-

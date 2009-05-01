@@ -289,7 +289,7 @@ vpn:
   add {$pptpcfg['server']} {$dgw} 
 
 EOD;
-	foreach ($pptpcfg['srclist'] as $route) {
+	foreach ($pptpcfg['routelist'] as $route) {
 		$ppplinkup .= "  add $route HISADDR\n";
 	}
 	
@@ -310,7 +310,7 @@ vpn:
   delete {$pptpcfg['server']} 
 
 EOD;
-	foreach ($pptpcfg['srclist'] as $route) {
+	foreach ($pptpcfg['routelist'] as $route) {
                 $ppplinkdown .= "  delete $route\n";
         }
 
