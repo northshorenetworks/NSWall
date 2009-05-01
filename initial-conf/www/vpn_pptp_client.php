@@ -32,13 +32,6 @@
 $pgtitle = array("VPN", "PPTP Client");
 require("guiconfig.inc");
 
-$pconfig['enable']    = isset($config['pptp']['client']['enable']);
-$pconfig['server']    = $config['pptp']['client']['server'];
-$pconfig['username']  = $config['pptp']['client']['username'];
-$pconfig['password']  =  $config['pptp']['client']['password'];
-$pconfig['routelist'] =  $config['pptp']['client']['routelist'];
-$pconfig['lcplog']    = isset($config['pptp']['client']['lcplog']);
-
 if ($_POST) {
 
 	if ($_POST['submit'] == "Disconnect") {
@@ -79,6 +72,14 @@ if ($_POST) {
 		$savemsg = get_std_save_message($retval);
 	}
 }
+
+$pconfig['enable']    = isset($config['pptp']['client']['enable']);
+$pconfig['server']    = $config['pptp']['client']['server'];
+$pconfig['username']  = $config['pptp']['client']['username'];
+$pconfig['password']  =  $config['pptp']['client']['password'];
+$pconfig['routelist'] =  $config['pptp']['client']['routelist'];
+$pconfig['lcplog']    = isset($config['pptp']['client']['lcplog']);
+
 ?>
 <?php include("fbegin.inc"); ?>
     <script language="javascript" src="/nss.js"></script> 

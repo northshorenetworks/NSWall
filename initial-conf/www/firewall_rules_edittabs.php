@@ -63,40 +63,6 @@ function is_specialnet($net) {
 		return false;
 }
 
-if (isset($id) && $a_filter[$id]) {
-	$pconfig['name'] = $a_filter[$id]['name'];
-	$pconfig['descr'] = $a_filter[$id]['descr'];
-	$pconfig['type'] = $a_filter[$id]['type'];
-	$pconfig['proto'] = $a_filter[$id]['protocol'];
-	$pconfig['interface'] = $a_filter[$id]['interface'];
-	$pconfig['srclist'] = $a_filter[$id]['srclist'];
-	$pconfig['dstlist'] = $a_filter[$id]['dstlist'];
- 	$pconfig['dstrelay'] = $a_filter[$id]['dstrelay'];
-	$pconfig['portforward'] = isset($a_filter[$id]['portforward']);
-	$pconfig['tcplist'] = $a_filter[$id]['tcplist'];
-        $pconfig['udplist'] = $a_filter[$id]['udplist'];	
-	$pconfig['disabled'] = isset($a_filter[$id]['disabled']);
-	$pconfig['log'] = isset($a_filter[$id]['log']);
-	$pconfig['altqbucket'] = $a_filter[$id]['options']['altqbucket'];
-	$pconfig['altqlowdelay'] = isset($a_filter[$id]['options']['altqlowdelay']);
-	$pconfig['state'] = $a_filter[$id]['options']['state'];
-	$pconfig['maxstates'] = $a_filter[$id]['options']['maxstates'];
-	$pconfig['srctrack'] = $a_filter[$id]['options']['srctrack'];
-	$pconfig['maxsrcnodes'] = $a_filter[$id]['options']['maxsrcnodes'];
-	$pconfig['maxsrcstates'] = $a_filter[$id]['options']['maxsrcstates'];
-	$pconfig['maxsrcconns'] = $a_filter[$id]['options']['maxsrcconns'];
-	$pconfig['maxsrcconnrate'] = $a_filter[$id]['options']['maxsrcconnrate'];
-	$pconfig['overload'] = isset($a_filter[$id]['options']['overload']);
-	$pconfig['flush'] = isset($a_filter[$id]['options']['flush']);
-} else {
-	/* defaults */
-	if ($_GET['if'])
-		$pconfig['interface'] = $_GET['if'];
-	$pconfig['type'] = "pass";
-	$pconfig['srclist']['src0'] = "any";
-	$pconfig['dstlist']['dst0'] = "any";
-}
-
 if (isset($_GET['dup']))
 	unset($id);
 
@@ -219,6 +185,41 @@ if ($_POST) {
 		Exit;
 	}
 }
+
+if (isset($id) && $a_filter[$id]) {
+        $pconfig['name'] = $a_filter[$id]['name'];
+        $pconfig['descr'] = $a_filter[$id]['descr'];
+        $pconfig['type'] = $a_filter[$id]['type'];
+        $pconfig['proto'] = $a_filter[$id]['protocol'];
+        $pconfig['interface'] = $a_filter[$id]['interface'];
+        $pconfig['srclist'] = $a_filter[$id]['srclist'];
+        $pconfig['dstlist'] = $a_filter[$id]['dstlist'];
+        $pconfig['dstrelay'] = $a_filter[$id]['dstrelay'];
+        $pconfig['portforward'] = isset($a_filter[$id]['portforward']);
+        $pconfig['tcplist'] = $a_filter[$id]['tcplist'];
+        $pconfig['udplist'] = $a_filter[$id]['udplist'];
+        $pconfig['disabled'] = isset($a_filter[$id]['disabled']);
+        $pconfig['log'] = isset($a_filter[$id]['log']);
+        $pconfig['altqbucket'] = $a_filter[$id]['options']['altqbucket'];
+        $pconfig['altqlowdelay'] = isset($a_filter[$id]['options']['altqlowdelay']);
+        $pconfig['state'] = $a_filter[$id]['options']['state'];
+        $pconfig['maxstates'] = $a_filter[$id]['options']['maxstates'];
+        $pconfig['srctrack'] = $a_filter[$id]['options']['srctrack'];
+        $pconfig['maxsrcnodes'] = $a_filter[$id]['options']['maxsrcnodes'];
+        $pconfig['maxsrcstates'] = $a_filter[$id]['options']['maxsrcstates'];
+        $pconfig['maxsrcconns'] = $a_filter[$id]['options']['maxsrcconns'];
+        $pconfig['maxsrcconnrate'] = $a_filter[$id]['options']['maxsrcconnrate'];
+        $pconfig['overload'] = isset($a_filter[$id]['options']['overload']);
+        $pconfig['flush'] = isset($a_filter[$id]['options']['flush']);
+} else {
+        /* defaults */
+        if ($_GET['if'])
+                $pconfig['interface'] = $_GET['if'];
+        $pconfig['type'] = "pass";
+        $pconfig['srclist']['src0'] = "any";
+        $pconfig['dstlist']['dst0'] = "any";
+}
+
 ?>
 <?php include("fbegin.inc"); ?>
 <script language="JavaScript">

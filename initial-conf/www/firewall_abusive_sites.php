@@ -32,8 +32,6 @@
 $pgtitle = array("Firewall", "Abusive Hosts");
 require("guiconfig.inc");
 
-$pconfig['abusiveslist'] =  $config['filter']['abusivehosts']['abusiveslist'];
-
 if ($_POST) {
 
 	if ($_POST['submit'] == "Save") {
@@ -60,6 +58,9 @@ if ($_POST) {
 		$savemsg = get_std_save_message($retval);
 	}
 }
+
+$pconfig['abusiveslist'] =  $config['filter']['abusivehosts']['abusiveslist'];
+
 ?>
 <?php include("fbegin.inc"); ?>
 <script language="javascript" src="/nss.js"></script>
