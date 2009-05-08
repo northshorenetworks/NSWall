@@ -98,6 +98,25 @@ void if_stats(char *name){
         exit (1);
 }
 
+void logs() {
+	FILE *inpipe;
+    	char inbuf[1000];
+        int lineno = 0;
+
+        char *command = "/usr/sbin/syslogc all";
+
+       inpipe = popen(command, "r");
+       if (!inpipe) {
+              printf("couldn't open pipe %s\n", command);
+              exit (1);
+       }
+       while (fgets(inbuf, sizeof(inbuf), inpipe)) {
+              printf("<tr valign=\"top\"><td class=\"listlogr\" nowrap>%s</td></tr>", inbuf);
+       }
+       pclose(inpipe);
+
+       exit (1);
+}
 
 int main(int argc, char *argv[]) {
 	
@@ -121,6 +140,8 @@ int main(int argc, char *argv[]) {
 	
 	if (strcmp(cl, "cpu") == 0)
 		cpu_stats();
+	else if (strcmp(cl, "logs") == 0)
+		logs();
 	else
 		if_stats(cl);
 	

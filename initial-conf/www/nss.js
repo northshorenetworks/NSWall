@@ -51,6 +51,12 @@ document.iform.srctable.value="";
 if (document.getElementById(selectbox).name=="MEMBERS") {
 document.iform.members.value="";
 }
+if (document.getElementById(selectbox).name=="SRCADDR") {
+document.iform.members.value="";
+}
+if (document.getElementById(selectbox).name=="DSTADDR") {
+document.iform.members.value="";
+}
 }
  
 function removeOptions(selectbox)
@@ -138,6 +144,15 @@ function hideallsrcids(){
 //loop through the array and hide each element by id
 for (var i=0;i<ids.length;i++){
 if(ids[i].match( /^src/ )) {
+hidediv(ids[i]);
+}
+}
+}
+
+function hidealldstids(){
+//loop through the array and hide each element by id
+for (var i=0;i<ids.length;i++){
+if(ids[i].match( /^dst/ )) {
 hidediv(ids[i]);
 }
 }

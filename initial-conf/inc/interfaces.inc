@@ -47,7 +47,7 @@ function interfaces_trunk_configure() {
                 echo "Configuring Trunk interfaces... ";
 		/* prepare the children interfaces*/
         	foreach($config['trunks']['trunk'] as $trunkcfg) {
-			/* only bring up the trunk if it's in use */
+			/* only bring up the trunk if it's directly in use */
 			foreach ($config['interfaces'] as $interface) {
         			if ($interface['if'] == $trunkcfg['trunkport']) {
 					$trunkif = $trunkcfg['trunkport'] . ' trunkproto ';
@@ -61,7 +61,21 @@ function interfaces_trunk_configure() {
         				mwexec("/sbin/ifconfig $trunkif up");
 				}
 			}
-		}    
+			/* only bring up the trunk if it's in use by a vlan */
+			foreach ($config['vlans']['vlan'] as $vlan) {
+                		if ($vlan['if'] == $trunkcfg['trunkport']) {
+                			$trunkif = $trunkcfg['trunkport'] . ' trunkproto ';
+                			$trunkif .= $trunkcfg['type'];
+                			for($i=0;$i<sizeof($trunkcfg['childiflist']); $i++ ) {
+                				$child = "childif" . "$i";
+                				$trunkif .= " trunkport {$trunkcfg['childiflist'][$child]}";
+                				/*bring up the child interfaces*/
+                				mwexec("/sbin/ifconfig {$trunkcfg['childiflist'][$child]} up");
+                			}
+                			mwexec("/sbin/ifconfig $trunkif up");
+                		}
+                	}
+		}
 		if ($g['booting'])
         		echo "done\n";
 	}
@@ -106,11 +120,6 @@ function interfaces_vlan_configure() {
 	if (is_array($config['vlans']['vlan']) && count($config['vlans']['vlan'])) {
 		if ($g['booting'])
                 echo "Configuring VLAN interfaces... ";		
-		/* devices with native VLAN support */
-		$vlan_native_supp = explode(" ", "bge em gx nge ti txp");
-		
-		/* devices with long frame support */
-		$vlan_long_supp = explode(" ", "dc fxp sis ste tl tx xl");
 		
 		$i = 0;
 		
@@ -120,22 +129,7 @@ function interfaces_vlan_configure() {
 				escapeshellarg($vlan['tag']) . " vlandev " . 
 				escapeshellarg($vlan['if']);
 			
-			/* get driver name */
-			for ($j = 0; $j < strlen($vlan['if']); $j++) {
-				if ($vlan['if'][$j] >= '0' && $vlan['if'][$j] <= '9')
-					break;
-			}
-			$drvname = substr($vlan['if'], 0, $j);
-			
-			if (in_array($drvname, $vlan_native_supp))
-				$cmd .= " link0";
-			else if (in_array($drvname, $vlan_long_supp))
-				$cmd .= " mtu 1500";
-			
 			mwexec($cmd);
-			
-			/* make sure the parent interface is up */
-			mwexec("/sbin/ifconfig " . escapeshellarg($vlan['if']) . " up");
 			
 			$i++;
 		}

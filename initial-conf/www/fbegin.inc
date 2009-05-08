@@ -223,7 +223,7 @@ function showhide(tspan, tri) {
 </script>
 <table width="800" border="0" cellspacing="0" cellpadding="2">
   <tr valign="bottom"> 
-    <td width="100" height="65" align="center" valign="middle"> <strong><a href="http://m0n0.ch/wall" target="_blank"><img src="/logo.gif" width="150" height="47" border="0"></a></strong></td>
+    <td width="100" height="65" align="center" valign="middle"> <strong><a href="http://www.northshoresoftware.com/" target="_blank"><img src="/logo.gif" width="150" height="47" border="0"></a></strong></td>
     <td height="65" bgcolor="#435370">
 	<table border="0" cellspacing="0" cellpadding="0" width="100%">
 	<tr><td align="left" valign="bottom"><span class="tfrtitle">&nbsp;webGUI 

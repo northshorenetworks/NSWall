@@ -77,6 +77,20 @@ if ($_POST) {
 }
 ?>
 <?php include("fbegin.inc"); ?>
+	<table width="100%" border="0" cellpadding="0" cellspacing="0">
+  <tr><td class="tabnavtbl">
+  <ul id="tabnav">
+<?php
+        $tabs = array('Ping' => 'diag_ping.php',
+                          'Traceroute' => 'diag_traceroute.php',
+                          'TCPDump' => 'diag_tcpdump.php',
+                          'Backup/Restore' => 'diag_backup.php',
+                          'Factory Default' => 'diag_defaults.php',
+                          'Reboot' => 'reboot.php');
+        dynamic_tab_menu($tabs);
+?>
+  </ul>
+  </td></tr>
             <form action="diag_backup.php" method="post" enctype="multipart/form-data">
             <?php if ($input_errors) print_input_errors($input_errors); ?>
             <?php if ($savemsg) print_info_box($savemsg); ?>

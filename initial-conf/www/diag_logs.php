@@ -104,8 +104,8 @@ function dump_clog($logfile, $tail, $withorig = true) {
 <script>
 var refreshId = setInterval(function()
 {
-     $('#rtlogs').load('dump_logs.php');
-}, 2000);
+     $('#rtlogs').load('stats.cgi?logs');
+}, 5000);
 </script>
 
 <table width="100%" border="0" cellpadding="0" cellspacing="0">

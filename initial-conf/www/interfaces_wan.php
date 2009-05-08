@@ -1,7 +1,7 @@
 #!/bin/php
-<?php 
+<?php
 /*
-	$Id: interfaces_wan.php,v 1.21 2008/09/19 08:03:39 jrecords Exp $
+	$Id: vpn_ipsec_edit.php,v 1.16 2009/04/20 06:59:38 jrecords Exp $
 	part of m0n0wall (http://m0n0.ch/wall)
 	
 	Copyright (C) 2003-2006 Manuel Kasper <mk@neon1.net>.
@@ -32,6 +32,140 @@
 $pgtitle = array("Interfaces", "WAN");
 require("guiconfig.inc");
 
+if ($_POST) {
+ 
+  unset($input_errors);
+  $pconfig = $_POST;
+ 
+  /* input validation */
+  if ($_POST['type'] == "Static") {
+    $reqdfields = explode(" ", "ipaddr subnet gateway");
+    $reqdfieldsn = explode(",", "IP address,Subnet bit count,Gateway");
+    do_input_validation($_POST, $reqdfields, $reqdfieldsn, &$input_errors);
+  } else if ($_POST['type'] == "PPPoE") {
+    if ($_POST['pppoe_dialondemand']) {
+      $reqdfields = explode(" ", "username password pppoe_dialondemand pppoe_idletimeout");
+      $reqdfieldsn = explode(",", "PPPoE username,PPPoE password,Dial on demand,Idle timeout value");
+    } else {
+      $reqdfields = explode(" ", "username password");
+      $reqdfieldsn = explode(",", "PPPoE username,PPPoE password");
+    }
+    do_input_validation($_POST, $reqdfields, $reqdfieldsn, &$input_errors);
+  } else if ($_POST['type'] == "PPTP") {
+    if ($_POST['pptp_dialondemand']) {
+      $reqdfields = explode(" ", "pptp_username pptp_password pptp_local pptp_subnet pptp_remote pptp_dialondemand pptp_idletimeout");
+      $reqdfieldsn = explode(",", "PPTP username,PPTP password,PPTP local IP address,PPTP subnet,PPTP remote IP address,Dial on demand,Idle timeout value");
+    } else {
+      $reqdfields = explode(" ", "pptp_username pptp_password pptp_local pptp_subnet pptp_remote");
+      $reqdfieldsn = explode(",", "PPTP username,PPTP password,PPTP local IP address,PPTP subnet,PPTP remote IP address");
+    }
+    do_input_validation($_POST, $reqdfields, $reqdfieldsn, &$input_errors);
+  } else if ($_POST['type'] == "BigPond") {
+    $reqdfields = explode(" ", "bigpond_username bigpond_password");
+    $reqdfieldsn = explode(",", "BigPond username,BigPond password");
+    do_input_validation($_POST, $reqdfields, $reqdfieldsn, &$input_errors);
+  }
+  
+  $_POST['spoofmac'] = str_replace("-", ":", $_POST['spoofmac']);
+  
+  if (($_POST['ipaddr'] && !is_ipaddr($_POST['ipaddr']))) {
+    $input_errors[] = "A valid IP address must be specified.";
+  }
+  if (($_POST['subnet'] && !is_numeric($_POST['subnet']))) {
+    $input_errors[] = "A valid subnet bit count must be specified.";
+  }
+  if (($_POST['gateway'] && !is_ipaddr($_POST['gateway']))) {
+    $input_errors[] = "A valid gateway must be specified.";
+  }
+  if (($_POST['pointtopoint'] && !is_ipaddr($_POST['pointtopoint']))) {
+    $input_errors[] = "A valid point-to-point IP address must be specified.";
+  }
+  if (($_POST['provider'] && !is_domain($_POST['provider']))) {
+    $input_errors[] = "The service name contains invalid characters.";
+  }
+  if (($_POST['pppoe_idletimeout'] != "") && !is_numericint($_POST['pppoe_idletimeout'])) {
+    $input_errors[] = "The idle timeout value must be an integer.";
+  }
+  if (($_POST['spoofmac'] && !is_macaddr($_POST['spoofmac']))) {
+    $input_errors[] = "A valid MAC address must be specified.";
+  }
+  if ($_POST['mtu'] && (($_POST['mtu'] < 576) || ($_POST['mtu'] > 1500))) {
+    $input_errors[] = "The MTU must be between 576 and 1500 bytes.";
+  }
+  
+  /* Wireless interface? */
+  if (isset($optcfg['wireless'])) {
+    $wi_input_errors = wireless_config_post();
+    if ($wi_input_errors) {
+      $input_errors = array_merge($input_errors, $wi_input_errors);
+    }
+  }
+ 
+  if (!$input_errors) {
+  
+    unset($wancfg['ipaddr']);
+    unset($wancfg['subnet']);
+    unset($wancfg['gateway']);
+    unset($wancfg['aliaslist']);
+    unset($wancfg['pointtopoint']);
+    unset($wancfg['dhcphostname']);
+    unset($config['pppoe']['username']);
+    unset($config['pppoe']['password']);
+    unset($config['pppoe']['provider']);
+    unset($config['pppoe']['ondemand']);
+    unset($config['pppoe']['timeout']);
+    unset($config['pptp']['username']);
+    unset($config['pptp']['password']);
+    unset($config['pptp']['local']);
+    unset($config['pptp']['subnet']);
+    unset($config['pptp']['remote']);
+    unset($config['pptp']['ondemand']);
+    unset($config['pptp']['timeout']);
+    unset($config['bigpond']['username']);
+    unset($config['bigpond']['password']);
+    unset($config['bigpond']['authserver']);
+    unset($config['bigpond']['authdomain']);
+    unset($config['bigpond']['minheartbeatinterval']);
+  
+    if ($_POST['type'] == "Static") {
+      $wancfg['ipaddr'] = $_POST['ipaddr'];
+    $wancfg['subnet'] = $_POST['subnet'];
+      $wancfg['gateway'] = $_POST['gateway'];
+      $aliaslist = explode(',', $_POST['aliases']);
+      for($i=0;$i<sizeof($aliaslist); $i++) {
+                             $alias = 'alias'."$i";
+                             $prop = preg_replace("/ /", "", $aliaslist[$i]);
+                             $wancfg['aliaslist'][$alias] = $prop;
+                        }
+      if (isset($wancfg['ispointtopoint']))
+        $wancfg['pointtopoint'] = $_POST['pointtopoint'];
+    } else if ($_POST['type'] == "DHCP") {
+      $wancfg['ipaddr'] = "dhcp";
+      $wancfg['dhcphostname'] = $_POST['dhcphostname'];
+    } else if ($_POST['type'] == "PPPoE") {
+      $wancfg['ipaddr'] = "pppoe";
+      $config['pppoe']['username'] = $_POST['username'];
+      $config['pppoe']['password'] = $_POST['password'];
+      $config['pppoe']['provider'] = $_POST['provider'];
+      $config['pppoe']['ondemand'] = $_POST['pppoe_dialondemand'] ? true : false;
+      $config['pppoe']['timeout'] = $_POST['pppoe_idletimeout'];
+    }
+    
+    $wancfg['spoofmac'] = $_POST['spoofmac'];
+    $wancfg['mtu'] = $_POST['mtu'];
+  
+    write_config();
+    
+    $retval = 0;
+    if (!file_exists($d_sysrebootreqd_path)) {
+      config_lock();
+      $retval = interfaces_wan_configure();
+      config_unlock();
+    }
+    $savemsg = get_std_save_message($retval);
+  }
+}
+
 $wancfg = &$config['interfaces']['wan'];
 $optcfg = &$config['interfaces']['wan'];
 
@@ -58,19 +192,19 @@ $pconfig['bigpond_minheartbeatinterval'] = $config['bigpond']['minheartbeatinter
 $pconfig['dhcphostname'] = $wancfg['dhcphostname'];
 
 if ($wancfg['ipaddr'] == "dhcp") {
-	$pconfig['type'] = "DHCP";
+        $pconfig['type'] = "DHCP";
 } else if ($wancfg['ipaddr'] == "pppoe") {
-	$pconfig['type'] = "PPPoE";
+        $pconfig['type'] = "PPPoE";
 } else if ($wancfg['ipaddr'] == "pptp") {
-	$pconfig['type'] = "PPTP";
+        $pconfig['type'] = "PPTP";
 } else if ($wancfg['ipaddr'] == "bigpond") {
-	$pconfig['type'] = "BigPond";
+        $pconfig['type'] = "BigPond";
 } else {
-	$pconfig['type'] = "Static";
-	$pconfig['ipaddr'] = $wancfg['ipaddr'];
-	$pconfig['subnet'] = $wancfg['subnet'];
-	$pconfig['gateway'] = $wancfg['gateway'];
-	$pconfig['pointtopoint'] = $wancfg['pointtopoint'];
+        $pconfig['type'] = "Static";
+        $pconfig['ipaddr'] = $wancfg['ipaddr'];
+        $pconfig['subnet'] = $wancfg['subnet'];
+        $pconfig['gateway'] = $wancfg['gateway'];
+        $pconfig['pointtopoint'] = $wancfg['pointtopoint'];
 }
 
 $pconfig['blockpriv'] = isset($wancfg['blockpriv']);
@@ -80,195 +214,25 @@ $pconfig['aliaslist'] = $wancfg['aliaslist'];
 
 /* Find next free carp interface */
 for($i=0;$i<100; $i++) {
-	if($config['interfaces']['wan']['carp']['carpif'] == 'carp' . "$i") 
-			continue;
-	if($config['interfaces']['lan']['carp']['carpif'] == 'carp' . "$i")
-                        continue;	
+        if($config['interfaces']['wan']['carp']['carpif'] == 'carp' . "$i")
+                        continue;
+        if($config['interfaces']['lan']['carp']['carpif'] == 'carp' . "$i")
+                        continue;
 $pconfig['carpif'] = 'carp' . "$i";
 break;
 }
 
 /* Wireless interface? */
 if (isset($optcfg['wireless'])) {
-	require("interfaces_wlan.inc");
-	wireless_config_init();
+        require("interfaces_wlan.inc");
+        wireless_config_init();
 }
 
-if ($_POST) {
-
-	unset($input_errors);
-	$pconfig = $_POST;
-
-	/* input validation */
-	if ($_POST['type'] == "Static") {
-		$reqdfields = explode(" ", "ipaddr subnet gateway");
-		$reqdfieldsn = explode(",", "IP address,Subnet bit count,Gateway");
-		do_input_validation($_POST, $reqdfields, $reqdfieldsn, &$input_errors);
-	} else if ($_POST['type'] == "PPPoE") {
-		if ($_POST['pppoe_dialondemand']) {
-			$reqdfields = explode(" ", "username password pppoe_dialondemand pppoe_idletimeout");
-			$reqdfieldsn = explode(",", "PPPoE username,PPPoE password,Dial on demand,Idle timeout value");
-		} else {
-			$reqdfields = explode(" ", "username password");
-			$reqdfieldsn = explode(",", "PPPoE username,PPPoE password");
-		}
-		do_input_validation($_POST, $reqdfields, $reqdfieldsn, &$input_errors);
-	} else if ($_POST['type'] == "PPTP") {
-		if ($_POST['pptp_dialondemand']) {
-			$reqdfields = explode(" ", "pptp_username pptp_password pptp_local pptp_subnet pptp_remote pptp_dialondemand pptp_idletimeout");
-			$reqdfieldsn = explode(",", "PPTP username,PPTP password,PPTP local IP address,PPTP subnet,PPTP remote IP address,Dial on demand,Idle timeout value");
-		} else {
-			$reqdfields = explode(" ", "pptp_username pptp_password pptp_local pptp_subnet pptp_remote");
-			$reqdfieldsn = explode(",", "PPTP username,PPTP password,PPTP local IP address,PPTP subnet,PPTP remote IP address");
-		}
-		do_input_validation($_POST, $reqdfields, $reqdfieldsn, &$input_errors);
-	} else if ($_POST['type'] == "BigPond") {
-		$reqdfields = explode(" ", "bigpond_username bigpond_password");
-		$reqdfieldsn = explode(",", "BigPond username,BigPond password");
-		do_input_validation($_POST, $reqdfields, $reqdfieldsn, &$input_errors);
-	}
-	
-	$_POST['spoofmac'] = str_replace("-", ":", $_POST['spoofmac']);
-	
-	if (($_POST['ipaddr'] && !is_ipaddr($_POST['ipaddr']))) {
-		$input_errors[] = "A valid IP address must be specified.";
-	}
-	if (($_POST['subnet'] && !is_numeric($_POST['subnet']))) {
-		$input_errors[] = "A valid subnet bit count must be specified.";
-	}
-	if (($_POST['gateway'] && !is_ipaddr($_POST['gateway']))) {
-		$input_errors[] = "A valid gateway must be specified.";
-	}
-	if (($_POST['pointtopoint'] && !is_ipaddr($_POST['pointtopoint']))) {
-		$input_errors[] = "A valid point-to-point IP address must be specified.";
-	}
-	if (($_POST['provider'] && !is_domain($_POST['provider']))) {
-		$input_errors[] = "The service name contains invalid characters.";
-	}
-	if (($_POST['pppoe_idletimeout'] != "") && !is_numericint($_POST['pppoe_idletimeout'])) {
-		$input_errors[] = "The idle timeout value must be an integer.";
-	}
-	if (($_POST['pptp_local'] && !is_ipaddr($_POST['pptp_local']))) {
-		$input_errors[] = "A valid PPTP local IP address must be specified.";
-	}
-	if (($_POST['pptp_subnet'] && !is_numeric($_POST['pptp_subnet']))) {
-		$input_errors[] = "A valid PPTP subnet bit count must be specified.";
-	}
-	if (($_POST['pptp_remote'] && !is_ipaddr($_POST['pptp_remote']))) {
-		$input_errors[] = "A valid PPTP remote IP address must be specified.";
-	}
-	if (($_POST['pptp_idletimeout'] != "") && !is_numericint($_POST['pptp_idletimeout'])) {
-		$input_errors[] = "The idle timeout value must be an integer.";
-	}
-	if (($_POST['bigpond_authserver'] && !is_domain($_POST['bigpond_authserver']))) {
-		$input_errors[] = "The authentication server name contains invalid characters.";
-	}
-	if (($_POST['bigpond_authdomain'] && !is_domain($_POST['bigpond_authdomain']))) {
-		$input_errors[] = "The authentication domain name contains invalid characters.";
-	}
-	if ($_POST['bigpond_minheartbeatinterval'] && !is_numericint($_POST['bigpond_minheartbeatinterval'])) {
-		$input_errors[] = "The minimum heartbeat interval must be an integer.";
-	}
-	if (($_POST['spoofmac'] && !is_macaddr($_POST['spoofmac']))) {
-		$input_errors[] = "A valid MAC address must be specified.";
-	}
-	if ($_POST['mtu'] && (($_POST['mtu'] < 576) || ($_POST['mtu'] > 1500))) {
-		$input_errors[] = "The MTU must be between 576 and 1500 bytes.";
-	}
-	
-	/* Wireless interface? */
-	if (isset($optcfg['wireless'])) {
-		$wi_input_errors = wireless_config_post();
-		if ($wi_input_errors) {
-			$input_errors = array_merge($input_errors, $wi_input_errors);
-		}
-	}
-
-	if (!$input_errors) {
-	
-		unset($wancfg['ipaddr']);
-		unset($wancfg['subnet']);
-		unset($wancfg['gateway']);
-		unset($wancfg['aliaslist']);
-		unset($wancfg['pointtopoint']);
-		unset($wancfg['dhcphostname']);
-		unset($config['pppoe']['username']);
-		unset($config['pppoe']['password']);
-		unset($config['pppoe']['provider']);
-		unset($config['pppoe']['ondemand']);
-		unset($config['pppoe']['timeout']);
-		unset($config['pptp']['username']);
-		unset($config['pptp']['password']);
-		unset($config['pptp']['local']);
-		unset($config['pptp']['subnet']);
-		unset($config['pptp']['remote']);
-		unset($config['pptp']['ondemand']);
-		unset($config['pptp']['timeout']);
-		unset($config['bigpond']['username']);
-		unset($config['bigpond']['password']);
-		unset($config['bigpond']['authserver']);
-		unset($config['bigpond']['authdomain']);
-		unset($config['bigpond']['minheartbeatinterval']);
-	
-		if ($_POST['type'] == "Static") {
-			$wancfg['ipaddr'] = $_POST['ipaddr'];
-		$wancfg['subnet'] = $_POST['subnet'];
-			$wancfg['gateway'] = $_POST['gateway'];
-			$aliaslist = explode(',', $_POST['aliases']);
-			for($i=0;$i<sizeof($aliaslist); $i++) {
-                             $alias = 'alias'."$i";
-                             $prop = preg_replace("/ /", "", $aliaslist[$i]);
-                             $wancfg['aliaslist'][$alias] = $prop;
-                        }
-			if (isset($wancfg['ispointtopoint']))
-				$wancfg['pointtopoint'] = $_POST['pointtopoint'];
-		} else if ($_POST['type'] == "DHCP") {
-			$wancfg['ipaddr'] = "dhcp";
-			$wancfg['dhcphostname'] = $_POST['dhcphostname'];
-		} else if ($_POST['type'] == "PPPoE") {
-			$wancfg['ipaddr'] = "pppoe";
-			$config['pppoe']['username'] = $_POST['username'];
-			$config['pppoe']['password'] = $_POST['password'];
-			$config['pppoe']['provider'] = $_POST['provider'];
-			$config['pppoe']['ondemand'] = $_POST['pppoe_dialondemand'] ? true : false;
-			$config['pppoe']['timeout'] = $_POST['pppoe_idletimeout'];
-		} else if ($_POST['type'] == "PPTP") {
-			$wancfg['ipaddr'] = "pptp";
-			$config['pptp']['username'] = $_POST['pptp_username'];
-			$config['pptp']['password'] = $_POST['pptp_password'];
-			$config['pptp']['local'] = $_POST['pptp_local'];
-			$config['pptp']['subnet'] = $_POST['pptp_subnet'];
-			$config['pptp']['remote'] = $_POST['pptp_remote'];
-			$config['pptp']['ondemand'] = $_POST['pptp_dialondemand'] ? true : false;
-			$config['pptp']['timeout'] = $_POST['pptp_idletimeout'];
-		} else if ($_POST['type'] == "BigPond") {
-			$wancfg['ipaddr'] = "bigpond";
-			$config['bigpond']['username'] = $_POST['bigpond_username'];
-			$config['bigpond']['password'] = $_POST['bigpond_password'];
-			$config['bigpond']['authserver'] = $_POST['bigpond_authserver'];
-			$config['bigpond']['authdomain'] = $_POST['bigpond_authdomain'];
-			$config['bigpond']['minheartbeatinterval'] = $_POST['bigpond_minheartbeatinterval'];
-		}
-		
-		$wancfg['blockpriv'] = $_POST['blockpriv'] ? true : false;
-		$wancfg['spoofmac'] = $_POST['spoofmac'];
-		$wancfg['mtu'] = $_POST['mtu'];
-	
-		write_config();
-		
-		$retval = 0;
-		if (!file_exists($d_sysrebootreqd_path)) {
-			config_lock();
-			$retval = interfaces_wan_configure();
-			config_unlock();
-		}
-		$savemsg = get_std_save_message($retval);
-	}
-}
 ?>
 <?php include("fbegin.inc"); ?>
 <script language="JavaScript">
 <!--
+
 function addOption(selectbox,text,value)
 {
 var optn = document.createElement("OPTION");
@@ -279,10 +243,22 @@ text = text.replace(/:$/, "");
 value = value.replace(/:$/, "");
 optn.text = text;
 optn.value = value;
-document.iform.host.value="";
-
-if (document.getElementById(selectbox).name=="ALIASES") {
-   document.iform.aliases.value="";
+if (document.getElementById(selectbox).name=="routepolicies") {
+   document.iform.src.value="";
+   document.iform.dst.value="";
+   if (optn.text != "Any") {
+      if (document.getElementById(selectbox).options[0].text == "Any") {
+         document.getElementById(selectbox).remove(0);
+      }
+   }
+}
+if (document.getElementById(selectbox).name=="DSTADDR") {
+   document.iform.dst.value="";
+   if (optn.text != "Any") {
+      if (document.getElementById(selectbox).options[0].text == "Any") {
+         document.getElementById(selectbox).remove(0);
+      }
+   }
 }
 }
 
@@ -293,6 +269,9 @@ for(i=selectbox.options.length-1;i>=0;i--)
 {
 if(selectbox.options[i].selected)
 selectbox.remove(i);
+   if(selectbox.options.length == 0) {
+      addOption(selectbox.name,"Any","any");
+   }
 }
 }
 
@@ -318,243 +297,126 @@ prop += selectbox.options[i].value + ', ';
 }
 prop = prop.replace(/, $/,"");
 prop = prop.replace(/host:/g,"");
-if (selectbox.name=="ALIASES") {
-   document.iform.aliases.value=prop
-   }
+prop = prop.replace(/network:/g,"");
+prop = prop.replace(/alias:/g,'$');
+document.iform.ipsecroutelist.value=prop
 }
 
-function prepareSubmit()
-{
-selectAllOptions(ALIASES);
-createProp(ALIASES);
+var tabs=new Array('Static', 'DHCP', 'PPPoE');
+
+function switchtab(tab){
+        hidealltabs();
+        showdiv(tab);
 }
 
-function enable_change(enable_change) {
-	if (document.iform.pppoe_dialondemand.checked || enable_change) {
-		document.iform.pppoe_idletimeout.disabled = 0;
-	} else {
-		document.iform.pppoe_idletimeout.disabled = 1;
-	}
+function hidealltabs(){
+        //loop through the array and hide each element by id
+        for (var i=0;i<tabs.length;i++){
+        	hidediv(tabs[i]);
+        }
 }
 
-function enable_change_pptp(enable_change_pptp) {
-	if (document.iform.pptp_dialondemand.checked || enable_change_pptp) {
-		document.iform.pptp_idletimeout.disabled = 0;
-		document.iform.pptp_local.disabled = 0;
-		document.iform.pptp_remote.disabled = 0;
-	} else {
-		document.iform.pptp_idletimeout.disabled = 1;
-	}
+function hidediv(id) {
+        //safe function to hide an element with a specified id
+        if (document.getElementById) { // DOM3 = IE5, NS6
+                document.getElementById(id).style.display = 'none';
+        }
+        else {
+                if (document.layers) { // Netscape 4
+                        document.id.display = 'none';
+                }
+                else { // IE 4
+                        document.all.id.style.display = 'none';
+                }
+        }
 }
 
-function type_change(enable_change,enable_change_pptp) {
-	switch (document.iform.type.selectedIndex) {
-		case 0:
-			document.iform.username.disabled = 1;
-			document.iform.password.disabled = 1;
-			document.iform.provider.disabled = 1;
-			document.iform.pppoe_dialondemand.disabled = 1;
-			document.iform.pppoe_idletimeout.disabled = 1;
-			document.iform.ipaddr.disabled = 0;
-			document.iform.subnet.disabled = 0;
-			document.iform.gateway.disabled = 0;
-			document.iform.host.disabled = 0;
-		        document.iform.ALIASES.disabled = 0;
-        		document.iform.addbtn.disabled = 0;
-        		document.iform.removebtn.disabled = 0;
-			document.iform.pptp_username.disabled = 1;
-			document.iform.pptp_password.disabled = 1;
-			document.iform.pptp_local.disabled = 1;
-			document.iform.pptp_subnet.disabled = 1;
-			document.iform.pptp_remote.disabled = 1;
-			document.iform.pptp_dialondemand.disabled = 1;
-			document.iform.pptp_idletimeout.disabled = 1;
-			document.iform.bigpond_username.disabled = 1;
-			document.iform.bigpond_password.disabled = 1;
-			document.iform.bigpond_authserver.disabled = 1;
-			document.iform.bigpond_authdomain.disabled = 1;
-			document.iform.bigpond_minheartbeatinterval.disabled = 1;
-			document.iform.dhcphostname.disabled = 1;
-			break;
-		case 1:
-			document.iform.username.disabled = 1;
-			document.iform.password.disabled = 1;
-			document.iform.provider.disabled = 1;
-			document.iform.pppoe_dialondemand.disabled = 1;
-			document.iform.pppoe_idletimeout.disabled = 1;
-			document.iform.ipaddr.disabled = 1;
-			document.iform.subnet.disabled = 1;
-			document.iform.gateway.disabled = 1;
-			document.iform.host.disabled = 1;
-       			document.iform.ALIASES.disabled = 1;
-	        	document.iform.addbtn.disabled = 1;
-        		document.iform.removebtn.disabled = 1;
-			document.iform.pptp_username.disabled = 1;
-			document.iform.pptp_password.disabled = 1;
-			document.iform.pptp_local.disabled = 1;
-			document.iform.pptp_subnet.disabled = 1;
-			document.iform.pptp_remote.disabled = 1;
-			document.iform.pptp_dialondemand.disabled = 1;
-			document.iform.pptp_idletimeout.disabled = 1;
-			document.iform.bigpond_username.disabled = 1;
-			document.iform.bigpond_password.disabled = 1;
-			document.iform.bigpond_authserver.disabled = 1;
-			document.iform.bigpond_authdomain.disabled = 1;
-			document.iform.bigpond_minheartbeatinterval.disabled = 1;
-			document.iform.dhcphostname.disabled = 0;
-			break;
-		case 2:
-			document.iform.username.disabled = 0;
-			document.iform.password.disabled = 0;
-			document.iform.provider.disabled = 0;
-			document.iform.pppoe_dialondemand.disabled = 0;
-			if (document.iform.pppoe_dialondemand.checked || enable_change) {
-				document.iform.pppoe_idletimeout.disabled = 0;
-			} else {
-				document.iform.pppoe_idletimeout.disabled = 1;
-			}
-			document.iform.ipaddr.disabled = 1;
-			document.iform.subnet.disabled = 1;
-			document.iform.gateway.disabled = 1;
-			document.iform.host.disabled = 1;
-                        document.iform.ALIASES.disabled = 1;
-                        document.iform.addbtn.disabled = 1;
-                        document.iform.removebtn.disabled = 1;
-			document.iform.pptp_username.disabled = 1;
-			document.iform.pptp_password.disabled = 1;
-			document.iform.pptp_local.disabled = 1;
-			document.iform.pptp_subnet.disabled = 1;
-			document.iform.pptp_remote.disabled = 1;
-			document.iform.pptp_dialondemand.disabled = 1;
-			document.iform.pptp_idletimeout.disabled = 1;
-			document.iform.bigpond_username.disabled = 1;
-			document.iform.bigpond_password.disabled = 1;
-			document.iform.bigpond_authserver.disabled = 1;
-			document.iform.bigpond_authdomain.disabled = 1;
-			document.iform.bigpond_minheartbeatinterval.disabled = 1;
-			document.iform.dhcphostname.disabled = 1;
-			break;
-		case 3:
-			document.iform.username.disabled = 1;
-			document.iform.password.disabled = 1;
-			document.iform.provider.disabled = 1;
-			document.iform.pppoe_dialondemand.disabled = 1;
-			document.iform.pppoe_idletimeout.disabled = 1;
-			document.iform.ipaddr.disabled = 1;
-			document.iform.subnet.disabled = 1;
-			document.iform.gateway.disabled = 1;
-			document.iform.host.disabled = 1;
-                        document.iform.ALIASES.disabled = 1;
-                        document.iform.addbtn.disabled = 1;
-                        document.iform.removebtn.disabled = 1;
-			document.iform.pptp_username.disabled = 0;
-			document.iform.pptp_password.disabled = 0;
-			document.iform.pptp_local.disabled = 0;
-			document.iform.pptp_subnet.disabled = 0;
-			document.iform.pptp_remote.disabled = 0;
-			document.iform.pptp_dialondemand.disabled = 0;
-			if (document.iform.pptp_dialondemand.checked || enable_change_pptp) {
-				document.iform.pptp_idletimeout.disabled = 0;
-			} else {
-				document.iform.pptp_idletimeout.disabled = 1;
-			}
-			document.iform.bigpond_username.disabled = 1;
-			document.iform.bigpond_password.disabled = 1;
-			document.iform.bigpond_authserver.disabled = 1;
-			document.iform.bigpond_authdomain.disabled = 1;
-			document.iform.bigpond_minheartbeatinterval.disabled = 1;
-			document.iform.dhcphostname.disabled = 1;
-			break;
-		case 4:
-			document.iform.username.disabled = 1;
-			document.iform.password.disabled = 1;
-			document.iform.provider.disabled = 1;
-			document.iform.pppoe_dialondemand.disabled = 1;
-			document.iform.pppoe_idletimeout.disabled = 1;
-			document.iform.ipaddr.disabled = 1;
-			document.iform.subnet.disabled = 1;
-			document.iform.gateway.disabled = 1;
-			document.iform.host.disabled = 1;
-                        document.iform.ALIASES.disabled = 1;
-                        document.iform.addbtn.disabled = 1;
-                        document.iform.removebtn.disabled = 1;
-			document.iform.pptp_username.disabled = 1;
-			document.iform.pptp_password.disabled = 1;
-			document.iform.pptp_local.disabled = 1;
-			document.iform.pptp_subnet.disabled = 1;
-			document.iform.pptp_remote.disabled = 1;
-			document.iform.pptp_dialondemand.disabled = 1;
-			document.iform.pptp_idletimeout.disabled = 1;
-			document.iform.bigpond_username.disabled = 0;
-			document.iform.bigpond_password.disabled = 0;
-			document.iform.bigpond_authserver.disabled = 0;
-			document.iform.bigpond_authdomain.disabled = 0;
-			document.iform.bigpond_minheartbeatinterval.disabled = 0;
-			document.iform.dhcphostname.disabled = 1;
-			break;
-	}
+function showdiv(id) {
+        //safe function to show an element with a specified id
+
+        if (document.getElementById) { // DOM3 = IE5, NS6
+                document.getElementById(id).style.display = 'block';
+        }
+        else {
+                if (document.layers) { // Netscape 4
+                        document.id.display = 'block';
+                }
+                else { // IE 4
+                        document.all.id.style.display = 'block';
+                }
+        }
 }
-//-->
+
+-->
 </script>
+
+<table width="100%" id="navigator" border="0" cellpadding="0" cellspacing="0">
 <?php if ($input_errors) print_input_errors($input_errors); ?>
 <?php if ($savemsg) print_info_box($savemsg); ?>
             <form action="interfaces_wan.php" onSubmit="return prepareSubmit()" method="post" name="iform" id="iform">
-	    <table width="100%" border="0" cellpadding="6" cellspacing="0">
-                <tr> 
+            <table width="100%" border="0" cellpadding="6" cellspacing="0">
+                <tr>
                   <td valign="middle"><strong>Type</strong></td>
-                  <td><select name="type" class="formfld" id="type" onchange="type_change()">
-                      <?php $opts = split(" ", "Static DHCP PPPoE PPTP BigPond");
-				foreach ($opts as $opt): ?>
-                      <option <?php if ($opt == $pconfig['type']) echo "selected";?>> 
+                  <td><select name="type" class="formfld" id="type" onchange="switchtab(document.iform.type.value)";
+                      <?php $opts = split(" ", "Static DHCP PPPoE");
+                                foreach ($opts as $opt): ?>
+                      <option value="<?=htmlspecialchars($opt);?>"<?php if ($opt == $pconfig['type']) echo " selected";?>>
                       <?=htmlspecialchars($opt);?>
                       </option>
                       <?php endforeach; ?>
                     </select></td>
                 </tr>
-                <tr> 
+                <tr>
                   <td colspan="2" valign="top" height="4"></td>
                 </tr>
-                <tr> 
+                <tr>
                   <td colspan="2" valign="top" class="listtopic">General configuration</td>
                 </tr>
-                <tr> 
+                <tr>
                   <td valign="top" class="vncell">MAC address</td>
-                  <td class="vtable"> <input name="spoofmac" type="text" class="formfld" id="spoofmac" size="30" value="<?=htmlspecialchars($pconfig['spoofmac']);?>"> 
+                  <td class="vtable"> <input name="spoofmac" type="text" class="formfld" id="spoofmac" size="30" value="<?=htmlspecialchars($pconfig['spoofmac']);?>">
                     <br>
-                    This field can be used to modify (&quot;spoof&quot;) the MAC 
+                    This field can be used to modify (&quot;spoof&quot;) the MAC
                     address of the WAN interface<br>
                     (may be required with some cable connections)<br>
-                    Enter a MAC address in the following format: xx:xx:xx:xx:xx:xx 
+                    Enter a MAC address in the following format: xx:xx:xx:xx:xx:xx
                     or leave blank</td>
                 </tr>
-                <tr> 
+                <tr>
                   <td valign="top" class="vncell">MTU</td>
-                  <td class="vtable"> <input name="mtu" type="text" class="formfld" id="mtu" size="8" value="<?=htmlspecialchars($pconfig['mtu']);?>"> 
+                  <td class="vtable"> <input name="mtu" type="text" class="formfld" id="mtu" size="8" value="<?=htmlspecialchars($pconfig['mtu']);?>">
                     <br>
-                    If you enter a value in this field, then MSS clamping for 
-                    TCP connections to the value entered above minus 40 (TCP/IP 
-                    header size) will be in effect. If you leave this field blank, 
-                    an MTU of 1492 bytes for PPPoE and 1500 bytes for all other 
+                    If you enter a value in this field, then MSS clamping for
+                    TCP connections to the value entered above minus 40 (TCP/IP
+                    header size) will be in effect. If you leave this field blank,
+                    an MTU of 1492 bytes for PPPoE and 1500 bytes for all other
                     connection types will be assumed.</td>
                 </tr>
-		<tr> 
+                <tr>
                   <td colspan="2" valign="top" height="16"></td>
                 </tr>
-                <tr> 
+             </table>
+
+<div id="Static" style="display:block">
+<?php if ($input_errors) print_input_errors($input_errors); ?>
+            <form action="vpn_ipsec_edit.php" onSubmit="return prepareSubmit()" method="post" name="iform" id="iform">
+	     <input name="ipsecroutelist" type="hidden" value=""> 
+             <table width="100%" border="0" cellpadding="6" cellspacing="0">
+	      <tr>
                   <td colspan="2" valign="top" class="listtopic">Static IP configuration</td>
                 </tr>
-                <tr> 
+                <tr>
                   <td width="100" valign="top" class="vncellreq">IP address</td>
                   <td class="vtable"><?=$mandfldhtml;?><input name="ipaddr" type="text" class="formfld" id="ipaddr" size="20" value="<?=htmlspecialchars($pconfig['ipaddr']);?>">
-                    / 
+                    /
                     <select name="subnet" class="formfld" id="subnet">
                     <?php
                       if (isset($wancfg['ispointtopoint']))
-                      	$snmax = 32;
+                        $snmax = 32;
                       else
-                      	$snmax = 31;
+                        $snmax = 31;
                       for ($i = $snmax; $i > 0; $i--): ?>
-                      <option value="<?=$i;?>" <?php if ($i == $pconfig['subnet']) echo "selected"; ?>> 
+                      <option value="<?=$i;?>" <?php if ($i == $pconfig['subnet']) echo "selected"; ?>>
                       <?=$i;?>
                       </option>
                       <?php endfor; ?>
@@ -566,12 +428,12 @@ function type_change(enable_change,enable_change_pptp) {
                     <?=$mandfldhtml;?><input name="pointtopoint" type="text" class="formfld" id="pointtopoint" size="20" value="<?=htmlspecialchars($pconfig['pointtopoint']);?>">
                   </td>
                 </tr><?php endif; ?>
-                <tr> 
+                <tr>
                   <td valign="top" class="vncellreq">Gateway</td>
-                  <td class="vtable"><?=$mandfldhtml;?><input name="gateway" type="text" class="formfld" id="gateway" size="20" value="<?=htmlspecialchars($pconfig['gateway']);?>"> 
+                  <td class="vtable"><?=$mandfldhtml;?><input name="gateway" type="text" class="formfld" id="gateway" size="20" value="<?=htmlspecialchars($pconfig['gateway']);?>">
                   </td>
                 </tr>
-		<tr>
+                <tr>
                  <td width="22%" valign="top" class="vncellreq">Aliases</td>
                  <td width="78%" class="vtable">
                  <SELECT style="width: 150px; height: 100px" id="ALIASES" NAME="ALIASES" MULTIPLE size=6 width=30>
@@ -587,47 +449,78 @@ function type_change(enable_change,enable_change_pptp) {
                      </select>
                  <input name="aliases" type="hidden" value="">
                </tr>
-                <tr> 
+                <tr>
                   <td colspan="2" valign="top" height="16"></td>
                 </tr>
-                <tr> 
+                <tr>
+                  <td width="22%" valign="top">&nbsp;</td>
+                  <td width="78%">
+                    <input name="Submit" type="submit" class="formbtn" value="Save">
+                    <?php if (isset($id) && $a_ipsec[$id]): ?>
+                    <input name="id" type="hidden" value="<?=$id;?>">
+                    <?php endif; ?>
+                  </td>
+                </tr>
+ 		</div>
+	</table>
+	</div>
+	<div id="DHCP" style="display:none">
+                <table width="100%" border="0" cellpadding="6" cellspacing="0">
+		<tr>
                   <td colspan="2" valign="top" class="listtopic">DHCP client configuration</td>
                 </tr>
-                <tr> 
+                <tr>
                   <td valign="top" class="vncell">Hostname</td>
                   <td class="vtable"> <input name="dhcphostname" type="text" class="formfld" id="dhcphostname" size="40" value="<?=htmlspecialchars($pconfig['dhcphostname']);?>">
                     <br>
-                    The value in this field is sent as the DHCP client identifier 
-                    and hostname when requesting a DHCP lease. Some ISPs may require 
+                    The value in this field is sent as the DHCP client identifier
+                    and hostname when requesting a DHCP lease. Some ISPs may require
                     this (for client identification).</td>
                 </tr>
-                <tr> 
+                <tr>
                   <td colspan="2" valign="top" height="16"></td>
                 </tr>
-                <tr> 
+                <tr>
+		<tr>
+                  <td width="22%" valign="top">&nbsp;</td>
+                  <td width="78%">
+                    <input name="Submit" type="submit" class="formbtn" value="Save">
+                    <?php if (isset($id) && $a_ipsec[$id]): ?>
+                    <input name="id" type="hidden" value="<?=$id;?>">
+                    <?php endif; ?>
+                  </td>
+                </tr>
+		</table>
+        	</div>
+		<div id="PPPoE" style="display:none">
+        	<table width="100%" border="0" cellpadding="6" cellspacing="0">	
+	     	<tr>
+                <div id='PPPOE' style="display:none;">
                   <td colspan="2" valign="top" class="listtopic">PPPoE configuration</td>
                 </tr>
-                <tr> 
+                <tr>
                   <td valign="top" class="vncellreq">Username</td>
-                  <td class="vtable"><?=$mandfldhtml;?><input name="username" type="text" class="formfld" id="username" size="20" value="<?=htmlspecialchars($pconfig['username']);?>"> 
+                  <td class="vtable"><?=$mandfldhtml;?><input name="username" type="text" class="formfld" id="username" size="20" value="<?=htmlspecialchars($pconfig['username']);?>">
                   </td>
                 </tr>
-                <tr> 
+                <tr>
                   <td valign="top" class="vncellreq">Password</td>
-                  <td class="vtable"><?=$mandfldhtml;?><input name="password" type="text" class="formfld" id="password" size="20" value="<?=htmlspecialchars($pconfig['password']);?>"> 
+                  <td class="vtable"><?=$mandfldhtml;?><input name="password" type="text" class="formfld" id="password" size="20" value="<?=htmlspecialchars($pconfig['password']);?>">
                   </td>
                 </tr>
-                <tr> 
+                <tr>
                   <td valign="top" class="vncell">Service name</td>
-                  <td class="vtable"><input name="provider" type="text" class="formfld" id="provider" size="20" value="<?=htmlspecialchars($pconfig['provider']);?>"> 
-                    <br> <span class="vexpl">Hint: this field can usually be left 
+                  <td class="vtable"><input name="provider" type="text" class="formfld" id="provider" size="20" value="<?=htmlspecialchars($pconfig['provider']);?>">
+                    <br> <span class="vexpl">Hint: this field can usually be left
                     empty</span></td>
                 </tr>
-                <tr> 
+                <tr>
                   <td valign="top" class="vncell">Dial on demand</td>
-                  <td class="vtable"><input name="pppoe_dialondemand" type="checkbox" id="pppoe_dialondemand" value="enable" <?php if ($pconfig['pppoe_dialondemand']) echo "checked"; ?> onClick="enable_change(false)" > 
+                  <td class="vtable"><input name="pppoe_dialondemand" type="checkbox" id="pppoe_dialondemand" value="enable" <?php if ($pconfig['pppoe_dialondemand']) echo "checked"; ?> onClick="en
+able_change(false)" >
                     <strong>Enable Dial-On-Demand mode</strong><br>
-		    This option causes the interface to operate in dial-on-demand mode, allowing you to have a <i>virtual full time</i> connection. The interface is configured, but the actual connection of the link is delayed until qualifying outgoing traffic is detected.</td>
+                    This option causes the interface to operate in dial-on-demand mode, allowing you to have a <i>virtual full time</i> connection. The interface is configured, but the actual conne
+ction of the link is delayed until qualifying outgoing traffic is detected.</td>
                 </tr>
                 <tr>
                   <td valign="top" class="vncell">Idle timeout</td>
@@ -636,101 +529,24 @@ function type_change(enable_change,enable_change_pptp) {
                     seconds<br>
     If no qualifying outgoing packets are transmitted for the specified number of seconds, the connection is brought down. An idle timeout of zero disables this feature.</td>
                 </tr>
-                <tr> 
+                <tr>
                   <td colspan="2" valign="top" height="16"></td>
                 </tr>
-                <tr> 
-                  <td colspan="2" valign="top" class="listtopic">PPTP configuration</td>
-                </tr>
-                <tr> 
-                  <td valign="top" class="vncellreq">Username</td>
-                  <td class="vtable"><?=$mandfldhtml;?><input name="pptp_username" type="text" class="formfld" id="pptp_username" size="20" value="<?=htmlspecialchars($pconfig['pptp_username']);?>"> 
+		<tr>
+                  <td width="22%" valign="top">&nbsp;</td>
+                  <td width="78%">
+                    <input name="Submit" type="submit" class="formbtn" value="Save">
+                    <?php if (isset($id) && $a_ipsec[$id]): ?>
+                    <input name="id" type="hidden" value="<?=$id;?>">
+                    <?php endif; ?>
                   </td>
-                </tr>
-                <tr> 
-                  <td valign="top" class="vncellreq">Password</td>
-                  <td class="vtable"><?=$mandfldhtml;?><input name="pptp_password" type="text" class="formfld" id="pptp_password" size="20" value="<?=htmlspecialchars($pconfig['pptp_password']);?>"> 
-                  </td>
-                </tr>
-                <tr> 
-                  <td width="100" valign="top" class="vncellreq">Local IP address</td>
-                  <td class="vtable"><?=$mandfldhtml;?><input name="pptp_local" type="text" class="formfld" id="pptp_local" size="20" value="<?=htmlspecialchars($pconfig['pptp_local']);?>">
-                    / 
-                    <select name="pptp_subnet" class="formfld" id="pptp_subnet">
-                      <?php for ($i = 31; $i > 0; $i--): ?>
-                      <option value="<?=$i;?>" <?php if ($i == $pconfig['pptp_subnet']) echo "selected"; ?>> 
-                      <?=$i;?>
-                      </option>
-                      <?php endfor; ?>
-                    </select></td>
-                </tr>
-                <tr> 
-                  <td width="100" valign="top" class="vncellreq">Remote IP address</td>
-                  <td class="vtable"><?=$mandfldhtml;?><input name="pptp_remote" type="text" class="formfld" id="pptp_remote" size="20" value="<?=htmlspecialchars($pconfig['pptp_remote']);?>"> 
-                  </td>
-                </tr>
-                <tr> 
-                  <td valign="top" class="vncell">Dial on demand</td>
-                  <td class="vtable"><input name="pptp_dialondemand" type="checkbox" id="pptp_dialondemand" value="enable" <?php if ($pconfig['pptp_dialondemand']) echo "checked"; ?> onClick="enable_change_pptp(false)" > 
-                    <strong>Enable Dial-On-Demand mode</strong><br>
-		    This option causes the interface to operate in dial-on-demand mode, allowing you to have a <i>virtual full time</i> connection. The interface is configured, but the actual connection of the link is delayed until qualifying outgoing traffic is detected.</td>
-                </tr>
-                <tr>
-                  <td valign="top" class="vncell">Idle timeout</td>
-                  <td class="vtable">
-                    <input name="pptp_idletimeout" type="text" class="formfld" id="pptp_idletimeout" size="8" value="<?=htmlspecialchars($pconfig['pptp_idletimeout']);?>">
-                    seconds<br>
-    If no qualifying outgoing packets are transmitted for the specified number of seconds, the connection is brought down. An idle timeout of zero disables this feature.</td>
-                </tr>
-                <tr> 
-                  <td colspan="2" valign="top" height="16"></td>
-                </tr>
-                <tr> 
-                  <td colspan="2" valign="top" class="listtopic">BigPond Cable configuration</td>
-                </tr>
-                <tr> 
-                  <td valign="top" class="vncellreq">Username</td>
-                  <td class="vtable"><?=$mandfldhtml;?><input name="bigpond_username" type="text" class="formfld" id="bigpond_username" size="20" value="<?=htmlspecialchars($pconfig['bigpond_username']);?>"> 
-                  </td>
-                </tr>
-                <tr> 
-                  <td valign="top" class="vncellreq">Password</td>
-                  <td class="vtable"><?=$mandfldhtml;?><input name="bigpond_password" type="text" class="formfld" id="bigpond_password" size="20" value="<?=htmlspecialchars($pconfig['bigpond_password']);?>"> 
-                  </td>
-                </tr>
-                <tr> 
-                  <td valign="top" class="vncell">Authentication server</td>
-                  <td class="vtable"><input name="bigpond_authserver" type="text" class="formfld" id="bigpond_authserver" size="20" value="<?=htmlspecialchars($pconfig['bigpond_authserver']);?>">
-                    <br>
-                  <span class="vexpl">If this field is left empty, the default (&quot;dce-server&quot;) is used. </span></td>
-                </tr>
-                <tr> 
-                  <td valign="top" class="vncell">Authentication domain</td>
-                  <td class="vtable"><input name="bigpond_authdomain" type="text" class="formfld" id="bigpond_authdomain" size="20" value="<?=htmlspecialchars($pconfig['bigpond_authdomain']);?>">
-                    <br>
-                  <span class="vexpl">If this field is left empty, the domain name assigned via DHCP will be used.<br>
-                  <br>
-                  Note: the BigPond client implicitly sets the &quot;Allow DNS server list to be overridden by DHCP/PPP on WAN&quot; on the System: General setup page.            </span></td>
-                </tr>
-                <tr>
-                  <td valign="top" class="vncell">Min. heartbeat interval</td>
-                  <td class="vtable">
-                    <input name="bigpond_minheartbeatinterval" type="text" class="formfld" id="bigpond_minheartbeatinterval" size="8" value="<?=htmlspecialchars($pconfig['bigpond_minheartbeatinterval']);?>">
-                    seconds<br>
-    Setting this to a sensible value (e.g. 60 seconds) can protect against DoS attacks. </td>
-                </tr>
-                <?php /* Wireless interface? */
-				if (isset($optcfg['wireless']))
-					wireless_config_print();
-				?>
-                <tr> 
-                  <td height="16" colspan="2" valign="top"></td>
-                </tr>
-              </table>
-</form>
+		</tr>
+		</table>
+	    </form>
+	</div>
 <script language="JavaScript">
 <!--
-type_change();
+javascript:switchtab(document.iform.type.value)
 //-->
 </script>
 <?php include("fend.inc"); ?>
