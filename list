@@ -107,7 +107,7 @@ COPY    ${DESTDIR}/usr/bin/nohup			usr/bin/nohup
 #SPECIAL cp -R -p ${CURDIR}/encrypted/www                usr/www/
 #SPECIAL rm -rf ${CURDIR}/encrypted
 
-SPECIAL cp -R -p ${CURDIR}/initial-conf/inc              usr/inc/
+SPECIAL cp -R -p ${CURDIR}/initial-conf/inc              etc/inc/
 SPECIAL cp -R -p ${CURDIR}/initial-conf/www              usr/www/
 
 SPECIAL mkdir usr/www/js
