@@ -97,21 +97,24 @@ COPY	${BINDIR}/zoneinfo.tgz				usr/share/zoneinfo.tgz
 COPY    ${DESTDIR}/usr/bin/nohup			usr/bin/nohup
 
 # Here we encrypt the php code with SG
-SPECIAL mkdir ${CURDIR}/encrypted
-SPECIAL cp -R -p ${CURDIR}/initial-conf/inc             ${CURDIR}/encrypted
-SPECIAL ${BINDIR}/SG/bin/encode4 -z 9 -b- ${CURDIR}/encrypted/inc/*.inc
-SPECIAL cp -R -p ${CURDIR}/encrypted/inc                etc/inc/
-SPECIAL cp -R -p ${CURDIR}/initial-conf/www             ${CURDIR}/encrypted
-SPECIAL ${BINDIR}/SG/bin/encode4 -z 9 -b- ${CURDIR}/encrypted/www/*.php
-SPECIAL ${BINDIR}/SG/bin/encode4 -z 9 -b- ${CURDIR}/encrypted/www/*.inc
-SPECIAL cp -R -p ${CURDIR}/encrypted/www                usr/www/
-SPECIAL rm -rf ${CURDIR}/encrypted
+#SPECIAL mkdir ${CURDIR}/encrypted
+#SPECIAL cp -R -p ${CURDIR}/initial-conf/inc             ${CURDIR}/encrypted
+#SPECIAL ${BINDIR}/SG/bin/encode4 -z 9 -b- ${CURDIR}/encrypted/inc/*.inc
+#SPECIAL cp -R -p ${CURDIR}/encrypted/inc                etc/inc/
+#SPECIAL cp -R -p ${CURDIR}/initial-conf/www             ${CURDIR}/encrypted
+#SPECIAL ${BINDIR}/SG/bin/encode4 -z 9 -b- ${CURDIR}/encrypted/www/*.php
+#SPECIAL ${BINDIR}/SG/bin/encode4 -z 9 -b- ${CURDIR}/encrypted/www/*.inc
+#SPECIAL cp -R -p ${CURDIR}/encrypted/www                usr/www/
+#SPECIAL rm -rf ${CURDIR}/encrypted
 
-SPECIAL mkdir usr/www/js
+SPECIAL cp -R -p ${CURDIR}/initial-conf/inc              etc/inc/
+SPECIAL cp -R -p ${CURDIR}/initial-conf/www 	         usr/www/
+
+#SPECIAL mkdir usr/www/js
 SPECIAL mkdir ftmp
 SPECIAL cp -R -p ${CURDIR}/initial-conf/captiveportal	usr/captiveportal/
 SPECIAL chmod 633 etc/php.ini
-SPECIAL echo "0.1" > 					etc/version
+SPECIAL echo "1.0" > 					etc/version
 SPECIAL date >						etc/version.buildtime
 SPECIAL chmod 755 usr/bin/nohup
 SPECIAL chmod +x  etc/rc.reboot

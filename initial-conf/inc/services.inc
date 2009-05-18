@@ -386,7 +386,7 @@ function services_dnsmasq_configure() {
 				" -s {$config['system']['general']['domain']}";
 		}
 		
-		$args = " -c 5000 --bind-interfaces";
+		$args = " -c 5000 --except-interface {$config['interfaces']['wan']['if']}";
 
 		if (isset($config['dnsmasq']['domainoverrides']) && is_array($config['dnsmasq']['domainoverrides'])) {
 			foreach($config['dnsmasq']['domainoverrides'] as $override) {
