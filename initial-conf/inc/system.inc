@@ -54,6 +54,7 @@ function system_sshd_start() {
 			echo "done\n";
 		}
 	echo "Starting SSH Server... ";
+	exec("/bin/echo \"ListenAddress\t\t{$config['interfaces']['lan']['ipaddr']}\" >> /etc/ssh/sshd_config"); 
 	exec("/usr/sbin/sshd");
 	echo "done\n";
 	}
@@ -469,6 +470,9 @@ function system_webgui_start() {
 	
 	/* kill any running mini_httpd */
 	killbypid("{$g['varrun_path']}/mini_httpd.pid");
+
+	/* find out the lan ip, we'll only listen on this one */
+	$lanip = $config['interfaces']['lan']['ipaddr'];
 	
 	/* generate password file */
 	system_password_configure();
@@ -541,10 +545,10 @@ EOD;
 	
 		$res = mwexec("/sbin/mini_httpd -S -E {$g['varetc_path']}/cert.pem" .
 			" -c \"**.php|**.cgi\" -u root -maxproc 16 $portarg" . 
-			" -i {$g['varrun_path']}/mini_httpd.pid");
+			" -i {$g['varrun_path']}/mini_httpd.pid -h $lanip");
 	} else {
 		$res = mwexec("/sbin/mini_httpd -c \"**.php|**.cgi\" -u root" .
-			" -maxproc 16 $portarg -i {$g['varrun_path']}/mini_httpd.pid");
+			" -maxproc 16 $portarg -i {$g['varrun_path']}/mini_httpd.pid -h $lanip");
 	}
 	
 	if ($g['booting']) {

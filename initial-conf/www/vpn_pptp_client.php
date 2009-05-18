@@ -197,14 +197,9 @@ $pconfig['lcplog']    = isset($config['pptp']['client']['lcplog']);
                 </tr>
                   <td width="22%" valign="top">&nbsp;</td>
                   <td width="78%"> 
-                    <input name="submit" type="submit" class="formbtn" value="Save" onclick="enable_change(true)"> 
+                    <input name="submit" type="submit" class="formbtn" value="Save"> 
                   </td>
                 </tr>
               </table>
 </form>
-<script language="JavaScript">
-<!--
-enable_change(false);
-//-->
-</script>
 <?php include("fend.inc"); ?>

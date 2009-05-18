@@ -597,7 +597,7 @@ function activate(obj){
 		<div id='rsasig' style="display:none;">
 		   <strong>Certificate</strong>
                     <select name="cert" class="formfld" id="cert">
-        	      <?php foreach($config['system']['cert'] as $i): ?>
+        	      <?php foreach($config['system']['certmgr']['cert'] as $i): ?>
                       <option value="<?='$' . $i['name'];?>" <?php if ($i == $pconfig['cert']) echo "selected"; ?>> 
                         <?=$i['name'];?>
                       </option>
@@ -738,5 +738,3 @@ function activate(obj){
 	    </form>
 	</div>
 <script language="JavaScript">
-</script>
-<?php include("fend.inc"); ?>

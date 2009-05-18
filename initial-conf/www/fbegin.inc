@@ -30,7 +30,7 @@
 
 /* send user to initial wizard if it hasn't been completed yet */
 if (file_exists("/conf/set_wizard_initial"))
-         header("Location: wizards_initial_install.htm");
+         header("Location: wizard_initial.htm");
 
 $navlevelsep = ": ";	/* navigation level separator string */
 $mandfldhtml = "";		/* display this before mandatory input fields */
@@ -116,7 +116,7 @@ else {
 }
 
 $menu['Firewall']['ALTQ']           =array('firewall_altq.php');
-$menu['Firewall']['Abusive Sites']  = array('firewall_abusive_sites.php');
+//$menu['Firewall']['Abusive Sites']  = array('firewall_abusive_sites.php');
 $menu['Firewall']['Aliases']        = array('firewall_aliases.php'); 
 $menu['Firewall']['Global Options'] = array('firewall_options_edit.php');
 $menu['Firewall']['NAT']            = array('firewall_nat.php');
@@ -124,9 +124,9 @@ $menu['Firewall']['Rules']          = array('firewall_rules.php');
 
 $menu['Services']['DHCP server']	= array('services_dhcp.php');
 $menu['Services']['DNS forwarder']	= array('services_dnsmasq.php');
-$menu['Services']['CARP']          	= array('firewall_carp.php');
-$menu['Services']['Config Server']      = array('services_config_server.php');
-$menu['Services']['Relayd']             = array('firewall_relayd_relays.php');
+//$menu['Services']['CARP']          	= array('firewall_carp.php');
+// $menu['Services']['Config Server']      = array('services_config_server.php');
+// $menu['Services']['Relayd']             = array('firewall_relayd_relays.php');
 
 $menu['VPN']['IPsec']  			= array('vpn_ipsec.php');
 $menu['VPN']['PPTP Client']             = array('vpn_pptp_client.php');
@@ -161,15 +161,16 @@ $menu['Diagnostics']['PF'] 	= array('diag_pfconf.php',
 					'diag_pfnat.php',
 					'diag_pfstates.php');
 
+/*
 $menu['Diagnostics']['Relays'] = array('diag_relaydconf.php', 
 				       'diag_relaydsummary.php');
-
+*/
 $menu['Diagnostics']['System']	= array ('diag_top.php',
 					 'diag_dhcp_leases.php',
 					 'diag_arp.php',
 					 'diag_df.php',
 					 'diag_routes.php');
-				
+		
 $menu['Diagnostics']['Logs']	= array	('diag_logs.php',
 					 'diag_logs_settings.php');
   
@@ -221,9 +222,9 @@ function showhide(tspan, tri) {
 }
 -->
 </script>
-<table width="800" border="0" cellspacing="0" cellpadding="2">
+<table width="800" border="0" cellspacing="0" cellpadding="0">
   <tr valign="bottom"> 
-    <td width="100" height="65" align="center" valign="middle"> <strong><a href="http://www.northshoresoftware.com/" target="_blank"><img src="/logo.gif" width="150" height="47" border="0"></a></strong></td>
+    <td width="100" height="65" align="left" valign="bottom"> <strong><a href="http://www.northshoresoftware.com/" target="_blank"><img src="/logo.gif" width="150" height="65" border="0"></a></strong></td>
     <td height="65" bgcolor="#435370">
 	<table border="0" cellspacing="0" cellpadding="0" width="100%">
 	<tr><td align="left" valign="bottom"><span class="tfrtitle">&nbsp;webGUI 
@@ -253,10 +254,10 @@ if ($_SERVER['REMOTE_USER'] === $config['system']['username']) {
 }
 if (array_intersect($if_menu,$allowed)) {
 	echo '<strong>Interfaces</strong>';
-	if ((!isset($config['system']['webgui']['noassigninterfaces'])) && 
+        /*if ((!isset($config['system']['webgui']['noassigninterfaces'])) && 
 	    (in_array('interfaces_assign.php',$allowed))) {
 		echo '<a href="/interfaces_assign.php" class="navlnks"> (assign)</a>';
-	}
+	}*/
     echo '<br>';
     if (in_array('interfaces_lan.php',$allowed)) {
     	echo '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="/interfaces_lan.php" class="navlnk">LAN</a><br>';

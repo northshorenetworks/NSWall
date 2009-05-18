@@ -589,8 +589,12 @@ function write_config() {
 		
 	fwrite($fd, $xmlconfig);
 	fclose($fd);
+
+        /* get rid of the wizardfile if it exists */
+	if (file_exists("/conf/set_wizard_initial"))
+ 		unlink("/conf/set_wizard_initial");	
 	
-	conf_mount_ro();
+ 	conf_mount_ro();
 	
 	/* re-read configuration */
 	$config = parse_xml_config("{$g['conf_path']}/config.xml", $g['xml_rootobj']);

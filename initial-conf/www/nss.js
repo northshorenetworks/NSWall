@@ -37,28 +37,44 @@ return 1;
 function addOption(selectbox,text,value)
 {
 var optn = document.createElement("OPTION");
-document.getElementById(selectbox).options.add(optn);
 text = text.replace(/\/32/g, "");
 value = value.replace(/\/32/g, "");
 text = text.replace(/:$/, "");
 value = value.replace(/:$/, "");
+if(value.match(/^host/)) {
+if(verifyIP(text) == 0) {
+document.getElementById(selectbox).options.add(optn);
 optn.text = text;
 optn.value = value;
-document.iform.srchost.value="";
-document.iform.srcnet.value="";
-document.iform.srctable.value="";
- 
-if (document.getElementById(selectbox).name=="MEMBERS") {
-document.iform.members.value="";
+}
+}
+else {
+document.getElementById(selectbox).options.add(optn);
+optn.text = text;
+optn.value = value;
 }
 if (document.getElementById(selectbox).name=="SRCADDR") {
-document.iform.members.value="";
+document.iform.srchost.value="";
+document.iform.srcnet.value="";
+document.iform.srcalias.value="";
+if (document.getElementById(selectbox).options[0].text == "any") {
+document.getElementById(selectbox).remove(0);
+}
 }
 if (document.getElementById(selectbox).name=="DSTADDR") {
-document.iform.members.value="";
+document.iform.dsthost.value="";
+document.iform.dstnet.value="";
+document.iform.snatint.value="";
+document.iform.snatext.value="";
+document.iform.dstalias.value="";
+if (optn.text != "any") {
+if (document.getElementById(selectbox).options[0].text == "any") {
+document.getElementById(selectbox).remove(0);
 }
 }
- 
+}
+}
+
 function removeOptions(selectbox)
 {
 var i;
@@ -66,6 +82,12 @@ for(i=selectbox.options.length-1;i>=0;i--)
 {
 if(selectbox.options[i].selected)
 selectbox.remove(i);
+if(selectbox.options.length == 0 && selectbox.name != 'PROTOLIST') {
+var optn = document.createElement("OPTION");
+document.getElementById(selectbox.name).options.add(optn);
+optn.text = 'any';
+optn.value = 'any';
+}
 }
 }
  
@@ -82,7 +104,6 @@ function createProp(selectbox)
 {
 var i;
 var prop = '';
-var rdrprop ='';
 for(i=selectbox.options.length-1;i>=0;i--)
 {
 if(selectbox.options[i].selected)
@@ -91,21 +112,54 @@ prop += selectbox.options[i].value + ', ';
 }
 }
 prop = prop.replace(/, $/,"");
+prop = prop.replace(/snat:/g,"");
 prop = prop.replace(/host:/g,"");
 prop = prop.replace(/net:/g,"");
-prop = prop.replace(/table:/g,'$');
-rdrprop = rdrprop.replace(/snat:/g,"");
+prop = prop.replace(/alias:/g,'$');
+if (selectbox.name=="SRCADDR") {
+document.iform.srclist.value=prop
+}
+if (selectbox.name=="DSTADDR") {
+document.iform.dstlist.value=prop
+}
 if (selectbox.name=="MEMBERS") {
 document.iform.memberslist.value=prop
-   }
-if (selectbox.name=="SRCADDR") {
-   document.iform.srclist.value=prop
-   }
-if (selectbox.name=="DSTADDR") {
-   document.iform.dstlist.value=prop
-   }
+}
+
 }
  
+function createProtoProps(selectbox)
+{
+var i;
+var tcp = '';
+var udp = '';
+var ip = '';
+for(i=selectbox.options.length-1;i>=0;i--)
+{
+if(selectbox.options[i].selected)
+{
+if(selectbox.options[i].value.match( /^tcp/ )) {
+tcp += selectbox.options[i].value + ', ';
+}
+if(selectbox.options[i].value.match( /^udp/ )) {
+udp += selectbox.options[i].value + ', ';
+}
+if(selectbox.options[i].value.match( /^ip/ )) {
+ip += selectbox.options[i].value + ', ';
+}
+}
+}
+tcp = tcp.replace(/, $/,"");
+udp = udp.replace(/, $/,"");
+ip = ip.replace(/, $/,"");
+tcp = tcp.replace(/tcp\//g, "");
+udp = udp.replace(/udp\//g, "");
+ip = ip.replace(/ip\//g, "");
+document.iform.tcpports.value=tcp;
+document.iform.udpports.value=udp;
+document.iform.ipprotos.value=ip;
+}
+
 function prepareSubmit()
 {
 selectAllOptions(MEMBERS);

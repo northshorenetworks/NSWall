@@ -51,34 +51,57 @@ function resolve_logs_green($arr) {
         return ' <font color="chartreuse">' . gethostbyaddr($arr[0]) . '</font>';
 }
 
+function logs_red($arr) {
+        return ' <font color="red">' . $arr[0] . '</font>';
+}
+
+function logs_green($arr) {
+        return ' <font color="chartreuse">' . $arr[0] . '</font>';
+}
+
 function resolve_logs($arr) {
         return gethostbyaddr($arr[0]);
 }
 
 function scrub_raw_log($log) {
+	global $g, $config;
+
 	$ipaddr = '/\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/';
+	
 	/* scrub filter logs */ 
-	if(preg_match('/pf:/', $log)) {
-		/* strings we get scrub out of raw logs */
-		$scrubstrings = '/\&lt\;.+?\&gt\;|\[tcp sum ok\]|\/\(match\)|\[uid \d+, pid \d+\]/';
-		$log = preg_replace($scrubstrings, '', $log);
-		$log = preg_replace('/rule \d+\./', 'rule: ', $log);
-		$log = preg_replace('/\s\&gt\;\s/', ' to ', $log);
-		$log = preg_replace('/\.(\d+)\s/', ' $1 ', $log);
-		$log = preg_replace('/(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})\.(\d+):/', ' $1 $2', $log);
-		$log = preg_replace('/F\s+?\d+?:\d+?\(0\)/', ' SYN ', $log);
-		$log = preg_replace('/S\s+?\d+?:\d+?\(0\)/', ' FIN ', $log);
-		$log = preg_replace('/R\s+?\d+?:\d+?\(0\)/', ' RST ', $log);
-		/* colorize block logs */
-		if(preg_match('/block in/', $log)) {
-			$log = preg_replace('/\d+  block in/', ' <font color="red">block</font>', $log);
-                        $log = preg_replace_callback($ipaddr, resolve_logs_red, $log);
-		} elseif (preg_match('/pass in/', $log)) {	
-			$log = preg_replace('/\d+  pass in/', ' <font color="chartreuse">pass</font>', $log);
-			$log = preg_replace_callback($ipaddr, resolve_logs_green, $log);	
+        if (!isset($config['syslog']['rawfilter'])) { 
+		if(preg_match('/pf:/', $log)) {
+			/* strings we get scrub out of raw logs */
+			$scrubstrings = '/\&lt\;.+?\&gt\;|\[tcp sum ok\]|\/\(match\)|\[uid \d+, pid \d+\]/';
+			$log = preg_replace($scrubstrings, '', $log);
+			$log = preg_replace('/rule \d+\./', 'rule: ', $log);
+			$log = preg_replace('/\s\&gt\;\s/', ' to ', $log);
+			$log = preg_replace('/\.(\d+)\s/', ' $1 ', $log);
+			$log = preg_replace('/(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})\.(\d+):/', ' $1 $2', $log);
+			$log = preg_replace('/F\s+?\d+?:\d+?\(0\)/', ' SYN ', $log);
+			$log = preg_replace('/S\s+?\d+?:\d+?\(0\)/', ' FIN ', $log);
+			$log = preg_replace('/R\s+?\d+?:\d+?\(0\)/', ' RST ', $log);
+			/* colorize block logs */
+			if(preg_match('/block in/', $log)) {
+				$log = preg_replace('/\d+  block in/', ' <font color="red">block</font>', $log);
+                        	if (isset($config['syslog']['resolve'])) {
+					$log = preg_replace_callback($ipaddr, resolve_logs_red, $log);
+				} else { 
+					$log = preg_replace_callback($ipaddr, logs_red, $log);
+				}
+				
+			} elseif (preg_match('/pass in/', $log)) {	
+				$log = preg_replace('/\d+  pass in/', ' <font color="chartreuse">pass</font>', $log);
+				if (isset($config['syslog']['resolve'])) {
+					$log = preg_replace_callback($ipaddr, resolve_logs_green, $log);	
+				} else {
+					$log = preg_replace_callback($ipaddr, logs_green, $log);
+				}
+			}
 		}
 	}
-	$log = preg_replace_callback($ipaddr, resolve_logs, $log);
+	if (isset($config['syslog']['resolve']))
+		$log = preg_replace_callback($ipaddr, resolve_logs, $log);
 	return $log;
 }
 

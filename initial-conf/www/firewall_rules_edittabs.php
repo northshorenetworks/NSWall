@@ -359,7 +359,7 @@ if (isset($id) && $a_filter[$id]) {
                       <option value="dstalias" >Alias</option>
                	      <option value="dstsnat" >SNAT</option> 
 		      <option value="dstredir" >Redirect</option>
-                      <option value="dstrelay" >Relay</option>
+                <!--  <option value="dstrelay" >Relay</option> -->
 		</select><br><br>
                 <div id='dsthost' style="display:block;">
                  <strong>Address</strong>
@@ -450,7 +450,7 @@ if (isset($id) && $a_filter[$id]) {
                 <tr>
                 <td width="22%" valign="top" class="vncellreq">Protocol</td>
                 <td width="78%" class="vtable">
-                <br><br><input name="portforward" type="checkbox" id="portforward" value="yes" <?php if ($pconfig['portforward']) echo "checked"; ?>> 
+                <!--<br><br><input name="portforward" type="checkbox" id="portforward" value="yes" <?php if ($pconfig['portforward']) echo "checked"; ?>> 
                 <strong>Forward Connections on this port to a nat lookup relay</strong><br>
                 <div id='dstrelay' style="display:block;">
                 <strong>Relay</strong>
@@ -462,7 +462,7 @@ if (isset($id) && $a_filter[$id]) {
                                 </option>
                                 <?php endif; ?>
                         <?php endforeach; ?>
-                    </select><br><br>
+                    </select><br><br> -->
 		<SELECT style="width: 150px; height: 100px" id="PROTOLIST" NAME="PROTOLIST" MULTIPLE size=6 width=30>
                 <?php for ($i = 0; $i<sizeof($pconfig['tcplist']); $i++): ?>
                 <option value="tcp/<?=$pconfig['tcplist']["tcp$i"];?>">
@@ -571,7 +571,7 @@ if (isset($id) && $a_filter[$id]) {
                 <input name="maxsrcconns" type="text" class="formfld" id="maxsrcconns" size="5" value="<?=htmlspecialchars($pconfig['maxsrcconns']);?>">
                 </td>
                 </tr>
-		<tr>
+<!--		<tr>
                 <td width="22%" valign="top" class="vncellreq">Max Src Conn Rate</td>
                 <td width="78%" class="vtable">
                 <input name="maxsrcconnrate" type="text" class="formfld" id="maxsrcconrate" size="5" value="<?=htmlspecialchars($pconfig['maxsrcconnrate']);?>">
@@ -588,7 +588,7 @@ if (isset($id) && $a_filter[$id]) {
                 <td width="78%" class="vtable">
                     <input name="flush" type="checkbox" id="flush" value="yes" <?php if ($pconfig['flush']) echo "checked"; ?>>
                 </tr>
-                <tr>	
+                <tr> -->	
 		  <td width="22%" valign="top">&nbsp;</td>
                   <td width="78%"> 
                     <input name="Submit" type="submit" class="formbtn" value="Save"> 

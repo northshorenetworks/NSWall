@@ -39,7 +39,7 @@ option		PROCFS		# /proc
 
 # or use		root on nfs swap on nfs
 option          RAMDISK_HOOKS
-option          MINIROOTSIZE=30720              # disktab.12mb
+option          MINIROOTSIZE=40960              # disktab.20mb
 option          NKPTP=8
 config          bsd     root on rd0a swap on rd0b and wd0b and wd1b
 pseudo-device   rd              1

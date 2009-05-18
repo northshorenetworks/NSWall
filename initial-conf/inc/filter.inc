@@ -1083,6 +1083,8 @@ EOD;
 			if (!$ispptp) {
 				$line .= "on $interface ";
 			}
+
+			$line .= "inet ";
 	
 			### Load Balancing code goes here. 	
 			if (isset($config['system']['multiwan'])) {
