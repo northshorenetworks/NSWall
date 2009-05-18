@@ -160,8 +160,8 @@ print_info_box($sig_warning);
 </form>
 <?php else: ?>
             <?php if (!file_exists($d_firmwarelock_path)): ?>
-            <p>Click &quot;Enable firmware 
-              upload&quot; below, then choose the image file (<?=$g['fullplatform'];?>-*.img)
+            <p>Click &quot;Begin 
+              Upgrade&quot; below, then choose the image file (<?=$g['fullplatform'];?>-*.img)
 			  to be uploaded.<br>Click &quot;Upgrade firmware&quot; 
               to start the upgrade process.</p>
             <form action="system_firmware.php" method="post" enctype="multipart/form-data">
