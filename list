@@ -106,12 +106,9 @@ COPY    ${DESTDIR}/usr/bin/nohup			usr/bin/nohup
 #SPECIAL ${BINDIR}/SG/bin/encode4 -z 9 -b- ${CURDIR}/encrypted/www/*.inc
 #SPECIAL cp -R -p ${CURDIR}/encrypted/www                usr/www/
 #SPECIAL rm -rf ${CURDIR}/encrypted
-<<<<<<< HEAD:list
-=======
 
 SPECIAL cp -R -p ${CURDIR}/initial-conf/inc              etc/inc/
 SPECIAL cp -R -p ${CURDIR}/initial-conf/www              usr/www/
->>>>>>> da0d83fedcdcdaefb5497ba59d5fb27025799353:list
 
 #SPECIAL mkdir usr/www/js
 SPECIAL mkdir ftmp
