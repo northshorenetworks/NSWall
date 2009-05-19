@@ -99,8 +99,8 @@ if ($_POST) {
                 <td width="75%" class="listr">
                   <?php
                         exec("/sbin/sysctl -n vm.loadavg", $loadavgstr);
-                        list($one, $five, $fifteen") = split(' ', $loadavgstr[0]);
-                        echo htmlspecialchars(1min: $one, 5min: $five, 15min: $fifteen);
+                        list($one, $five, $fifteen) = split(' ', $loadavgstr[0]);
+                        echo htmlspecialchars("1min: $one, 5min: $five, 15min: $fifteen");
                   ?>
                 </td>
               </tr> 
