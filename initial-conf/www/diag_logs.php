@@ -120,14 +120,9 @@ var refreshId = setInterval(function()
   </td></tr>
   <tr> 
     <td class="tabcont">
-		<table width="100%" border="0" cellspacing="0" cellpadding="0">
-		<div id="rtlogs" style="display:block; overflow:auto; max-height:500px; min-height:500px; max-width:800px; min-width:800px; background-color:black;">
-		</div>	
-		</table>
-		<br><form action="diag_logs.php" method="post">
-<input name="clear" type="submit" class="formbtn" value="Clear log">
-</form>
-	</td>
+	<div id="rtlogs" style="display:block; overflow:auto; max-height:500px; min-height:500px; max-width:800px; min-width:800px; background-color:black;"></div>
+   </td>
   </tr>
 </table>
 <?php include("fend.inc"); ?>
+
