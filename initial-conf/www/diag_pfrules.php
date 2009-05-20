@@ -102,10 +102,10 @@ function dump_clog($logfile, $tail, $withorig = true) {
 <script src="jquery-1.3.2.min.js"></script>
 
 <script>
-var refreshId = setInterval(function()
-{
-     $('#rtlogs').load('stats.cgi?rules' + "&random=" + Math.random());
-}, 5000);
+function status () {
+  $('#rtlogs').load('stats.cgi?rules' + "&random=" + Math.random());
+}
+var refreshId = setInterval("status()", 5000);
 </script>
 
 <table width="100%" border="0" cellpadding="0" cellspacing="0">
@@ -127,4 +127,7 @@ var refreshId = setInterval(function()
   </tr>
 </table>
 <div id="rtlogs" class="tabcont"</div>
+<script>
+status()
+</script>
 <?php include("fend.inc"); ?>
