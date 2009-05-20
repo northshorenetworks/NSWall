@@ -99,7 +99,7 @@ function dump_clog($logfile, $tail, $withorig = true) {
 
 ?>
 <?php include("fbegin.inc"); ?>
-<script src="jquery-1.3.2.min.js"</script>
+<script src="jquery-1.3.2.min.js"></script>
 
 <script>
 var refreshId = setInterval(function()

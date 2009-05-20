@@ -98,6 +98,28 @@ void if_stats(char *name){
         exit (1);
 }
 
+void top() {
+        FILE *inpipe;
+        char inbuf[1000];
+        int lineno = 0;
+
+        char *command = "/usr/bin/top -o res -n 100";
+
+       inpipe = popen(command, "r");
+       if (!inpipe) {
+              printf("couldn't open pipe %s\n", command);
+              exit (1);
+       }
+       printf("<pre>\n");
+       while (fgets(inbuf, sizeof(inbuf), inpipe)) {
+              printf("%s", inbuf);
+       }
+       printf("</pre>\n");
+       pclose(inpipe);
+
+       exit (1);
+}
+
 void logs() {
 	FILE *inpipe;
     	char inbuf[1000];
@@ -113,6 +135,94 @@ void logs() {
        while (fgets(inbuf, sizeof(inbuf), inpipe)) {
               printf("<tr valign=\"top\"><td class=\"listlogr\" nowrap>%s</td></tr>", inbuf);
        }
+       pclose(inpipe);
+
+       exit (1);
+}
+
+void rules() {
+        FILE *inpipe;
+        char inbuf[1000];
+        int lineno = 0;
+
+        char *command = "/sbin/pfctl -vvs rules";
+
+       inpipe = popen(command, "r");
+       if (!inpipe) {
+              printf("couldn't open pipe %s\n", command);
+              exit (1);
+       }
+       printf("<pre>\n");
+       while (fgets(inbuf, sizeof(inbuf), inpipe)) {
+              printf("%s", inbuf);
+       }
+       printf("</pre>\n");
+       pclose(inpipe);
+
+       exit (1);
+}
+
+void nat() {
+        FILE *inpipe;
+        char inbuf[1000];
+        int lineno = 0;
+
+        char *command = "/sbin/pfctl -vvs nat";
+
+       inpipe = popen(command, "r");
+       if (!inpipe) {
+              printf("couldn't open pipe %s\n", command);
+              exit (1);
+       }
+       printf("<pre>\n");
+       while (fgets(inbuf, sizeof(inbuf), inpipe)) {
+              printf("%s", inbuf);
+       }
+       printf("</pre>\n");
+       pclose(inpipe);
+
+       exit (1);
+}
+
+void states() {
+        FILE *inpipe;
+        char inbuf[1000];
+        int lineno = 0;
+
+        char *command = "/sbin/pfctl -vvs states";
+
+       inpipe = popen(command, "r");
+       if (!inpipe) {
+              printf("couldn't open pipe %s\n", command);
+              exit (1);
+       }
+       printf("<pre>\n");
+       while (fgets(inbuf, sizeof(inbuf), inpipe)) {
+              printf("%s", inbuf);
+       }
+       printf("</pre>\n");
+       pclose(inpipe);
+
+       exit (1);
+}
+
+void queues() {
+        FILE *inpipe;
+        char inbuf[1000];
+        int lineno = 0;
+
+        char *command = "/sbin/pfctl -vs queue";
+
+       inpipe = popen(command, "r");
+       if (!inpipe) {
+              printf("couldn't open pipe %s\n", command);
+              exit (1);
+       }
+       printf("<pre>\n");
+       while (fgets(inbuf, sizeof(inbuf), inpipe)) {
+              printf("%s", inbuf);
+       }
+       printf("</pre>\n");
        pclose(inpipe);
 
        exit (1);
@@ -135,13 +245,23 @@ int main(int argc, char *argv[]) {
 	if (cl == NULL)
 		exit(1);
 	
-	if ((strlen(cl) < 3) || (strlen(cl) > 16))
+	if (strlen(cl) < 3)
 		exit(1);
 	
 	if (strcmp(cl, "cpu") == 0)
 		cpu_stats();
-	else if (strcmp(cl, "logs") == 0)
+	else if (strncmp(cl, "top", 3) == 0)
+                top();
+        else if (strncmp(cl, "logs", 4) == 0)
 		logs();
+	else if (strncmp(cl, "rules", 5) == 0)
+                rules();
+	else if (strncmp(cl, "nat", 3) == 0)
+                nat();
+	else if (strncmp(cl, "states", 6) == 0)
+                states();
+	else if (strncmp(cl, "queues", 6) == 0)
+                queues();
 	else
 		if_stats(cl);
 	

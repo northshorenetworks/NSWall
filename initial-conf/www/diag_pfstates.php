@@ -1,7 +1,7 @@
 #!/bin/php
 <?php 
 /*
-	$Id: diag_pfstates.php,v 1.1.1.1 2008/08/01 07:56:19 root Exp $
+	$Id: diag_logs.php,v 1.1.1.1 2008/08/01 07:56:19 root Exp $
 	part of m0n0wall (http://m0n0.ch/wall)
 	
 	Copyright (C) 2003-2006 Manuel Kasper <mk@neon1.net>.
@@ -29,47 +29,102 @@
 	POSSIBILITY OF SUCH DAMAGE.
 */
 
-$pgtitle = array("Diagnostics", "View PF States");
+$pgtitle = array("Diagnostics", "PF States");
 require("guiconfig.inc");
 
-function dump_pfstates() {
-        global $g, $config;
-        printf("<pre>");
-        $pfstates = `/sbin/pfctl -s states`;
-        $pfstates = preg_replace("/all/", "<b>all", $pfstates);
-        $pfstates = preg_replace("/n\s+\[/", "</b>  [", $pfstates);
-        printf("$pfstates");
+$nentries = $config['syslog']['nentries'];
+if (!$nentries)
+	$nentries = 50;
+
+if ($_POST['clear']) {
+	exec("/usr/sbin/syslogc -C system");
+	/* redirect to avoid reposting form data on refresh */
+	header("Location: diag_logs.php");
+	exit;
+}
+
+function resolve_logs_red($arr) {
+        return ' <font color="red">' . gethostbyaddr($arr[0]) . '</font>';
+}
+
+function resolve_logs_green($arr) {
+        return ' <font color="chartreuse">' . gethostbyaddr($arr[0]) . '</font>';
+}
+
+function scrub_raw_log($log) {
+	/* scrub filter logs */ 
+	if(preg_match('/pf:/', $log)) {
+		/* strings we get scrub out of raw logs */
+		$scrubstrings = '/\&lt\;.+?\&gt\;|\[tcp sum ok\]|\/\(match\)|\[uid \d+, pid \d+\]/';
+		$log = preg_replace($scrubstrings, '', $log);
+		$log = preg_replace('/rule \d+\./', 'rule: ', $log);
+		$log = preg_replace('/\s\&gt\;\s/', ' to ', $log);
+		$log = preg_replace('/\.(\d+)\s/', ' $1 ', $log);
+		$log = preg_replace('/\.(\d+):/', ' $1 ', $log);
+		/* colorize block logs */
+		if(preg_match('/block in/', $log)) {
+			echo $log;
+			$log = preg_replace('/block/', '', $log);
+                	$ipaddr = '/\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/';
+                        $log = preg_replace_callback($ipaddr, resolve_logs_red, $log);
+		}	
+		/* colorize pass logs */
+		if(preg_match('/pass in/', $log)) {
+			$ipaddr = '/\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/';
+			$log = preg_replace_callback($ipaddr, resolve_logs_green, $log);	
+		}
+	}
+	return $log;
+}
+
+function dump_clog($logfile, $tail, $withorig = true) {
+	global $g, $config;
+
+	$sor = isset($config['syslog']['reverse']) ? "-r" : "";
+
+	exec("/usr/sbin/syslogc " . $logfile . " | tail {$sor} -n " . $tail, $logarr);
+	
+	foreach ($logarr as $logent) {
+		$logent = preg_split("/\s+/", $logent, 6);
+		echo "<tr valign=\"top\">\n";
+	
+		if ($withorig) {
+                        echo scrub_raw_log("<td class=\"listlogr\" nowrap>" . htmlspecialchars(join(" ", array_slice($logent, 0, 3)) . " " . $logent[4] . " " . $logent[5]) . "</td>\n");
+                } else {
+                        echo "<td class=\"listlr\" nowrap colspan=\"2\">" . htmlspecialchars($logent[5]) . "</td>\n";
+                }
+		echo "</tr>\n";
+	}
 }
 
 ?>
 <?php include("fbegin.inc"); ?>
+<script src="jquery-1.3.2.min.js"></script>
+
+<script>
+var refreshId = setInterval(function()
+{
+     $('#rtlogs').load('stats.cgi?states' + "&random=" + Math.random());
+}, 5000);
+</script>
+
 <table width="100%" border="0" cellpadding="0" cellspacing="0">
   <tr><td class="tabnavtbl">
   <ul id="tabnav">
-  <?php
+    <?php
         $tabs = array('pf.conf' => 'diag_pfconf.php',
                           'Rules' => 'diag_pfrules.php',
                           'Nat' => 'diag_pfnat.php',
                           'States' => 'diag_pfstates.php',
-        		  'Options' => 'diag_pfoptions.php',
+                          'Options' => 'diag_pfoptions.php',
                           'Queues' => 'diag_pfqueues.php');
-
-	dynamic_tab_menu($tabs);
+        dynamic_tab_menu($tabs);
 ?>
- 
   </ul>
   </td></tr>
   <tr> 
-    <td class="tabcont">
-		<table width="100%" border="0" cellspacing="0" cellpadding="0">
-		  <tr> 
-			<td colspan="2" class="listtopic"> 
-		  </tr>
-		  <?php dump_pfstates(); ?>
-		</table>
-		<br><form action="diag_pfstates.php" method="post">
-</form>
-	</td>
+    <td class="tabcont"></td>
   </tr>
 </table>
+<div id="rtlogs" class="tabcont"</div>
 <?php include("fend.inc"); ?>
