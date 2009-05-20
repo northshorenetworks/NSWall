@@ -7,8 +7,8 @@
 # All rights reserved.
 
 # make sure the user can't kill us by pressing Ctrl-C
-trap : 2
-trap : 3
+#trap : 2
+#trap : 3
 
 # redirect input/output
 export TERM=vt220; tput init

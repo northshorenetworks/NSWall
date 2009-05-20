@@ -22,4 +22,4 @@ ifconfig pflog0 up
 ( /usr/sbin/tcpdump -l -e -n -t -v -i pflog0 2>&1 | /usr/bin/logger -p local0.info -t pf) &
 echo -n 'done'
 
-#/etc/rc.initial
+/etc/rc.initial
