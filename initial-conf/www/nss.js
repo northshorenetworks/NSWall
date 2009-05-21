@@ -163,7 +163,7 @@ document.iform.ipprotos.value=ip;
 function prepareSubmit()
 {
 selectAllOptions(MEMBERS);
-createProp(MEMBERS)
+createProp(MEMBERS);
 }
 
 function prepareRuleSubmit()
