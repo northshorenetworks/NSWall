@@ -126,14 +126,12 @@ if (!isset($do_tcpdump)) {
 				<tr>
 				<td valign="top" colspan="2">
 				<? if ($do_tcpdump) {
-					echo("<strong>TCPDump output:</strong><br>");
-					echo('<pre>');
-					ob_end_flush();
-					$ifname = get_interface_name($interface);					
-					system("/usr/sbin/tcpdump -i $ifname -c $count" );
-					echo('</pre>');
-				}
-				?>
+                                        echo("<strong>TCPDump in Progress: Do not navigate away from this page</strong><br>");
+                                        $ifname = get_interface_name($interface);
+                                        mwexec("/usr/sbin/tcpdump -i $ifname -c $count -w /tmp/debug/nswall.cap" );
+                                        echo("<strong><a href=\"/debug/nswall.cap\">nswall.cap</a></strong><br>");
+                                }
+                                ?>
 				</td>
 				</tr>
 			</table>

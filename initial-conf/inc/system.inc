@@ -465,10 +465,12 @@ function system_pccard_start() {
 function system_webgui_start() {
 	global $config, $g;
 	
-	if ($g['booting'])
+	if ($g['booting']) {
 		echo "Starting webGUI... ";
+		mwexec("/bin/ln -s /tmp/debug/ /usr/www/debug");
+	}
 	
-	/* kill any running mini_httpd */
+        /* kill any running mini_httpd */
 	killbypid("{$g['varrun_path']}/mini_httpd.pid");
 
 	/* find out the lan ip, we'll only listen on this one */
