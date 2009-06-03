@@ -89,7 +89,7 @@ $pconfig['lcplog']    = isset($config['pptp']['client']['lcplog']);
             <?php if ($savemsg) print_info_box($savemsg); ?>
             <p><span class="vexpl"><span class="red"><strong>Note: </strong></span>the 
               options on this page are intended for use by advanced users only.</span></p>
-            <form action="vpn_pptp_client.php" onSubmit="return prepareSubmit()" method="post" name="iform" id="iform">
+            <form action="vpn_pptp_client.php" onSubmit="return prepareSubmit(MEMBERS)" method="post" name="iform" id="iform">
  	    <?php if (!file_exists($d_pptpclient_pid)): ?><p>
 	    <input name="submit" type="submit" class="formbtn" id="Connect" value="Connect"></p>
             <?php endif; ?>
@@ -136,12 +136,13 @@ $pconfig['lcplog']    = isset($config['pptp']['client']['lcplog']);
 		<tr>
                 <td width="22%" valign="top" class="vncellreq">Remote Network(s)</td>
                 <td width="78%" class="vtable">
-                <SELECT style="width: 150px; height: 100px" id="MEMBERS" NAME="MEMBERS" MULTIPLE size=6 width=30>
-                <?php for ($i = 0; $i<sizeof($pconfig['routelist']); $i++): ?>
+                <select name="MEMBERS" style="width: 150px; height: 100px" id="MEMBERS" multiple>
+		<?php for ($i = 0; $i<sizeof($pconfig['routelist']); $i++): ?>
                 <option value="<?=$pconfig['routelist']["route$i"];?>">
                 <?=$pconfig['routelist']["route$i"];?>
                 </option>
                 <?php endfor; ?>
+		</select>
                 <input type=button onClick="removeOptions(MEMBERS)"; value='Remove Selected'><br><br>
                   <strong>Type</strong>
                     <select name="srctype" class="formfld" id="srctype" onChange="switchsrcid(document.iform.srctype.value)">

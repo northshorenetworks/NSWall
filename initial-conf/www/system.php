@@ -221,12 +221,6 @@ if ($_POST) {
                     to change the password for accessing the webGUI, enter it 
                     here twice.</span></td>
                 </tr>
-                <tr> 
-                  <td width="22%" valign="top" class="vncell">webGUI protocol</td>
-                  <td width="78%" class="vtable"> <input name="webguiproto" type="radio" value="http" <?php if ($pconfig['webguiproto'] == "http") echo "checked"; ?>>
-                    HTTP &nbsp;&nbsp;&nbsp; <input type="radio" name="webguiproto" value="https" <?php if ($pconfig['webguiproto'] == "https") echo "checked"; ?>>
-                    HTTPS</td>
-                </tr>
                 <tr>
                   <td width="22%" valign="top" class="vncell">webGUI Certificate</td>
                   <td width="78%" class="vtable">
@@ -244,14 +238,14 @@ if ($_POST) {
                   <td class="vtable"> <input name="webguiport" type="text" class="formfld" id="webguiport" size="5" value="<?=htmlspecialchars($pconfig['webguiport']);?>"> 
                     <br>
                     <span class="vexpl">Enter a custom port number for the webGUI 
-                    above if you want to override the default (80 for HTTP, 443 
-                    for HTTPS).</span></td>
+                    above if you want to override the default (443 
+                    ).</span></td>
                 </tr>
-		<tr>
+		<!--<tr>
                   <td width="22%" valign="top" class="vncell">SSH Server</td>
                   <td width="78%" class="vtable"> <input name="sshdenabled" type="checkbox" value="sshdenabled" <?php if ($pconfig['sshdenabled']) echo "checked"; ?>>
                     Enable SSH Server &nbsp;&nbsp;&nbsp;</td>
-                </tr>
+                </tr>-->
                 <tr>
                   <td width="22%" valign="top" class="vncell">Symon Logging</td>
                   <td width="78%" class="vtable"> <input name="symonenabled" type="checkbox" value="symonenabled" <?php if ($pconfig['symonenabled']) echo "checked"; ?>>

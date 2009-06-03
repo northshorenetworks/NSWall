@@ -41,12 +41,6 @@ if (!$index)
 	exit;
 
 $optcfg = &$config['interfaces']['opt' . $index];
-$pconfig['descr'] = $optcfg['descr'];
-$pconfig['ipaddr'] = $optcfg['ipaddr'];
-$pconfig['subnet'] = $optcfg['subnet'];
-$pconfig['aliaslist'] = $optcfg['aliaslist'];
-$pconfig['enable'] = isset($optcfg['enable']);
-$pconfig['gateway'] = $optcfg['gateway'];
 
 /* Wireless interface? */
 if (isset($optcfg['wireless'])) {
@@ -85,8 +79,9 @@ if ($_POST) {
 		$optcfg['descr'] = $_POST['descr'];
 		$optcfg['ipaddr'] = $_POST['ipaddr'];
 		$optcfg['subnet'] = $_POST['subnet'];
-		$aliaslist = explode(',', $_POST['aliases']);
-         	for($i=0;$i<sizeof($aliaslist); $i++) {
+		unset($optcfg['aliaslist']);
+		$aliaslist = explode(',', $_POST['memberslist']);
+                for($i=0;$i<sizeof($aliaslist); $i++) {
                       $alias = 'alias'."$i";
                       $prop = preg_replace("/ /", "", $aliaslist[$i]);
                       $optcfg['aliaslist'][$alias] = $prop;
@@ -112,6 +107,13 @@ if ($_POST) {
 	}
 }
 
+$pconfig['descr'] = $optcfg['descr'];
+$pconfig['ipaddr'] = $optcfg['ipaddr'];
+$pconfig['subnet'] = $optcfg['subnet'];
+$pconfig['aliaslist'] = $optcfg['aliaslist'];
+$pconfig['enable'] = isset($optcfg['enable']);
+$pconfig['gateway'] = $optcfg['gateway'];
+
 $pgtitle = array("Interfaces", "Optional $index (" . htmlspecialchars($optcfg['descr']) . ")");
 ?>
 
@@ -124,7 +126,7 @@ function enable_change(enable_over) {
 	document.iform.descr.disabled = endis;
 	document.iform.ipaddr.disabled = endis;
 	document.iform.subnet.disabled = endis;
-	document.iform.host.disabled = endis;
+	document.iform.srchost.disabled = endis;
 	document.iform.ALIASES.disabled = endis;
 	document.iform.addbtn.disabled = endis;
         document.iform.removebtn.disabled = endis;
@@ -140,66 +142,6 @@ function enable_change(enable_over) {
 		 document.iform.key3.disabled = endis;
 		 document.iform.key4.disabled = endis;
 	}
-}
-
-function addOption(selectbox,text,value)
-{
-var optn = document.createElement("OPTION");
-document.getElementById(selectbox).options.add(optn);
-text = text.replace(/\/32/g, "");
-value = value.replace(/\/32/g, "");
-text = text.replace(/:$/, "");
-value = value.replace(/:$/, "");
-optn.text = text;
-optn.value = value;
-document.iform.host.value="";
-
-if (document.getElementById(selectbox).name=="ALIASES") {
-   document.iform.aliases.value="";
-}
-}
-
-function removeOptions(selectbox)
-{
-var i;
-for(i=selectbox.options.length-1;i>=0;i--)
-{
-if(selectbox.options[i].selected)
-selectbox.remove(i);
-}
-}
-
-function selectAllOptions(selectbox)
-{
-var i; 
-for(i=selectbox.options.length-1;i>=0;i--)
-{
-selectbox.options[i].selected = true;
-}
-}
-
-function createProp(selectbox)
-{
-var i;
-var prop = '';
-for(i=selectbox.options.length-1;i>=0;i--)
-{
-if(selectbox.options[i].selected)
-{
-prop += selectbox.options[i].value + ', ';   
-}
-}
-prop = prop.replace(/, $/,"");
-prop = prop.replace(/host:/g,"");
-if (selectbox.name=="ALIASES") {
-   document.iform.aliases.value=prop
-   }
-}
-
-function prepareSubmit()
-{
-selectAllOptions(ALIASES);
-createProp(ALIASES);
 }
 
 function gen_bits(ipaddr) {
@@ -225,6 +167,7 @@ function ipaddr_change() {
 }
 //-->
 </script>
+<script language="javascript" src="/nss.js"></script>
 <?php if ($input_errors) print_input_errors($input_errors); ?>
 <?php if ($savemsg) print_info_box($savemsg); ?>
 <?php if ($optcfg['if']): ?>
@@ -263,18 +206,18 @@ function ipaddr_change() {
 				<tr>
                  <td width="22%" valign="top" class="vncellreq">Aliases</td>
                  <td width="78%" class="vtable">
-                 <SELECT style="width: 150px; height: 100px" id="ALIASES" NAME="ALIASES" MULTIPLE size=6 width=30>
-                 <?php for ($i = 0; $i<sizeof($pconfig['aliaslist']); $i++): ?>
+                 <select name="MEMBERS" style="width: 150px; height: 100px" id="MEMBERS" multiple>
+		 <?php for ($i = 0; $i<sizeof($pconfig['aliaslist']); $i++): ?>
                  <option value="<?=$pconfig['aliaslist']["alias$i"];?>">
                  <?=$pconfig['aliaslist']["alias$i"];?>
                  </option>
 		 <?php endfor; ?>
-                 <input type=button onClick="removeOptions(ALIASES)"; name='removebtn'; value='Remove Selected'><br><br>
+                 <input type=button onClick="removeOptions(MEMBERS)"; name='removebtn'; value='Remove Selected'><br><br>
                   <strong>Address</strong>
-                   <?=$mandfldhtml;?><input name="host" type="text" class="formfld" id="host" size="16" value="<?=htmlspecialchars($pconfig['address']);?>">
-                 <input type=button onClick="addOption('ALIASES',document.iform.host.value + '/32','host' + ':' + document.iform.host.value + '/32')"; name='addbtn'; value='Add'>
+                   <?=$mandfldhtml;?><input name="srchost" type="text" class="formfld" id="srchost" size="16" value="<?=htmlspecialchars($pconfig['address']);?>">
+                   <input type=button onClick="addOption('MEMBERS',document.iform.srchost.value + '/32','host' + ':' + document.iform.srchost.value + '/32')"; name='addbtn'; value='Add'>
                      </select>
-		<input name="aliases" type="hidden" value="">
+		   <input name="memberslist" type="hidden" value="">		
 				</tr>
 				<?php /* Wireless interface? */
 				if (isset($optcfg['wireless']))

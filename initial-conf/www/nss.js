@@ -53,6 +53,11 @@ document.getElementById(selectbox).options.add(optn);
 optn.text = text;
 optn.value = value;
 }
+if (document.getElementById(selectbox).name=="MEMBERS") {
+document.iform.srchost.value="";
+document.iform.srcnet.value="";
+document.iform.srcalias.value="";
+}
 if (document.getElementById(selectbox).name=="SRCADDR") {
 document.iform.srchost.value="";
 document.iform.srcnet.value="";
@@ -82,11 +87,13 @@ for(i=selectbox.options.length-1;i>=0;i--)
 {
 if(selectbox.options[i].selected)
 selectbox.remove(i);
-if(selectbox.options.length == 0 && selectbox.name != 'PROTOLIST') {
+if(selectbox.options.length == 0) {
+if(selectbox.name == 'DSTADDR' || selectbox.name == 'SRCADDR') {
 var optn = document.createElement("OPTION");
 document.getElementById(selectbox.name).options.add(optn);
 optn.text = 'any';
 optn.value = 'any';
+}
 }
 }
 }
@@ -160,20 +167,20 @@ document.iform.udpports.value=udp;
 document.iform.ipprotos.value=ip;
 }
 
-function prepareSubmit()
+function prepareSubmit(id)
 {
-selectAllOptions(MEMBERS);
-createProp(MEMBERS);
+selectAllOptions(id);
+createProp(id);
 }
 
-function prepareRuleSubmit()
+function prepareRuleSubmit(id1,id2,id3)
 {
-selectAllOptions(SRCADDR);
-createProp(SRCADDR);
-selectAllOptions(DSTADDR);
-createProp(DSTADDR);
-selectAllOptions(PROTOLIST);
-createProtoProps(PROTOLIST);
+selectAllOptions(id1);
+createProp(id1);
+selectAllOptions(id2);
+createProp(id2);
+selectAllOptions(id3);
+createProtoProps(id3);
 }
  
 var ids=new Array('srchost','srcnet','srcalias', 'dsthost', 'dstnet', 'dstalias', 'dstsnat', 'dstredir', 'dstrelay');

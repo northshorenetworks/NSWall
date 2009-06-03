@@ -234,10 +234,8 @@ if (isset($id) && $a_filter[$id]) {
   </td></tr>
   <tr>
     <td class="tabcont">
-
-<center>
 	<div id="tabAddress" style="display:block;"> 
-             <form action="firewall_rules_edittabs.php" onSubmit="return prepareRuleSubmit()" method="post" name="iform" id="iform">
+             <form action="firewall_rules_edittabs.php" onSubmit="return prepareRuleSubmit(SRCADDR,DSTADDR,PROTOLIST)" method="post" name="iform" id="iform">
 	      <table width="100%" border="0" cellpadding="6" cellspacing="0">
         	<tr>
                   <td width="22%" valign="top" class="vncellreq">Name</td>
@@ -291,13 +289,14 @@ if (isset($id) && $a_filter[$id]) {
                   <tr>
                 <td width="22%" valign="top" class="vncellreq">Source</td>
                 <td width="78%" class="vtable">
-                <SELECT style="width: 150px; height: 100px" id="SRCADDR" NAME="SRCADDR" MULTIPLE size=6 width=30>
+		<select name="SRCADDR" style="width: 150px; height: 100px" id="SRCADDR" multiple>
                 <?php for ($i = 0; $i<sizeof($pconfig['srclist']); $i++): ?>
                 <option value="<?=$pconfig['srclist']["src$i"];?>">
                 <?=$pconfig['srclist']["src$i"];?>
                 </option>
                 <?php endfor; ?>
-                <input type=button onClick="removeOptions(SRCADDR)"; value='Remove Selected'><br><br>
+                </select>
+		<input type=button onClick="removeOptions(SRCADDR)"; value='Remove Selected'><br><br>
                   <strong>Type</strong>
                     <select name="srctype" class="formfld" id="srctype" onChange="switchsrcid(document.iform.srctype.value)">
                       <option value="srchost" selected>Host</option>
@@ -345,12 +344,13 @@ if (isset($id) && $a_filter[$id]) {
 		<tr>
                 <td width="22%" valign="top" class="vncellreq">Destination</td>
                 <td width="78%" class="vtable">
-                <SELECT style="width: 150px; height: 100px" id="DSTADDR" NAME="DSTADDR" MULTIPLE size=6 width=30>
+                <select name="DSTADDR" style="width: 150px; height: 100px" id="DSTADDR" multiple>
        		<?php for ($i = 0; $i<sizeof($pconfig['dstlist']); $i++): ?>
                 <option value="<?=$pconfig['dstlist']["dst$i"];?>">
                 <?=$pconfig['dstlist']["dst$i"];?>
                 </option>
                 <?php endfor; ?>
+		</select>
 		<input type=button onClick="removeOptions(DSTADDR)"; value='Remove Selected'><br><br>
 		<strong>Type</strong>
                     <select name="dsttype" class="formfld" id="dsttype" onChange="switchdstid(document.iform.dsttype.value)">
@@ -463,12 +463,13 @@ if (isset($id) && $a_filter[$id]) {
                                 <?php endif; ?>
                         <?php endforeach; ?>
                     </select><br><br> -->
-		<SELECT style="width: 150px; height: 100px" id="PROTOLIST" NAME="PROTOLIST" MULTIPLE size=6 width=30>
+		<select name="PROTOLIST" style="width: 150px; height: 100px" id="PROTOLIST" multiple>
                 <?php for ($i = 0; $i<sizeof($pconfig['tcplist']); $i++): ?>
                 <option value="tcp/<?=$pconfig['tcplist']["tcp$i"];?>">
                 tcp/<?=$pconfig['tcplist']["tcp$i"];?>
                 </option>
                 <?php endfor; ?>
+		</select>
 		<?php for ($i = 0; $i<sizeof($pconfig['udplist']); $i++): ?>
                 <option value="udp/<?=$pconfig['udplist']["udp$i"];?>">
                 udp/<?=$pconfig['udplist']["udp$i"];?>
@@ -601,7 +602,6 @@ if (isset($id) && $a_filter[$id]) {
               </table>
 	</form>
 	</div>
-</center>
 <script language="JavaScript">
 <!--
 </script>

@@ -349,7 +349,6 @@ function activate(obj){
   </td></tr>
   <tr>
     <td class="tabcont">
-<center>
 	<div id="tabTimeouts" style="display:block">
              <form action="firewall_options_edit.php" onSubmit="return prepareSubmit()" method="post" name="iform" id="iform">
 	     <?php if ($savemsg) print_info_box($savemsg); ?>
@@ -809,7 +808,6 @@ extended PAWS checks
                 </table>
 		</form>
         </div>
-</center>
 <script language="JavaScript">
 <!--
 //-->

@@ -97,9 +97,8 @@ if ($_POST) {
 <script language="javascript" src="/nss.js"></script>
 
 <?php if ($input_errors) print_input_errors($input_errors); ?>
-<center>
 	<id="Address">
-             <form action="firewall_aliases_edit.php" onSubmit="return prepareSubmit()" method="post" name="iform" id="iform">
+             <form action="firewall_aliases_edit.php" onSubmit="return prepareSubmit(MEMBERS)" method="post" name="iform" id="iform">
 	      <table width="100%" border="0" cellpadding="6" cellspacing="0">
         	<tr>
                   <td width="22%" valign="top" class="vncellreq">Name</td>
@@ -117,12 +116,13 @@ if ($_POST) {
 		<tr>
                 <td width="22%" valign="top" class="vncellreq">Members</td>
                 <td width="78%" class="vtable">
-                <SELECT style="width: 150px; height: 100px" id="MEMBERS" NAME="MEMBERS" MULTIPLE size=6 width=30>
-                <?php for ($i = 0; $i<sizeof($pconfig['memberlist']); $i++): ?>
+                <select name="MEMBERS" style="width: 150px; height: 100px" id="MEMBERS" multiple>
+		<?php for ($i = 0; $i<sizeof($pconfig['memberlist']); $i++): ?>
                 <option value="<?=$pconfig['memberlist']["member$i"];?>">
                 <?=$pconfig['memberlist']["member$i"];?>
                 </option>
                 <?php endfor; ?>
+		</select>
                 <input type=button onClick="removeOptions(MEMBERS)"; value='Remove Selected'><br><br>
                   <strong>Type</strong>
                     <select name="srctype" class="formfld" id="srctype" onChange="switchsrcid(document.iform.srctype.value)">

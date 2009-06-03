@@ -131,7 +131,7 @@ if ($_POST) {
       $wancfg['ipaddr'] = $_POST['ipaddr'];
     $wancfg['subnet'] = $_POST['subnet'];
       $wancfg['gateway'] = $_POST['gateway'];
-      $aliaslist = explode(',', $_POST['aliases']);
+      $aliaslist = explode(',', $_POST['memberslist']);
       for($i=0;$i<sizeof($aliaslist); $i++) {
                              $alias = 'alias'."$i";
                              $prop = preg_replace("/ /", "", $aliaslist[$i]);
@@ -230,126 +230,55 @@ if (isset($optcfg['wireless'])) {
 
 ?>
 <?php include("fbegin.inc"); ?>
-<script language="JavaScript">
+<script language="javascript" src="/nss.js"></script>
+<script language="javascript">
 <!--
-
-function addOption(selectbox,text,value)
-{
-var optn = document.createElement("OPTION");
-document.getElementById(selectbox).options.add(optn);
-text = text.replace(/\/32/g, "");
-value = value.replace(/\/32/g, "");
-text = text.replace(/:$/, "");
-value = value.replace(/:$/, "");
-optn.text = text;
-optn.value = value;
-if (document.getElementById(selectbox).name=="routepolicies") {
-   document.iform.src.value="";
-   document.iform.dst.value="";
-   if (optn.text != "Any") {
-      if (document.getElementById(selectbox).options[0].text == "Any") {
-         document.getElementById(selectbox).remove(0);
-      }
-   }
-}
-if (document.getElementById(selectbox).name=="DSTADDR") {
-   document.iform.dst.value="";
-   if (optn.text != "Any") {
-      if (document.getElementById(selectbox).options[0].text == "Any") {
-         document.getElementById(selectbox).remove(0);
-      }
-   }
-}
-}
-
-function removeOptions(selectbox)
-{
-var i;
-for(i=selectbox.options.length-1;i>=0;i--)
-{
-if(selectbox.options[i].selected)
-selectbox.remove(i);
-   if(selectbox.options.length == 0) {
-      addOption(selectbox.name,"Any","any");
-   }
-}
-}
-
-function selectAllOptions(selectbox)
-{
-var i; 
-for(i=selectbox.options.length-1;i>=0;i--)
-{
-selectbox.options[i].selected = true;
-}
-}
-
-function createProp(selectbox)
-{
-var i;
-var prop = '';
-for(i=selectbox.options.length-1;i>=0;i--)
-{
-if(selectbox.options[i].selected)
-{
-prop += selectbox.options[i].value + ', ';   
-}
-}
-prop = prop.replace(/, $/,"");
-prop = prop.replace(/host:/g,"");
-prop = prop.replace(/network:/g,"");
-prop = prop.replace(/alias:/g,'$');
-document.iform.ipsecroutelist.value=prop
-}
-
 var tabs=new Array('Static', 'DHCP', 'PPPoE');
-
+ 
 function switchtab(tab){
-        hidealltabs();
-        showdiv(tab);
+hidealltabs();
+showdiv(tab);
 }
-
+ 
 function hidealltabs(){
-        //loop through the array and hide each element by id
-        for (var i=0;i<tabs.length;i++){
-        	hidediv(tabs[i]);
-        }
+//loop through the array and hide each element by id
+for (var i=0;i<tabs.length;i++){
+  hidediv(tabs[i]);
 }
-
+}
+ 
 function hidediv(id) {
-        //safe function to hide an element with a specified id
-        if (document.getElementById) { // DOM3 = IE5, NS6
-                document.getElementById(id).style.display = 'none';
-        }
-        else {
-                if (document.layers) { // Netscape 4
-                        document.id.display = 'none';
-                }
-                else { // IE 4
-                        document.all.id.style.display = 'none';
-                }
-        }
+//safe function to hide an element with a specified id
+if (document.getElementById) { // DOM3 = IE5, NS6
+document.getElementById(id).style.display = 'none';
 }
-
+else {
+if (document.layers) { // Netscape 4
+document.id.display = 'none';
+}
+else { // IE 4
+document.all.id.style.display = 'none';
+}
+}
+}
+ 
 function showdiv(id) {
-        //safe function to show an element with a specified id
-
-        if (document.getElementById) { // DOM3 = IE5, NS6
-                document.getElementById(id).style.display = 'block';
-        }
-        else {
-                if (document.layers) { // Netscape 4
-                        document.id.display = 'block';
-                }
-                else { // IE 4
-                        document.all.id.style.display = 'block';
-                }
-        }
+//safe function to show an element with a specified id
+ 
+if (document.getElementById) { // DOM3 = IE5, NS6
+document.getElementById(id).style.display = 'block';
 }
-
+else {
+if (document.layers) { // Netscape 4
+document.id.display = 'block';
+}
+else { // IE 4
+document.all.id.style.display = 'block';
+}
+}
+}
 -->
 </script>
-
 <table width="100%" id="navigator" border="0" cellpadding="0" cellspacing="0">
 <?php if ($input_errors) print_input_errors($input_errors); ?>
 <?php if ($savemsg) print_info_box($savemsg); ?>
@@ -357,7 +286,7 @@ function showdiv(id) {
             <table width="100%" border="0" cellpadding="6" cellspacing="0">
                 <tr>
                   <td valign="middle"><strong>Type</strong></td>
-                  <td><select name="type" class="formfld" id="type" onchange="switchtab(document.iform.type.value)";
+                  <td><select name="type" class="formfld" id="type" onchange="switchtab(document.iform.type.value)";>
                       <?php $opts = split(" ", "Static DHCP PPPoE");
                                 foreach ($opts as $opt): ?>
                       <option value="<?=htmlspecialchars($opt);?>"<?php if ($opt == $pconfig['type']) echo " selected";?>>
@@ -399,8 +328,6 @@ function showdiv(id) {
 
 <div id="Static" style="display:block">
 <?php if ($input_errors) print_input_errors($input_errors); ?>
-            <form action="vpn_ipsec_edit.php" onSubmit="return prepareSubmit()" method="post" name="iform" id="iform">
-	     <input name="ipsecroutelist" type="hidden" value=""> 
              <table width="100%" border="0" cellpadding="6" cellspacing="0">
 	      <tr>
                   <td colspan="2" valign="top" class="listtopic">Static IP configuration</td>
@@ -411,7 +338,7 @@ function showdiv(id) {
                     /
                     <select name="subnet" class="formfld" id="subnet">
                     <?php
-                      if (isset($wancfg['ispointtopoint']))
+                        if (isset($wancfg['ispointtopoint']))
                         $snmax = 32;
                       else
                         $snmax = 31;
@@ -436,19 +363,19 @@ function showdiv(id) {
                 <tr>
                  <td width="22%" valign="top" class="vncellreq">Aliases</td>
                  <td width="78%" class="vtable">
-                 <SELECT style="width: 150px; height: 100px" id="ALIASES" NAME="ALIASES" MULTIPLE size=6 width=30>
-                 <?php for ($i = 0; $i<sizeof($pconfig['aliaslist']); $i++): ?>
+                 <select name="MEMBERS" style="width: 150px; height: 100px" id="MEMBERS" multiple>
+		 <?php for ($i = 0; $i<sizeof($pconfig['aliaslist']); $i++): ?>
                  <option value="<?=$pconfig['aliaslist']["alias$i"];?>">
                  <?=$pconfig['aliaslist']["alias$i"];?>
                  </option>
                  <?php endfor; ?>
-                 <input type=button onClick="removeOptions(ALIASES)"; name='removebtn'; value='Remove Selected'><br><br>
+                 <input type=button onClick="removeOptions(MEMBERS)"; name='removebtn'; value='Remove Selected'><br><br>
                   <strong>Address</strong>
-                   <?=$mandfldhtml;?><input name="host" type="text" class="formfld" id="host" size="16" value="<?=htmlspecialchars($pconfig['address']);?>">
-                 <input type=button onClick="addOption('ALIASES',document.iform.host.value + '/32','host' + ':' + document.iform.host.value + '/32')"; name='addbtn'; value='Add'>
+                   <?=$mandfldhtml;?><input name="srchost" type="text" class="formfld" id="srchost" size="16" value="<?=htmlspecialchars($pconfig['address']);?>">
+                 <input type=button onClick="addOption('MEMBERS',document.iform.srchost.value + '/32','host' + ':' + document.iform.srchost.value + '/32')"; name='addbtn'; value='Add'>
                      </select>
-                 <input name="aliases" type="hidden" value="">
-               </tr>
+                <input name="memberslist" type="hidden" value="">
+                </tr>
                 <tr>
                   <td colspan="2" valign="top" height="16"></td>
                 </tr>

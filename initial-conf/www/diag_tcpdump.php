@@ -52,12 +52,14 @@ if ($_POST) {
 		$do_tcpdump = true;
 		$interface = $_POST['interface'];
 		$count = $_POST['count'];
+		$port = $_POST['port'];
 	}
 }
 if (!isset($do_tcpdump)) {
 	$do_tcpdump = false;
 	$host = '';
 	$count = DEFAULT_COUNT;
+	$port = 'http';
 }
 
 ?>
@@ -84,10 +86,14 @@ if (!isset($do_tcpdump)) {
 				<tr>
 				  <td dth="22%" valign="top" class="vncellreq">Protocol</td>
                                   <td width="78%" class="vtable">
-                                        <select name="count" class="formfld" id="proto">
-                                        <option selected value="tcp.port == 80">HTTP</option>
-                                        <option value="tcp.port == 25">SMTP</option>
-                                        <option value="">Any</option>
+                                        <select name="port" class="formfld" id="proto">
+                                        <option selected value="http">HTTP</option>
+                                        <option value="smtp">SMTP</option>
+                                        <option value="ftp or ftp-data">FTP</option>
+					<option value="telnet">Telnet</option>
+					<option value="ssh">SSH</option>
+					<option value="icmp">ICMP</option>
+					<option value="any">Any</option>
                                         </select></td>
                                 </tr>
                                 <tr>
@@ -105,7 +111,7 @@ if (!isset($do_tcpdump)) {
                       <?=htmlspecialchars($ifacename);?>
                       </option>
                       <?php endforeach; ?>
-                    </select>
+                      </select>
 				  </td>
 				</tr>
 				<tr>
@@ -128,7 +134,14 @@ if (!isset($do_tcpdump)) {
 				<? if ($do_tcpdump) {
                                         echo("<strong>TCPDump in Progress: Do not navigate away from this page</strong><br>");
                                         $ifname = get_interface_name($interface);
-                                        mwexec("/usr/sbin/tcpdump -i $ifname -c $count -w /tmp/debug/nswall.cap" );
+                                        if ($port != 'any') {
+                                                $proto = "port $port";
+                                        } elseif ($port == 'icmp') {
+						$proto = 'icmp';
+					}else {
+						$proto = '';
+					}
+                                        mwexec("/usr/sbin/tcpdump -i $ifname -c $count -w /tmp/debug/nswall.cap $proto");
                                         echo("<strong><a href=\"/debug/nswall.cap\">nswall.cap</a></strong><br>");
                                 }
                                 ?>

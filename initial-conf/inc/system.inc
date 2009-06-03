@@ -485,19 +485,18 @@ function system_webgui_start() {
 	if ($config['system']['general']['webgui']['port'])
 		$portarg = "-p {$config['system']['general']['webgui']['port']}";
 	else
-		$portarg = "";
+		$portarg = "-p 443";
 	
 	$hostname = $config['system']['hostname'];
-	if ($config['system']['general']['webgui']['protocol'] == "https") {
 	
-		if ($config['system']['general']['webgui']['certificate']) {
-			foreach ($config['system']['certmgr']['cert'] as $certificate) {
-				if ($config['system']['general']['webgui']['certificate'] == $certificate['name']) {
-					$cert = base64_decode($certificate['crt']);
-					$key = base64_decode($certificate['prv']);
-				}
+	if ($config['system']['general']['webgui']['certificate']) {
+		foreach ($config['system']['certmgr']['cert'] as $certificate) {
+			if ($config['system']['general']['webgui']['certificate'] == $certificate['name']) {
+				$cert = base64_decode($certificate['crt']);
+				$key = base64_decode($certificate['prv']);
 			}
-		} else {
+		}
+	} else {
 			/* default certificate/key */
 			$cert = <<<EOD
 -----BEGIN CERTIFICATE-----
@@ -548,10 +547,6 @@ EOD;
 		$res = mwexec("/sbin/mini_httpd -S -E {$g['varetc_path']}/cert.pem" .
 			" -c \"**.php|**.cgi\" -u root -maxproc 16 $portarg" . 
 			" -i {$g['varrun_path']}/mini_httpd.pid -h $lanip");
-	} else {
-		$res = mwexec("/sbin/mini_httpd -c \"**.php|**.cgi\" -u root" .
-			" -maxproc 16 $portarg -i {$g['varrun_path']}/mini_httpd.pid -h $lanip");
-	}
 	
 	if ($g['booting']) {
 		if ($res == 0)
