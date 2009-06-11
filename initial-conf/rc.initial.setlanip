@@ -43,7 +43,7 @@
 		}
 	} while (!is_ipaddr($lanip));
 
-	echo "\nSubnet masks are entered as bit counts (as in CIDR notation) in m0n0wall.\n";
+	echo "\nSubnet masks are entered as bit counts (as in CIDR notation) in NSWall.\n";
 	echo "e.g. 255.255.255.0 = 24\n";
 	echo "     255.255.0.0   = 16\n";
 	echo "     255.0.0.0     = 8\n\n";
@@ -85,16 +85,7 @@
 		unset($config['dhcpd']['lan']['enable']);
 	}
 	
-	$proto = "http";
-	if ($config['system']['webgui']['protocol'] == "https") {
-	
-		echo "\nDo you want to revert to HTTP as the webGUI protocol? (y/n) ";
-		
-		if (strcasecmp(chop(fgets($fp)), "y") == 0)
-			$config['system']['webgui']['protocol'] = "http";
-		else
-			$proto = "https";
-	}
+	$proto = "https";
 	
 	if (isset($config['system']['webgui']['noantilockout'])) {
 		echo "\nNote: the anti-lockout rule on LAN has been re-enabled.\n";

@@ -136,7 +136,7 @@ echo "Copying default config from platform to conf partition..."
 # Here is where you add your own packages and configuration to the flash...
 ${SUDO} touch ${MOUNTPOINT}/set_wizard_initial
 ${SUDO} cp ${BASE}/initial-conf/config.xml ${MOUNTPOINT}/config.xml
-${SUDO} mkdir ${MOUNTPOINT}/ssh
+#${SUDO} mkdir ${MOUNTPOINT}/ssh
 
 echo ""
 echo "Unmounting and Config Partition..."

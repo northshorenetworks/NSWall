@@ -35,12 +35,11 @@ while : ; do
 # display a cheap menu
 echo "NSWall console setup"
 echo "**********************"
-echo "1) Interfaces: assign network ports"
-echo "2) Set up LAN IP address"
-echo "3) Reset webGUI password"
-echo "4) Reset to factory defaults"
-echo "5) Reboot system"
-echo "6) Ping host"
+echo "1) Set up LAN IP address"
+echo "2) Reset webGUI password"
+echo "3) Reset to factory defaults"
+echo "4) Reboot system"
+echo "5) Ping host"
 echo
 
 echo "Enter a number: "; read opmode
@@ -48,21 +47,18 @@ echo "Enter a number: "; read opmode
 # see what the user has chosen
 case ${opmode} in
 1)
-	/etc/rc.initial.setports
- 	;;
-2)
 	/etc/rc.initial.setlanip
  	;;
-3)
+2)
 	/etc/rc.initial.password
 	;;
-4)
+3)
 	/etc/rc.initial.defaults
 	;;
-5)
+4)
 	/etc/rc.reboot > /dev/null
 	;;
-6)
+5)
 	/etc/rc.initial.ping
 	;;
 esac

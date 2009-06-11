@@ -1,39 +1,25 @@
 <?xml version="1.0"?>
-<!-- NSWall default system configuration -->
-<!-- $Id: config.xml,v 1.2 2009/02/24 07:12:12 jrecords Exp $ -->
 <nswall>
-	<version>1.0</version>
-	<lastchange>1242426772</lastchange>
+	<version>1.6</version>
+	<lastchange>1244590588</lastchange>
 	<system>
-		<hostname>nswall</hostname>
 		<username>admin</username>
-		<password>$1$wWnd/iov$yT9PhU.90Evxp/oFK92hy.</password>
-		<webgui>
-			<protocol>http</protocol>
-		</webgui>
+		<password>$1$i9teCui6$HUS98dEKoXDeaMjQTzvXJ.</password>
 		<general>
-			<domain>northshoresoftware.com</domain>
-			<webgui>
-				<protocol>http</protocol>
-				<certificate/>
-				<port>80</port>
-			</webgui>
-			<timezone>America/Los_Angeles</timezone>
 			<timeservers>pool.ntp.org</timeservers>
 			<time-update-interval>300</time-update-interval>
-			<symon/>
 		</general>
 	</system>
 	<interfaces>
 		<lan>
-			<if>vr1</if>
+			<if>vic1</if>
 			<ipaddr>192.168.254.1</ipaddr>
 			<subnet>24</subnet>
 			<media/>
 			<mediaopt/>
 		</lan>
 		<wan>
-			<if>vr0</if>
+			<if>vic0</if>
 			<mtu/>
 			<ipaddr>dhcp</ipaddr>
 			<subnet/>
@@ -44,12 +30,10 @@
 		</wan>
 		<opt1>
 			<descr>DMZ</descr>
-			<if>vr2</if>
+			<if>vic2</if>
 			<type/>
 		</opt1>
 	</interfaces>
-	<staticroutes/>
-	<pppoe/>
 	<pptp>
 		<client>
 			<server/>
@@ -62,17 +46,16 @@
 			</routelist>
 		</client>
 	</pptp>
-	<dnsupdate/>
 	<dhcpd>
 		<lan>
-			<enable/>
-			<range>
-				<from>192.168.254.2</from>
-				<to>192.168.254.100</to>
-			</range>
 			<gateway/>
+			<range>
+				<from>192.168.254.100</from>
+				<to>192.168.254.199</to>
+			</range>
 			<defaultleasetime/>
 			<maxleasetime/>
+			<enable/>
 		</lan>
 	</dhcpd>
 	<dnsmasq>
@@ -82,13 +65,14 @@
 	<nat>
 		<advancedoutbound>
 			<rule>
-				<interface>wan</interface>
 				<source>
 					<network>192.168.254.0/24</network>
 				</source>
+				<descr/>
+				<target/>
+				<interface>wan</interface>
 				<destination>
 					<any/>
-					<network>xxx.xxx.xxx.xxx/xx</network>
 				</destination>
 			</rule>
 		</advancedoutbound>
@@ -143,9 +127,4 @@
 			</logging>
 		</options>
 	</filter>
-	<ipsec/>
-	<aliases/>
-	<altq>
-		<bandwidth/>
-	</altq>
 </nswall>

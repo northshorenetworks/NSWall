@@ -72,7 +72,7 @@ COPY	${CURDIR}/initial-conf/rc		etc/rc
 COPY    ${CURDIR}/initial-conf/rc.initial	etc/rc.initial
 COPY	${CURDIR}/initial-conf/rc.pkg		etc/rc.pkg
 COPY	${CURDIR}/initial-conf/moduli		etc/moduli
-COPY	${CURDIR}/initial-conf/sshd_config	etc/ssh/sshd_config
+#COPY	${CURDIR}/initial-conf/sshd_config	etc/ssh/sshd_config
 COPY	${CURDIR}/initial-conf/ttys		etc/ttys
 COPY    ${CURDIR}/initial-conf/boot.conf        etc/boot.conf
 
@@ -93,22 +93,9 @@ COPY    ${CURDIR}/initial-conf/rc.newwanip		etc/rc.newwanip
 COPY    ${CURDIR}/initial-conf/rc.queryconfigserver     etc/rc.queryconfigserver
 COPY    ${CURDIR}/initial-conf/rc.reboot                etc/rc.reboot
 COPY    ${CURDIR}/initial-conf/php.ini			etc/php.ini
+COPY    ${CURDIR}/initial-conf/config.xml               conf.default/config.xml
 COPY	${BINDIR}/zoneinfo.tgz				usr/share/zoneinfo.tgz
 COPY    ${DESTDIR}/usr/bin/nohup			usr/bin/nohup
-
-# Here we encrypt the php code with SG
-#SPECIAL mkdir ${CURDIR}/encrypted
-#SPECIAL cp -R -p ${CURDIR}/initial-conf/inc             ${CURDIR}/encrypted
-#SPECIAL ${BINDIR}/SG/bin/encode4 -z 9 -b- ${CURDIR}/encrypted/inc/*.inc
-#SPECIAL cp -R -p ${CURDIR}/encrypted/inc                etc/inc/
-#SPECIAL cp -R -p ${CURDIR}/initial-conf/www             ${CURDIR}/encrypted
-#SPECIAL ${BINDIR}/SG/bin/encode4 -z 9 -b- ${CURDIR}/encrypted/www/*.php
-#SPECIAL ${BINDIR}/SG/bin/encode4 -z 9 -b- ${CURDIR}/encrypted/www/*.inc
-#SPECIAL cp -R -p ${CURDIR}/encrypted/www                usr/www/
-#SPECIAL rm -rf ${CURDIR}/encrypted
-
-SPECIAL cp -R -p ${CURDIR}/initial-conf/inc              etc/inc/
-SPECIAL cp -R -p ${CURDIR}/initial-conf/www              usr/www/
 
 #SPECIAL mkdir usr/www/js
 SPECIAL mkdir ftmp
@@ -131,9 +118,14 @@ SPECIAL	chmod 755 bin/createconfig
 SPECIAL chmod 755 etc/rc
 SPECIAL chmod 755 etc/rc.pkg
 SPECIAL chown root.wheel etc/master.passwd
-SPECIAL chmod 0600 etc/master.passwd etc/ssh/sshd_config
+SPECIAL chmod 0600 etc/master.passwd
 SPECIAL sed "/^tty00/s/19200/${TTYSPEED}/" < etc/ttys > etc/ttys.speed
 SPECIAL mv etc/ttys.speed etc/ttys
+
+# Here we encrypt the php code with SG
+SPECIAL cp -R -p ${CURDIR}/initial-conf/inc             etc/inc/
+SPECIAL cp -R -p ${CURDIR}/initial-conf/www             usr/www/
+SPECIAL ${BINDIR}/SG/bin/encode4 --conj -z 9 -b- @${CURDIR}/sgproject
 
 # Miscellaneous extra tools
 COPY	${CURDIR}/tools/rw.sh			bin/rw
@@ -226,7 +218,7 @@ COPY ${DESTDIR}/usr/bin/sed			usr/bin/sed
 COPY ${DESTDIR}/usr/bin/sftp			usr/bin/sftp
 COPY ${DESTDIR}/usr/bin/sort			usr/bin/sort
 #COPY ${DESTDIR}/usr/bin/ssh			usr/bin/ssh
-COPY ${DESTDIR}/usr/bin/ssh-keygen		usr/bin/ssh-keygen
+#COPY ${DESTDIR}/usr/bin/ssh-keygen		usr/bin/ssh-keygen
 COPY ${DESTDIR}/usr/bin/su			usr/bin/su
 COPY ${DESTDIR}/usr/bin/systat			usr/bin/systat
 COPY ${DESTDIR}/usr/bin/tail			usr/bin/tail
@@ -239,7 +231,7 @@ COPY ${DESTDIR}/usr/bin/tset			usr/bin/tset
 COPY ${DESTDIR}/usr/bin/tty			usr/bin/tty
 COPY ${DESTDIR}/usr/bin/uname			usr/bin/uname
 COPY ${DESTDIR}/usr/bin/uptime			usr/bin/uptime
-COPY ${DESTDIR}/usr/bin/vi			usr/bin/vi
+#COPY ${DESTDIR}/usr/bin/vi			usr/bin/vi
 COPY ${DESTDIR}/usr/bin/vmstat			usr/bin/vmstat
 COPY ${DESTDIR}/usr/libexec/auth/login_passwd	usr/libexec/auth/login_passwd
 COPY ${DESTDIR}/usr/libexec/getty		usr/libexec/getty
@@ -253,7 +245,7 @@ COPY ${DESTDIR}/usr/libexec/tftpd		usr/libexec/tftpd
 COPY ${DESTDIR}/usr/sbin/authpf			usr/sbin/authpf
 COPY ${DESTDIR}/usr/sbin/arp			usr/sbin/arp
 #COPY ${DESTDIR}/usr/sbin/bgpd			usr/sbin/bgpd
-#COPY ${DESTDIR}/usr/sbin/bgpctl			usr/sbin/bgpctl
+#COPY ${DESTDIR}/usr/sbin/bgpctl		usr/sbin/bgpctl
 COPY ${DESTDIR}/usr/sbin/chroot			usr/sbin/chroot
 COPY ${DESTDIR}/usr/sbin/cron			usr/sbin/cron
 COPY ${DESTDIR}/usr/sbin/dev_mkdb		usr/sbin/dev_mkdb
@@ -280,11 +272,11 @@ COPY ${DESTDIR}/usr/sbin/pwd_mkdb		usr/sbin/pwd_mkdb
 COPY ${DESTDIR}/usr/sbin/rdate			usr/sbin/rdate
 COPY ${DESTDIR}/usr/sbin/relayd                 usr/sbin/relayd
 COPY ${DESTDIR}/usr/sbin/relayctl               usr/sbin/relayctl
-#COPY ${DESTDIR}/usr/sbin/rpc.bootparamd		usr/sbin/rpc.bootparamd
+#COPY ${DESTDIR}/usr/sbin/rpc.bootparamd	usr/sbin/rpc.bootparamd
 COPY ${DESTDIR}/usr/sbin/rtadvd			usr/sbin/rtadvd
 COPY ${DESTDIR}/usr/sbin/rtsold			usr/sbin/rtsold
 COPY ${DESTDIR}/usr/sbin/sasyncd		usr/sbin/sasyncd
-COPY ${DESTDIR}/usr/sbin/sshd			usr/sbin/sshd
+#COPY ${DESTDIR}/usr/sbin/sshd			usr/sbin/sshd
 COPY ${DESTDIR}/usr/sbin/syslogc		usr/sbin/syslogc
 COPY ${DESTDIR}/usr/sbin/syslogd		usr/sbin/syslogd
 COPY ${DESTDIR}/usr/sbin/tcpdrop		usr/sbin/tcpdrop
@@ -292,7 +284,7 @@ COPY ${DESTDIR}/usr/sbin/tcpdump		usr/sbin/tcpdump
 COPY ${DESTDIR}/usr/sbin/traceroute		usr/sbin/traceroute
 #COPY ${DESTDIR}/usr/sbin/traceroute6		usr/sbin/traceroute6
 COPY ${DESTDIR}/usr/sbin/watchdogd		usr/sbin/watchdogd
-#COPY ${DESTDIR}/usr/sbin/vipw            usr/sbin/vipw
+#COPY ${DESTDIR}/usr/sbin/vipw            	usr/sbin/vipw
 
 # Link pseudonymous binaries
 SPECIAL ln bin/chmod bin/chgrp
