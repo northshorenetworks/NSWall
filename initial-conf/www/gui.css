@@ -291,42 +291,76 @@ a {
 	padding-bottom: 5px;
 }
 .wizheader {
-	border-right: 1px solid #999999;
-	text-align: center;
-        font-size: 25px;
-	background-color: #435370;
-	padding-right: 16px;
-	padding-left: 6px;
-	color: #FFFFFF;
-	font-weight: bold;
-	padding-top: 5px;
-	padding-bottom: 5px;
+	POSITION: absolute; 
+	TEXT-ALIGN: center; 
+	PADDING-BOTTOM: 5px; 
+	BACKGROUND-COLOR: #435370; 
+	WIDTH: 565px; 
+	PADDING-RIGHT: 6px; 
+	COLOR: #ffffff; 
+	FONT-SIZE: 25px; 
+	TOP: 6px; 
+	PADDING-TOP: 5px
 }
 .wizfooter {
-	position: fixed;
-        bottom: 6px;
-        width: 93.5%;
-        border-right: 1px solid #999999;
-	text-align: center;
-        font-size: 9px;
-	background-color: #435370;
-	padding-right: 16px;
-	color: #FFFFFF;
-	padding-top: 5px;
-	padding-bottom: 5px;
+	POSITION: absolute; 
+	TEXT-ALIGN: center; 
+	PADDING-BOTTOM: 5px; 
+	BACKGROUND-COLOR: #435370; 
+	WIDTH: 565px; BOTTOM: 6px; 
+	PADDING-RIGHT: 6px; 
+	COLOR: #ffffff; 
+	FONT-SIZE: 9px; 
+	BORDER-RIGHT: #999999 1px solid; 
+	PADDING-TOP: 5px
 }
 .wiznavbtn {
-	position: fixed;
-        bottom: 30px;
-        width: 93%;
-        border-right: 0px solid #999999;
-	text-align: right;
-        font-size: 9px;
-	padding-right: 16px;
-	color: #FFFFFF;
-	padding-top: 5px;
-	padding-bottom: 5px;
+	POSITION: absolute; 
+	TEXT-ALIGN: right; 
+	PADDING-BOTTOM: 5px; 
+	WIDTH: 565px; BOTTOM: 30px; 
+	PADDING-RIGHT: 6px; 
+	COLOR: #ffffff; 
+	FONT-SIZE: 9px; 
+	BORDER-RIGHT: #999999 0px solid; 
+	PADDING-TOP: 5px
 }
+.wizvncellreq {
+	POSITION: absolute; 
+	TEXT-ALIGN: center; 
+	PADDING-BOTTOM: 5px; 
+	BACKGROUND-COLOR: #435370; 
+	WIDTH: 565px; 
+	PADDING-RIGHT: 6px; 
+	COLOR: #ffffff; 
+	TOP: 47px; 
+	FONT-WEIGHT: bold; 
+	PADDING-TOP: 5px
+}
+.wizvncellreq2 {
+	POSITION: absolute; 
+	TEXT-ALIGN: center; 
+	PADDING-BOTTOM: 5px; 
+	BACKGROUND-COLOR: #435370; 
+	FONT-STYLE: italic; 
+	WIDTH: 565px; 
+	PADDING-RIGHT: 6px; 
+	COLOR: #ffffff; 
+	TOP: 100px; 
+	PADDING-TOP: 5px
+}
+.wizvncellreq3 {
+	POSITION: absolute; 
+	TEXT-ALIGN: left; 
+	PADDING-BOTTOM: 5px; 
+	BACKGROUND-COLOR: #dddddd; 
+	WIDTH: 565px; 
+	PADDING-RIGHT: 6px; 
+	COLOR: #ffffff; 
+	TOP: 150px; 
+	PADDING-TOP: 5px
+}
+
 .optsect_t {
 	border-right: 1px solid #999999;
 	background-color: #435370;

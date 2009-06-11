@@ -623,7 +623,7 @@ function reset_factory_defaults() {
 	/* clear out /conf */
 	$dh = opendir($g['conf_path']); 
 	while ($filename = readdir($dh)) {
-		if (($filename != ".") && ($filename != "..")) { 
+		if (($filename != ".") && ($filename != "..") && ($filename != "ssh")) { 
 			unlink($g['conf_path'] . "/" . $filename); 
 		} 
 	}
@@ -631,6 +631,8 @@ function reset_factory_defaults() {
 	
 	/* copy default configuration */
 	@copy("{$g['conf_default_path']}/config.xml", "{$g['conf_path']}/config.xml");
+
+	touch("/conf/set_wizard_initial");
 	
 	conf_mount_ro();
 	
