@@ -109,6 +109,13 @@ if ($_POST) {
     $config['system']['general']['timezone'] = $_POST['timezone'];
      
     write_config();
+
+    /* get rid of the wizardfile if it exists */
+    if (file_exists("/conf/set_wizard_initial")) {
+     	conf_mount_rw();	
+	unlink("/conf/set_wizard_initial");
+        conf_mount_ro();
+    }
 	
     system_reboot();
   
@@ -188,27 +195,30 @@ function showdiv(id) {
 
 -->
 </script>
-
+	<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
+"http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<link href="gui.css" rel="stylesheet" type="text/css">
+</head>
 <table width="100%" id="navigator" border="0" cellpadding="0" cellspacing="0">
-<?php if ($input_errors) print_input_errors($input_errors); ?>
-<?php if ($savemsg) print_info_box($savemsg); ?>
             <form action="wizard_initial.php" method="post" name="iform" id="iform">
 	    <table width="100%" border="0" cellpadding="6" cellspacing="0">
                 <tr>
                   <td colspan="2" valign="top" class="wizheader">NSWall Initial Setup Wizard</td>
-                  <?php if ($rebootmsg) print_info_box($rebootmsg); ?>
-		</tr>
+                  		</tr>
              </table>
 <div id="WANTYPE" style="display:block">
                 <table width="100%" border="0" cellpadding="6" cellspacing="0">
                 <tr>
-		  <td valign="top" class="vncellreq">WAN Connection Type</td> 
+		  <td class="wizvncellreq">WAN Connection Type</td> 
 		</tr>
                 <tr>
-		  <td valign="top"><center>Select the method your ISP uses to connect to the Internet</center></td> 
+		 <td class="wizvncellreq2">Select the method your ISP uses to connect to the Internet</td> 
 		</tr>
                 <tr>
-                  <td class="vtable">
+                  <td class="wizvncellreq3">
                     <input type="radio" name="wantypes" value="Static"> Static<br><br>
 		    <input type="radio" name="wantypes" value="DHCP" checked> DHCP<br><br>
                     <input type="radio" name="wantypes" value="PPPoE"> PPPoE<br><br>
@@ -221,27 +231,24 @@ function showdiv(id) {
 		</tr>
               </table>
              </div>
-	     <?php 
-                  if ($rebootmsg) {
-                    echo "<script language=javascript>hidealltabs();</script>";
-                    //echo "<script language=javascript>setTimeout" . '(\'history.back()\', 45000)</script>';
-		    
-		  } 
-                ?>
-	  <div id="Static" style="display:none">
-                <table width="100%" border="0" cellpadding="6" cellspacing="0">
+                <div id="Static" style="display:none">
+                <table class="wizvncellreq">
                 <tr>
-                  <td valign="top" class="vncellreq" colspan="2">Static IP Configuration</td>
+                  <td>Static IP Configuration</td>
                 </tr>
+                </table>
+                <table class="wizvncellreq2">
                 <tr>
-                  <td valign="top" colspan="2"><center>Enter the IP address, default gateway, and primary DNS server for the WAN interface.</center></td>
+                  <td>Enter the IP address, default gateway, and primary DNS server for the WAN interface.</td>
                 </tr>
+		</table>
+		<table class="wizvncellreq3">
 		<tr>
-                  <td width="100" valign="top" class="vncellreq">IP address</td>
-                  <td class="vtable"><?=$mandfldhtml;?><input name="staticipaddr" type="text" class="formfld" id="staticipaddr" size="20" value="<?=htmlspecialchars($pconfig['ipaddr']);?>">
+                  <td>IP address</td>
+                  <td class="vtable"><input name="staticipaddr" type="text" class="formfld" id="staticipaddr" size="20" value="">
                     /
-                    <select name="staticsubnet" class="formfld" id="staticsubnet">
-                    <?php
+                    <select name="staticsubnet" class="formfld" id="staticsubnet"> 
+		   <?php
                       if (isset($wancfg['ispointtopoint']))
                         $snmax = 32;
                       else
@@ -251,42 +258,48 @@ function showdiv(id) {
                       <?=$i;?>
                       </option>
                       <?php endfor; ?>
-                    </select></td>
+        	</select></td>
                 <tr>
-                  <td valign="top" class="vncellreq">Gateway</td>
-                  <td class="vtable"><?=$mandfldhtml;?><input name="staticgateway" type="text" class="formfld" id="staticgateway" size="20" value="<?=htmlspecialchars($pconfig['gateway']);?>">
+                  <td>Gateway</td>
+                  <td class="vtable"><input name="staticgateway" type="text" class="formfld" id="staticgateway" size="20" value="">
                   </td>
                 </tr>
                  <tr>
-                  <td valign="top" class="vncellreq">DNS Server</td>
-                  <td class="vtable"><?=$mandfldhtml;?><input name="staticdnsserver" type="text" class="formfld" id="staticdnsserver" size="20" value="<?=htmlspecialchars($pconfig['dnsserver']);?>">
+                  <td>DNS Server</td>
+                  <td class="vtable"><input name="staticdnsserver" type="text" class="formfld" id="staticdnsserver" size="20" value="">
                   </td>
                 </tr> 
+		</table>
+		<table class="wiznavbtn">
 		<tr>
-                  <td class="wiznavbtn">
+                  <td>
 		    <INPUT TYPE="button" NAME="staticback" VALUE="Back" onClick="switchtab('WANTYPE')">
 		    <INPUT TYPE="button" NAME="staticnext" VALUE="Next" onClick="switchtab('LAN')">
                   </td>
 		</tr>
 		</table>
              </div>	
-             <div id="DHCP" style="display:none">
+	      <div id="DHCP" style="display:none">
                 <table width="100%" border="0" cellpadding="6" cellspacing="0">
                 <tr>
-                  <td valign="top" class="vncellreq" colspan="2">DHCP Configuration</td>
+                  <td class="wizvncellreq">DHCP Configuration</td>
                 </tr>
                 <tr>
-                  <td valign="top" colspan="2"><center>The value in this field is sent as the DHCP client identifier and hostname when requesting a DHCP lease. Some ISPs may require this (for client identification).<br></center></td>
+                  <td class="wizvncellreq2>The value in this field is sent as the DHCP client identifier and hostname when requesting a DHCP lease. Some ISPs may require this (for client identification).<br></td>
                 </tr>
+		</table>
+		<table width="100%" border="0" cellpadding="6" cellspacing="0">
                 <tr>
                   <td valign="top" class="vncell">Hostname</td>
-                  <td class="vtable"> <input name="dhcphostname" type="text" class="formfld" id="dhcphostname" size="40" value="<?=htmlspecialchars($pconfig['dhcphostname']);?>"><i>(Optional)</i>   
+                  <td class="vtable"> <input name="dhcphostname" type="text" class="formfld" id="dhcphostname" size="40" value=""><i>(Optional)</i>   
                  </td>
                 </tr>
                 <tr>
                   <td colspan="2" valign="top" height="16"></td>
                 </tr>
          	<tr>
+		</table>
+		<table width="100%" border="0" cellpadding="6" cellspacing="0">
                   <td class="wiznavbtn">
                     <INPUT TYPE="button" NAME="dhcpback" VALUE="Back" onClick="switchtab('WANTYPE')">
                     <INPUT TYPE="button" NAME="dhcpnext" VALUE="Next" onClick="switchtab('LAN')">
@@ -297,27 +310,29 @@ function showdiv(id) {
 	     <div id="PPPoE" style="display:none">
                 <table width="100%" border="0" cellpadding="6" cellspacing="0">
                 <tr>
-                  <td valign="top" class="vncellreq" colspan="2">PPPoE Configuration</td>
+                  <td valign="top" class="wizvncellreq" colspan="2">PPPoE Configuration</td>
                 </tr>
+		</table>
+		<table width="100%" border="0" cellpadding="6" cellspacing="0">
 		<tr>
                   <td valign="top" class="vncellreq">Username</td>
-                  <td class="vtable"><?=$mandfldhtml;?><input name="pppoeusername" type="text" class="formfld" id="pppoeusername" size="20" value="<?=htmlspecialchars($pconfig['username']);?>">
+                  <td class="vtable"><input name="pppoeusername" type="text" class="formfld" id="pppoeusername" size="20" value="">
                   </td>
                 </tr>
                 <tr>
                   <td valign="top" class="vncellreq">Password</td>
-                  <td class="vtable"><?=$mandfldhtml;?><input name="pppoepassword" type="text" class="formfld" id="pppoepassword" size="20" value="<?=htmlspecialchars($pconfig['password']);?>">
+                  <td class="vtable"><input name="pppoepassword" type="text" class="formfld" id="pppoepassword" size="20" value="">
                   </td>
                 </tr>
                 <tr>
                   <td valign="top" class="vncell">Service name</td>
-                  <td class="vtable"><input name="pppoeprovider" type="text" class="formfld" id="pppoeprovider" size="20" value="<?=htmlspecialchars($pconfig['provider']);?>">
+                  <td class="vtable"><input name="pppoeprovider" type="text" class="formfld" id="pppoeprovider" size="20" value="">
                     <br> <span class="vexpl">Hint: this field can usually be left
                     empty</span></td>
                 </tr>
                 <tr>
                   <td valign="top" class="vncell">Dial on demand</td>
-                  <td class="vtable"><input name="pppoe_dialondemand" type="checkbox" id="pppoe_dialondemand" value="enable" <?php if ($pconfig['pppoe_dialondemand']) echo "checked"; ?> onClick="en
+                  <td class="vtable"><input name="pppoe_dialondemand" type="checkbox" id="pppoe_dialondemand" value="enable"  onClick="en
 able_change(false)" >
                     <strong>Enable Dial-On-Demand mode</strong><br>
                     This option causes the interface to operate in dial-on-demand mode, allowing you to have a <i>virtual full time</i> connection. The interface is configured, but the actual conne
@@ -326,7 +341,7 @@ ction of the link is delayed until qualifying outgoing traffic is detected.</td>
                 <tr>
                   <td valign="top" class="vncell">Idle timeout</td>
                   <td class="vtable">
-                    <input name="pppoe_idletimeout" type="text" class="formfld" id="pppoe_idletimeout" size="8" value="<?=htmlspecialchars($pconfig['pppoe_idletimeout']);?>">
+                    <input name="pppoe_idletimeout" type="text" class="formfld" id="pppoe_idletimeout" size="8" value="">
                     seconds<br>
     If no qualifying outgoing packets are transmitted for the specified number of seconds, the connection is brought down. An idle timeout of zero disables this feature.</td>
                 </tr>
@@ -341,31 +356,35 @@ ction of the link is delayed until qualifying outgoing traffic is detected.</td>
                 </tr>
               </table>
              </div>
-	     <div id="LAN" style="display:none">		
+                <div id="LAN" style="display:none">		
                 <table width="100%" border="0" cellpadding="6" cellspacing="0">
                 <tr>
-                  <td valign="top" class="vncellreq" colspan="2">LAN Interface Configuration</td>
+                  <td valign="top" class="wizvncellreq" colspan="2">LAN Interface Configuration</td>
                 </tr>
                 <tr>
-                  <td valign="top" colspan="2"><center>Enter the IP address for the LAN interface.</center></td>
+                  <td class="wizvncellreq2>Enter the IP address for the LAN interface.</td>
                 </tr>
+                </table>
+		<table width="100%" border="0" cellpadding="6" cellspacing="0">
 		<tr>
                   <td width="22%" valign="top" class="vncellreq">IP address</td>
                   <td width="78%" class="vtable">
-                    <?=$mandfldhtml;?><input name="lanipaddr" type="text" class="formfld" id="lanipaddr" size="20" value="<?=htmlspecialchars($config['interfaces']['lan']['ipaddr']);?>" onchange="ipaddr_change()">
+                    <input name="lanipaddr" type="text" class="formfld" id="lanipaddr" size="20" value="192.168.254.1" onchange="ipaddr_change()">
                     /
-                    <select name="lansubnet" class="formfld" id="lansubnet">
+                    <select name="lansubnet" class="formfld" id="lansubnet">    
                       <?php for ($i = 31; $i > 0; $i--): ?>
                       <option value="<?=$i;?>" <?php if ($i == $config['interfaces']['lan']['subnet']) echo "selected"; ?>>
                       <?=$i;?>
                       </option>
                       <?php endfor; ?>
                     </select></td>
-                </tr>
+		</tr>
 	        <tr>
                   <td colspan="2" valign="top" height="16"></td>
                 </tr>
                 <tr>
+		</table>
+		<table width="100%" border="0" cellpadding="6" cellspacing="0">
                   <td class="wiznavbtn">
                     <INPUT TYPE="button" NAME="staticback" VALUE="Back" onClick="getCheckedValue(document.iform.elements['wantypes'])">
                     <INPUT TYPE="button" NAME="lannext" VALUE="Next" onClick="switchtab('SETTINGS')">
@@ -373,24 +392,26 @@ ction of the link is delayed until qualifying outgoing traffic is detected.</td>
                 </tr>
               </table>
              </div>
-	     <div id="SETTINGS" style="display:none">
+                <div id="SETTINGS" style="display:none">
                  <table width="100%" border="0" cellpadding="6" cellspacing="0">
                 <tr>
-                  <td valign="top" class="vncellreq" colspan="2">General Settings</td>
+                  <td valign="top" class="wizvncellreq" colspan="2">General Settings</td>
                 </tr>
                 <tr>
-                  <td valign="top" colspan="2"><center>Enter the Hostname, Domain, Admin Username/Password, and Timezone for your NSWall appliance.</center></td>
+                  <td class="vncellreq2">Enter the Hostname, Domain, Admin Username/Password, and Timezone for your NSWall appliance.</td>
                 </tr>
+		</table>
+		<table width="100%" border="0" cellpadding="6" cellspacing="0">
 		<tr> 
                   <td width="22%" valign="top" class="vncellreq">Hostname</td>
-                  <td width="78%" class="vtable"><?=$mandfldhtml;?><input name="hostname" type="text" class="formfld" id="hostname" size="40" value="<?=htmlspecialchars($pconfig['hostname']);?>"> 
+                  <td width="78%" class="vtable"><input name="hostname" type="text" class="formfld" id="hostname" size="40" value=""> 
                     <br> <span class="vexpl">name of the firewall host, without 
                     domain part<br>
                     e.g. <em>firewall</em></span></td>
                 </tr>
                 <tr> 
                   <td valign="top" class="vncellreq">Username</td>
-                  <td class="vtable"> <input name="username" type="text" class="formfld" id="username" size="20" value="<?=$pconfig['username'];?>">
+                  <td class="vtable"> <input name="username" type="text" class="formfld" id="username" size="20" value="">
                     <br>
                      <span class="vexpl">If you want 
                     to change the username for accessing the webGUI, enter it 
@@ -407,18 +428,19 @@ ction of the link is delayed until qualifying outgoing traffic is detected.</td>
                 <tr> 
                   <td width="22%" valign="top" class="vncellreq">Time zone</td>
                   <td width="78%" class="vtable"> <select name="timezone" id="timezone">
-                      <?php foreach ($timezonelist as $value): ?>
+		<?php foreach ($timezonelist as $value): ?>
                       <option value="<?=htmlspecialchars($value);?>" <?php if ($value == $config['system']['general']['timezone']) echo "selected"; ?>> 
                       <?=htmlspecialchars($value);?>
                       </option>
                       <?php endforeach; ?>
-                    </select> <br> <span class="vexpl">Select the location closest 
+        	</select> <br> <span class="vexpl">Select the location closest 
                     to you</span></td>
                   </td>
                 </tr>
                 <tr>
                   <td colspan="2" valign="top" height="16"></td>
                 </tr>
+		</table>
                 <tr>
                   <td class="wiznavbtn">
         	   <INPUT TYPE="button" NAME="setback" VALUE="Back" onClick="switchtab('LAN')">
@@ -427,14 +449,16 @@ ction of the link is delayed until qualifying outgoing traffic is detected.</td>
                 </tr> 
 	     </table> 
 	   </div>   
-            <div id="OVERVIEW" style="display:none">
+ 	<div id="OVERVIEW" style="display:none">
                 <table width="100%" border="0" cellpadding="6" cellspacing="0">
                 <tr>
-                  <td valign="top" class="vncellreq" colspan="2">Submit Changes and Reboot</td>
+                  <td valign="top" class="wizvncellreq" colspan="2">Submit Changes and Reboot</td>
                 </tr>
                 <tr>
-                  <td valign="top" colspan="2"><center>Click Submit to commit the changes and reboot.</center></td>
+                  <td class="wizvncellreq3">Click Submit to commit the changes and reboot.</td>
                 </tr>
+		</table>
+		<table width="100%" border="0" cellpadding="6" cellspacing="0">
                   <tr>
                   <td width="100%" valign="top">
                     <center><input name="Submit" type="submit" class="formbtn" value="Submit"></center>
@@ -442,6 +466,8 @@ ction of the link is delayed until qualifying outgoing traffic is detected.</td>
                 <tr>
                   <td colspan="2" valign="top" height="16"></td>
                 </tr>
+		</table>
+		<table width="100%" border="0" cellpadding="6" cellspacing="0">
                 <tr>
                   <td class="wiznavbtn">
                     <INPUT TYPE="button" NAME="overback" VALUE="Back" onClick="switchtab('SETTINGS')">
@@ -449,7 +475,7 @@ ction of the link is delayed until qualifying outgoing traffic is detected.</td>
                 </tr>
               </table>
              </div>
- 	    </table>
+	</table>
 	</form>
 	<table width="100%" border="0" cellpadding="6" cellspacing="0">
                 <tr> 
