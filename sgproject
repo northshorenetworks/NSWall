@@ -1,0 +1,14 @@
+usr/www/*.php
+usr/www/*.inc
+usr/captiveportal/*.inc
+usr/captiveportal/*.php
+etc/inc/*.inc
+etc/rc.banner
+etc/rc.bootup
+etc/rc.cleanreboot
+etc/rc.initial.defaults
+etc/rc.initial.password
+etc/rc.initial.ping
+etc/rc.initial.reboot
+etc/rc.initial.setlanip
+etc/rc.queryconfigserver
