@@ -110,6 +110,8 @@ if ($_POST) {
      
     write_config();
 
+    touch($d_wizconfdirty_path);
+
     /* get rid of the wizardfile if it exists */
     if (file_exists("/conf/set_wizard_initial")) {
      	conf_mount_rw();	
@@ -119,7 +121,6 @@ if ($_POST) {
 	
     system_reboot();
   
-    $rebootmsg = "The system is rebooting now.  Please wait 1 minute and redirect your browser to the LAN ip address.";	
   }
 }
 
@@ -130,7 +131,7 @@ if ($_POST) {
 <script language="JavaScript">
 <!--
 
-var tabs=new Array('WANTYPE', 'Static', 'DHCP', 'PPPoE', 'LAN', 'SETTINGS', 'OVERVIEW');
+var tabs=new Array('WANTYPE', 'Static', 'DHCP', 'PPPoE', 'LAN', 'SETTINGS', 'OVERVIEW', 'Reboot');
 
 function getCheckedValue(radioObj) {
 	if(!radioObj)
@@ -203,7 +204,13 @@ function showdiv(id) {
 <link href="gui.css" rel="stylesheet" type="text/css">
 </head>
 <table width="100%" id="navigator" border="0" cellpadding="0" cellspacing="0">
-            <form action="wizard_initial.php" method="post" name="iform" id="iform">
+<form action="wizard_initial.php" method="post" name="iform" id="iform">
+<?php 
+echo '<script language="JavaScript">';
+echo 'switchtab(\'Reboot\')';
+echo '</script>';
+?>
+
 	    <table width="100%" border="0" cellpadding="6" cellspacing="0">
                 <tr>
                   <td colspan="2" valign="top" class="wizheader">NSWall Initial Setup Wizard</td>
@@ -280,32 +287,33 @@ function showdiv(id) {
 		</table>
              </div>	
 	      <div id="DHCP" style="display:none">
-                <table width="100%" border="0" cellpadding="6" cellspacing="0">
+                <table class="wizvncellreq">
                 <tr>
-                  <td class="wizvncellreq">DHCP Configuration</td>
+                  <td>DHCP Configuration</td>
                 </tr>
+                </table>
+                <table class="wizvncellreq2">
                 <tr>
-                  <td class="wizvncellreq2>The value in this field is sent as the DHCP client identifier and hostname when requesting a DHCP lease. Some ISPs may require this (for client identification).<br></td>
+                  <td>The value in this field is sent as the DHCP client identifier and hostname when re
+questing a DHCP lease. Some ISPs may require this (for client identification).</td>
                 </tr>
 		</table>
-		<table width="100%" border="0" cellpadding="6" cellspacing="0">
-                <tr>
+		<table class="wizvncellreq3">
+		<tr>
                   <td valign="top" class="vncell">Hostname</td>
-                  <td class="vtable"> <input name="dhcphostname" type="text" class="formfld" id="dhcphostname" size="40" value=""><i>(Optional)</i>   
+                  <td class="vtable"> <input name="dhcphostname" type="text" class="formfld" id="dhcphostname" size="40" valu
+e=""><i>(Optional)</i>
                  </td>
                 </tr>
-                <tr>
-                  <td colspan="2" valign="top" height="16"></td>
-                </tr>
-         	<tr>
 		</table>
-		<table width="100%" border="0" cellpadding="6" cellspacing="0">
-                  <td class="wiznavbtn">
-                    <INPUT TYPE="button" NAME="dhcpback" VALUE="Back" onClick="switchtab('WANTYPE')">
-                    <INPUT TYPE="button" NAME="dhcpnext" VALUE="Next" onClick="switchtab('LAN')">
+		<table class="wiznavbtn">
+		<tr>
+                  <td>
+		    <INPUT TYPE="button" NAME="staticback" VALUE="Back" onClick="switchtab('WANTYPE')">
+		    <INPUT TYPE="button" NAME="staticnext" VALUE="Next" onClick="switchtab('LAN')">
                   </td>
 		</tr>
-              </table>	
+		</table>	
 		</div>
 	     <div id="PPPoE" style="display:none">
                 <table width="100%" border="0" cellpadding="6" cellspacing="0">
@@ -357,15 +365,17 @@ ction of the link is delayed until qualifying outgoing traffic is detected.</td>
               </table>
              </div>
                 <div id="LAN" style="display:none">		
-                <table width="100%" border="0" cellpadding="6" cellspacing="0">
+                <table class="wizvncellreq">
                 <tr>
-                  <td valign="top" class="wizvncellreq" colspan="2">LAN Interface Configuration</td>
-                </tr>
-                <tr>
-                  <td class="wizvncellreq2>Enter the IP address for the LAN interface.</td>
+                  <td>LAN Interface Configuration</td>
                 </tr>
                 </table>
-		<table width="100%" border="0" cellpadding="6" cellspacing="0">
+                <table class="wizvncellreq2">
+                <tr>
+                  <td>Enter the IP address for the LAN interface.</td>
+                </tr>
+                </table>
+		<table class="wizvncellreq3">
 		<tr>
                   <td width="22%" valign="top" class="vncellreq">IP address</td>
                   <td width="78%" class="vtable">
@@ -379,13 +389,10 @@ ction of the link is delayed until qualifying outgoing traffic is detected.</td>
                       <?php endfor; ?>
                     </select></td>
 		</tr>
-	        <tr>
-                  <td colspan="2" valign="top" height="16"></td>
-                </tr>
-                <tr>
 		</table>
-		<table width="100%" border="0" cellpadding="6" cellspacing="0">
-                  <td class="wiznavbtn">
+		<table class="wiznavbtn">
+                  </tr>
+                  <td>
                     <INPUT TYPE="button" NAME="staticback" VALUE="Back" onClick="getCheckedValue(document.iform.elements['wantypes'])">
                     <INPUT TYPE="button" NAME="lannext" VALUE="Next" onClick="switchtab('SETTINGS')">
 		  </td>
@@ -393,15 +400,17 @@ ction of the link is delayed until qualifying outgoing traffic is detected.</td>
               </table>
              </div>
                 <div id="SETTINGS" style="display:none">
-                 <table width="100%" border="0" cellpadding="6" cellspacing="0">
+                 <table class="wizvncellreq">
                 <tr>
-                  <td valign="top" class="wizvncellreq" colspan="2">General Settings</td>
+                  <td>General Settings</td>
                 </tr>
                 <tr>
-                  <td class="vncellreq2">Enter the Hostname, Domain, Admin Username/Password, and Timezone for your NSWall appliance.</td>
+                </table>
+                <table class="wizvncellreq2">
+                  <td>Enter the Hostname, Domain, Admin Username/Password, and Timezone for your NSWall appliance.</td>
                 </tr>
 		</table>
-		<table width="100%" border="0" cellpadding="6" cellspacing="0">
+		<table class="wizvncellreq3">
 		<tr> 
                   <td width="22%" valign="top" class="vncellreq">Hostname</td>
                   <td width="78%" class="vtable"><input name="hostname" type="text" class="formfld" id="hostname" size="40" value=""> 
@@ -437,12 +446,10 @@ ction of the link is delayed until qualifying outgoing traffic is detected.</td>
                     to you</span></td>
                   </td>
                 </tr>
-                <tr>
-                  <td colspan="2" valign="top" height="16"></td>
-                </tr>
 		</table>
+                <table class="wiznavbtn">
                 <tr>
-                  <td class="wiznavbtn">
+                  <td>
         	   <INPUT TYPE="button" NAME="setback" VALUE="Back" onClick="switchtab('LAN')">
 		   <INPUT TYPE="button" NAME="setnext" VALUE="Next" onClick="switchtab('OVERVIEW')">
                   </td>
@@ -450,30 +457,44 @@ ction of the link is delayed until qualifying outgoing traffic is detected.</td>
 	     </table> 
 	   </div>   
  	<div id="OVERVIEW" style="display:none">
-                <table width="100%" border="0" cellpadding="6" cellspacing="0">
+                <table class="wizvncellreq">
                 <tr>
-                  <td valign="top" class="wizvncellreq" colspan="2">Submit Changes and Reboot</td>
+                  <td>Submit Changes and Reboot</td>
                 </tr>
+                </table>
+                <table class="wizvncellreq2">
                 <tr>
-                  <td class="wizvncellreq3">Click Submit to commit the changes and reboot.</td>
+                  <td>Click Submit to commit the changes and reboot.</td>
                 </tr>
 		</table>
-		<table width="100%" border="0" cellpadding="6" cellspacing="0">
+		<table class="wizvncellreq3">
                   <tr>
-                  <td width="100%" valign="top">
+                  <td>
                     <center><input name="Submit" type="submit" class="formbtn" value="Submit"></center>
                 </tr>
                 <tr>
                   <td colspan="2" valign="top" height="16"></td>
                 </tr>
 		</table>
-		<table width="100%" border="0" cellpadding="6" cellspacing="0">
+		<table class="wiznavbtn">
                 <tr>
-                  <td class="wiznavbtn">
+                  <td>
                     <INPUT TYPE="button" NAME="overback" VALUE="Back" onClick="switchtab('SETTINGS')">
                   </td>
                 </tr>
               </table>
+             </div>
+             <div id="Reboot" style="display:none">
+                <table class="wizvncellreq">
+                <tr>
+                  <td>Settings Applied</td>
+                </tr>
+                </table>
+                <table class="wizvncellreq2">
+                <tr>
+                  <td>Your NSWall Appliance is now rebooting, please be patient</td>
+                </tr>
+		</table>
              </div>
 	</table>
 	</form>
@@ -482,3 +503,10 @@ ction of the link is delayed until qualifying outgoing traffic is detected.</td>
                 <td colspan="2" valign="top" class="wizfooter">NSWall is © 2009 by Northshore Software Inc. All rights reserved.</td>
                 </tr> 
         </table>
+<?php 
+if (file_exists($d_wizconfdirty_path)) {
+echo '<script language="JavaScript">';
+echo 'switchtab(\'Reboot\');';
+echo '</script>';
+}
+?>
