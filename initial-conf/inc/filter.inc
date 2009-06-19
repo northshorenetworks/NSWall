@@ -846,14 +846,9 @@ $ipfrules .= "\nanchor \"Block RFC1918\" {\n\tblock in $log quick on $wanif from
         /* Webgui antilockout code */
 	if (!isset($config['system']['general']['webgui']['noantilockout'])) {
 		$webuiport = $config['system']['general']['webgui']['port'];
-		$webuiprotocol = $config['system']['general']['webgui']['protocol'];
-		if (!$webuiport && preg_match('/^http$/', $webuiprotocol)) {
-			$webuiport = '80';
-		}
-		elseif (!$webuiport && preg_match('/^https$/', $webuiprotocol)) {
-                        $webuiport = '443';
-                }	
-		else { 
+		if (!$webuiport) {
+			$webuiport = '443';
+		} else {
 			$webuiport = $config['system']['general']['webgui']['port'];
 		}
 		if(isset($config['system']['general']['sshd']['enabled'])) {	

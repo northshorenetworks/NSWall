@@ -121,6 +121,7 @@ if ($_POST) {
 	
     system_reboot();
   
+    $rebootmsg = "The system is rebooting now.  Please wait 1 minute and redirect your browser to the LAN ip address.";	
   }
 }
 
@@ -194,6 +195,88 @@ function showdiv(id) {
         }
 }
 
+function verifyIP (IPvalue) {
+errorString = "";
+theName = "IPaddress";
+
+var ipPattern = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/;
+var ipArray = IPvalue.match(ipPattern);
+
+if (IPvalue == "0.0.0.0")
+errorString = errorString + theName + ': '+IPvalue+' is a special IP address and cannot be used here.';
+else if (IPvalue == "255.255.255.255")
+errorString = errorString + theName + ': '+IPvalue+' is a special IP address and cannot be used here.';
+if (ipArray == null)
+errorString = errorString + theName + ': '+IPvalue+' is not a valid IP address.';
+else {
+for (i = 0; i < 4; i++) {
+thisSegment = ipArray[i];
+if (thisSegment > 255) {
+errorString = errorString + theName + ': '+IPvalue+' is not a valid IP address.';
+i = 4;
+}
+if ((i == 0) && (thisSegment > 255)) {
+errorString = errorString + theName + ': '+IPvalue+' is a special IP address and cannot be used here.';
+i = 4;
+      }
+   }
+}
+extensionLength = 3;
+if (errorString == "") {
+return 0;
+}
+else {
+return errorString;
+}
+}
+
+function validateStaticIP () {
+    if(verifyIP(document.iform.staticipaddr.value) != 0) {
+	 alert (errorString);
+         return;
+    }
+    if(verifyIP(document.iform.staticgateway.value) != 0) {
+         alert (errorString);
+         return;
+    }
+    if(verifyIP(document.iform.staticdnsserver.value) != 0) {
+         alert (errorString);
+         return;
+    }
+    switchtab('LAN');
+    return;
+}
+
+function validateLANIP () {
+	if(verifyIP(document.iform.lanipaddr.value) != 0) {
+            alert (errorString);
+            return;
+	}
+        switchtab('SETTINGS')
+}
+
+function validateSETTINGS () {
+        if( document.iform.hostname.value == '') {
+                alert ('The hostname cannot be blank');
+        	return;
+	}
+	if( document.iform.username.value == '') {
+                alert ('The username cannot be blank');
+        	return;
+	}
+	if( document.iform.password.value == '') {
+		alert ('The password cannot be blank');
+		return;
+	}
+	if( document.iform.password.value == document.iform.password2.value) {
+                switchtab('OVERVIEW');
+        } else {
+		alert ('The passwords do not match');
+		return;
+	}
+	return;
+}
+
 -->
 </script>
 	<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
@@ -205,18 +288,12 @@ function showdiv(id) {
 </head>
 <table width="100%" id="navigator" border="0" cellpadding="0" cellspacing="0">
 <form action="wizard_initial.php" method="post" name="iform" id="iform">
-<?php 
-echo '<script language="JavaScript">';
-echo 'switchtab(\'Reboot\')';
-echo '</script>';
-?>
-
 	    <table width="100%" border="0" cellpadding="6" cellspacing="0">
                 <tr>
                   <td colspan="2" valign="top" class="wizheader">NSWall Initial Setup Wizard</td>
                   		</tr>
              </table>
-<div id="WANTYPE" style="display:block">
+<div id="WANTYPE" style="display:none">
                 <table width="100%" border="0" cellpadding="6" cellspacing="0">
                 <tr>
 		  <td class="wizvncellreq">WAN Connection Type</td> 
@@ -281,7 +358,7 @@ echo '</script>';
 		<tr>
                   <td>
 		    <INPUT TYPE="button" NAME="staticback" VALUE="Back" onClick="switchtab('WANTYPE')">
-		    <INPUT TYPE="button" NAME="staticnext" VALUE="Next" onClick="switchtab('LAN')">
+		    <INPUT TYPE="button" NAME="staticnext" VALUE="Next" onClick="validateStaticIP()">
                   </td>
 		</tr>
 		</table>
@@ -394,7 +471,7 @@ ction of the link is delayed until qualifying outgoing traffic is detected.</td>
                   </tr>
                   <td>
                     <INPUT TYPE="button" NAME="staticback" VALUE="Back" onClick="getCheckedValue(document.iform.elements['wantypes'])">
-                    <INPUT TYPE="button" NAME="lannext" VALUE="Next" onClick="switchtab('SETTINGS')">
+                    <INPUT TYPE="button" NAME="lannext" VALUE="Next" onClick="validateLANIP()">
 		  </td>
                 </tr>
               </table>
@@ -451,7 +528,7 @@ ction of the link is delayed until qualifying outgoing traffic is detected.</td>
                 <tr>
                   <td>
         	   <INPUT TYPE="button" NAME="setback" VALUE="Back" onClick="switchtab('LAN')">
-		   <INPUT TYPE="button" NAME="setnext" VALUE="Next" onClick="switchtab('OVERVIEW')">
+		   <INPUT TYPE="button" NAME="setnext" VALUE="Next" onClick="validateSETTINGS()">
                   </td>
                 </tr> 
 	     </table> 
@@ -503,10 +580,14 @@ ction of the link is delayed until qualifying outgoing traffic is detected.</td>
                 <td colspan="2" valign="top" class="wizfooter">NSWall is © 2009 by Northshore Software Inc. All rights reserved.</td>
                 </tr> 
         </table>
-<?php 
+<?php
 if (file_exists($d_wizconfdirty_path)) {
-echo '<script language="JavaScript">';
-echo 'switchtab(\'Reboot\');';
-echo '</script>';
+  echo '<script language="JavaScript">';
+  echo 'switchtab(\'Reboot\')';
+  echo '</script>';
 }
+else
+  echo '<script language="JavaScript">';
+  echo 'switchtab(\'WANTYPE\')';
+  echo '</script>';
 ?>

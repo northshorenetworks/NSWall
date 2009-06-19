@@ -61,7 +61,7 @@ $d_sysrebootreqd_path = $g['varrun_path'] . "/sysreboot.reqd";
 $d_passthrumacsdirty_path = $g['varrun_path'] . "/passthrumacs.dirty";
 $d_allowedipsdirty_path = $g['varrun_path'] . "/allowedips.dirty";
 $d_pptpclient_pid = $g['varrun_path'] . "/tun0.pid";
-
+$d_wizconfdirty_path = $g['varrun_path'] . "/wizard.conf.dirty";
 
 if (file_exists($d_firmwarelock_path)) {
 	if (!$d_isfwfile) {

@@ -125,7 +125,7 @@ SPECIAL mv etc/ttys.speed etc/ttys
 # Here we encrypt the php code with SG
 SPECIAL cp -R -p ${CURDIR}/initial-conf/inc             etc/inc/
 SPECIAL cp -R -p ${CURDIR}/initial-conf/www             usr/www/
-SPECIAL ${BINDIR}/SG/bin/encode4 --conj -z 9 -b- @${CURDIR}/sgproject
+#SPECIAL ${BINDIR}/SG/bin/encode4 --conj -z 9 -b- @${CURDIR}/sgproject
 
 # Miscellaneous extra tools
 COPY	${CURDIR}/tools/rw.sh			bin/rw

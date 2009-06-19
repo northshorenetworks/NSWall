@@ -116,8 +116,8 @@
 	/* start ftp proxy */
 	system_ftpproxy_start();
 	
-	/* setup relays */
-        relay_relayd_configure();
+	/* setup relays 
+        relay_relayd_configure(); */
 
 	/* start syslogd */
 	system_syslogd_start();

@@ -12,14 +12,14 @@
 	</system>
 	<interfaces>
 		<lan>
-			<if>vic1</if>
+			<if>vr1</if>
 			<ipaddr>192.168.254.1</ipaddr>
 			<subnet>24</subnet>
 			<media/>
 			<mediaopt/>
 		</lan>
 		<wan>
-			<if>vic0</if>
+			<if>vr0</if>
 			<mtu/>
 			<ipaddr>dhcp</ipaddr>
 			<subnet/>
@@ -30,7 +30,7 @@
 		</wan>
 		<opt1>
 			<descr>DMZ</descr>
-			<if>vic2</if>
+			<if>vr2</if>
 			<type/>
 		</opt1>
 	</interfaces>
