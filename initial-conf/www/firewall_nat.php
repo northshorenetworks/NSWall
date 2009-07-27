@@ -113,6 +113,8 @@ if ($_GET['act'] == "del") {
                     <?php
 					if (!$natent['interface'] || ($natent['interface'] == "wan"))
 					  	echo "WAN";
+					elseif ($natent['interface'] == "pptp")
+                                                echo "PPTP";
 					else
 						echo htmlspecialchars($config['interfaces'][$natent['interface']]['descr']);
 					?>

@@ -241,11 +241,11 @@ if ($_POST) {
                     above if you want to override the default (443 
                     ).</span></td>
                 </tr>
-		<!--<tr>
+		<tr>
                   <td width="22%" valign="top" class="vncell">SSH Server</td>
                   <td width="78%" class="vtable"> <input name="sshdenabled" type="checkbox" value="sshdenabled" <?php if ($pconfig['sshdenabled']) echo "checked"; ?>>
                     Enable SSH Server &nbsp;&nbsp;&nbsp;</td>
-                </tr>-->
+                </tr>
                 <tr>
                   <td width="22%" valign="top" class="vncell">Symon Logging</td>
                   <td width="78%" class="vtable"> <input name="symonenabled" type="checkbox" value="symonenabled" <?php if ($pconfig['symonenabled']) echo "checked"; ?>>

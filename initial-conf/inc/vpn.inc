@@ -222,7 +222,9 @@ function vpn_pptp_client_disconnect() {
 
 function vpn_pptp_configure() {
 	global $config, $g;
-        
+       
+	$curwanip = get_current_wan_address();
+ 
 	if(isset($config['pptp']['client']['enable'])) {
 	/* allow gre packets */
 	mwexec("/sbin/sysctl net.inet.gre.allow=1");
@@ -270,14 +272,14 @@ EOD;
 
        $dgw = get_current_default_gateway();
        $ppplinkup = <<<EOD
-
 vpn:
-  ! sh -c "/sbin/pfctl -a pptp_client -f /etc/ppp/pf.conf.pptp_client"
   add {$pptpcfg['server']} {$dgw} 
 
 EOD;
 	foreach ($pptpcfg['routelist'] as $route) {
 		$ppplinkup .= "  add $route HISADDR\n";
+		$ppplinkup .= "  ! sh -c \"/sbin/pfctl -k $curwanip -k $route\"\n";
+		$ppplinkup .= "  ! sh -c \"/sbin/pfctl -k HISADDR -k $route\"\n";
 	}
 	
 	fwrite($fd, $ppplinkup);
@@ -293,36 +295,19 @@ EOD;
         $ppplinkdown = <<<EOD
 
 vpn:
-  ! sh -c "/sbin/pfctl -a pptp_client -F all"
+  ! sh -c "/sbin/pfctl -a vpn -F all"
   delete {$pptpcfg['server']} 
 
 EOD;
 	foreach ($pptpcfg['routelist'] as $route) {
                 $ppplinkdown .= "  delete $route\n";
+		$ppplinkdown .= "  ! sh -c \"/sbin/pfctl -k $curwanip -k $route\"\n";
+		$ppplinkdown .= "  ! sh -c \"/sbin/pfctl -k HISADDR -k $route\"\n";
         }
 
         fwrite($fd, $ppplinkdown);
         fclose($fd);
 
-
-	/* write pf.conf.pptp_client */
-        $fd = fopen("{$g['varetc_path']}/ppp/pf.conf.pptp_client", "w");
-        if (!$fd) {
-                 printf("Error: cannot open pf.conf.pptp_client in vpn_pptp_configure().\n");
-                 return 1;
-        }
-
-        $pfconfpptpclient = <<<EOD
-vpn_if=tun0
-
-# NAT is of course optional. The remote network needs
-# a route to our network as well if we don't do NAT.
-nat on \$vpn_if from any to {$pptpcfg['subnet']} -> (\$vpn_if)
-EOD;
-
- 	fwrite($fd, $pfconfpptpclient);
-        fclose($fd);	
-	
 	if ($g['booting']) {
        		if(isset($config['pptp']['client']['connectonboot'])) {
 			vpn_pptp_client_connect();

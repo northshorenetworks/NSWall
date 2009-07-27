@@ -12,5 +12,6 @@ cp $KERNCONF $DISTNAME
 rm $DISTNAME
 ./build-diskimage.sh $DISTNAME 
 gzip $DISTNAME 
-mv -f $DISTNAME.update Output/$DISTNAME.update
-mv -f $DISTNAME.gz Output/$DISTNAME.image
+DATETIME=`date "+%Y-%m-%d-%H:%M:%S"`
+mv -f $DISTNAME.update Output/$DISTNAME.update.$DATETIME
+mv -f $DISTNAME.gz Output/$DISTNAME.image.$DATETIME

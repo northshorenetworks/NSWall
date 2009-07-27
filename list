@@ -72,7 +72,7 @@ COPY	${CURDIR}/initial-conf/rc		etc/rc
 COPY    ${CURDIR}/initial-conf/rc.initial	etc/rc.initial
 COPY	${CURDIR}/initial-conf/rc.pkg		etc/rc.pkg
 COPY	${CURDIR}/initial-conf/moduli		etc/moduli
-#COPY	${CURDIR}/initial-conf/sshd_config	etc/ssh/sshd_config
+COPY	${CURDIR}/initial-conf/sshd_config	etc/ssh/sshd_config
 COPY	${CURDIR}/initial-conf/ttys		etc/ttys
 COPY    ${CURDIR}/initial-conf/boot.conf        etc/boot.conf
 
@@ -213,12 +213,12 @@ COPY ${DESTDIR}/usr/bin/nc			usr/bin/nc
 COPY ${DESTDIR}/usr/bin/netstat			usr/bin/netstat
 COPY ${DESTDIR}/usr/bin/passwd			usr/bin/passwd
 COPY ${DESTDIR}/usr/bin/printf			usr/bin/printf
-#COPY ${DESTDIR}/usr/bin/scp			usr/bin/scp
+COPY ${DESTDIR}/usr/bin/scp			usr/bin/scp
 COPY ${DESTDIR}/usr/bin/sed			usr/bin/sed
 COPY ${DESTDIR}/usr/bin/sftp			usr/bin/sftp
 COPY ${DESTDIR}/usr/bin/sort			usr/bin/sort
-#COPY ${DESTDIR}/usr/bin/ssh			usr/bin/ssh
-#COPY ${DESTDIR}/usr/bin/ssh-keygen		usr/bin/ssh-keygen
+COPY ${DESTDIR}/usr/bin/ssh			usr/bin/ssh
+COPY ${DESTDIR}/usr/bin/ssh-keygen		usr/bin/ssh-keygen
 COPY ${DESTDIR}/usr/bin/su			usr/bin/su
 COPY ${DESTDIR}/usr/bin/systat			usr/bin/systat
 COPY ${DESTDIR}/usr/bin/tail			usr/bin/tail
@@ -231,7 +231,7 @@ COPY ${DESTDIR}/usr/bin/tset			usr/bin/tset
 COPY ${DESTDIR}/usr/bin/tty			usr/bin/tty
 COPY ${DESTDIR}/usr/bin/uname			usr/bin/uname
 COPY ${DESTDIR}/usr/bin/uptime			usr/bin/uptime
-#COPY ${DESTDIR}/usr/bin/vi			usr/bin/vi
+COPY ${DESTDIR}/usr/bin/vi			usr/bin/vi
 COPY ${DESTDIR}/usr/bin/vmstat			usr/bin/vmstat
 COPY ${DESTDIR}/usr/libexec/auth/login_passwd	usr/libexec/auth/login_passwd
 COPY ${DESTDIR}/usr/libexec/getty		usr/libexec/getty
@@ -276,7 +276,7 @@ COPY ${DESTDIR}/usr/sbin/relayctl               usr/sbin/relayctl
 COPY ${DESTDIR}/usr/sbin/rtadvd			usr/sbin/rtadvd
 COPY ${DESTDIR}/usr/sbin/rtsold			usr/sbin/rtsold
 COPY ${DESTDIR}/usr/sbin/sasyncd		usr/sbin/sasyncd
-#COPY ${DESTDIR}/usr/sbin/sshd			usr/sbin/sshd
+COPY ${DESTDIR}/usr/sbin/sshd			usr/sbin/sshd
 COPY ${DESTDIR}/usr/sbin/syslogc		usr/sbin/syslogc
 COPY ${DESTDIR}/usr/sbin/syslogd		usr/sbin/syslogd
 COPY ${DESTDIR}/usr/sbin/tcpdrop		usr/sbin/tcpdrop

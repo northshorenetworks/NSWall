@@ -60,6 +60,7 @@ if ($_POST) {
 			$source = preg_replace("/ /", "", $routelist[$i]);
 			$config['pptp']['client']['routelist'][$member] = $source;
 		}
+		$config['pptp']['client']['autonat'] = $_POST['autonat'] ? true : false;
 		$config['pptp']['client']['lcplog'] = $_POST['lcplog'] ? true : false;
         	write_config();
 		vpn_pptp_configure();
@@ -80,6 +81,7 @@ $pconfig['server']    = $config['pptp']['client']['server'];
 $pconfig['username']  = $config['pptp']['client']['username'];
 $pconfig['password']  =  $config['pptp']['client']['password'];
 $pconfig['routelist'] =  $config['pptp']['client']['routelist'];
+$pconfig['autonat']    = isset($config['pptp']['client']['autonat']);
 $pconfig['lcplog']    = isset($config['pptp']['client']['lcplog']);
 
 ?>
@@ -187,6 +189,13 @@ $pconfig['lcplog']    = isset($config['pptp']['client']['lcplog']);
 		<input type=button onClick="addOption('MEMBERS',document.iform.srcalias.value + '/32','net' + ':' + document.iform.srcalias.value + '/32')"; value='Add'>
 		</div>
                 </td>
+                </tr>
+		<tr>
+                  <td width="22%" valign="top" class="vncellreq">Generate NAT rules for PPTP</td>
+                  <td width="78%" class="vtable">
+                  <input name="autonat" type="checkbox" id="autonat" value="Yes" <?php if ($pconfig['autonat']) echo "checked";
+?>>
+                  </span></td>
                 </tr>
 		<tr> 
 		 <tr>

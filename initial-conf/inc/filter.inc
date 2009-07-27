@@ -214,8 +214,8 @@ function filter_flush_state_table() {
 }
 
 function filter_nat_rules_generate_if($if, $src, $dst, $target, $portmap = true) {
- 	$natrule .= "nat on $if from $src to any -> ($if)\n";
-	return $natrule;
+        $natrule .= "nat on $if from $src $dst -> ($if)\n";
+        return $natrule;
 }
 
 function filter_tables_generate() {
@@ -315,37 +315,38 @@ function filter_nat_rules_generate() {
 			$natrules .= "binat on {$natif} from {$natent['internal']} to any -> {$natent['external']}\n";
 		}
 	}
-	/* we will always have the nat anchors for ftp and relay */
+	/* we will always have the nat anchors for ftp */
                 $natrules .= 'nat-anchor "ftp-proxy/*"' . "\n";
 		
-		if(isset($config['pptp']['client']['enable']))
-			$natrules .= 'nat-anchor "pptp_client/*"' . "\n";
-	
-	/* Dynamic outbound rules - advanced or standard */
-		if (is_array($config['nat']['advancedoutbound']['rule'])) {
- 			foreach ($config['nat']['advancedoutbound']['rule'] as $obent) {				
-				$dst = "";
-				$src = "";
-				if (!isset($obent['destination']['any'])) {
-					$src = "from ";
-					if (isset($obent['destination']['not'])) 
-						$dst = "! to ";
-					else
-						$dst = "to ";
-					$dst .= $obent['destination']['network'];
-				}
-				$src .= $obent['source']['network'];
-				
-				if (!$obent['interface'] || ($obent['interface'] == "wan"))
-					$natif = $wanif;
-				else
-					$natif = $config['interfaces'][$obent['interface']]['if'];
-				
-				$natrules .= filter_nat_rules_generate_if($natif, $src, $dst,
-					$obent['target'], !isset($obent['noportmap']));
-			}
-		}	
-	
+		/* Dynamic outbound rules - advanced or standard */
+                if (is_array($config['nat']['advancedoutbound']['rule'])) {
+                        foreach ($config['nat']['advancedoutbound']['rule'] as $obent) {
+                                $dst = "to any";
+                                $src = "";
+                                if (!isset($obent['destination']['any'])) {
+                                        if (isset($obent['destination']['not']))
+                                                $dst = "! to ";
+                                        else
+                                                $dst = "to ";
+                                        $dst .= $obent['destination']['network'];
+                                }
+                                $src .= $obent['source']['network'];
+
+                                if (!$obent['interface'] || ($obent['interface'] == "wan"))
+                                        $natif = $wanif;
+                                elseif ($obent['interface'] == "pptp")
+                                        $natif = 'tun0';
+                                else
+                                        $natif = $config['interfaces'][$obent['interface']]['if'];
+
+                                $natrules .= filter_nat_rules_generate_if($natif, $src, $dst,
+                                        $obent['target'], !isset($obent['noportmap']));
+                        }
+                }
+
+	if (isset($config['pptp']['client']['autonat']))
+        	$natrules .= "nat on tun0 from any to any -> (tun0)\n";
+
 	/* DIAG: add ipv6 NAT, if requested */
 	if (isset($config['diag']['ipv6nat']['enable'])) {
 		$natrules .= "rdr $wanif 0/0 port 0 -> " . 
@@ -1260,6 +1261,7 @@ EOD;
 ##### System Anchors #####
 ##########################
 anchor "ftp-proxy/*"\n
+anchor "vpn/*"\n
 EOD;
 if(isset($config['relays']['pfanchor']))
 	$ipfrules .= 'anchor "relayd/*"' . "\n";
