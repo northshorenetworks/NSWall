@@ -109,7 +109,7 @@ $medias = array("auto" => "autoselect", "100full" => "100BASE-TX full-duplex",
 	"10half" => "10BASE-T half-duplex", "1000full" => "1000BASE-TX full-duplex");
 	
 /* platforms that support firmware updating */
-$fwupplatforms = array('COMMELL-LE564', 'WJ-200', 'FBII', 'FBIII', 'FBX500-2500', 'GENERIC', 'PCENGINES', 'SOEKRIS4501', 'SOEKRIS4521', 'SOEKRIS4801', 'SOEKRIS5501', 'VMWARE', 'WRAP12');
+$fwupplatforms = array('COMMELL-LE564', 'WJ-200', 'FBII', 'FBIII', 'FBX500-2500', 'NSWALL', 'GENERIC', 'PCENGINES', 'SOEKRIS4501', 'SOEKRIS4521', 'SOEKRIS4801', 'SOEKRIS5501', 'VMWARE', 'WRAP12');
 
 /* IPsec defines */
 $my_identifier_list = array('myaddress' => 'My IP address',

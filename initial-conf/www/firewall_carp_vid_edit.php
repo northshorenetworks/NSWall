@@ -57,10 +57,11 @@ if (isset($id) && $a_virtualhost[$id]) {
         $pconfig['ip'] = $a_virtualhost[$id]['ip'];
         $pconfig['subnet'] = $a_virtualhost[$id]['subnet'];
         $pconfig['interface'] = $a_virtualhost[$id]['interface'];
-        $pconfig['vid'] = $a_virtualhost[$id]['vid'];
         $pconfig['password'] = $a_virtualhost[$id]['password'];
-        $pconfig['advbase'] = $a_virtualhost[$id]['advbase'];
-        $pconfig['advskew'] = $a_virtualhost[$id]['advskew'];
+	$pconfig['carpmode'] = $a_virtualhost[$id]['carpmode'];
+	$pconfig['carphostmode'] = $a_virtualhost[$id]['carphostmode'];
+	$pconfig['activemember'] = $a_virtualhost[$id]['activemember'];
+	$pconfig['activenodes'] = $a_virtualhost[$id]['activenodes'];
 }
 
 if (isset($_GET['dup']))
@@ -74,11 +75,12 @@ if ($_POST) {
         unset($virtualhost['ip']);
         unset($virtualhost['subnet']);
         unset($virtualhost['interface']);
-        unset($virtualhost['vid']);
         unset($virtualhost['password']);
-        unset($virtualhost['advbase']);
-        unset($virtualhost['advskew']);
-        $pconfig = $_POST;
+	unset($virtualhost['carpmode']);
+	unset($virtualhost['carphostmode']);
+        unset($virtualhost['activemember']);
+	unset($virtualhost['activenodes']);
+	$pconfig = $_POST;
 
         /* input validation */
         $reqdfields = explode(" ", "name");
@@ -92,11 +94,12 @@ if ($_POST) {
         $virtualhostent['ip'] = $_POST['ip'];
         $virtualhostent['subnet'] = $_POST['subnet'];
         $virtualhostent['interface'] = $_POST['interface'];
-        $virtualhostent['vid'] = $_POST['vid'];
         $virtualhostent['password'] = $_POST['password'];
-        $virtualhostent['advbase'] = $_POST['advbase'];
-	$virtualhostent['advskew'] = $_POST['advskew'];
-       
+        $virtualhostent['carpmode'] = $_POST['carpmode'];
+	$virtualhostent['carphostmode'] = $_POST['carphostmode'];
+ 	$virtualhostent['activemember'] = $_POST['activemember'];
+	$virtualhostent['activenodes'] = $_POST['activenodes'];
+
 	if (isset($id) && $a_virtualhost[$id])
                 $a_virtualhost[$id] = $virtualhostent;
         else
@@ -105,7 +108,6 @@ if ($_POST) {
         if (!$input_errors) {
 
                 write_config();
-
 
                 header("Location: firewall_carp_vid.php");
                 exit;
@@ -163,30 +165,28 @@ if ($_POST) {
                     <span class="vexpl">Choose on which interface the Virtual Host will exist.</span></td> 
                 </tr>
 		<tr>
-                  <td valign="top" class="vncell">Virtual Host ID</td>
-                  <td class="vtable"> <input name="vid" type="text" class="formfld" id="vid" size="4" value="<?=htmlspecialchars($pconfig['vid']);?>">
-                    <br>
-                    The Virtual Host ID. This is a unique number that is used to
-                    identify the redundancy group to other nodes on the network.
-                    Acceptable values are from 1 to 255.</td>
-                </tr>
-		<tr>
                   <td valign="top" class="vncell">Password</td>
-                  <td class="vtable"> <input name="password" type="text" class="formfld" id="password" size="4" value="<?=htmlspecialchars($pconfig['password']);?>">
+                  <td class="vtable"> <input name="password" type="password" class="formfld" id="password" size="20" value="<?=htmlspecialchars($pconfig['password']);?>">
                     <br>
                      The authentication password to use when talking to other CARP-enabled hosts in this redundancy group. This must be the same on all members of the group
 		</tr>
+		 <tr> 
+                  <td width="22%" valign="top" class="vncell">CARP Mode</td>
+                  <td width="78%" class="vtable"> <input name="carpmode" type="radio" value="activestandby" <?php if ($pconfig['carpmode'] == "activestandby") echo "checked"; ?>>
+                    Active/Standby &nbsp;&nbsp;&nbsp; <input type="radio" name="carpmode" value="activeactive" <?php if ($pconfig['carpmode'] == "activeactive") echo "checked"; ?>>
+                    Active/Active</td>
+                </tr>
 		<tr>
-                  <td valign="top" class="vncell">Advertisement Rate</td>
-                  <Td class="vtable"> <input name="advbase" type="text" class="formfld" id="advbase" size="4" value="<?=htmlspecialchars($pconfig['advbase']);?>">
-                    <br>
-                	This optional parameter specifies how often, in seconds, to advertise that we're a member of the redundancy group. The default is 1 second. Acceptable values are from 1 to 255. 
-		</tr>
-  		<tr>
-                  <td valign="top" class="vncell">Advertisement Skew</td>
-                  <td class="vtable"> <input name="advskew" type="text" class="formfld" id="advskew" size="4" value="<?=htmlspecialchars($pconfig['advskew']);?>">
-                    <br>
-                	This optional parameter specifies how much to skew the advbase when sending CARP advertisements. By manipulating advskew, the master CARP host can be chosen. The higher the number, the less preferred the host will be when choosing a master. The default is 0. Acceptable values are from 0 to 254. 
+                  <td width="22%" valign="top" class="vncell">CARP Host Mode</td>
+                  <td width="78%" class="vtable"> <input name="carphostmode" type="radio" value="active" <?php if ($pconfig['carphostmode'] == "active") echo "checked"; ?>>
+                  Active &nbsp;&nbsp;&nbsp; <input type="radio" name="standby" value="standby" <?php if ($pconfig['carphostmode'] == "standby") echo "checked"; ?>>
+                    Standby</td>
+                </tr>
+		<tr>
+                  <td width="22%" valign="top" class="vncellreq">Cluster Member</td>
+                  <td width="78%" class="vtable"> Member
+                    <input name="activemember" type="text" class="formfld" id="activemember" size="4" value="<?=htmlspecialchars($pconfig['activemember']);?>"> of 
+                <input name="activenodes" type="text" class="formfld" id="activenodes" size="4" value="<?=htmlspecialchars($pconfig['activenodes']);?>"> Nodes
 		</tr>
 		</table>
 		<table>

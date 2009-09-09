@@ -33,13 +33,17 @@ $wlchannels = array(1,2,3,4,5,6,7,8,9,10,11,12,13,14);
 function wireless_config_init() {
 	global $optcfg, $pconfig;
 	
-	$pconfig['standard'] = $optcfg['wireless']['standard'];
+        $pconfig['ifmode'] = $optcfg['wireless']['ifmode'];
 	$pconfig['mode'] = $optcfg['wireless']['mode'];
 	$pconfig['ssid'] = $optcfg['wireless']['ssid'];
-	$pconfig['stationname'] = $optcfg['wireless']['stationname'];
 	$pconfig['channel'] = $optcfg['wireless']['channel'];
+	$pconfig['encmode'] = $optcfg['wireless']['encmode'];
 	$pconfig['wep_enable'] = isset($optcfg['wireless']['wep']['enable']);
-	
+	$pconfig['wpa_enable'] = isset($optcfg['wireless']['wpa']['enable']);
+	$pconfig['wpacipher'] = $optcfg['wireless']['wpacipher'];
+	$pconfig['wpamode'] = $optcfg['wireless']['wpamode'];
+	$pconfig['wpapsk'] = $optcfg['wireless']['wpapsk'];
+
 	if (is_array($optcfg['wireless']['wep']['key'])) {
 		$i = 1;
 		foreach ($optcfg['wireless']['wep']['key'] as $wepkey) {
@@ -60,8 +64,8 @@ function wireless_config_post() {
 
 	/* input validation */
 	if ($_POST['enable']) {
-		$reqdfields = explode(" ", "mode ssid channel");
-		$reqdfieldsn = explode(",", "Mode,SSID,Channel");
+		$reqdfields = explode(" ", "ssid channel");
+		$reqdfieldsn = explode(",", "SSID,Channel");
 		do_input_validation($_POST, $reqdfields, $reqdfieldsn, &$input_errors);
 		
 		if (!$input_errors) {
@@ -73,25 +77,33 @@ function wireless_config_post() {
 
 	if (!$input_errors) {
 	
-		$optcfg['wireless']['standard'] = $_POST['standard'];
-		$optcfg['wireless']['mode'] = $_POST['mode'];
+		unset($optcfg['wireless']);
+
+	        $optcfg['wireless']['ifmode'] = $_POST['ifmode'];
+                $optcfg['wireless']['mode'] = $_POST['mode'];
 		$optcfg['wireless']['ssid'] = $_POST['ssid'];
-		$optcfg['wireless']['stationname'] = $_POST['stationname'];
 		$optcfg['wireless']['channel'] = $_POST['channel'];
-		$optcfg['wireless']['wep']['enable'] = $_POST['wep_enable'] ? true : false;
-		
-		$optcfg['wireless']['wep']['key'] = array();
-		for ($i = 1; $i <= 4; $i++) {
-			if ($_POST['key' . $i]) {
-				$newkey = array();
-				$newkey['value'] = $_POST['key' . $i];
-				if ($_POST['txkey'] == $i)
-					$newkey['txkey'] = true;
-				$optcfg['wireless']['wep']['key'][] = $newkey;
+		$optcfg['wireless']['encmode'] = $_POST['encmode'];
+		if ($optcfg['wireless']['encmode'] == 'wpa') {
+			$optcfg['wireless']['wpa']['enable'] = $_POST['wpa_enable'] ? true : false;
+                	$optcfg['wireless']['wpamode'] = $_POST['wpamode'];
+                	$optcfg['wireless']['wpacipher'] = $_POST['wpacipher'];
+                	$optcfg['wireless']['wpapsk'] = $_POST['wpapsk'];
+		}
+		if ($optcfg['wireless']['encmode'] == 'wep') {
+			$optcfg['wireless']['wep']['enable'] = $_POST['wep_enable'] ? true : false;
+			$optcfg['wireless']['wep']['key'] = array();
+			for ($i = 1; $i <= 4; $i++) {
+				if ($_POST['key' . $i]) {
+					$newkey = array();
+					$newkey['value'] = $_POST['key' . $i];
+					if ($_POST['txkey'] == $i)
+						$newkey['txkey'] = true;
+					$optcfg['wireless']['wep']['key'][] = $newkey;
+				}
 			}
 		}
 	}
-	
 	return $input_errors;
 }
 
@@ -103,40 +115,7 @@ function wireless_config_print() {
 				</tr>
                 <tr> 
                   <td colspan="2" valign="top" class="listtopic">Wireless configuration</td>
-				</tr>
-				<?php if (strstr($optcfg['if'], "ath")): ?>
-                <tr> 
-                  <td valign="top" class="vncellreq">Standard</td>
-                  <td class="vtable"><select name="standard" class="formfld" id="standard">
-                      <?php
-					  $standards = array("11b" => "802.11b", "11g" => "802.11g", "11a" => "802.11a");
-					  foreach ($standards as $sn => $sv): ?>
-                      <option value="<?=$sn;?>" <?php if ($sn == $pconfig['standard']) echo "selected";?>>
-                      <?=$sv;?>
-                      </option>
-                      <?php endforeach; ?>
-                    </select></td>
-                </tr>
-				<?php endif; ?>
-                <tr> 
-                  <td valign="top" class="vncellreq">Mode</td>
-                  <td class="vtable"><select name="mode" class="formfld" id="mode">
-                      <?php 
-						$opts = array();
-						if (strstr($optcfg['if'], "wi") || strstr($optcfg['if'], "ath"))
-							$opts[] = "hostap";
-						$opts[] = "BSS";
-						$opts[] = "IBSS";
-				foreach ($opts as $opt): ?>
-                      <option <?php if ($opt == $pconfig['mode']) echo "selected";?>> 
-                      <?=htmlspecialchars($opt);?>
-                      </option>
-                      <?php endforeach; ?>
-                    </select> <br>
-                    Note: IBSS mode is sometimes also called &quot;ad-hoc&quot; 
-                    mode;<br>
-                    BSS mode is also known as &quot;infrastructure&quot; mode</td>
-				</tr>
+		</tr>
                 <tr> 
                   <td valign="top" class="vncellreq">SSID</td>
                   <td class="vtable"><?=$mandfldhtml;?><input name="ssid" type="text" class="formfld" id="ssid" size="20" value="<?=htmlspecialchars($pconfig['ssid']);?>">
@@ -145,7 +124,6 @@ function wireless_config_print() {
                 <tr> 
                   <td valign="top" class="vncellreq">Channel</td>
                   <td class="vtable"><select name="channel" class="formfld" id="channel">
-                      <option <?php if ($pconfig['channel'] == 0) echo "selected";?> value="0">Auto</option>
                       <?php
 					  foreach ($wlchannels as $channel): ?>
                       <option <?php if ($channel == $pconfig['channel']) echo "selected";?> value="<?=$channel;?>">
@@ -155,16 +133,26 @@ function wireless_config_print() {
                     </select> <br>
                     Note: Not all channels may be supported by your card</td>
                 </tr>
-                <tr> 
-                  <td valign="top" class="vncell">Station name</td>
-                  <td class="vtable"><input name="stationname" type="text" class="formfld" id="stationname" size="20" value="<?=htmlspecialchars($pconfig['stationname']);?>"> 
-                    <br>
-                    Hint: this field can usually be left blank</td>
+
+		<tr>
+                  <td width="22%" valign="top" class="vncell">Encryption</td>
+                  <td width="78%" class="vtable">
+                    <select name="encmode" class="formfld" id="encmode" onChange="switchwifiencrypt(document.iform.encmode.value)
+">
+                        <?php $modes = array('open' => 'Open System', 'wep' => 'WEP', 'wpa' => 'WPA');
+                                foreach ($modes as $mode => $modename): ?>
+                                        <option value="<?=$mode;?>" <?php if ($mode == $pconfig['encmode']) echo "selected"; ?>>
+                                        <?=htmlspecialchars($modename);?>
+                                        </option>
+                        <?php endforeach; ?>
+                    </select>
+                </td>
                 </tr>
-                <tr> 
+		<tr id='open' style="display:none;">
+		</tr>	
+                <tr id='wep' style="display:none;"> 
                   <td valign="top" class="vncell">WEP</td>
-                  <td class="vtable"> <input name="wep_enable" type="checkbox" id="wep_enable" value="yes" <?php if ($pconfig['wep_enable']) echo "checked"; ?>> 
-                    <strong>Enable WEP</strong>
+                  <td class="vtable">
                     <table border="0" cellspacing="0" cellpadding="0">
                       <tr> 
                         <td>&nbsp;</td>
@@ -198,5 +186,61 @@ function wireless_config_print() {
                     hex digits preceded by '0x'.<br>
                     104 (128) bit keys may be entered as 13 ASCII characters or 
                     26 hex digits preceded by '0x'.</td>
+                </tr>
+		<tr id='wpa' style="display:none;">
+                  <td valign="top" class="vncell">WPA</td>
+                  <td class="vtable"> <input name="wpa_enable" type="checkbox" id="wpa_enable" value="yes" <?php if ($pconfig['wpa_enable']) echo "checked"; ?>>
+                    <strong>Enable WPA</strong>
+                    <table border="0" cellspacing="0" cellpadding="0">
+                    <tr>
+                        <td>&nbsp;</td>
+                        <td>&nbsp;</td>
+                        <td>&nbsp;</td>
+                    </tr>
+                    <tr> 
+                        <td>WPA Mode:&nbsp;&nbsp;</td>
+                        <td class="vtable"><select name="wpamode" class="formfld" id="mode">
+                      <?php 
+			$opts = array();
+                        $opts[] = "Auto";		
+			$opts[] = "WPA-1";
+			$opts[] = "WPA-2";
+			foreach ($opts as $opt): ?>
+                             <option <?php if ($opt == $pconfig['wpamode']) echo "selected";?>> 
+                      <?=htmlspecialchars($opt);?>
+                      </option>
+                      <?php endforeach; ?>
+                    </select></td>
+                        <td>&nbsp;</td>
+                        <td>&nbsp;</td>
+                        <td>&nbsp;</td>  
+                    </tr>  
+                    <tr> 
+                        <td>WPA Ciphers:&nbsp;&nbsp;</td>
+                        <td class="vtable"><select name="wpacipher" class="formfld" id="mode">
+                      <?php 
+			$opts = array();
+                        $opts[] = "Auto";		
+			$opts[] = "TKIP";
+			$opts[] = "CCMP";
+			foreach ($opts as $opt): ?>
+                             <option <?php if ($opt == $pconfig['wpacipher']) echo "selected";?>> 
+                      <?=htmlspecialchars($opt);?>
+                      </option>
+                      <?php endforeach; ?>
+                    </select></td>
+                        <td>&nbsp;</td>
+                        <td>&nbsp;</td>
+                        <td>&nbsp;</td>  
+                    </tr>  
+                    <tr>
+                        <td>Pre-Shared Key:&nbsp;&nbsp;</td>
+                        <td><input name="wpapsk" type="password" class="formfld" id="wpapsk" size="30" value="<?=htmlspecialchars($pconfig['wpapsk']);?>"></td>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+                <tr id='none' style="display:none;">
                 </tr>
 <?php } ?>

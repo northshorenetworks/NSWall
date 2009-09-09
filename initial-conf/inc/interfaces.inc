@@ -100,18 +100,60 @@ function interfaces_carp_configure() {
                        	echo "Configuring CARP interfaces... ";
                	$i = 0;
                	foreach($config['carp']['virtualhost'] as $carpcfg) {
-               		$carpdev = $config['interfaces'][$carpcfg['interface']]['if'];
-                       	mwexec("/sbin/ifconfig carp" . $i . " create");
-                       	$carpcmd = "carp$i" . " vhid " . $carpcfg['vid'] . " pass ";
-                       	$carpcmd .= $carpcfg['password'] . " carpdev $carpdev" . " advskew " . $carpcfg['advskew'];
-                       	$carpcmd .= " " . $carpcfg['ip'] . "/" . $carpcfg['subnet'];
-                       	mwexec("/sbin/ifconfig $carpcmd");
-                       	$i++;
-               	}
+               		if($carpcfg['carpmode'] == 'activestandby') {
+				if($carpcfg['carphostmode'] == 'active') {
+					$vid = 1;
+					$advskew = 0;
+				} else {
+					$vid = 2;
+					$advskew = 254;
+				}
+				$carpdev = $config['interfaces'][$carpcfg['interface']]['if'];
+                       		mwexec("/sbin/ifconfig carp" . $i . " create");
+                       		$carpcmd = "carp$i" . " vhid " . $vid . " pass ";
+                       		$carpcmd .= $carpcfg['password'] . " carpdev $carpdev" . " advskew " . $advskew;
+                       		$carpcmd .= " " . $carpcfg['ip'] . "/" . $carpcfg['subnet'];
+                       		mwexec("/sbin/ifconfig $carpcmd");
+                       		$i++;
+        		} else {
+				$carpdev = $config['interfaces'][$carpcfg['interface']]['if'];
+                                mwexec("/sbin/ifconfig carp" . $i . " create");
+                                $carpcmd = "carp$i "  . $carpcfg['ip'] . "/" . $carpcfg['subnet'];
+                                $carpcmd .= " pass " . $carpcfg['password'] . " carpdev $carpdev ";
+                                $carpcmd .= interfaces_cluster_generate($carpcfg['activemember'], $carpcfg['activenodes']); 
+				mwexec("/sbin/ifconfig $carpcmd");
+                                $i++;	
+			}
+	       	}
                	if ($g['booting'])
                        	echo "done\n";
        	}
        	return 0;
+}
+
+function interfaces_cluster_generate($member, $nodecount) {
+        $askdev = (254/$nodecount) * (1 + (1 / ($nodecount -1)));
+        $string = "balancing ip carpnodes ";
+        #make an array of nodes
+        $nodes = array();
+        for ($i=1;$i<=$nodecount;$i++) {
+                array_push($nodes, $i);
+        }
+        #sort the array so that the member we are using is at the begining
+        for ($i=1;$i<=$nodecount;$i++) {
+                if($member != 1) {
+                        if ($i < $member) {
+                                array_shift($nodes);
+                                array_push($nodes, $i);
+                        }
+                }
+        }
+        $n = 0;
+        foreach ($nodes as $_) {
+                $string .= "$_:" . floor($n * $askdev) . ",";
+                $n++;
+        }
+	return preg_replace('/,$/','',$string);
 }
 
 function interfaces_vlan_configure() {
@@ -212,28 +254,9 @@ function interfaces_lan_configure() {
 
 function interfaces_optional_configure() {
 	global $config, $g;
-	global $bridgeconfig;
-	
-	/* Reset bridge configuration.	Interfaces will add to it. */
-	$bridgeconfig = "";
 	
 	for ($i = 1; isset($config['interfaces']['opt' . $i]); $i++) {
 		interfaces_optional_configure_if($i);
-	}
-	
-	if ($bridgeconfig) {
-		/* Set the system bridge configuration and enable bridging. */
-		mwexec("/sbin/sysctl net.link.ether.bridge_cfg=" . $bridgeconfig);
-		
-		if (isset($config['bridge']['filteringbridge']))
-			mwexec("/sbin/sysctl net.link.ether.bridge_ipf=1");
-		else
-			mwexec("/sbin/sysctl net.link.ether.bridge_ipf=0");
-		
-		mwexec("/sbin/sysctl net.link.ether.bridge=1");
-	} else {
-		mwexec("/sbin/sysctl net.link.ether.bridge_ipf=0");
-		mwexec("/sbin/sysctl net.link.ether.bridge=0");
 	}
 	
 	if (!$g['booting']) {
@@ -290,32 +313,31 @@ function interfaces_optional_configure_if($opti) {
 		}
 	
 		$addflags = "";
-		if (strpos($optcfg['if'], "fxp") !== false)
-			$addflags .= " link0";
-		
 		$optif = $optcfg['if'];
-		
-		/* bridged? */
-		if ($optcfg['bridge']) {
-			mwexec("/sbin/ifconfig " . escapeshellarg($optcfg['if']) . 
-				" delete up");
 	
-			if ($bridgeconfig != "")
-				$bridgeconfig .= ",";
+		if ($optcfg['wireless']['ifmode'] == 'lanbridge' || $optcfg['wireless']['ifmode'] == 'dmzbridge') {
+			if ($optcfg['wireless']['ifmode'] == 'lanbridge') {
+				mwexec("/sbin/ifconfig ral0 up");	
+				mwexec("/sbin/ifconfig bridge0 create up");
+				mwexec("/sbin/brconfig bridge0 add " . $optif . " add " . $config['interfaces']['lan']['if']);
+			}
+			if ($optcfg['wireless']['ifmode'] == 'dmzbridge') {
+      				mwexec("/sbin/ifconfig ral0 up"); 
+	                        mwexec("/sbin/ifconfig bridge0 create up");
+                        	mwexec("/sbin/brconfig bridge0 add " . $optif . " add " . $config['interfaces']['opt1']['if']);
+			}
+			return 0;
+		}
+
+		mwexec("/sbin/ifconfig " . $optif . " " . 
+		escapeshellarg($optcfg['ipaddr'] . "/" . $optcfg['subnet']) . $addflags);
 		
-			$bridgeconfig .= $optcfg['if'] . ":" . $opti . "," .
-				$config['interfaces'][$optcfg['bridge']]['if'] .
-				":" . $opti;
-		} 
-		else {
-			mwexec("/sbin/ifconfig " . $optif . " " . 
-				escapeshellarg($optcfg['ipaddr'] . "/" . $optcfg['subnet']) . $addflags);
-			/* if aliases are defined bring them up */
-       			for($i=0;$i<sizeof($optcfg['aliaslist']); $i++ ) {     
-               			$alias = "alias" . "$i";
-               			mwexec("/sbin/ifconfig " . $optif . " alias " . escapeshellarg($optcfg['aliaslist'][$alias]) . " netmask 255.255.255.255");
-       			}
-		}	
+		/* if aliases are defined bring them up */
+       		for($i=0;$i<sizeof($optcfg['aliaslist']); $i++ ) {     
+               	        $alias = "alias" . "$i";
+               	        mwexec("/sbin/ifconfig " . $optif . " alias " . 
+                        escapeshellarg($optcfg['aliaslist'][$alias]) . " netmask 255.255.255.255");
+       		}
 	}
 	else {
 		mwexec("/sbin/ifconfig " . escapeshellarg($optcfg['if']) . 
@@ -352,61 +374,68 @@ function interfaces_wireless_configure($if, $wlcfg) {
 	
 	/* wireless configuration */
 	$ifcargs = escapeshellarg($if) . 
-		" ssid " . escapeshellarg($wlcfg['ssid']) . " channel " . 
+		" nwid " . escapeshellarg($wlcfg['ssid']) . " chan " . 
 		escapeshellarg($wlcfg['channel']) . " ";
 	
-	if ($wlcfg['stationname'])
-		$ifcargs .= "stationname " . escapeshellarg($wlcfg['stationname']) . " ";
 	
+        $ifcargs .= "media OFDM54 mediaopt hostap ";
+
 	if (isset($wlcfg['wep']['enable']) && is_array($wlcfg['wep']['key'])) {
-		$ifcargs .= "wepmode on ";
+		$wepargs = "nwkey ";
 		
 		$i = 1;
 		foreach ($wlcfg['wep']['key'] as $wepkey) {
-			$ifcargs .= "wepkey " . escapeshellarg("{$i}:{$wepkey['value']}") . " ";
 			if (isset($wepkey['txkey'])) {
-				$ifcargs .= "weptxkey {$i} ";
+				$wepargs .= "n:";
 			}
+                        $wepargs .= escapeshellarg("{$wepkey['value']}") . ",";
 			$i++;
 		}
+                $ifcargs .= preg_replace('/,$/',' ',$wepargs);
 	} else {
-		$ifcargs .= "wepmode off ";
+		$ifcargs .= "-nwkey ";
 	}
-	
-	if (strstr($if, "ath")) {
-		if ($wlcfg['standard'])
-			$ifcargs .= "mode {$wlcfg['standard']} ";
-	}
-	
-	switch ($wlcfg['mode']) {
-		case 'hostap':
-			if (strstr($if, "ath"))
-				$ifcargs .= "-mediaopt adhoc mediaopt hostap ";
-			else if (strstr($if, "wi"))
-				$ifcargs .= "-mediaopt ibss mediaopt hostap ";
-			break;
-		case 'ibss':
-		case 'IBSS':
-			if (strstr($if, "ath"))
-				$ifcargs .= "-mediaopt hostap mediaopt adhoc ";
-			else if (strstr($if, "wi"))
-				$ifcargs .= "-mediaopt hostap mediaopt ibss ";
-			else if (strstr($if, "an"))
-				$ifcargs .= "mediaopt adhoc ";
-			break;
-		case 'bss':
-		case 'BSS':
-			if (strstr($if, "ath"))
-				$ifcargs .= "-mediaopt hostap -mediaopt adhoc ";
-			else if (strstr($if, "wi"))
-				$ifcargs .= "-mediaopt hostap -mediaopt ibss ";
-			else if (strstr($if, "an"))
-				$ifcargs .= "-mediaopt adhoc ";
-			break;
-	}
+
+	if (isset($wlcfg['wpa']['enable'])) {
+                $wpaargs = "wpa ";
+		$wpassid = escapeshellarg($wlcfg['ssid']);
+                
+		switch ($wlcfg['wpamode']) {
+			case 'Auto':
+                                $wpaargs .= "wpaprotos wpa1,wpa2 ";
+                        	break;
+                	case 'WPA-1':
+				$wpaargs .= "wpaprotos wpa1 ";
+                                break;
+			case 'WPA-2':
+                                $wpaargs .= "wpaprotos wpa2 ";
+                                break;
+		}
+		
+		switch ($wlcfg['wpacipher']) {
+                        case 'Auto':
+                                $wpaargs .= "wpaciphers tkip,ccmp ";
+                                break;
+                        case 'TKIP':
+                                $wpaargs .= "wpaciphers tkip ";
+                                break;
+                        case 'CCMP':
+                                $wpaargs .= "wpaciphers ccmp ";
+                                break;
+                }
+
+		$wpapsk = escapeshellarg($wlcfg['wpapsk']);
+		$wpapsk = `/sbin/wpa-psk $wpassid $wpapsk`;
+	        
+		$wpaargs .= "wpapsk $wpapsk ";
+		$ifcargs .= $wpaargs;
+        
+	} else {
+                $ifcargs .= "-wpa ";
+        }
 	
 	$ifcargs .= "up";
-	
+
 	mwexec("/sbin/ifconfig " . $ifcargs);
 	
 	return 0;

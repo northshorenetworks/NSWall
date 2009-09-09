@@ -76,7 +76,12 @@ if ($_POST) {
 	}
 	
 	if (!$input_errors) {
-		$optcfg['descr'] = $_POST['descr'];
+		if ($index == 1)
+			$optcfg['descr'] = 'DMZ';
+		if ($index == 2)
+                        $optcfg['descr'] = 'Wireless';
+		if ($index > 2)
+			$optcfg['descr'] = $_POST['descr'];
 		$optcfg['ipaddr'] = $_POST['ipaddr'];
 		$optcfg['subnet'] = $_POST['subnet'];
 		unset($optcfg['aliaslist']);
@@ -114,10 +119,11 @@ $pconfig['aliaslist'] = $optcfg['aliaslist'];
 $pconfig['enable'] = isset($optcfg['enable']);
 $pconfig['gateway'] = $optcfg['gateway'];
 
-$pgtitle = array("Interfaces", "Optional $index (" . htmlspecialchars($optcfg['descr']) . ")");
+$pgtitle = array("Interfaces", htmlspecialchars($optcfg['descr']));
 ?>
 
 <?php include("fbegin.inc"); ?>
+<script language="javascript" src="/nss.js"></script>
 <script language="JavaScript">
 <!--
 function enable_change(enable_over) {
@@ -177,33 +183,47 @@ function ipaddr_change() {
                   <td width="22%" valign="top" class="vtable">&nbsp;</td>
                   <td width="78%" class="vtable">
 		  <input name="enable" type="checkbox" value="yes" <?php if ($pconfig['enable']) echo "checked"; ?> onClick="enable_change(false);bridge_change(false)">
-		  <strong>Enable Optional <?=$index;?> interface</strong></td>
-				</tr>
-                <tr> 
-                  <td width="22%" valign="top" class="vncell">Description</td>
-                  <td width="78%" class="vtable"> 
-                    <input name="descr" type="text" class="formfld" id="descr" size="30" value="<?=htmlspecialchars($pconfig['descr']);?>">
-					<br> <span class="vexpl">Enter a description (name) for the interface here.</span>
-				 </td>
-				</tr>
+		  <?php if ($index == 1) echo "<strong>Enable DMZ interface</strong>"; ?>
+		  <?php if ($index == 2) echo "<strong>Enable Wireless interface</strong>"; ?>
+		  <?php if ($index > 2) echo "<strong>Enable Optional <?=$index;?> interface</strong>"; ?>
+		</td>
+		</tr>
                 <tr> 
                   <td colspan="2" valign="top" height="16"></td>
 				</tr>
 				<tr> 
                   <td colspan="2" valign="top" class="listtopic">IP configuration</td>
-				</tr>
+		</tr>
+		<?php if ($index == 2): ?> 
                 <tr> 
-                  <td width="22%" valign="top" class="vncellreq">IP address</td>
+                  <td width="22%" valign="top" class="vncell">Wireless Interface Mode</td>
                   <td width="78%" class="vtable"> 
+                    <select name="ifmode" class="formfld" id="ifmode" onChange="switchwifibridge(document.iform.ifmode.value)">
+                	<?php $modes = array('nobridge' => 'Independant Network', 'lanbridge' => 'Bridge to LAN', 'dmzbridge' => 'Bridge to DMZ');
+		        	foreach ($modes as $mode => $modename): ?>
+                  			<option value="<?=$mode;?>" <?php if ($mode == $pconfig['ifmode']) echo "selected"; ?>>
+					<?=htmlspecialchars($modename);?>
+					</option>
+                	<?php endforeach; ?>
+		    </select>
+                </td>
+                </tr>
+		<?php endif; ?>
+                <tr id='ipdisp' style="display:none;"> 
+                 <td width="22%" valign="top" class="vncellreq">IP address</td>
+                 <td width="78%" class="vtable"> 
                     <?=$mandfldhtml;?><input name="ipaddr" type="text" class="formfld" id="ipaddr" size="20" value="<?=htmlspecialchars($pconfig['ipaddr']);?>" onchange="ipaddr_change()">
                     /
-                	<select name="subnet" class="formfld" id="subnet">
-					<?php for ($i = 31; $i > 0; $i--): ?>
-					<option value="<?=$i;?>" <?php if ($i == $pconfig['subnet']) echo "selected"; ?>><?=$i;?></option>
-					<?php endfor; ?>
-                    </select>
-				 </td>
-				<tr>
+ 		 <select name="subnet" class="formfld" id="subnet">
+                      <?php for ($i = 31; $i > 0; $i--): ?>
+                      <option value="<?=$i;?>" <?php if ($i == $pconfig['subnet']) echo "selected"; ?>>
+                      <?=$i;?>
+                      </option>
+                      <?php endfor; ?>
+                 </select>               
+		 </td>
+		 </tr>
+	         <tr id='ipaliasdisp' style="display:none;">
                  <td width="22%" valign="top" class="vncellreq">Aliases</td>
                  <td width="78%" class="vtable">
                  <select name="MEMBERS" style="width: 150px; height: 100px" id="MEMBERS" multiple>
@@ -229,6 +249,8 @@ function ipaddr_change() {
                   <td class="vtable"><?=$mandfldhtml;?><input name="gateway" type="text" class="formfld" id="gateway" size="20" value="<?=htmlspecialchars($pconfig['gateway']);?>">
                   </td>
 		</tr><?php endif; ?>
+		<tr id='bridgedisp' style="display:none;">
+		</tr>
                 <tr> 
                   <td width="22%" valign="top">&nbsp;</td>
                   <td width="78%"> 
@@ -249,6 +271,15 @@ function ipaddr_change() {
               </table>
 </form>
 <script language="JavaScript">
+<?php if ($index == 2): ?>
+	switchwifibridge(document.iform.ifmode.value);
+<?php endif; ?>
+
+<?php if ($index == 1): ?>
+	switchwifibridge('nobridge');
+<?php endif; ?>
+
+switchwifiencrypt(document.iform.encmode.value);
 <!--
 enable_change(false);
 bridge_change(false);

@@ -49,7 +49,8 @@ if ($config['pptpd']['mode'] == "server")
 	$iflist['pptp'] = "PPTP VPN";
 
 for ($i = 1; isset($config['interfaces']['opt' . $i]); $i++) {
-	$iflist['opt' . $i] = $config['interfaces']['opt' . $i]['descr'];
+	if ($config['interfaces']['opt' . $i]['wireless']['ifmode'] != 'lanbridge' && $config['interfaces']['wireless']['ifmode'] != 'dmzbridge')
+		$iflist['opt' . $i] = $config['interfaces']['opt' . $i]['descr'];
 }
 
 if (!$if || !isset($iflist[$if]))

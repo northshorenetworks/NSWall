@@ -33,6 +33,11 @@
 			<if>vr2</if>
 			<type/>
 		</opt1>
+		<opt1>
+                        <descr>Wireless</descr>
+                        <if>ral0</if>
+                        <type/>
+                </opt1>
 	</interfaces>
 	<pptp>
 		<client>
@@ -66,7 +71,7 @@
 		<advancedoutbound>
 			<rule>
 				<source>
-					<network>192.168.254.0/24</network>
+					<network>192.168.0.0/16</network>
 				</source>
 				<descr/>
 				<target/>
@@ -75,6 +80,28 @@
 					<any/>
 				</destination>
 			</rule>
+			<rule>
+                                <source>
+                                        <network>172.16.0.0/12</network>
+                                </source>
+                                <descr/>
+                                <target/>
+                                <interface>wan</interface>
+                                <destination>
+                                        <any/>
+                                </destination>
+                        </rule>
+			<rule>
+                                <source>
+                                        <network>10.0.0.0/8</network>
+                                </source>
+                                <descr/>
+                                <target/>
+                                <interface>wan</interface>
+                                <destination>
+                                        <any/>
+                                </destination>
+                        </rule>
 		</advancedoutbound>
 	</nat>
 	<filter>

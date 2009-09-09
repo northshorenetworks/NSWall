@@ -259,6 +259,7 @@ vpn:
       set authkey {$pptpcfg['password']} 
       set mppe 128 stateless
       disable ipv6
+
 EOD;
 	fwrite($fd, $pppconf);
        	fclose($fd);
@@ -317,6 +318,114 @@ EOD;
 
 	return 0;
 	}
+}
+
+function vpn_pptpd_configure() {
+        global $config, $g;
+	
+	$syscfg = $config['system'];
+	$pptpdcfg = $config['pptpd'];
+        $curwanip = get_current_wan_address();
+
+	$subnet_start = $pptpdcfg['remoteip'];
+        $subnet_end = long2ip(ip2long($pptpdcfg['remoteip']) + $g['n_pptp_units'] - 1);
+	$subnet_last_octet = explode(".", $subnet_start);
+        $subnet_last_octet = $subnet_last_octet[3] + $g['n_pptp_units'] - 1;
+
+        if(isset($config['pptpd']['enable'])) {
+
+ 		if ($g['booting'])
+ 	               echo "\nConfiguring PPTP Server... ";
+
+ 		/* kill any running pptpd process */
+		mwexec("/usr/bin/pkill pptpd");       
+
+		/* allow gre packets */
+       		mwexec("/sbin/sysctl net.inet.gre.allow=1");
+
+ 	      	/* make sure ppp directory exists */
+        	if (!file_exists("{$g['varetc_path']}/ppp"))
+ 	               mkdir("{$g['varetc_path']}/ppp");
+
+        	/* write pptpd.conf */
+        	$fd = fopen("{$g['varetc_path']}/pptpd.conf", "w");
+       		if (!$fd) {
+        		printf("Error: cannot open pptpd.conf in vpn_pptpd_configure().\n");
+ 		        return 1;
+ 	       }
+       	       $pptpdconf = <<<EOD
+option /etc/ppp/options.pptp
+localip $curwanip
+remoteip $subnet_start-$subnet_last_octet 
+
+EOD;
+
+		fwrite($fd, $pptpdconf);
+		fclose($fd);
+	
+		 /* write options.pptp */
+                $fd = fopen("{$g['varetc_path']}/ppp/options.pptp", "w");
+                if (!$fd) {
+                        printf("Error: cannot open options.pptp in vpn_pptpd_configure().\n");
+                        return 1;
+               }
+               $pptpopts = <<<EOD
+proxyarp
++MSChap-V2
+mppe-128
+mppe-stateless
+
+EOD;
+
+                fwrite($fd, $pptpopts);
+                fclose($fd);
+
+		 /* append pptp section to ppp.conf */
+                $fd = fopen("{$g['varetc_path']}/ppp/ppp.conf", "a");
+                if (!$fd) {
+                        printf("Error: cannot open options.pptp in vpn_pptpd_configure().\n");
+                        return 1;
+               }
+               $pppconf = <<<EOD
+
+pptp:
+	set timeout 0
+	set log tun phase chat connect lcp ipcp
+	enable proxy
+	set ifaddr $curwanip $subnet_start-$subnet_end 255.255.255.0
+	enable mschapv2
+	disable ipv6cp
+	accept dns
+	require-mschap-v2
+	set dns 192.168.7.50
+	set dns 192.168.7.50
+
+EOD;
+
+                fwrite($fd, $pppconf);
+                fclose($fd);
+
+		/* write ppp.secret */
+                $fd = fopen("{$g['varetc_path']}/ppp/ppp.secret", "w");
+                if (!$fd) {
+                        printf("Error: cannot open ppp.secret in vpn_pptpd_configure().\n");
+                        return 1;
+                }
+	
+		foreach ($pptpdcfg['user'] as $user) {
+                	$pppsecret .= "{$user['name']}\t{$user['password']}\t*\n";
+        	}
+
+                fwrite($fd, $pppsecret);
+                fclose($fd);
+
+		/* startup pptpd */
+        	mwexec("/usr/sbin/pptpd -l $curwanip -C 10");
+	
+		if ($g['booting'])
+                       echo "done";	
+	}
+return 0;
 }
 
 function vpn_localnet_determine($adr, &$sa, &$sn) {

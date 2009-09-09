@@ -257,7 +257,4 @@ pseudo-device	nvram		1
 pseudo-device	sequencer	1
 #pseudo-device	raid		4	# RAIDframe disk driver
 pseudo-device	hotplug		1	# devices hot plugging
-
-# mouse & keyboard multiplexor pseudo-devices
-pseudo-device	wsmux		2
 pseudo-device	crypto		1

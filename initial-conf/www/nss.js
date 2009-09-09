@@ -185,7 +185,25 @@ createProtoProps(id3);
  
 var ids=new Array('srchost','srcnet','srcalias', 'dsthost', 'dstnet', 'dstalias', 'dstsnat', 'dstredir', 'dstrelay');
 var tabs=new Array('tabAddress', 'tabProtocol', 'tabOptions');
- 
+var wifiencrypts= new Array('wpa','wep','open');
+var wifibridges= new Array('nobridge','lanbridge','dmzbridge');
+
+function switchwifiencrypt(id){
+  hideallwifiencrypts();
+  showwifibridge(id);
+} 
+
+function switchwifibridge(id){
+  hideallwifibridges();
+  if(id.match( /^lan/ ) || id.match( /^dmz/)) {
+        return 0;
+  }
+  if(id.match( /^nobridge/)) { 
+   	showwifibridge('ipdisp');
+   	showwifibridge('ipaliasdisp');
+  }
+}
+
 function switchsrcid(id){  
   hideallsrcids();
   showdiv(id);
@@ -228,6 +246,18 @@ hidediv(tabs[i]);
 }
 }
 
+function hideallwifiencrypts(){
+//loop through the array and hide each element by id
+for (var i=0;i<wifiencrypts.length;i++){
+hidediv(wifiencrypts[i]);
+}
+}
+
+function hideallwifibridges(){
+hidediv('ipdisp');
+hidediv('ipaliasdisp');
+}
+
 function hidediv(id) {
 //safe function to hide an element with a specified id
 if (document.getElementById) { // DOM3 = IE5, NS6
@@ -254,6 +284,36 @@ document.id.display = 'block';
 }
 else { // IE 4
 document.all.id.style.display = 'block';
+}
+}
+}
+
+function showwifidiv(id) {
+//safe function to show an element with a specified id
+if (document.getElementById) { // DOM3 = IE5, NS6
+document.getElementById(id).style.display = '';
+}
+else {
+if (document.layers) { // Netscape 4
+document.id.display = '';
+}
+else { // IE 4
+document.all.id.style.display = '';
+}
+}
+}
+
+function showwifibridge(id) {
+//safe function to show an element with a specified id
+if (document.getElementById) { // DOM3 = IE5, NS6
+document.getElementById(id).style.display = '';
+}
+else {
+if (document.layers) { // Netscape 4
+document.id.display = '';
+}
+else { // IE 4
+document.all.id.style.display = '';
 }
 }
 }

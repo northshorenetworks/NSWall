@@ -95,8 +95,7 @@ if ($_GET['act'] == "del") {
   <ul id="tabnav">
 <?php 
    	$tabs = array('Tunnels' => 'vpn_ipsec.php',
-           		  'Mobile clients' => 'vpn_ipsec_mobile.php',
-           		  'Pre-shared keys' => 'vpn_ipsec_keys.php');
+        	'Mobile clients' => 'vpn_ipsec_mobile.php');
 	dynamic_tab_menu($tabs);
 ?>       
   </ul>

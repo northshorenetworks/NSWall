@@ -54,3 +54,4 @@ _relayd:*:89:
 dialer:*:117:
 nogroup:*:32766:
 nobody:*:32767:
+_dnsmasq:*:631:

@@ -47,12 +47,11 @@ $g = array(
     "captiveportal_element_sizelimit" => 262144,
     "xml_rootobj" => "nswall",
     "pppoe_interface" => "ng0",
-    "n_pptp_units" => 16,
-    "pptp_subnet" => 28,
+    "n_pptp_units" => 10,
     "debug" => false,
     "latest_config" => "1.6",
     "nopccard_platforms" => array("wrap", "net48xx"),
-    "wireless_regex" => "/^(wi|ath|an)/"
+    "wireless_regex" => "/^(ral|ath|an)/"
 );
 
 ?>

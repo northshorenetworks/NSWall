@@ -39,7 +39,8 @@ if ($_POST['if'])
 $iflist = array("lan" => "LAN");
 
 for ($i = 1; isset($config['interfaces']['opt' . $i]); $i++) {
-	$oc = $config['interfaces']['opt' . $i];
+	if ($config['interfaces']['opt' . $i]['wireless']['ifmode'] != 'lanbridge' && $config['interfaces']['wireless']['ifmode'] != 'dmzbridge')
+		$oc = $config['interfaces']['opt' . $i];
 	
 	if (isset($oc['enable']) && $oc['if'] && (!$oc['bridge'])) {
 		$iflist['opt' . $i] = $oc['descr'];

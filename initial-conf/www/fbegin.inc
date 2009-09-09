@@ -124,13 +124,13 @@ $menu['Firewall']['Rules']          = array('firewall_rules.php');
 
 $menu['Services']['DHCP server']	= array('services_dhcp.php');
 $menu['Services']['DNS forwarder']	= array('services_dnsmasq.php');
-//$menu['Services']['CARP']          	= array('firewall_carp.php');
-// $menu['Services']['Config Server']      = array('services_config_server.php');
+$menu['Services']['CARP']          	= array('firewall_carp.php');
+ $menu['Services']['Config Server']     = array('services_config_server.php');
 // $menu['Services']['Relayd']             = array('firewall_relayd_relays.php');
 
 $menu['VPN']['IPsec']  			= array('vpn_ipsec.php');
 $menu['VPN']['PPTP Client']             = array('vpn_pptp_client.php');
-											
+$menu['VPN']['PPTP Server']             = array('vpn_pptp_server.php');									
 $menu['Status']['System']			= array('index.php');
 $menu['Status']['Interfaces']		= array('status_interfaces.php');
 $menu['Status']['Traffic graph']	= array('status_graph.php');
@@ -225,7 +225,7 @@ function showhide(tspan, tri) {
 </script>
 <table width="800" border="0" cellspacing="0" cellpadding="0">
   <tr valign="bottom"> 
-    <td width="100" height="65" align="left" valign="bottom"> <strong><a href="http://www.northshoresoftware.com/" target="_blank"><img src="/logo.gif" width="150" height="65" border="0"></a></strong></td>
+    <td width="150"><strong><a href="http://www.northshoresoftware.com/" target="_blank"><img src="/logo.gif" align="center" width="100%" height="65" border="0"></a></strong></td>
     <td height="65" bgcolor="#435370">
 	<table border="0" cellspacing="0" cellpadding="0" width="100%">
 	<tr><td align="left" valign="bottom"><span class="tfrtitle">&nbsp;webGUI 
@@ -292,4 +292,3 @@ dynamic_menu($menu['Diagnostics'], 'Diagnostics');
 <?php if (!$pgtitle_omit): ?>
       <p class="pgtitle"><?=gentitle($pgtitle);?></p>
 <?php endif; ?>
-

@@ -480,14 +480,13 @@ function filter_options_generate() {
 }
 
 function filter_normalization_generate() {
-	global $config, $g;
-	$ipfrules = <<<EOD
+        global $config, $g;
+        $ipfrules = <<<EOD
 #############################
 ### Traffic Normalization ###
 #############################
-
 EOD;
-                $normalrule = "scrub in all ";
+
         if (isset($config['filter']['options']['scrub']['dfbit']))
                 $normalrule .= "no-df ";
         if (isset($config['filter']['options']['scrub']['minttl']))
@@ -496,11 +495,10 @@ EOD;
                 $normalrule .= "max-mss " . $config['filter']['options']['scrub']['maxmss'] . " ";
         if (isset($config['filter']['options']['scrub']['randid']))
                 $normalrule .= "random-id ";
-        if (isset($config['filter']['options']['scrub']['fraghandle']))
-                $normalrule .= "fragment " . $config['filter']['options']['scrub']['fraghandle'];
         if (isset($config['filter']['options']['scrub']['reassembletcp']))
-                $normalrule .= "\nscrub all reassemble tcp fragment " . $config['filter']['options']['scrub']['fraghandle'] . "\n";
-        $ipfrules .= $normalrule . "\n";
+                $normalrule .= "reassemble tcp";
+        if ($normalrule)
+        	$ipfrules .= "\nmatch in all scrub ( " . $normalrule . ")\n";
 
 return $ipfrules;
 }
@@ -671,6 +669,21 @@ anchor "default" {
 	pass out all
 }
 
+EOD;
+	if($config['interfaces']['opt2']['wireless']['ifmode'] == 'lanbridge' || $config['interfaces']['opt2']['wireless']['ifmode'] == 'dmzbridge') {
+ 	$ipfrules .= <<<EOD
+
+##############################################
+### Allow all traffic into Wireless bridge ###
+##############################################
+anchor "Wireless_Bridge" {
+	pass in quick on ral0 all
+}
+
+EOD;
+	}
+	$ipfrules .= <<<EOD
+
 #######################################################
 #### Activate spoofing protection on all interfaces ###
 #######################################################
@@ -776,29 +789,23 @@ EOD;
 	/* LAN spoof check */
 	/* omit if any interface is bridged to LAN and the filtering bridge is on */
 	$lanbridge = false;
-	foreach ($optcfg as $on => $oc) {
-		if ($oc['bridge'] && $oc['bridge_if'] == "lan") {
-			$lanbridge = true;
-			break;
-		}
-	}
-	if (!$lanbridge || !isset($config['bridge']['filteringbridge']))
+	for ($i = 1; isset($config['interfaces']['opt' . $i]); $i++) {
+                if($config['interfaces']['opt' . $i]['wireless']['ifmode'] == 'lanbridge')
+                $lanbridge = true;
+        }
+	if (!$lanbridge)
 		$ipfrules .= "\t" . filter_rules_spoofcheck_generate('lan', $lanif, $lansa, $lansn, $log);
 
 	/* OPT spoof check */
-	foreach ($optcfg as $on => $oc) {
-		/* omit for bridged interfaces when the filtering bridge is on */
-		$isbridged = false;
-		foreach ($optcfg as $on2 => $oc2) {
-			if ($oc2['bridge'] && $oc2['bridge_if'] == $on) {
-				$isbridged = true;
-				break;
-			}
-		}
-		
-		if ($oc['ip'] && !(($oc['bridge'] || $isbridged) && isset($config['bridge']['filteringbridge'])))
-			$ipfrules .= "\t" . filter_rules_spoofcheck_generate($on, $oc['if'], $oc['sa'], $oc['sn'], $log);
-	}
+	/* omit for bridged interfaces when the filtering bridge is on */
+	$isbridged = false;
+	for ($i = 1; isset($config['interfaces']['opt' . $i]); $i++) {
+                if($config['interfaces']['opt' . $i]['wireless']['ifmode'] == 'lanbridge' || $config['interfaces']['opt' . $i]['wireless']['ifmode'] == 'dmzbridge')
+                $isbridged = true;
+        }
+        if (!$isbridged)
+		$ipfrules .= filter_rules_spoofcheck_generate($on, $oc['if'], $oc['sa'], $oc['sn'], $log);
+
 	$ipfrules .= "}\n";
 
 	/* block private networks on WAN? */
@@ -875,9 +882,11 @@ EOD;
 ### Allow CARP Protocol ###
 ###########################
 EOD;
-       		 foreach($config['carp']['virtualhost'] as $virtual) {
-			$carpdev = $config['interfaces'][$virtual['interface']]['if'];
-			$ipfrules .= "\npass in quick on $carpdev proto carp";
+       		if (is_array($config['carp']['virtualhost'])) { 
+			foreach($config['carp']['virtualhost'] as $virtual) {
+				$carpdev = $config['interfaces'][$virtual['interface']]['if'];
+				$ipfrules .= "\npass in quick on $carpdev proto carp";
+			}
 		}
 		$ipfrules .= "\n";
 	}

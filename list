@@ -5,12 +5,14 @@ SCRIPT ${DESTDIR}/dev/MAKEDEV			dev/MAKEDEV
 SPECIAL chmod 700 dev/MAKEDEV
 SPECIAL cd dev; ./MAKEDEV ramdisk pty systrace tty00 tty01 pci wdt0 
 SPECIAL cd dev; ./MAKEDEV ttyU0 ttyU1
-SPECIAL cd dev; ./MAKEDEV tun0 tun1 tun2 tun3 tun4 tun5 tun6 tun7
+SPECIAL cd dev; ./MAKEDEV tun0 tun1 tun2 tun3 tun4 tun5 tun6 tun7 tun8 tun9 tun10
 SPECIAL cd dev; ./MAKEDEV bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 
 SPECIAL cd dev; ./MAKEDEV pf crypto fd wsmux wscons apm local gpio
 
 COPY	${DESTDIR}/etc/disktab			etc/disktab
 COPY    ${DESTDIR}/etc/login.conf               etc/login.conf
+COPY    ${DESTDIR}/etc/hostapd.conf             etc/hostapd.conf
+COPY    ${DESTDIR}/etc/firmware/ral-rt2860      etc/firmware/ral-rt2860
 COPY    ${DESTDIR}/etc/ssl/openssl.cnf          etc/ssl/openssl.cnf
 COPY	${DESTDIR}/etc/gettytab			etc/gettytab
 COPY	${DESTDIR}/etc/remote			etc/remote
@@ -185,9 +187,11 @@ COPY ${DESTDIR}/sbin/route			sbin/route
 COPY ${DESTDIR}/sbin/sysctl			sbin/sysctl
 COPY ${DESTDIR}/sbin/ttyflags			sbin/ttyflags
 COPY ${DESTDIR}/sbin/umount			sbin/umount
-#COPY ${DESTDIR}/sbin/wicontrol			sbin/wicontrol
+COPY ${DESTDIR}/sbin/wpa-psk			sbin/wpa-psk
 COPY ${BINDIR}/mini_httpd			sbin/mini_httpd
 COPY ${BINDIR}/pptp				sbin/pptp
+COPY ${BINDIR}/pptpd                            usr/sbin/pptpd
+COPY ${BINDIR}/pptpctrl                         usr/local/sbin/pptpctrl
 COPY ${DESTDIR}/usr/bin/awk			usr/bin/awk
 COPY ${DESTDIR}/usr/bin/basename		usr/bin/basename
 COPY ${DESTDIR}/usr/bin/crontab			usr/bin/crontab

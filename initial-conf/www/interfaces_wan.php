@@ -32,6 +32,9 @@
 $pgtitle = array("Interfaces", "WAN");
 require("guiconfig.inc");
 
+$optcfg = &$config['interfaces']['wan'];
+$wancfg = &$config['interfaces']['wan'];
+
 if ($_POST) {
  
   unset($input_errors);
@@ -129,14 +132,14 @@ if ($_POST) {
   
     if ($_POST['type'] == "Static") {
       $wancfg['ipaddr'] = $_POST['ipaddr'];
-    $wancfg['subnet'] = $_POST['subnet'];
+      $wancfg['subnet'] = $_POST['subnet'];
       $wancfg['gateway'] = $_POST['gateway'];
       $aliaslist = explode(',', $_POST['memberslist']);
       for($i=0;$i<sizeof($aliaslist); $i++) {
-                             $alias = 'alias'."$i";
-                             $prop = preg_replace("/ /", "", $aliaslist[$i]);
-                             $wancfg['aliaslist'][$alias] = $prop;
-                        }
+      	$alias = 'alias'."$i";
+      	$prop = preg_replace("/ /", "", $aliaslist[$i]);
+      	$wancfg['aliaslist'][$alias] = $prop;
+      }
       if (isset($wancfg['ispointtopoint']))
         $wancfg['pointtopoint'] = $_POST['pointtopoint'];
     } else if ($_POST['type'] == "DHCP") {
@@ -165,9 +168,6 @@ if ($_POST) {
     $savemsg = get_std_save_message($retval);
   }
 }
-
-$wancfg = &$config['interfaces']['wan'];
-$optcfg = &$config['interfaces']['wan'];
 
 $pconfig['username'] = $config['pppoe']['username'];
 $pconfig['password'] = $config['pppoe']['password'];
