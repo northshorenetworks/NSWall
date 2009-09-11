@@ -1,0 +1,225 @@
+#	$OpenBSD: GENERIC-RD,v 1.22 2008/08/20 15:16:11 stevesk Exp $
+#
+# For further information on compiling OpenBSD kernels, see the config(8)
+# man page.
+#
+# For further information on hardware support for this architecture, see
+# the intro(4) man page.  For further information about kernel options
+# for this architecture, see the options(4) man page.  For an explanation
+# of each device driver in this file see the section 4 man page for the
+# device.
+
+machine		i386
+include		"../../../conf/GENERIC"
+maxusers	32			# estimated number of users
+
+option		I586_CPU
+
+option		USER_PCICONF	# user-space PCI configuration
+
+#option		VM86		# Virtual 8086 emulation
+option		KVM86		# Kernel Virtual 8086 emulation
+option		USER_LDT	# user-settable LDT; see i386_set_ldt(2)
+
+#option		KGDB		# Remote debugger support; exclusive of DDB
+#option		"KGDB_DEVNAME=\"com\"",KGDBADDR=0x2f8,KGDBRATE=9600
+
+# or use		root on nfs swap on nfs
+option          RAMDISK_HOOKS
+option          MINIROOTSIZE=40960              # disktab.20mb
+option          NKPTP=8
+config          bsd     root on rd0a swap on rd0b and wd0b and wd1b
+pseudo-device   rd              1
+
+mainbus0 at root
+
+cpu0	at mainbus?
+bios0	at mainbus0
+apm0	at bios0 flags 0x0000	# flags 0x0101 to force protocol version 1.1
+pcibios0 at bios0 flags 0x0000	# use 0x30 for a total verbose
+ipmi0	at mainbus?		# IPMI
+esm0	at mainbus? 		# Dell Embedded Server Management
+
+isa0	at mainbus0
+isa0	at pcib?
+isa0	at ichpcib?
+isa0	at piixpcib?
+isa0	at gscpcib?
+eisa0	at mainbus0
+pci*	at mainbus0
+
+#option		ACPIVERBOSE
+#option		ACPI_ENABLE
+
+acpi0		at bios?	disable
+#acpitimer*	at acpi?
+#acpihpet*	at acpi?
+#acpiac*	at acpi?
+#acpibat*	at acpi?
+#acpibtn*	at acpi?
+#acpicpu*	at acpi?
+#acpidock*	at acpi?
+acpiec*		at acpi?	disable
+acpiprt*	at acpi?
+#acpitz*	at acpi?
+
+option		PCIVERBOSE
+option		EISAVERBOSE
+option		USBVERBOSE
+
+pchb*	at pci?			# PCI-Host bridges
+ppb*	at pci?			# PCI-PCI bridges
+pci*	at ppb?
+pci*	at pchb?
+pcib*	at pci?			# PCI-ISA bridge
+ichpcib* at pci?		# Intel ICHx/ICHx-M LPC bridges
+piixpcib* at pci?		# Intel PIIX4 PCI-ISA bridge
+gscpcib* at pci?		# NS Geode SC1100 PCI-ISA bridge
+gpio*	at gscpcib?
+
+# power management and other environmental stuff
+elansc*	at pci?			# AMD Elan SC520 System Controller
+gpio*	at elansc?
+geodesc* at pci?		# Geode SC1100/SCx200 IAOC
+#gscpm*	at pci?			# NS Geode SC1100 SMI/ACPI module
+#ichwdt* at pci?		# Intel 6300ESB ICH watchdog timer
+wdt0	at pci?			# Ind Computer Source PCI-WDT50x driver
+pwdog0	at pci?			# Quancom PWDOG1 watchdog timer
+
+# National Semiconductor LM7[89] and compatible hardware monitors
+lm0	at isa? port 0x290
+#lm1	at isa? port 0x280
+#lm2	at isa? port 0x310
+nsclpcsio* at isa? port 0x2e		# NS PC87366 LPC Super I/O
+nsclpcsio* at isa? port 0x4e
+gpio*	at nsclpcsio?
+gscsio*	at isa?	port 0x2e		# NS Geode SC1100 Super I/O
+gscsio*	at isa?	port 0x15c
+iic*	at gscsio?			# ACCESS.bus 1 & 2
+piixpm* at pci?				# Intel PIIX power management
+iic*	at piixpm?
+alipm*	at pci?				# Acer Labs M7101 power management
+iic*	at alipm?
+ichiic*	at pci?				# Intel ICH SMBus controller
+iic*	at ichiic?
+viapm*	at pci?				# VIA VT8237 power management
+iic*	at viapm?
+amdiic*	at pci?				# AMD-8111 SMBus controller
+iic*	at amdiic?
+nviic*	at pci?				# NVIDIA nForce2/3/4 SMBus controller
+iic*	at nviic?
+amdpm*	at pci?				# AMD-7xx/8111 and NForce SMBus controller
+iic*	at amdpm?
+
+it0	at isa? port 0x290		# IT8705F, IT8712F and SiS970 hardware
+it1	at isa? port 0xc00		# monitors
+it2	at isa? port 0xd00
+viaenv*	at pci?				# VIA VT82C686A hardware monitor
+viasio*	at isa? port 0x2e flags 0x0000	# VIA VT1211 LPC Super I/O
+viasio*	at isa? port 0x4e flags 0x0000
+aps0	at isa? port 0x1600		# ThinkPad Active Protection System
+
+adc*	at iic?				# Analog Devices AD7416/AD7417/7418
+admtemp* at iic?			# Analog Devices ADM1021
+admlc*	at iic?				# Analog Devices ADM1024
+admcts*	at iic?				# Analog Devices ADM1026
+admtm*	at iic?				# Analog Devices ADM1025
+admtmp*	at iic?				# Analog Devices ADM1030
+admtt*	at iic?				# Analog Devices ADM1031
+adt*	at iic?				# Analog Devices ADT7460
+lm*	at iic?				# LM78/79 and clones
+lmenv*	at iic?				# National Semiconductor LM87
+lmtemp*	at iic?				# NS LM75/LM77 temperature sensor
+maxds*	at iic?				# Maxim DS1631/1624/1721
+maxtmp*	at iic?				# Maxim MAX6642/MAX6690
+asbtm*	at iic?				# Asus ASB100
+wbenv*	at iic?				# Winbond W83L784R/W83L785R/W83L785TS-L
+glenv*	at iic?				# Genesys Logic GL518SM
+
+#isagpio0 at isa? port 0x78		# ISA I/O mapped as GPIO
+#isagpio1 at isa? port 0x80
+
+npx0	at isa? port 0xf0 irq 13	# math coprocessor
+isadma0	at isa?
+isapnp0	at isa?
+
+#vesabios0	at mainbus?
+# option	VESABIOSVERBOSE
+
+#option	VESAFB			# VESA bios framebuffer support for X11
+
+pcppi0		at isa?
+
+com0	at isa? port 0x3f8 irq 4	# standard PC serial ports
+com1	at isa? port 0x2f8 irq 3
+com2	at isa? port 0x3e8 irq 5
+#com3	at isa? port 0x2e8 irq 9	# (conflicts with some video cards)
+ast0	at isa? port 0x1a0 irq 5	# AST 4-port serial card
+#ast1	at isa? port 0x2a0 irq 6	# 2nd AST 4-port serial card
+com*	at ast?
+#boca0	at isa? port 0x100 irq 5	# BOCA 8-port serial cards
+#com*	at boca?
+#addcom0	at isa? port 0x108 irq 5	# Addonics FlexPort
+#com*	at addcom?
+#rtfps0	at isa? port 0x1230 irq 10	# RT 4-port serial cards
+#com*	at rtfps?
+#hsq0	at isa? port 0x140 irq 10	# Hostess 4-port serial card
+#com*	at hsq?
+com*	at isapnp?
+
+# option for using CD1400 handshaking for incoming data
+# requires a special cable that exchanges the RTS and DTR lines
+# options CY_HW_RTS
+cy0	at isa? iomem 0xd4000 irq 12	# ISA cyclom serial card
+cy*	at pci?				# PCI cyclom serial card
+#cz*	at pci?				# Cyclades-Z multi-port serial boards
+
+lpt0	at isa? port 0x378 irq 7	# standard PC parallel ports
+lpt1	at isa? port 0x278
+lpt2	at isa? port 0x3bc
+
+# IDE controllers
+pciide* at pci? flags 0x0000
+
+wdc0	at isa? port 0x1f0 irq 14 flags 0x00
+wdc1	at isa? port 0x170 irq 15 flags 0x00
+wdc*	at isapnp?
+
+# IDE hard drives
+wd*	at wdc? flags 0x0000
+wd*	at pciide? flags 0x0000
+
+# Networking devices
+vr*	at pci?				# VIA Rhine ethernet
+
+# Wireless network cards
+ral*	at pci?				# Ralink RT2500/RT2501/RT2600
+
+# Media Independent Interface (mii) drivers
+ukphy*	at mii?				# "unknown" PHYs
+
+# crypto support
+glxsb*	at pci?			# AMD Geode LX series processor security block
+
+# I2O
+iop*	at pci?			# I2O processor
+ioprbs*	at iop?			# I2O arrays
+scsibus* at ioprbs?
+iopsp*	at iop?			# I2O SCSI pass-through
+scsibus* at iopsp?
+
+# GPIO ``pin bus'' drivers
+#gpioiic* at gpio? offset 0 mask 0x3	# I2C bus bit-banging
+#iic*	at gpioiic?
+#gpioow* at gpio? offset 0 mask 0x1	# 1-Wire bus bit-banging
+
+pseudo-device	pctr		1
+pseudo-device	mtrr		1	# Memory range attributes control
+pseudo-device	nvram		1
+pseudo-device	sequencer	1
+#pseudo-device	raid		4	# RAIDframe disk driver
+pseudo-device	hotplug		1	# devices hot plugging
+
+# mouse & keyboard multiplexor pseudo-devices
+pseudo-device	wsmux		2
+pseudo-device	crypto		1
