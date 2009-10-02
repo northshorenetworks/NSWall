@@ -7,8 +7,7 @@ SUBSTRING=`expr "$1" : '.*\(list.debug\)'`
 
 
 if [ "${SUBSTRING}" = "list.debug" ]; then
-	if [ "$DEBUG_FLAG" = "TRUE" ]; then	
-	else 
+	if [ "$DEBUG_FLAG" = "FALSE" ]; then	
 		exit
 	fi
 fi

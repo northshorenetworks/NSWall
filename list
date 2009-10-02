@@ -124,8 +124,15 @@ SPECIAL sed "/^tty00/s/19200/${TTYSPEED}/" < etc/ttys > etc/ttys.speed
 SPECIAL mv etc/ttys.speed etc/ttys
 
 # Here we encrypt the php code with SG
+# Copy all the inc files, for now these will be common amoungst modules
 SPECIAL cp -R -p ${CURDIR}/initial-conf/inc             etc/inc/
-SPECIAL cp -R -p ${CURDIR}/initial-conf/www             usr/www/
+# Copy all the common www files shared between modules
+SPECIAL sh ${CURDIR}/tools/runlist.sh ${CURDIR}/list.common
+#SPECIAL cp -R -p ${CURDIR}/initial-conf/www             usr/www/
+# Copy files specific to FIREWALL module
+#SPECIAL sh ${CURDIR}/tools/runlist.sh ${CURDIR}/list.firewall
+# Copy files specifc to MGMTSVR module
+#SPECIAL sh ${CURDIR}/tools/runlist.sh ${CURDIR}/list.mgmtsvr
 #SPECIAL ${BINDIR}/SG/bin/encode4 --conj -z 9 -b- @${CURDIR}/sgproject
 
 # Miscellaneous extra tools

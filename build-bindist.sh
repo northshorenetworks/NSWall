@@ -26,13 +26,13 @@ then
 	export DEBUG_FLAG=TRUE
 	export MODULE=$MODULE
 	echo "Running build-kernel.sh $PLATFORM with debug on"
-	./build-kernel.sh $PLATFORM TRUE 
+	./build-kernel.sh $PLATFORM TRUE $MODULE
 	
 else
 	export DEBUG_FLAG=FALSE
 	export MODULE=$MODULE
 	echo "Running build-kernel.sh $PLATFORM"
-	./build-kernel.sh $PLATFORM FALSE
+	./build-kernel.sh $PLATFORM FALSE $MODULE
 fi
 rm $DISTNAME
 

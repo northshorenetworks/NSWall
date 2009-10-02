@@ -9,8 +9,9 @@ SUDO=sudo
 DISKTAB=disktab.20mb
 NBLKS=40960
 export DEBUG_FLAG=$2
+export MODULE=$3
 
-export SRCDIR DESTDIR BINDIR SUDO DEBUG_FLAG
+export SRCDIR DESTDIR BINDIR SUDO DEBUG_FLAG MODULE
 
 # Don't start without a kernel as a parameter
 if [ "$1" = "" ]; then
@@ -38,7 +39,7 @@ ${SUDO} vnconfig -u vnd0
 make KCONF=${KERNEL} clean
 
 # Make kernel
-make KCONF=${KERNEL} DEBUG_FLAG=${DEBUG_FLAG} $3 $4
+make KCONF=${KERNEL} DEBUG_FLAG=${DEBUG_FLAG} MODULE=${MODULE} $4
 
 # Done
 echo "Your kernel is stored here ${BASE}/obj/"
