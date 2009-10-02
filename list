@@ -12,7 +12,6 @@ SPECIAL cd dev; ./MAKEDEV pf crypto fd wsmux wscons apm local gpio
 COPY	${DESTDIR}/etc/disktab			etc/disktab
 COPY    ${DESTDIR}/etc/login.conf               etc/login.conf
 COPY    ${DESTDIR}/etc/hostapd.conf             etc/hostapd.conf
-COPY    ${DESTDIR}/etc/firmware/ral-rt2860      etc/firmware/ral-rt2860
 COPY    ${DESTDIR}/etc/ssl/openssl.cnf          etc/ssl/openssl.cnf
 COPY	${DESTDIR}/etc/gettytab			etc/gettytab
 COPY	${DESTDIR}/etc/remote			etc/remote
@@ -38,6 +37,7 @@ SPECIAL chmod 0660 var/cron/cron.deny
 #COPY	/etc/firmware/ral-rt2561		etc/firmware
 #COPY	/etc/firmware/ral-rt2561s		etc/firmware
 #COPY	/etc/firmware/ral-rt2661		etc/firmware
+COPY    /etc/firmware/ral-rt2860      		etc/firmware
 
 # optional ipw(4) firmware (copied from build system)
 #COPY	/etc/firmware/ipw-bss			etc/firmware
@@ -74,7 +74,6 @@ COPY	${CURDIR}/initial-conf/rc		etc/rc
 COPY    ${CURDIR}/initial-conf/rc.initial	etc/rc.initial
 COPY	${CURDIR}/initial-conf/rc.pkg		etc/rc.pkg
 COPY	${CURDIR}/initial-conf/moduli		etc/moduli
-COPY	${CURDIR}/initial-conf/sshd_config	etc/ssh/sshd_config
 COPY	${CURDIR}/initial-conf/ttys		etc/ttys
 COPY    ${CURDIR}/initial-conf/boot.conf        etc/boot.conf
 
@@ -217,12 +216,9 @@ COPY ${DESTDIR}/usr/bin/nc			usr/bin/nc
 COPY ${DESTDIR}/usr/bin/netstat			usr/bin/netstat
 COPY ${DESTDIR}/usr/bin/passwd			usr/bin/passwd
 COPY ${DESTDIR}/usr/bin/printf			usr/bin/printf
-COPY ${DESTDIR}/usr/bin/scp			usr/bin/scp
 COPY ${DESTDIR}/usr/bin/sed			usr/bin/sed
 COPY ${DESTDIR}/usr/bin/sftp			usr/bin/sftp
 COPY ${DESTDIR}/usr/bin/sort			usr/bin/sort
-COPY ${DESTDIR}/usr/bin/ssh			usr/bin/ssh
-COPY ${DESTDIR}/usr/bin/ssh-keygen		usr/bin/ssh-keygen
 COPY ${DESTDIR}/usr/bin/su			usr/bin/su
 COPY ${DESTDIR}/usr/bin/systat			usr/bin/systat
 COPY ${DESTDIR}/usr/bin/tail			usr/bin/tail
@@ -235,18 +231,14 @@ COPY ${DESTDIR}/usr/bin/tset			usr/bin/tset
 COPY ${DESTDIR}/usr/bin/tty			usr/bin/tty
 COPY ${DESTDIR}/usr/bin/uname			usr/bin/uname
 COPY ${DESTDIR}/usr/bin/uptime			usr/bin/uptime
-COPY ${DESTDIR}/usr/bin/vi			usr/bin/vi
 COPY ${DESTDIR}/usr/bin/vmstat			usr/bin/vmstat
 COPY ${DESTDIR}/usr/libexec/auth/login_passwd	usr/libexec/auth/login_passwd
 COPY ${DESTDIR}/usr/libexec/getty		usr/libexec/getty
 COPY ${DESTDIR}/usr/libexec/identd		usr/libexec/identd
 COPY ${DESTDIR}/usr/libexec/ld.so		usr/libexec/ld.so
-COPY ${DESTDIR}/usr/libexec/sftp-server		usr/libexec/sftp-server
 #COPY ${DESTDIR}/usr/libexec/spamd		usr/libexec/spamd
 #COPY ${DESTDIR}/usr/libexec/spamd-setup	usr/libexec/spamd-setup
 COPY ${BINDIR}/symon  		             	usr/libexec/symon
-COPY ${DESTDIR}/usr/libexec/tftpd		usr/libexec/tftpd
-COPY ${DESTDIR}/usr/sbin/authpf			usr/sbin/authpf
 COPY ${DESTDIR}/usr/sbin/arp			usr/sbin/arp
 #COPY ${DESTDIR}/usr/sbin/bgpd			usr/sbin/bgpd
 #COPY ${DESTDIR}/usr/sbin/bgpctl		usr/sbin/bgpctl
@@ -280,7 +272,6 @@ COPY ${DESTDIR}/usr/sbin/relayctl               usr/sbin/relayctl
 COPY ${DESTDIR}/usr/sbin/rtadvd			usr/sbin/rtadvd
 COPY ${DESTDIR}/usr/sbin/rtsold			usr/sbin/rtsold
 COPY ${DESTDIR}/usr/sbin/sasyncd		usr/sbin/sasyncd
-COPY ${DESTDIR}/usr/sbin/sshd			usr/sbin/sshd
 COPY ${DESTDIR}/usr/sbin/syslogc		usr/sbin/syslogc
 COPY ${DESTDIR}/usr/sbin/syslogd		usr/sbin/syslogd
 COPY ${DESTDIR}/usr/sbin/tcpdrop		usr/sbin/tcpdrop
@@ -289,6 +280,9 @@ COPY ${DESTDIR}/usr/sbin/traceroute		usr/sbin/traceroute
 #COPY ${DESTDIR}/usr/sbin/traceroute6		usr/sbin/traceroute6
 COPY ${DESTDIR}/usr/sbin/watchdogd		usr/sbin/watchdogd
 #COPY ${DESTDIR}/usr/sbin/vipw            	usr/sbin/vipw
+
+# Additonal tools added to debug builds
+SPECIAL sh ${CURDIR}/tools/runlist.sh ${CURDIR}/list.debug 
 
 # Link pseudonymous binaries
 SPECIAL ln bin/chmod bin/chgrp
@@ -317,7 +311,6 @@ SPECIAL ln usr/bin/tip usr/bin/cu
 SPECIAL ln usr/bin/tput usr/bin/clear
 SPECIAL ln usr/bin/tset usr/bin/reset
 SPECIAL ln usr/bin/uptime usr/bin/w
-#SPECIAL ln usr/bin/vi usr/bin/ex
 
 # We don't need the full mtree hierarchy
 # Use find and rmdir so we don't accidentally delete files that are there
@@ -349,8 +342,6 @@ SPECIAL chown root.kmem		usr/bin/systat
 SPECIAL chmod 2755		usr/bin/systat
 SPECIAL chmod 4755		usr/bin/passwd
 SPECIAL chmod 4755		usr/bin/su
-SPECIAL chown root.authpf	usr/sbin/authpf
-SPECIAL chmod 6555		usr/sbin/authpf
 SPECIAL chown root.network	usr/sbin/ppp
 SPECIAL chmod 4750		usr/sbin/ppp
 SPECIAL chmod 4755		usr/sbin/traceroute
