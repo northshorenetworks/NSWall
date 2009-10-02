@@ -33,11 +33,12 @@
 			<if>vr2</if>
 			<type/>
 		</opt1>
-		<opt1>
+		<opt2>
                         <descr>Wireless</descr>
                         <if>ral0</if>
+			<wireless></wireless>
                         <type/>
-                </opt1>
+                </opt2>
 	</interfaces>
 	<pptp>
 		<client>

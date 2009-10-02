@@ -747,8 +747,8 @@ EOD;
 		}
 }
 	foreach ($optcfg as $oc) {
-		if (!$oc['bridge'])
-			$ipfrules .= "block in $log quick on $wanif from {$oc['sa']}/{$oc['sn']} to any\n";
+		if($config['interfaces']['opt2']['wireless']['ifmode'] != 'lanbridge' && $config['interfaces']['opt2']['wireless']['ifmode'] != 'dmzbridge')
+		$ipfrules .= "block in $log quick on $wanif from {$oc['sa']}/{$oc['sn']} to any\n";
 	}
 	
 	/* allow PPTP traffic if PPTP client is enabled on WAN */
@@ -803,7 +803,7 @@ EOD;
                 if($config['interfaces']['opt' . $i]['wireless']['ifmode'] == 'lanbridge' || $config['interfaces']['opt' . $i]['wireless']['ifmode'] == 'dmzbridge')
                 $isbridged = true;
         }
-        if (!$isbridged)
+        if (!$isbridged && isset($config['interfaces']['opt' . $i]['enable']))
 		$ipfrules .= filter_rules_spoofcheck_generate($on, $oc['if'], $oc['sa'], $oc['sn'], $log);
 
 	$ipfrules .= "}\n";

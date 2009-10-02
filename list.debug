@@ -1,0 +1,8 @@
+COPY ${DESTDIR}/usr/bin/vi                      usr/bin/vi
+COPY ${DESTDIR}/usr/bin/ssh-keygen              usr/bin/ssh-keygen
+COPY ${DESTDIR}/usr/sbin/sshd                   usr/sbin/sshd
+COPY ${DESTDIR}/usr/bin/ssh                     usr/bin/ssh
+COPY ${CURDIR}/initial-conf/sshd_config         etc/ssh/sshd_config
+COPY ${DESTDIR}/usr/bin/scp                     usr/bin/scp
+COPY ${DESTDIR}/usr/libexec/sftp-server         usr/libexec/sftp-server
+COPY ${DESTDIR}/usr/libexec/tftpd               usr/libexec/tftpd

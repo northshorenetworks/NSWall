@@ -66,10 +66,10 @@ function dynamic_menu(&$menu, $menu_title) {
 			else { 
 				if (!isset($header_displayed)) {
 					if (isset($config['system']['webgui']['expanddiags']) || strstr($_SERVER['SCRIPT_FILENAME'], "diag_") || strstr($_SERVER['SCRIPT_FILENAME'], "reboot")): ?>
-					<a href="javascript:showhide('diag','tri_diag')"><img src="/tri_o.gif" id="tri_diag" width="14" height="10" border="0"></a><strong><a href="javascript:showhide('diag','tri_diag')" class="navlnk">Diagnostics</a></strong><br>
+					<a href="javascript:showhide('diag','tri_diag')"><img src="/images/tri_o.gif" id="tri_diag" width="14" height="10" border="0"></a><strong><a href="javascript:showhide('diag','tri_diag')" class="navlnk">Diagnostics</a></strong><br>
 					<span id="diag">
 					<?php else: ?>
-					<a href="javascript:showhide('diag','tri_diag')"><img src="/tri_c.gif" id="tri_diag" width="14" height="10" border="0"></a><strong><a href="javascript:showhide('diag','tri_diag')" class="navlnk">Diagnostics</a></strong><br>
+					<a href="javascript:showhide('diag','tri_diag')"><img src="/images/tri_c.gif" id="tri_diag" width="14" height="10" border="0"></a><strong><a href="javascript:showhide('diag','tri_diag')" class="navlnk">Diagnostics</a></strong><br>
 					<span id="diag" style="display: none">
 					<?php endif;
 					$header_displayed = true;			  
@@ -205,8 +205,8 @@ function preload() {
 	if (document.images) {
 		tri_open = new Image(14,10);
 		tri_closed = new Image(14,10);
-		tri_open.src = "/tri_o.gif";
-		tri_closed.src = "/tri_c.gif";
+		tri_open.src = "/images/tri_o.gif";
+		tri_closed.src = "/images/tri_c.gif";
 	}
 }
 
@@ -215,17 +215,17 @@ function showhide(tspan, tri) {
 	triel = document.getElementById(tri);
 	if (tspanel.style.display == 'none') {
 		tspanel.style.display = '';
-		triel.src = "/tri_o.gif";
+		triel.src = "/images/tri_o.gif";
 	} else {
 		tspanel.style.display = 'none';
-		triel.src = "/tri_c.gif";
+		triel.src = "/images/tri_c.gif";
 	}
 }
 -->
 </script>
 <table width="800" border="0" cellspacing="0" cellpadding="0">
   <tr valign="bottom"> 
-    <td width="150"><strong><a href="http://www.northshoresoftware.com/" target="_blank"><img src="/logo.gif" align="center" width="100%" height="65" border="0"></a></strong></td>
+    <td width="150"><strong><a href="http://www.northshoresoftware.com/" target="_blank"><img src="/images/logo.gif" align="center" width="100%" height="65" border="0"></a></strong></td>
     <td height="65" bgcolor="#435370">
 	<table border="0" cellspacing="0" cellpadding="0" width="100%">
 	<tr><td align="left" valign="bottom"><span class="tfrtitle">&nbsp;webGUI 
