@@ -428,10 +428,10 @@ function method_change() {
                         <td class="listr"><?=$subj;?>&nbsp;</td>
                         <td valign="middle" nowrap class="list">
                             <a href="system_camanager.php?act=exp&id=<?=$i;?>")">
-                                <img src="down.gif" title="export ca" alt="export ca" width="17" height="17" border="0" />
+                                <img src="images/down.gif" title="export ca" alt="export ca" width="17" height="17" border="0" />
                             </a>
                             <a href="system_camanager.php?act=del&id=<?=$i;?>" onclick="return confirm('<?="Do you really want to delete this Certificate Authority and all associated Certificates?";?>')">
-                                <img src="x.gif" title="delete ca" alt="delete ca" width="17" height="17" border="0" />
+                                <img src="images/x.gif" title="delete ca" alt="delete ca" width="17" height="17" border="0" />
                             </a>
                         </td>
                     </tr>
@@ -443,7 +443,7 @@ function method_change() {
                         <td class="list" colspan="4"></td>
                         <td class="list">
                             <a href="system_camanager.php?act=new">
-                                <img src="plus.gif" title="add or import ca" alt="add ca" width="17" height="17" border="0" />
+                                <img src="images/plus.gif" title="add or import ca" alt="add ca" width="17" height="17" border="0" />
                             </a>
                         </td>
                     </tr>

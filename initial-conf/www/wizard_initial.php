@@ -102,12 +102,25 @@ if ($_POST) {
 
     $config['interfaces']['lan']['ipaddr'] = $_POST['lanipaddr'];
     $config['interfaces']['lan']['subnet'] = $_POST['lansubnet'];
-     
+    
+    if(isset($_POST['wpabridgeenabled'])) {
+
+    $config['interfaces']['opt2']['enable'] = $_POST['wpabridgeenabled'] ? true : false; 
+    $config['interfaces']['opt2']['wireless']['ifmode'] = 'lanbridge';
+    $config['interfaces']['opt2']['wireless']['channel'] = '11';
+    $config['interfaces']['opt2']['wireless']['ssid'] = $_POST['hostname'];
+    $config['interfaces']['opt2']['wireless']['encmode'] = 'wpa';
+    $config['interfaces']['opt2']['wireless']['wpa']['enable'] = $_POST['wpabridgeenabled'] ? true : false;
+    $config['interfaces']['opt2']['wireless']['wpamode'] = 'Auto';
+    $config['interfaces']['opt2']['wireless']['wpacipher'] = 'Auto';
+    $config['interfaces']['opt2']['wireless']['wpapsk'] = $_POST['wpapassword'];
+    } 
+
     $config['system']['hostname'] = $_POST['hostname'];
     $config['system']['username'] = $_POST['username'];
-    $config['system']['password'] = crypt($_POST['password']);
+    $config['system']['password'] = base64_encode($_POST['password']);
     $config['system']['general']['timezone'] = $_POST['timezone'];
-     
+    
     write_config();
 
     touch($d_wizconfdirty_path);
@@ -252,7 +265,16 @@ function validateLANIP () {
             alert (errorString);
             return;
 	}
-        switchtab('SETTINGS')
+	if( document.iform.wpapassword.value == '') {
+                alert ('The password cannot be blank');
+                return;
+        }
+	if( document.iform.wpapassword.value == document.iform.wpapassword2.value) {
+                switchtab('SETTINGS');
+        } else {
+                alert ('The passwords do not match');
+                return;
+        }
 }
 
 function validateSETTINGS () {
@@ -466,6 +488,19 @@ ction of the link is delayed until qualifying outgoing traffic is detected.</td>
                       <?php endfor; ?>
                     </select></td>
 		</tr>
+		 <tr>
+	  	  <td width="22%" valign="top" class="vncellreq">Wireless Briedge</td>
+                  <td width="78%" class="vtable"> <input name="wpabridgeenabled" type="checkbox" value="wpabridgeenabled"> 
+                    Enable Wireless bridge on LAN &nbsp;&nbsp;&nbsp;</td>
+                </tr>
+		 <tr>
+                  <td width="22%" valign="top" class="vncellreq">WPA Password</td>
+                  <td width="78%" class="vtable"> <input name="wpapassword" type="password" class="formfld" id="wpapassword" size="
+20">
+                    <br> <input name="wpapassword2" type="password" class="formfld" id="wpapassword2" size="20">
+                    &nbsp;(confirmation) <br> <span class="vexpl">Set WPA password
+                    (Must be 8 characters)</span></td>
+                </tr>
 		</table>
 		<table class="wiznavbtn">
                   </tr>

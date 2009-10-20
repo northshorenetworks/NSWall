@@ -32,26 +32,75 @@
 $pgtitle = array("Firewall", "Rules");
 require("guiconfig.inc");
 
-if (!is_array($config['filter']['rule'])) {
-	$config['filter']['rule'] = array();
-}
-filter_rules_sort();
-$a_filter = &$config['filter']['rule'];
+if (isset($_POST['rulesetid']) || isset($_GET['rulesetid'])) {
 
-$if = $_GET['if'];
+ 	$id = $_GET['rulesetid'];
+        if (isset($_POST['rulesetid']))
+                $id = $_POST['rulesetid'];
 
-if ($_POST['if'])
-	$if = $_POST['if'];
+        $rulesetid = $_GET['rulesetid'];
+        if (isset($_POST['rulesetid']))
+                $rulesetid = $_POST['rulesetid'];
+
+
+	if (!is_array($config['grouppolicies']['ruleset'][$id]['rule'])) {
+       		$config['grouppolicies']['ruleset'][$id]['rule'] = array();
+	}
+
+	filter_rulesets_sort();
+
+	$a_ruleset = &$config['grouppolicies']['ruleset'];
+
+	if (isset($id) && $a_ruleset[$id]) {
+        	$pconfig['name'] = $a_ruleset[$id]['name'];
+        	$pconfig['descr'] = $a_ruleset[$id]['descr'];
+        
+		filter_rulesets_rules_sort($id);
+
+		$a_filter = $a_ruleset[$id]['rule'];
+
+        }
+
+	$if = $_GET['if'];
+
+        if ($_POST['if'])
+                $if = $_POST['if'];
+
+	$iflist = array("wan" => "WAN","lan" => "LAN");
+
+	if ($config['pptpd']['mode'] == "server")
+ 	       $iflist['pptp'] = "PPTP VPN";
+
+	for ($i = 1; isset($config['interfaces']['opt' . $i]); $i++) {
+        	if ($config['interfaces']['opt' . $i]['wireless']['ifmode'] != 'lanbridge' && $config['interfaces']['wireless']['ifmode'] != 'dmzbridge')
+        	        $iflist['opt' . $i] = $config['interfaces']['opt' . $i]['descr'];
+	}
+
+
+} else {
+
+	if (!is_array($config['filter']['rule'])) {
+		$config['filter']['rule'] = array();
+	}
+	filter_rules_sort();
+	$a_filter = &$config['filter']['rule'];
+
+	$if = $_GET['if'];
+
+	if ($_POST['if'])
+		$if = $_POST['if'];
 	
-$iflist = array("wan" => "WAN","lan" => "LAN");
+	$iflist = array("wan" => "WAN","lan" => "LAN");
 
-if ($config['pptpd']['mode'] == "server")
-	$iflist['pptp'] = "PPTP VPN";
+	if ($config['pptpd']['mode'] == "server")
+		$iflist['pptp'] = "PPTP VPN";
 
-for ($i = 1; isset($config['interfaces']['opt' . $i]); $i++) {
-	if ($config['interfaces']['opt' . $i]['wireless']['ifmode'] != 'lanbridge' && $config['interfaces']['wireless']['ifmode'] != 'dmzbridge')
-		$iflist['opt' . $i] = $config['interfaces']['opt' . $i]['descr'];
+	for ($i = 1; isset($config['interfaces']['opt' . $i]); $i++) {
+		if ($config['interfaces']['opt' . $i]['wireless']['ifmode'] != 'lanbridge' && $config['interfaces']['wireless']['ifmode'] != 'dmzbridge')
+			$iflist['opt' . $i] = $config['interfaces']['opt' . $i]['descr'];
+	}
 }
+
 
 if (!$if || !isset($iflist[$if]))
 	$if = "wan";
@@ -83,11 +132,19 @@ if (isset($_POST['del_x'])) {
 	/* delete selected rules */
 	if (is_array($_POST['rule']) && count($_POST['rule'])) {
 		foreach ($_POST['rule'] as $rulei) {
-			unset($a_filter[$rulei]);
+	                if (isset($rulesetid)) {
+                                  unset($config['grouppolicies']['ruleset'][$id]['rule'][$rulei]);
+                        } else {
+                                  unset($a_filter[$rulei]);
+                        }
 		}
 		write_config();
-		touch($d_filterconfdirty_path);
-		header("Location: firewall_rules.php?if={$if}");
+		if (isset($rulesetid)) {
+			header("Location: firewall_rules.php?if={$if}&rulesetid={$rulesetid}");
+		} else {
+			touch($d_filterconfdirty_path);
+			header("Location: firewall_rules.php?if={$if}");
+		}
 		exit;
 	}
 } else if ($_GET['act'] == "toggle") {
@@ -138,8 +195,13 @@ if (isset($_POST['del_x'])) {
 		
 		$a_filter = $a_filter_new;
 		write_config();
-		touch($d_filterconfdirty_path);
-		header("Location: firewall_rules.php?if={$if}");
+	
+		if (isset($rulesetid)) {
+                        header("Location: firewall_rules.php?if={$if}&rulesetid={$rulesetid}");
+                } else {
+                        touch($d_filterconfdirty_path);
+                        header("Location: firewall_rules.php?if={$if}");
+                }
 		exit;
 	}
 }
@@ -201,20 +263,64 @@ function fr_insline(id, on) {
 }
 // -->
 </script>
+<?php if (isset($rulesetid)): ?>
+             <form action="firewall_rulesets.php" method="post" name="iform" id="iform">
+              <table width="100%" border="0" cellpadding="6" cellspacing="0">
+                <tr>
+                  <td width="22%" valign="top" class="vncellreq">Name</td>
+                  <td width="78%" class="vtable">
+                    <input name="name" type="text" class="formfld" id="name" size="20" value="<?=htmlspecialchars($pconfig['name']);?>">
+                </tr>
+                <tr>
+                  <td width="22%" valign="top" class="vncell">Description</td>
+                  <td width="78%" class="vtable">
+                    <input name="descr" type="text" class="formfld" id="descr" size="40" value="<?=htmlspecialchars($pconfig['descr']);?>">
+                    <br> <span class="vexpl">You may enter a description here
+                    for your reference (not parsed).</span></td>
+                </tr>
+                <tr>
+                  <td width="22%" valign="top" class="vncell">Interface List</td>
+                  <td width="78%" class="vtable">
+                    <input name="iflist" type="text" class="formfld" id="iflist" size="40" value="<?=htmlspecialchars($pconfig['iflist']);?>">
+                    <br> <span class="vexpl">Interfaces to be used in this Ruleset</span></td>
+                </tr>
+                <tr>
+                <tr>
+                  <td width="22%" valign="top">&nbsp;</td>
+                  <td width="78%">
+                    <input name="Submit" type="submit" class="formbtn" value="Save">
+                    <?php if (isset($id)): ?>
+                    <input name="id" type="hidden" value="<?=$id;?>">
+                     <?php endif; ?>
+                    <input name="after" type="hidden" value="<?=$after;?>">
+                    <input name="rulesetid" type="hidden" value="<?=$rulesetid;?>">
+                  </td>
+                </tr>
+                </tr>
+              </table>
+             </form>
+<?php endif; ?>
+
+
 <form action="firewall_rules.php" method="post">
 <?php if ($savemsg) print_info_box($savemsg); ?>
 <?php if (file_exists($d_filterconfdirty_path)): ?><p>
 <?php print_info_box_np("The firewall rule configuration has been changed.<br>You must apply the changes in order for them to take effect.");?><br>
 <input name="apply" type="submit" class="formbtn" id="apply" value="Apply changes"></p>
 <?php endif; ?>
+
 <table width="100%" border="0" cellpadding="0" cellspacing="0">
   <tr><td class="tabnavtbl">
   <ul id="tabnav">
 <?php $i = 0; foreach ($iflist as $ifent => $ifname):
-	if ($ifent == $if): ?>
+        if ($ifent == $if): ?>
     <li class="tabact"><?=htmlspecialchars($ifname);?></li>
 <?php else: ?>
+        <?php if (isset($rulesetid)): ?>
+    <li class="<?php if ($i == 0) echo "tabinact1"; else echo "tabinact";?>"><a href="firewall_rules.php?if=<?=$ifent;?>&rulesetid=<?=$id;?>"><?=htmlspecialchars($ifname);?></a></li>
+        <?php else: ?>
     <li class="<?php if ($i == 0) echo "tabinact1"; else echo "tabinact";?>"><a href="firewall_rules.php?if=<?=$ifent;?>"><?=htmlspecialchars($ifname);?></a></li>
+        <?php endif; ?>
 <?php endif; ?>
 <?php $i++; endforeach; ?>
   </ul>
@@ -254,13 +360,13 @@ function fr_insline(id, on) {
 							$textss = $textse = "";
 						}
 				  ?>
-				  <a href="?if=<?=$if;?>&act=toggle&id=<?=$i;?>"><img src="<?=$iconfn;?>.gif" width="11" height="11" border="0" title="click to toggle enabled/disabled status"></a>
+				  <a href="?if=<?=$if;?>&act=toggle&id=<?=$i;?>"><img src="images/<?=$iconfn;?>.gif" width="11" height="11" border="0" title="click to toggle enabled/disabled status"></a>
 				  <?php if (isset($filterent['log'])):
 							$iconfn = "log_s";
 						if (isset($filterent['disabled']))
 							$iconfn .= "_d";
 				  	?>
-				  <br><img src="<?=$iconfn;?>.gif" width="11" height="15" border="0">
+				  <br><img src="images/<?=$iconfn;?>.gif" width="11" height="15" border="0">
 				  <?php endif; ?>
 				  </td>
                   <td class="listlr" onClick="fr_toggle(<?=$nrules;?>)"> 
@@ -272,12 +378,21 @@ function fr_insline(id, on) {
                   <td valign="middle" nowrap class="list">
 				    <table border="0" cellspacing="0" cellpadding="1">
 					<tr>
-					  <td><input name="move_<?=$i;?>" type="image" src="left.gif" width="17" height="17" title="move selected rules before this rule" onMouseOver="fr_insline(<?=$nrules;?>, true)" onMouseOut="fr_insline(<?=$nrules;?>, false)"></td>
-					  <td><a href="firewall_rules_edittabs.php?id=<?=$i;?>"><img src="e.gif" title="edit rule" width="17" height="17" border="0"></a></td>
+					  <td><input name="move_<?=$i;?>" type="image" src="images/left.gif" width="17" height="17" title="move selected rules before this rule" onMouseOver="fr_insline(<?=$nrules;?>, true)" onMouseOut="fr_insline(<?=$nrules;?>, false)"></td>
+				
+		 <?php if (isset($rulesetid)): ?>
+        		<td><a href="firewall_rules_edittabs.php?id=<?=$i;?>&rulesetid=<?=$rulesetid;?>""><img src="images/e.gif" title="edit rule" width="17" height="17" border="0"></a></td>
+		<?php else: ?>
+        		<td><a href="firewall_rules_edittabs.php?id=<?=$i;?>"><img src="images/e.gif" title="edit rule" width="17" height="17" border="0"></a></td>
+		<?php endif; ?>
 					</tr>
 					<tr>
 					  <td align="center" valign="middle"></td>
-					  <td><a href="firewall_rules_edittabs.php?dup=<?=$i;?>"><img src="plus.gif" title="add a new rule based on this one" width="17" height="17" border="0"></a></td>
+					<?php if (isset($rulesetid)): ?>  
+						<td><a href="firewall_rules_edittabs.php?dup=<?=$i;?>&rulesetid=<?=$rulesetid;?>"><img src="images/plus.gif" title="add a new rule based on this one" width="17" height="17" border="0"></a></td>
+					<?php else: ?>
+						<td><a href="firewall_rules_edittabs.php?dup=<?=$i;?>"><img src="images/plus.gif" title="add a new rule based on this one" width="17" height="17" border="0"></a></td>
+					<?php endif; ?>
 					</tr>
 					</table>
 				  </td>
@@ -290,7 +405,13 @@ function fr_insline(id, on) {
 			  <span class="gray">
 			  No rules are currently defined for this interface.<br>
 			  All incoming connections on this interface will be blocked until you add pass rules.<br><br>
-			  Click the <a href="firewall_rules_edittabs.php?if=<?=$if;?>"><img src="plus.gif" title="add new rule" border="0" width="17" height="17" align="absmiddle"></a> button to add a new rule.</span>
+			  Click the
+			  <?php if (isset($rulesetid)): ?>
+                         	<a href="firewall_rules_edittabs.php?if=<?=$if;?>&rulesetid=<?=$rulesetid;?>"> 
+                          <?php else: ?>
+                          	<a href="firewall_rules_edittabs.php?if=<?=$if;?>">
+                          <?php endif; ?>
+			  <img src="images/plus.gif" title="add new rule" border="0" width="17" height="17" align="absmiddle"></a> button to add a new rule.</span>
 			  </td>
 			  <?php endif; ?>
                 <tr id="fr<?=$nrules;?>"> 
@@ -306,12 +427,22 @@ function fr_insline(id, on) {
 				    <table border="0" cellspacing="0" cellpadding="1">
 					<tr>
 				      <td>
-					  <?php if ($nrules == 0): ?><img src="left_d.gif" width="17" height="17" title="move selected rules to end" border="0"><?php else: ?><input name="move_<?=$i;?>" type="image" src="left.gif" width="17" height="17" title="move selected rules to end" onMouseOver="fr_insline(<?=$nrules;?>, true)" onMouseOut="fr_insline(<?=$nrules;?>, false)"><?php endif; ?></td>
+					  <?php if ($nrules == 0): ?><img src="images/left_d.gif" width="17" height="17" title="move selected rules to end" border="0"><?php else: ?><input name="move_<?=$i;?>" type="image" src="images/left.gif" width="17" height="17" title="move selected rules to end" onMouseOver="fr_insline(<?=$nrules;?>, true)" onMouseOut="fr_insline(<?=$nrules;?>, false)"><?php endif; ?></td>
 					  <td></td>
 				    </tr>
 					<tr>
-					  <td><?php if ($nrules == 0): ?><img src="x_d.gif" width="17" height="17" title="delete selected rules" border="0"><?php else: ?><input name="del" type="image" src="x.gif" width="17" height="17" title="delete selected rules" onclick="return confirm('Do you really want to delete the selected rules?')"><?php endif; ?></td>
-					  <td><a href="firewall_rules_edittabs.php?if=<?=$if;?>"><img src="plus.gif" title="add new rule" width="17" height="17" border="0"></a></td>
+					<td>
+					<?php if ($nrules == 0): ?>
+						<img src="images/x_d.gif" width="17" height="17" title="delete selected rules" border="0">
+					<?php else: ?><input name="del" type="image" src="images/x.gif" width="17" height="17" title="delete selected rules" onclick="return confirm('Do you really want to delete the selected rules?')">
+					<?php endif; ?>
+					</td>
+					<?php if (isset($rulesetid)): ?>
+        					<td><a href="firewall_rules_edittabs.php?if=<?=$if;?>&rulesetid=<?=$rulesetid
+;?>"><img src="images/plus.gif" title="add new rule" width="17" height="17" border="0"></a></td>
+					<?php else: ?>
+        					<td><a href="firewall_rules_edittabs.php?if=<?=$if;?>"><img src="images/plus.gif" title="add new rule" width="17" height="17" border="0"></a></td>
+					<?php endif; ?>
 					</tr>
 				    </table>
 				  </td>
@@ -319,33 +450,17 @@ function fr_insline(id, on) {
               </table>
 			  <table border="0" cellspacing="0" cellpadding="0">
                 <tr> 
-                  <td width="16"><img src="pass.gif" width="11" height="11"></td>
+                  <td width="16"><img src="images/pass.gif" width="11" height="11"></td>
                   <td>pass</td>
                   <td width="14"></td>
-                  <td width="16"><img src="block.gif" width="11" height="11"></td>
+                  <td width="16"><img src="images/block.gif" width="11" height="11"></td>
                   <td>block</td>
                   <td width="14"></td>
-                  <td width="16"><img src="reject.gif" width="11" height="11"></td>
-                  <td>reject</td>
-                  <td width="14"></td>
-                  <td width="16"><img src="log.gif" width="11" height="11"></td>
+                  <td width="16"><img src="images/log.gif" width="11" height="11"></td>
                   <td>log</td>
                 </tr>
                 <tr>
                   <td colspan="5" height="4"></td>
-                </tr>
-                <tr> 
-                  <td><img src="pass_d.gif" width="11" height="11"></td>
-                  <td>pass (disabled)</td>
-                  <td></td>
-                  <td><img src="block_d.gif" width="11" height="11"></td>
-                  <td>block (disabled)</td>
-                  <td></td>
-                  <td><img src="reject_d.gif" width="11" height="11"></td>
-                  <td>reject (disabled)</td>
-                  <td></td>
-                  <td width="16"><img src="log_d.gif" width="11" height="11"></td>
-                  <td>log (disabled)</td>
                 </tr>
               </table>
     </td>
@@ -358,5 +473,9 @@ function fr_insline(id, on) {
   to the rule order. Everything that isn't explicitly passed is blocked 
   by default.
   <input type="hidden" name="if" value="<?=$if;?>">
+  <?php if (isset($rulesetid)): ?>
+  	<input type="hidden" name="rulesetid" value="<?=$rulesetid;?>"> 
+  <?php endif; ?>
+
 </form>
 <?php include("fend.inc"); ?>

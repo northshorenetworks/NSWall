@@ -37,8 +37,6 @@ require("guiconfig.inc");
 // The page title for non-admins
 $pgtitle = array("System", "User password");
 
-if ($_SERVER['REMOTE_USER'] === $config['system']['username']) { 
-    
     // Page title for main admin
     $pgtitle = array("System", "User manager");
 
@@ -99,10 +97,6 @@ if ($_SERVER['REMOTE_USER'] === $config['system']['username']) {
     		}
     	}
 
-		if(!isset($groupindex[$_POST['groupname']])) {
-			$input_errors[] = "group does not exist, please define the group before assigning users.";
-		}
-    	
     	if (!$input_errors) {
     	
     		if (isset($id) && $a_user[$id])
@@ -110,10 +104,9 @@ if ($_SERVER['REMOTE_USER'] === $config['system']['username']) {
     		
     		$userent['name'] = $_POST['username'];
     		$userent['fullname'] = $_POST['fullname'];
-    		$userent['groupname'] = $_POST['groupname'];
     		
     		if ($_POST['password'])
-    			$userent['password'] = crypt($_POST['password']);
+    			$userent['password'] = base64_encode($_POST['password']);
     		
     		if (isset($id) && $a_user[$id])
     			$a_user[$id] = $userent;
@@ -127,8 +120,7 @@ if ($_SERVER['REMOTE_USER'] === $config['system']['username']) {
 			
 			header("Location: system_usermanager.php");
     	}
-    }
-
+  }
 ?>
 <?php include("fbegin.inc"); ?>
 <?php if ($input_errors) print_input_errors($input_errors); ?>
@@ -151,7 +143,6 @@ if($_GET['act']=="new" || $_GET['act']=="edit" || $input_errors){
 		if (isset($id) && $a_user[$id]) {
 	       $pconfig['username'] = $a_user[$id]['name'];
 	       $pconfig['fullname'] = $a_user[$id]['fullname'];
-	       $pconfig['groupname'] = $a_group[$id]['groupname'];
         }
 	}	
 ?>
@@ -178,19 +169,6 @@ if($_GET['act']=="new" || $_GET['act']=="edit" || $input_errors){
                     User's full name, for your own information only</td>
                 </tr>
                 <tr> 
-                  <td width="22%" valign="top" class="vncell">Group Name</td>
-                  <td width="78%" class="vtable">
-				  <select name="groupname" class="formfld" id="groupname">
-                      <?php foreach ($config['system']['accounts']['group'] as $group): ?>
-                      <option value="<?=$group['name'];?>" <?php if ($group['name'] == $pconfig['groupname']) echo "selected"; ?>>
-                      <?=htmlspecialchars($group['name']);?>
-                      </option>
-                      <?php endforeach; ?>
-                    </select>                   
-                    <br>
-                    The admin group to which this user is assigned.</td>
-                </tr>                
-                <tr> 
                   <td width="22%" valign="top">&nbsp;</td>
                   <td width="78%"> 
                     <input name="save" type="submit" class="formbtn" value="Save"> 
@@ -208,7 +186,6 @@ if($_GET['act']=="new" || $_GET['act']=="edit" || $input_errors){
         <tr>
            <td width="35%" class="listhdrr">Username</td>
            <td width="20%" class="listhdrr">Full name</td>
-           <td width="20%" class="listhdrr">Group</td>                  
            <td width="10%" class="list"></td>
 		</tr>
 	<?php $i = 0; foreach($a_user as $userent): ?>
@@ -219,20 +196,17 @@ if($_GET['act']=="new" || $_GET['act']=="edit" || $input_errors){
                   <td class="listr">
                     <?=htmlspecialchars($userent['fullname']);?>&nbsp;
                   </td>
-                  <td class="listbg">
-                    <?=htmlspecialchars($userent['groupname']); ?>&nbsp;
-                  </td>
-                  <td valign="middle" nowrap class="list"> <a href="system_usermanager.php?act=edit&id=<?=$i; ?>"><img src="e.gif" title="edit user" width="17" height="17" border="0"></a>
-                     &nbsp;<a href="system_usermanager.php?act=del&id=<?=$i; ?>" onclick="return confirm('Do you really want to delete this User?')"><img src="x.gif" title="delete user" width="17" height="17" border="0"></a></td>
+                  <td valign="middle" nowrap class="list"> <a href="system_usermanager.php?act=edit&id=<?=$i; ?>"><img src="images/e.gif" title="edit user" width="17" height="17" border="0"></a>
+                     &nbsp;<a href="system_usermanager.php?act=del&id=<?=$i; ?>" onclick="return confirm('Do you really want to delete this User?')"><img src="images/x.gif" title="delete user" width="17" height="17" border="0"></a></td>
 		</tr>
 	<?php $i++; endforeach; ?>
 	    <tr> 
 			<td class="list" colspan="3"></td>
-			<td class="list"> <a href="system_usermanager.php?act=new"><img src="plus.gif" title="add user" width="17" height="17" border="0"></a></td>
+			<td class="list"> <a href="system_usermanager.php?act=new"><img src="images/plus.gif" title="add user" width="17" height="17" border="0"></a></td>
 		</tr>
 		<tr>
 			<td colspan="3">
-		      Additional webGui users can be added here.  User permissions are determined by the admin group they are a member of.
+		      Additional webGui users can be added here.
 			</td>
 		</tr>
  </table>
@@ -241,57 +215,5 @@ if($_GET['act']=="new" || $_GET['act']=="edit" || $input_errors){
   </td>
   </tr>
   </table>
-<?php 
-} else { // end of admin user code, start of normal user code
-	if (isset($_POST['save'])) {
-
-	    unset($input_errors);
-    
-    	/* input validation */
-   		$reqdfields = explode(" ", "password");
-   		$reqdfieldsn = explode(",", "Password");
-    	
-    	do_input_validation($_POST, $reqdfields, $reqdfieldsn, &$input_errors);
-    	
-    	if ($_POST['password'] != $_POST['password2'])
-      		$input_errors[] = "The passwords do not match.";
-    	
-		if (!$input_errors) {
-			//all values are okay --> saving changes
-			$config['system']['user'][$userindex[$_SERVER['REMOTE_USER']]]['password']=crypt(trim($_POST['password']));
-
-			write_config();
-			$retval = system_password_configure();
-			$savemsg = get_std_save_message($retval);
-			$savemsg = "Password successfully changed<br>";
-		}		
-	}
-
-	
-?>
-<?php include("fbegin.inc"); ?>
-<?php if ($input_errors) print_input_errors($input_errors); ?>
-<?php if ($savemsg) print_info_box($savemsg); ?>
-      <form action="system_usermanager.php" method="post" name="iform" id="iform">
-         <table width="100%" border="0" cellpadding="6" cellspacing="0">
-            <tr> 
-              <td colspan="2" valign="top" class="listtopic"><?=$_SERVER['REMOTE_USER']?>'s Password</td>
-            </tr>
-		    <tr> 
-		      <td width="22%" valign="top" class="vncell">Password</td>
-		      <td width="78%" class="vtable"> <input name="password" type="password" class="formfld" id="password" size="20"> 
-		        <br> <input name="password2" type="password" class="formfld" id="password2" size="20"> 
-		        &nbsp;(confirmation) <br> <span class="vexpl">Select a new password</span></td>
-		    </tr>
-            <tr> 
-              <td width="22%" valign="top">&nbsp;</td>
-              <td width="78%"> 
-                <input name="save" type="submit" class="formbtn" value="Save"> 
-              </td>
-            </tr>		    
-         </table>
-      </form>		    
-
-<?php 
-} // end of normal user code ?>
+  </form>		    
 <?php include("fend.inc"); ?>

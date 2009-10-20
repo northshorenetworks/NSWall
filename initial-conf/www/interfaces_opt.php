@@ -123,7 +123,7 @@ $pgtitle = array("Interfaces", htmlspecialchars($optcfg['descr']));
 ?>
 
 <?php include("fbegin.inc"); ?>
-<script language="javascript" src="/nss.js"></script>
+<script language="javascript" src="js/nss.js"></script>
 <script language="JavaScript">
 <!--
 function enable_change(enable_over) {
@@ -173,7 +173,6 @@ function ipaddr_change() {
 }
 //-->
 </script>
-<script language="javascript" src="/nss.js"></script>
 <?php if ($input_errors) print_input_errors($input_errors); ?>
 <?php if ($savemsg) print_info_box($savemsg); ?>
 <?php if ($optcfg['if']): ?>

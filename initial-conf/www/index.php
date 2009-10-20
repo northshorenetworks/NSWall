@@ -62,7 +62,7 @@ if ($_POST) {
                 <td height="10" colspan="2">&nbsp;</td>
               </tr>
               <tr align="center" valign="top"> 
-                <td height="170" colspan="2"><img src="logobig.gif" width="520" height="149"></td>
+                <td height="170" colspan="2"><img src="images/logobig.gif" width="520" height="149"></td>
               </tr>
               <tr> 
                 <td colspan="2" class="listtopic">System information</td>
@@ -155,10 +155,10 @@ $freeMem = $matches[1] * 1024;
 $usedMem = $totalMem - $freeMem;
 $memUsage = round(($usedMem * 100) / $totalMem, 0);
 		  
-echo " <img src='bar_left.gif' height='15' width='4' border='0' align='absmiddle'>";
-echo "<img src='bar_blue.gif' height='15' width='" . $memUsage . "' border='0' align='absmiddle'>";
-echo "<img src='bar_gray.gif' height='15' width='" . (100 - $memUsage) . "' border='0' align='absmiddle'>";
-echo "<img src='bar_right.gif' height='15' width='5' border='0' align='absmiddle'> ";
+echo " <img src='images/bar_left.gif' height='15' width='4' border='0' align='absmiddle'>";
+echo "<img src='images/bar_blue.gif' height='15' width='" . $memUsage . "' border='0' align='absmiddle'>";
+echo "<img src='images/bar_gray.gif' height='15' width='" . (100 - $memUsage) . "' border='0' align='absmiddle'>";
+echo "<img src='images/bar_right.gif' height='15' width='5' border='0' align='absmiddle'> ";
 echo $memUsage . "%";
 ?>
                 </td>

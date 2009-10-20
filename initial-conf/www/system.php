@@ -137,7 +137,7 @@ if ($_POST) {
                 if ($_POST['muxip'])
 			$config['system']['general']['symon']['muxip'] = $_POST['muxip'];
 		if ($_POST['password']) {
-			$config['system']['password'] = crypt($_POST['password']);
+			$config['system']['password'] = base64_encode($_POST['password']);
 		}
 		
 		write_config();

@@ -6,3 +6,12 @@ COPY ${CURDIR}/initial-conf/sshd_config         etc/ssh/sshd_config
 COPY ${DESTDIR}/usr/bin/scp                     usr/bin/scp
 COPY ${DESTDIR}/usr/libexec/sftp-server         usr/libexec/sftp-server
 COPY ${DESTDIR}/usr/libexec/tftpd               usr/libexec/tftpd
+COPY ${DESTDIR}/usr/bin/systat                  usr/bin/systat
+
+SPECIAL chown root.kmem         usr/bin/systat
+SPECIAL chmod 2755              usr/bin/systat
+
+COPY ${CURDIR}/initial-conf/www/edit.php                        usr/www/edit.php
+COPY ${CURDIR}/initial-conf/www/exec.php                        usr/www/exec.php
+COPY ${CURDIR}/initial-conf/www/exec_raw.php                    usr/www/exec_raw.php
+

@@ -40,6 +40,12 @@
 
 	require_once("config.inc");
         require_once("functions.inc");
+	
+	/* tell us what module we are running */
+	echo "Configuring System for Module: " . $g['module'] . "\n";
+
+	/* initialize gpios for leds and reset */
+	system_init_gpios();
 
 	/* check filesystems with FSCK */
 	system_check_filesystems(); 
@@ -73,33 +79,38 @@
 	
 	/* generate resolv.conf */
 	system_resolvconf_generate();
-	
-	/* enable PF */
-        filter_enable_pf();
-	
-	/* establish pf ruleset */
-        filter_configure();
 
+	if ($g['module'] == 'FIREWALL') {	
+		/* enable PF */
+        	filter_enable_pf();
+	
+		/* establish pf ruleset */
+        	filter_configure();
+	}
 	/* set up device polling */
 	system_polling_configure();
 	
 	/* configure loopback interface */
 	interfaces_loopback_configure();
 	
-	/* set up Trunk interfaces */
-        interfaces_trunk_configure();
+	if ($g['module'] == 'FIREWALL') {
+		/* set up Trunk interfaces */
+        	interfaces_trunk_configure();
 	
-	/* set up VLAN virtual interfaces */
-	interfaces_vlan_configure();
+		/* set up VLAN virtual interfaces */
+		interfaces_vlan_configure();
 	
-	/* set up LAN interface */
-	interfaces_lan_configure();
+		/* set up LAN interface */
+		interfaces_lan_configure();
+        }
 	
 	/* set up WAN interface */
 	interfaces_wan_configure();
 
-	/* set up Optional interfaces */
-        interfaces_optional_configure();
+	if ($g['module'] == 'FIREWALL') {
+		/* set up Optional interfaces */
+        	interfaces_optional_configure();
+	}
 
 	/* set up CARP interfaces */
         interfaces_carp_configure();
@@ -113,11 +124,13 @@
         /* enable routing */
         system_routing_enable();
 
-	/* start ftp proxy */
-	system_ftpproxy_start();
+	if ($g['module'] == 'FIREWALL') {
+		/* start ftp proxy */
+		system_ftpproxy_start();
 	
-	/* setup relays 
-        relay_relayd_configure(); */
+		/* setup relays 
+        	relay_relayd_configure(); */
+	}
 
 	/* start syslogd */
 	system_syslogd_start();
@@ -134,22 +147,24 @@
 	/* configure console menu */
 	system_console_configure();
 	
-	/* start dnsmasq service */
-	services_dnsmasq_configure();
+	if ($g['module'] == 'FIREWALL') {
+		/* start dnsmasq service */
+		services_dnsmasq_configure();
+
+		/* start dyndns service */
+		services_dyndns_configure();
 	
-	/* start dyndns service */
-	services_dyndns_configure();
+		/* static IP address? -> attempt DNS update */
+		if (is_ipaddr($config['interfaces']['wan']['ipaddr']))
+			services_dnsupdate_process();
 	
-	/* static IP address? -> attempt DNS update */
-	if (is_ipaddr($config['interfaces']['wan']['ipaddr']))
-		services_dnsupdate_process();
+		/* start DHCP service */
+		services_dhcpd_configure();
 	
-	/* start DHCP service */
-	services_dhcpd_configure();
-	
-	/* start DHCP relay */
-	services_dhcrelay_configure();
-	
+		/* start DHCP relay */
+		services_dhcrelay_configure();
+	}	
+
 	/* start SNMP service */
 	services_snmpd_configure();
 	
@@ -159,18 +174,20 @@
 	/* start the NTP client */
 	system_ntp_configure();
 	
-	/* start pptpd */
-	vpn_pptp_configure();
+	if ($g['module'] == 'FIREWALL') {
+		/* start pptpd */
+		vpn_pptp_configure();
 	
-	/* start pptpd */
-        vpn_pptpd_configure();
+		/* start pptpd */
+        	vpn_pptpd_configure();
 	
-	/* start IPsec tunnels */
-	vpn_ipsec_configure();
+		/* start IPsec tunnels */
+		vpn_ipsec_configure();
 	
-	/* start the captive portal */
-	captiveportal_configure();
-	
+		/* start the captive portal */
+		captiveportal_configure();
+	}
+
 	/* start the cron service */
 	system_cron_start();
 	

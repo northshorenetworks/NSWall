@@ -326,6 +326,8 @@ function interfaces_optional_configure_if($opti) {
 	                        mwexec("/sbin/ifconfig bridge0 create up");
                         	mwexec("/sbin/brconfig bridge0 add " . $optif . " add " . $config['interfaces']['opt1']['if']);
 			}
+			if ($g['booting'])
+                        	echo "done\n";
 			return 0;
 		}
 

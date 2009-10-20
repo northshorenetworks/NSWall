@@ -26,7 +26,7 @@ option		USER_LDT	# user-settable LDT; see i386_set_ldt(2)
 
 # or use		root on nfs swap on nfs
 option          RAMDISK_HOOKS
-option          MINIROOTSIZE=40960              # disktab.20mb
+option          MINIROOTSIZE=51200              # disktab.25mb
 option          NKPTP=8
 config          bsd     root on rd0a swap on rd0b and wd0b and wd1b
 pseudo-device   rd              1
@@ -76,6 +76,8 @@ ichpcib* at pci?		# Intel ICHx/ICHx-M LPC bridges
 piixpcib* at pci?		# Intel PIIX4 PCI-ISA bridge
 gscpcib* at pci?		# NS Geode SC1100 PCI-ISA bridge
 gpio*	at gscpcib?
+glxpcib* at pci? # AMD CS5536 PCI-ISA bridge
+gpio* at glxpcib?  
 
 # power management and other environmental stuff
 elansc*	at pci?			# AMD Elan SC520 System Controller

@@ -100,9 +100,9 @@ if ($_GET['act'] == "del") {
                   <td class="listbg"> 
                     <?=htmlspecialchars($virtualhostent['descr']);?>&nbsp;
                   </td>
-                  <td class="list" nowrap> <a href="firewall_carp_vid_edit.php?id=<?=$i;?>"><img src="e.gif" title="edit Virtual Host" width="17" height="17" border="0"></a>
-                     <a href="firewall_carp_vid.php?act=del&id=<?=$i;?>" onclick="return confirm('Do you really want to delete this Virtual Host?')"><img src="x.gif" title="delete Virtual Host" width="17" height="17" border="0"></a>
-		     <a href="firewall_carp_vid_edit.php?dup=<?=$i;?>"><img src="plus.gif" title="add a new Virtual Host based on this one" width="17" height="17" border="0"></a></td>
+                  <td class="list" nowrap> <a href="firewall_carp_vid_edit.php?id=<?=$i;?>"><img src="images/e.gif" title="edit Virtual Host" width="17" height="17" border="0"></a>
+                     <a href="firewall_carp_vid.php?act=del&id=<?=$i;?>" onclick="return confirm('Do you really want to delete this Virtual Host?')"><img src="images/x.gif" title="delete Virtual Host" width="17" height="17" border="0"></a>
+		     <a href="firewall_carp_vid_edit.php?dup=<?=$i;?>"><img src="images/plus.gif" title="add a new Virtual Host based on this one" width="17" height="17" border="0"></a></td>
 		</tr>
                 	<?php $nvirtualhosts++; endfor; ?>
                         <?php if ($nvirtualhosts == 0): ?>
@@ -110,13 +110,13 @@ if ($_GET['act'] == "del") {
                           <span class="gray">
                           No Virtual Hosts are currently defined.<br>
                           <br><br>
-                          Click the <a href="firewall_carp_vid_edit.php"><img src="plus.gif" title="add new rule" border="0" width="17" height="17" align="absmiddle"></a> button to add a new Virtual Host.</span>
+                          Click the <a href="firewall_carp_vid_edit.php"><img src="images/plus.gif" title="add new rule" border="0" width="17" height="17" align="absmiddle"></a> button to add a new Virtual Host.</span>
                           </td>
                           <?php endif; ?>
 
 		<tr> 
                   <td class="list" colspan="4"></td>
-                  <td class="list"> <a href="firewall_carp_vid_edit.php"><img src="plus.gif" title="add Virtual Host" width="17" height="17" border="0"></a></td>
+                  <td class="list"> <a href="firewall_carp_vid_edit.php"><img src="images/plus.gif" title="add Virtual Host" width="17" height="17" border="0"></a></td>
 				</tr>
 </td>
 </tr>

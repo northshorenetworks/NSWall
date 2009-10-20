@@ -268,7 +268,7 @@ if ($_GET['act'] == "add") {
 		<?php endif; ?>
 		<td valign="middle" class="list"> 
 		  <?php if (($ifname != 'lan') && ($ifname != 'wan')): ?>
-		  <a href="interfaces_assign.php?act=del&id=<?=$ifname;?>"><img src="x.gif" title="delete interface" width="17" height="17" border="0"></a> 
+		  <a href="interfaces_assign.php?act=del&id=<?=$ifname;?>"><img src="images/x.gif" title="delete interface" width="17" height="17" border="0"></a> 
 		  <?php endif; ?>
 		</td>
 
@@ -278,7 +278,7 @@ if ($_GET['act'] == "add") {
   <tr>
 	<td class="list" colspan="2"></td>
 	<td class="list" nowrap>
-	<a href="interfaces_assign.php?act=add"><img src="plus.gif" title="add interface" width="17" height="17" border="0"></a>
+	<a href="interfaces_assign.php?act=add"><img src="images/plus.gif" title="add interface" width="17" height="17" border="0"></a>
 	</td>
   </tr>
 
@@ -288,7 +288,7 @@ if ($_GET['act'] == "add") {
   </tr>
   <?php endif; ?>
 </table>
-<!--<a href="interfaces_assign.php?act=add"><img src="plus.gif" title="add interface" width="17" height="17" border="0"></a>
+<!--<a href="interfaces_assign.php?act=add"><img src="images/plus.gif" title="add interface" width="17" height="17" border="0"></a>
 <br>Enable Multiwan: <input type="checkbox" name="multiwan" value="multiwan"><br><br>
 -->
   <input name="Submit" type="submit" class="formbtn" value="Save"><br><br>

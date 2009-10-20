@@ -6,8 +6,8 @@ BASE=`pwd`
 SRCDIR=${BSDSRCDIR:-/usr/src}
 DESTDIR=${DESTDIR:-${BASE}/flash-dist}
 SUDO=sudo
-DISKTAB=disktab.20mb
-NBLKS=40960
+DISKTAB=disktab.25mb
+NBLKS=51200
 export DEBUG_FLAG=$2
 export MODULE=$3
 

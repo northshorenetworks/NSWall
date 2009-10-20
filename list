@@ -4,7 +4,7 @@
 SCRIPT ${DESTDIR}/dev/MAKEDEV			dev/MAKEDEV
 SPECIAL chmod 700 dev/MAKEDEV
 SPECIAL cd dev; ./MAKEDEV ramdisk pty systrace tty00 tty01 pci wdt0 
-SPECIAL cd dev; ./MAKEDEV ttyU0 ttyU1
+SPECIAL cd dev; ./MAKEDEV ttyU0 ttyU1 gpio0 
 SPECIAL cd dev; ./MAKEDEV tun0 tun1 tun2 tun3 tun4 tun5 tun6 tun7 tun8 tun9 tun10
 SPECIAL cd dev; ./MAKEDEV bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 
 SPECIAL cd dev; ./MAKEDEV pf crypto fd wsmux wscons apm local gpio
@@ -22,6 +22,7 @@ COPY	${DESTDIR}/etc/shells			etc/shells
 COPY	${DESTDIR}/etc/ksh.kshrc		etc/ksh.kshrc
 COPY	${DESTDIR}/etc/pf.os			etc/pf.os
 COPY    ${DESTDIR}/etc/platform			etc/platform
+COPY    ${DESTDIR}/etc/module                   etc/module
 #COPY	/dev/null				var/named/etc/rndc.key
 #COPY	${DESTDIR}/var/named/standard/localhost var/named/standard/localhost
 #COPY	${DESTDIR}/var/named/standard/loopback	var/named/standard/loopback
@@ -227,7 +228,6 @@ COPY ${DESTDIR}/usr/bin/sed			usr/bin/sed
 COPY ${DESTDIR}/usr/bin/sftp			usr/bin/sftp
 COPY ${DESTDIR}/usr/bin/sort			usr/bin/sort
 COPY ${DESTDIR}/usr/bin/su			usr/bin/su
-COPY ${DESTDIR}/usr/bin/systat			usr/bin/systat
 COPY ${DESTDIR}/usr/bin/tail			usr/bin/tail
 COPY ${DESTDIR}/usr/bin/tip			usr/bin/tip
 COPY ${DESTDIR}/usr/bin/top			usr/bin/top
@@ -291,6 +291,9 @@ COPY ${DESTDIR}/usr/sbin/watchdogd		usr/sbin/watchdogd
 # Additonal tools added to debug builds
 SPECIAL sh ${CURDIR}/tools/runlist.sh ${CURDIR}/list.debug 
 
+# Run list for each module
+SPECIAL sh ${CURDIR}/tools/runlist.sh ${CURDIR}/list.dnsserver
+
 # Link pseudonymous binaries
 SPECIAL ln bin/chmod bin/chgrp
 SPECIAL ln bin/chmod sbin/chown
@@ -345,8 +348,6 @@ SPECIAL chown root.kmem		usr/bin/netstat
 SPECIAL chmod 2755		usr/bin/netstat
 SPECIAL chown root.kmem		usr/bin/vmstat
 SPECIAL chmod 2755		usr/bin/vmstat
-SPECIAL chown root.kmem		usr/bin/systat
-SPECIAL chmod 2755		usr/bin/systat
 SPECIAL chmod 4755		usr/bin/passwd
 SPECIAL chmod 4755		usr/bin/su
 SPECIAL chown root.network	usr/sbin/ppp

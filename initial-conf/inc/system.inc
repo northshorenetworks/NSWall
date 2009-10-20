@@ -34,6 +34,13 @@ function system_build_ps_database(){
 	mwexec("dev_mkdb");
 }
 
+function system_init_gpios() {
+	mwexec("gpioctl gpio0 6 set out led1");
+	mwexec("gpioctl gpio0 25 set out led2");
+	mwexec("gpioctl gpio0 27 set out led3");
+	mwexec("gpioctl gpio0 24 set out reset_btn");
+}
+
 function system_secure_level(){
 	mwexec("sysctl kern.securelevel=1");
 }
@@ -473,11 +480,14 @@ function system_webgui_start() {
         /* kill any running mini_httpd */
 	killbypid("{$g['varrun_path']}/mini_httpd.pid");
 
-	/* find out the lan ip, we'll only listen on this one */
-	$lanip = $config['interfaces']['lan']['ipaddr'];
-	
+	if ($g['module'] == 'FIREWALL') {
+		/* find out the lan ip, we'll only listen on this one */
+		$listenip = $config['interfaces']['lan']['ipaddr'];
+	} else {
+		$listenip = get_current_wan_address(); 
+	}
 	/* generate password file */
-	system_password_configure();
+ 	//system_password_configure();
 	
 	chdir($g['www_path']);
 	
@@ -546,7 +556,7 @@ EOD;
 	
 		$res = mwexec("/sbin/mini_httpd -S -E {$g['varetc_path']}/cert.pem" .
 			" -c \"**.php|**.cgi\" -u root -maxproc 16 $portarg" . 
-			" -i {$g['varrun_path']}/mini_httpd.pid -h $lanip");
+			" -i {$g['varrun_path']}/mini_httpd.pid -h $listenip");
 	
 	if ($g['booting']) {
 		if ($res == 0)
@@ -561,7 +571,7 @@ EOD;
 function system_password_configure() {
 	global $config, $g;
 	
-	$fd = fopen("{$g['varrun_path']}/htpasswd", "w");
+	$fd = fopen("{$g['www_path']}/secret.php", "w");
 	if (!$fd) {
 		printf("Error: cannot open htpasswd in system_password_configure().\n");
 		return 1;
@@ -571,19 +581,15 @@ function system_password_configure() {
 		$username = $config['system']['username'];
 	else
 		$username = "admin";
-	
-	fwrite($fd, $username . ":" . $config['system']['password'] . "\n");
 
-	if (is_array($config['system']['accounts']['user'])) {
-		foreach ($config['system']['accounts']['user'] as $userent) {
-			    fwrite($fd, $userent['name'] . ":" 
-		              . $userent['password'] . "\n");
-		}
-	}
+	$string = '<?php' . "\n" . 'define("ADMINUSER", "' . $username . '");' . "\n";
+	$string .= 'define("ADMINPASSWORD", "' . base64_decode($config['system']['password']) . '");' . "\n";
+	$string .= 'define("ADMINHOME", "index.php");' . "\n" . '?>'; 
+	
+	fwrite($fd, $string);
 	
 	fclose($fd);
-	chmod("{$g['varrun_path']}/htpasswd", 0600);
- 	#symlink("{$g['varrun_path']}/htpasswd","{$g['www_path']}/.htpasswd");	
+	chmod("{$g['www_path']}/secret.php", 0751);
 	return 0;
 }
 

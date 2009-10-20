@@ -101,9 +101,9 @@ if ($_GET['act'] == "del") {
                   <td class="listbg"> 
                     <?=htmlspecialchars($configsynchostent['descr']);?>&nbsp;
                   </td>
-                  <td class="list" nowrap> <a href="firewall_carp_sync_hosts_edit.php?id=<?=$i;?>"><img src="e.gif" title="edit Config Sync Host" width="17" height="17" border="0"></a>
-                     <a href="firewall_carp_sync_hosts.php?act=del&id=<?=$i;?>" onclick="return confirm('Do you really want to delete this Config Sync Host?')"><img src="x.gif" title="delete Config Sync Host" width="17" height="17" border="0"></a>
-		     <a href="firewall_carp_sync_hosts_edit.php?dup=<?=$i;?>"><img src="plus.gif" title="add a new Config Sync Host based on this one" width="17" height="17" border="0"></a></td>
+                  <td class="list" nowrap> <a href="firewall_carp_sync_hosts_edit.php?id=<?=$i;?>"><img src="images/e.gif" title="edit Config Sync Host" width="17" height="17" border="0"></a>
+                     <a href="firewall_carp_sync_hosts.php?act=del&id=<?=$i;?>" onclick="return confirm('Do you really want to delete this Config Sync Host?')"><img src="images/x.gif" title="delete Config Sync Host" width="17" height="17" border="0"></a>
+		     <a href="firewall_carp_sync_hosts_edit.php?dup=<?=$i;?>"><img src="images/plus.gif" title="add a new Config Sync Host based on this one" width="17" height="17" border="0"></a></td>
 		</tr>
                 	<?php $nconfigsynchosts++; endfor; ?>
                         <?php if ($nconfigsynchosts == 0): ?>
@@ -111,13 +111,13 @@ if ($_GET['act'] == "del") {
                           <span class="gray">
                           No Config Sync Hosts are currently defined.<br>
                           <br><br>
-                          Click the <a href="firewall_carp_sync_hosts_edit.php"><img src="plus.gif" title="add new rule" border="0" width="17" height="17" align="absmiddle"></a> button to add a new Config Sync Host.</span>
+                          Click the <a href="firewall_carp_sync_hosts_edit.php"><img src="images/plus.gif" title="add new rule" border="0" width="17" height="17" align="absmiddle"></a> button to add a new Config Sync Host.</span>
                           </td>
                           <?php endif; ?>
 
 		<tr> 
                   <td class="list" colspan="4"></td>
-                  <td class="list"> <a href="firewall_carp_vid_edit.php"><img src="plus.gif" title="add Virtual Host" width="17" height="17" border="0"></a></td>
+                  <td class="list"> <a href="firewall_carp_vid_edit.php"><img src="images/plus.gif" title="add Virtual Host" width="17" height="17" border="0"></a></td>
 				</tr>
 </td>
 </tr>

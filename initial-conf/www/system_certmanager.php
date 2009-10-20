@@ -702,15 +702,15 @@ function internalca_change() {
                         <td class="listr"><?=$subj;?>&nbsp;</td>
                         <td valign="middle" nowrap class="list">
                             <a href="system_certmanager.php?act=exp&id=<?=$i;?>")">
-                                <img src="down.gif" title="export cert" alt="export ca" width="17" height="17" border="0" />
+                                <img src="images/down.gif" title="export cert" alt="export ca" width="17" height="17" border="0" />
                             </a>
                             <a href="system_certmanager.php?act=del&id=<?=$i;?>" onclick="return confirm('<?="Do you really want to delete this Certificate?";?>')">
-                                <img src="x.gif" title="delete cert" alt="delete cert" width="17" height="17" border="0" />
+                                <img src="images/x.gif" title="delete cert" alt="delete cert" width="17" height="17" border="0" />
                             </a>
                             <?php    if ($cert['csr']): ?>
                             &nbsp;
                                 <a href="system_certmanager.php?act=csr&id=<?=$i;?>">
-                                <img src="e.gif" title="update csr" alt="update csr" width="17" height="17" border="0" />
+                                <img src="images/e.gif" title="update csr" alt="update csr" width="17" height="17" border="0" />
                             </a>
                             <?php    endif; ?>
                         </td>
@@ -723,7 +723,7 @@ function internalca_change() {
                         <td class="list" colspan="3"></td>
                         <td class="list">
                             <a href="system_certmanager.php?act=new">
-                                <img src="plus.gif" title="add or import ca" alt="add ca" width="17" height="17" border="0" />
+                                <img src="images/plus.gif" title="add or import ca" alt="add ca" width="17" height="17" border="0" />
                             </a>
                         </td>
                     </tr>

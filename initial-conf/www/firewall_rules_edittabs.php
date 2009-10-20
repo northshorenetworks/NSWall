@@ -34,24 +34,58 @@ require("guiconfig.inc");
 
 $specialsrcdst = explode(" ", "any wanip lan pptp");
 
-if (!is_array($config['filter']['rule'])) {
-	$config['filter']['rule'] = array();
-}
-filter_rules_sort();
-$a_filter = &$config['filter']['rule'];
+if (isset($_POST['rulesetid']) || isset($_GET['rulesetid'])) {
 
-$id = $_GET['id'];
-if (is_numeric($_POST['id']))
-	$id = $_POST['id'];
+	if (!is_array($config['grouppolicies']['ruleset']))
+        	$config['grouppolicies']['ruleset'] = array();
+
+	filter_rulesets_sort();
+
+	$a_ruleset = &$config['grouppolicies']['ruleset'];
+
+	$rulesetid = $_GET['rulesetid'];
+	if (isset($_POST['rulesetid']))
+        	$rulesetid = $_POST['rulesetid'];
+
+	if (isset($_POST['after']))
+        	$after = $_POST['after'];
+
+	$id = $_GET['id'];
+	if (is_numeric($_POST['id']))
+ 	       $id = $_POST['id'];
+
+	$after = $_GET['after'];
+
+	if (isset($_POST['after']))
+ 	       $after = $_POST['after'];
+
+	if (isset($_GET['dup'])) {
+        	$id = $_GET['dup'];
+        	$after = $_GET['dup'];
+	}
+
+        $a_filter = &$config['grouppolicies']['ruleset'][$rulesetid]['rule'];
+
+} else {
+	if (!is_array($config['filter']['rule']))
+		$config['filter']['rule'] = array();
 	
-$after = $_GET['after'];
+	filter_rules_sort();
+	$a_filter = &$config['filter']['rule'];
 
-if (isset($_POST['after']))
-	$after = $_POST['after'];
+	$id = $_GET['id'];
+	if (is_numeric($_POST['id']))
+		$id = $_POST['id'];
+	
+	$after = $_GET['after'];
 
-if (isset($_GET['dup'])) {
-	$id = $_GET['dup'];
-	$after = $_GET['dup'];
+	if (isset($_POST['after']))
+		$after = $_POST['after'];
+
+	if (isset($_GET['dup'])) {
+		$id = $_GET['dup'];
+		$after = $_GET['dup'];
+	}
 }
 
 function is_specialnet($net) {
@@ -180,8 +214,14 @@ if ($_POST) {
 
 	if (!$input_errors) {
 		write_config();
-		touch($d_filterconfdirty_path);
-		header("Location: firewall_rules.php?if=" . $_POST['interface']);
+		
+		if (isset($rulesetid)) {
+                	header("Location: firewall_rules.php?if=" . $_POST['interface'] . "&rulesetid=$rulesetid");
+
+		} else {
+                	touch($d_filterconfdirty_path);
+                	header("Location: firewall_rules.php?if=" . $_POST['interface']);
+		}
 		Exit;
 	}
 }
@@ -222,7 +262,7 @@ if (isset($id) && $a_filter[$id]) {
 
 ?>
 <?php include("fbegin.inc"); ?>
-<script language="javascript" src="/nss.js"></script>
+<script language="javascript" src="js/nss.js"></script>
 
 <table width="100%" id="navigator" border="0" cellpadding="0" cellspacing="0">
 <tr><td class="tabnavtbl">
@@ -292,7 +332,8 @@ if (isset($id) && $a_filter[$id]) {
 		<select name="SRCADDR" style="width: 150px; height: 100px" id="SRCADDR" multiple>
                 <?php for ($i = 0; $i<sizeof($pconfig['srclist']); $i++): ?>
                 <option value="<?=$pconfig['srclist']["src$i"];?>">
-                <?=$pconfig['srclist']["src$i"];?>
+                <?php $display = preg_replace('/user:|:user/', '', $pconfig['srclist']["src$i"]);?>
+                <?=$display;?>
                 </option>
                 <?php endfor; ?>
                 </select>
@@ -302,6 +343,7 @@ if (isset($id) && $a_filter[$id]) {
                       <option value="srchost" selected>Host</option>
                       <option value="srcnet" >Network</option>
                       <option value="srcalias" >Alias</option>
+		      <option value="srcuser" >User</option>
                     </select><br><br>
                 <div id='srchost' style="display:block;">
                  <strong>Address</strong>
@@ -337,9 +379,20 @@ if (isset($id) && $a_filter[$id]) {
                       </option>
                       <?php endforeach; ?>
                     </select>
-		<input type=button onClick="addOption('SRCADDR',document.iform.srcalias.value + '/32','net' + ':' + document.iform.srcalias.value + '/32')"; value='Add'>
+		<input type=button onClick="addOption('SRCADDR',document.iform.srcalias.value + '/32','alias' + ':' + document.iform.srcalias.value + '/32')"; value='Add'>
 		</div>
-                </td>
+                <div id='srcuser' style="display:none;">
+                <strong>User</strong>
+                    <select name="srcuser" class="formfld" id="srcuser">
+                      <?php foreach($config['system']['accounts']['user'] as $i): ?>
+                      <option value="<?=$i['name'];?>">
+                        <?=$i['name'];?>
+                      </option>
+                      <?php endforeach; ?>
+                    </select>
+                <input type=button onClick="addOption('SRCADDR',document.iform.srcuser.value + '/32','user:' + document.iform.srcuser.value + ':user')"; value='Add'>
+                </div>
+		</td>
                 </tr> 
 		<tr>
                 <td width="22%" valign="top" class="vncellreq">Destination</td>
@@ -595,6 +648,9 @@ if (isset($id) && $a_filter[$id]) {
                     <input name="Submit" type="submit" class="formbtn" value="Save"> 
                     <?php if (isset($id) && $a_filter[$id]): ?>
                     <input name="id" type="hidden" value="<?=$id;?>"> 
+                    <?php endif; ?>
+		    <?php if (isset($rulesetid)): ?>
+                    <input name="rulesetid" type="hidden" value="<?=$rulesetid;?>">
                     <?php endif; ?>
                     <input name="after" type="hidden" value="<?=$after;?>"> 
                   </td>

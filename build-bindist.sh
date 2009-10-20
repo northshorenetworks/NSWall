@@ -19,6 +19,7 @@ KERNCONF=PLATFORM/$DISTNAME/$DISTNAME
 export TTYSPEED=19200
 sudo chmod 777 flash-dist/etc/
 sudo echo $DISTNAME > flash-dist/etc/platform
+sudo echo $MODULE > flash-dist/etc/module
 cp $KERNCONF $DISTNAME
 
 if [ $DEBUG_FLAG = TRUE ]
@@ -39,5 +40,5 @@ rm $DISTNAME
 ./build-diskimage.sh $DISTNAME 
 gzip $DISTNAME 
 DATETIME=`date "+%Y-%m-%d-%H:%M:%S"`
-mv -f $DISTNAME.update ../../public_html/$DISTNAME.update.$DATETIME
-mv -f $DISTNAME.gz ../../public_html/$DISTNAME.image.$DATETIME
+mv -f $DISTNAME.update ../../public_html/$MODULE-$DISTNAME.update.$DATETIME
+mv -f $DISTNAME.gz ../../public_html/$MODULE-$DISTNAME.image.$DATETIME

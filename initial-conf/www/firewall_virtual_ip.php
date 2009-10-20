@@ -181,8 +181,8 @@ echo $pfSenseHead->getHTML();
                   <td class="list" nowrap>
                     <table border="0" cellspacing="0" cellpadding="1">
                       <tr>
-                        <td valign="middle"><a href="firewall_virtual_ip_edit.php?id=<?=$i;?>"><img src="./themes/<?= $g['theme']; ?>/images/icons/icon_e.gif" width="17" height="17" border="0" alt="" /></a></td>
-                        <td valign="middle"><a href="firewall_virtual_ip.php?act=del&amp;id=<?=$i;?>" onclick="return confirm('<?=gettext("Do you really want to delete this entry?");?>')"><img src="./themes/<?= $g['theme']; ?>/images/icons/icon_x.gif" width="17" height="17" border="0" alt="" /></a></td>
+                        <td valign="middle"><a href="firewall_virtual_ip_edit.php?id=<?=$i;?>"><img src="./themes/<?= $g['theme']; ?>/images/icons/icon_images/e.gif" width="17" height="17" border="0" alt="" /></a></td>
+                        <td valign="middle"><a href="firewall_virtual_ip.php?act=del&amp;id=<?=$i;?>" onclick="return confirm('<?=gettext("Do you really want to delete this entry?");?>')"><img src="./themes/<?= $g['theme']; ?>/images/icons/icon_images/x.gif" width="17" height="17" border="0" alt="" /></a></td>
                       </tr>
                     </table>
                   </td>
@@ -194,7 +194,7 @@ echo $pfSenseHead->getHTML();
                   <td class="list">
                     <table border="0" cellspacing="0" cellpadding="1">
                       <tr>
-                        <td valign="middle"><a href="firewall_virtual_ip_edit.php"><img src="./themes/<?= $g['theme']; ?>/images/icons/icon_plus.gif" width="17" height="17" border="0" alt="" /></a></td>
+                        <td valign="middle"><a href="firewall_virtual_ip_edit.php"><img src="./themes/<?= $g['theme']; ?>/images/icons/icon_images/plus.gif" width="17" height="17" border="0" alt="" /></a></td>
                       </tr>
                     </table>
                   </td>

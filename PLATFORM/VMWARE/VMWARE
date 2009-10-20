@@ -13,8 +13,6 @@ machine		i386
 include		"../../../conf/GENERIC"
 maxusers	32			# estimated number of users
 
-option		I486_CPU	# CPU classes; at least one is REQUIRED
-option		I586_CPU
 option		I686_CPU
 
 option		USER_PCICONF	# user-space PCI configuration
@@ -27,19 +25,12 @@ option		APERTURE	# in-kernel aperture driver for XFree86
 #option		KGDB		# Remote debugger support; exclusive of DDB
 #option		"KGDB_DEVNAME=\"com\"",KGDBADDR=0x2f8,KGDBRATE=9600
 
-option		COMPAT_SVR4	# binary compatibility with SVR4
-option		COMPAT_IBCS2	# binary compatibility with SCO and ISC
-option		COMPAT_LINUX	# binary compatibility with Linux
-option		COMPAT_FREEBSD	# binary compatibility with FreeBSD
-option		COMPAT_BSDOS	# binary compatibility with BSD/OS
-option		COMPAT_AOUT	# a.out binaries are emulated
-
 option		PROCFS		# /proc
 #option		NTFS		# Experimental NTFS support
 
 # or use		root on nfs swap on nfs
 option          RAMDISK_HOOKS
-option          MINIROOTSIZE=40960              # disktab.12mb
+option          MINIROOTSIZE=51200              # disktab.25mb
 option          NKPTP=8
 config          bsd     root on rd0a swap on rd0b and wd0b and wd1b
 pseudo-device   rd              1

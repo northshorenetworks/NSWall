@@ -107,9 +107,9 @@ if ($_GET['act'] == "del") {
                   <td class="listbg"> 
                     <?=htmlspecialchars($relayent['descr']);?>&nbsp;
                   </td>
-                  <td class="list" nowrap> <a href="firewall_relayd_relays_edit.php?id=<?=$i;?>"><img src="e.gif" title="edit relay" width="17" height="17" border="0"></a>
-                     <a href="firewall_relayd_relays.php?act=del&id=<?=$i;?>" onclick="return confirm('Do you really want to delete this relay?')"><img src="x.gif" title="delete relay" width="17" height="17" border="0"></a>
-		     <a href="firewall_relayd_relays_edit.php?dup=<?=$i;?>"><img src="plus.gif" title="add a new relay based on this one" width="17" height="17" border="0"></a></td>
+                  <td class="list" nowrap> <a href="firewall_relayd_relays_edit.php?id=<?=$i;?>"><img src="images/e.gif" title="edit relay" width="17" height="17" border="0"></a>
+                     <a href="firewall_relayd_relays.php?act=del&id=<?=$i;?>" onclick="return confirm('Do you really want to delete this relay?')"><img src="images/x.gif" title="delete relay" width="17" height="17" border="0"></a>
+		     <a href="firewall_relayd_relays_edit.php?dup=<?=$i;?>"><img src="images/plus.gif" title="add a new relay based on this one" width="17" height="17" border="0"></a></td>
 		</tr>
                 	<?php $nrelays++; endfor; ?>
                         <?php if ($nrelays == 0): ?>
@@ -117,13 +117,13 @@ if ($_GET['act'] == "del") {
                           <span class="gray">
                           No Relays are currently defined.<br>
                           <br><br>
-                          Click the <a href="firewall_relayd_relays_edit.php"><img src="plus.gif" title="add new rule" border="0" width="17" height="17" align="absmiddle"></a> button to add a new relay.</span>
+                          Click the <a href="firewall_relayd_relays_edit.php"><img src="images/plus.gif" title="add new rule" border="0" width="17" height="17" align="absmiddle"></a> button to add a new relay.</span>
                           </td>
                           <?php endif; ?>
 
 		<tr> 
                   <td class="list" colspan="4"></td>
-                  <td class="list"> <a href="firewall_relayd_relays_edit.php"><img src="plus.gif" title="add relay" width="17" height="17" border="0"></a></td>
+                  <td class="list"> <a href="firewall_relayd_relays_edit.php"><img src="images/plus.gif" title="add relay" width="17" height="17" border="0"></a></td>
 				</tr>
 </td>
 </tr>

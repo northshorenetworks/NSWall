@@ -1,147 +1,126 @@
 <?php
 /*
-	$Id: fbegin.inc,v 1.16 2009/04/20 06:52:10 jrecords Exp $
-	part of m0n0wall (http://m0n0.ch/wall)
-	
-	Copyright (C) 2003-2006 Manuel Kasper <mk@neon1.net>.
-	All rights reserved.
-	
-	Redistribution and use in source and binary forms, with or without
-	modification, are permitted provided that the following conditions are met:
-	
-	1. Redistributions of source code must retain the above copyright notice,
-	   this list of conditions and the following disclaimer.
-	
-	2. Redistributions in binary form must reproduce the above copyright
-	   notice, this list of conditions and the following disclaimer in the
-	   documentation and/or other materials provided with the distribution.
-	
-	THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
-	INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
-	AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
-	AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
-	OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
-	SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-	INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
-	CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-	ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-	POSSIBILITY OF SUCH DAMAGE.
+$Id: fbegin.inc,v 1.16 2009/04/20 06:52:10 jrecords Exp $
+part of m0n0wall (http://m0n0.ch/wall)
+ 
+Copyright (C) 2003-2006 Manuel Kasper <mk@neon1.net>.
+All rights reserved.
+ 
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+ 
+1. Redistributions of source code must retain the above copyright notice,
+this list of conditions and the following disclaimer.
+ 
+2. Redistributions in binary form must reproduce the above copyright
+notice, this list of conditions and the following disclaimer in the
+documentation and/or other materials provided with the distribution.
+ 
+THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
+AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
+OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+POSSIBILITY OF SUCH DAMAGE.
 */
-
-/* send user to initial wizard if it hasn't been completed yet */
-if (file_exists("/conf/set_wizard_initial"))
-         header("Location: wizard_initial.htm");
-
-$navlevelsep = ": ";	/* navigation level separator string */
-$mandfldhtml = "";		/* display this before mandatory input fields */
-$mandfldhtmlspc = "";	/* same as above, but with spacing */
-
+/* make sure the user is an admin */
+require_once("adminOnly.php");
+ 
+$navlevelsep = ": "; /* navigation level separator string */
+$mandfldhtml = ""; /* display this before mandatory input fields */
+$mandfldhtmlspc = ""; /* same as above, but with spacing */
+ 
 function gentitle($title) {
-	global $navlevelsep;
-	return join($navlevelsep, $title);
+global $navlevelsep;
+return join($navlevelsep, $title);
 }
-
+ 
 function genhtmltitle($title) {
-	global $config;
-	return $config['system']['hostname'] . "." . $config['system']['general']['domain'] . " - " . gentitle($title);
+global $allowed, $config;
+return $config['system']['hostname'] . "." . $config['system']['general']['domain'] . " - " . gentitle($title);
 }
-
+ 
 function dynamic_menu(&$menu, $menu_title) {
-	global $allowed, $config;
-
-	// Make sure the admin can see everything
-	if ($_SERVER['REMOTE_USER'] === $config['system']['username']) {
-		unset($allowed);
-   		foreach ($menu as $item) {
-        			$allowed[] = $item[0];
-		}
-	}
-	
-	foreach ($menu as $desc => $links) {
-		if ($intersect = array_intersect($menu[$desc],$allowed)) {
-			if (!isset($header_displayed) && !($menu_title=='Diagnostics')) {
-				echo "\n			<strong>".$menu_title.'</strong><br>';
-				$header_displayed = true;
-			}
-			else { 
-				if (!isset($header_displayed)) {
-					if (isset($config['system']['webgui']['expanddiags']) || strstr($_SERVER['SCRIPT_FILENAME'], "diag_") || strstr($_SERVER['SCRIPT_FILENAME'], "reboot")): ?>
-					<a href="javascript:showhide('diag','tri_diag')"><img src="/images/tri_o.gif" id="tri_diag" width="14" height="10" border="0"></a><strong><a href="javascript:showhide('diag','tri_diag')" class="navlnk">Diagnostics</a></strong><br>
-					<span id="diag">
-					<?php else: ?>
-					<a href="javascript:showhide('diag','tri_diag')"><img src="/images/tri_c.gif" id="tri_diag" width="14" height="10" border="0"></a><strong><a href="javascript:showhide('diag','tri_diag')" class="navlnk">Diagnostics</a></strong><br>
-					<span id="diag" style="display: none">
-					<?php endif;
-					$header_displayed = true;			  
-				}
-				
-			}
-			// $intersect may contain one or more links, but we only need the first one
-			// BUT, we are doing a foreach here because it might not be element [0]
-			foreach ($intersect as $link) { 
-				// Below lines are spaced out oddly to help improve the look of resulting HTML code.
-				?>
-
-				&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="/<?=$link?>" class="navlnk"><?=$desc?></a><br><?
-	   			// Only need the first one, so break out of foreach
-	   			break;
-			}
-		}
-	}
+global $config;
+ 
+// Make sure the admin can see everything
+unset($allowed);
+    foreach ($menu as $item) {
+         $allowed[] = $item[0];
 }
-        
-// Check for issues when changing the web admin username
-// $allowed is set in auth.inc *IF* the user is not the webGUI admin
-// so, if it's not set here, they were the admin user when they submited the admin username change.
-if ((!is_array($allowed)) and 
-    ($_SERVER['PHP_SELF'] == '/system.php') and 
-    ($_SERVER['REMOTE_USER'] != $config['system']['username'])) {
-	// webGUI username was just changed, let us change what PHP sees the remote user as so
-	// the menu will build properly.  When user hits next link, they will be prompted to reauthenticate.
-	$_SERVER['REMOTE_USER'] = $config['system']['username'];	
-   
-}
-
-$menu['System']['General setup'] = array('system.php');
-$menu['System']['Static routes'] = array('system_routes.php');
-$menu['System']['Firmware']      = array('system_firmware.php');
-$menu['System']['Advanced']      = array('system_advanced.php');
-$menu['System']['Networking']      = array('system_networking.php');
-$menu['System']['Manage Certificates']      = array('system_camanager.php');
-if ($_SERVER['REMOTE_USER'] === $config['system']['username']) {
-	$menu['System']['User manager']  = array('system_usermanager.php');
+ 
+foreach ($menu as $desc => $links) {
+if ($intersect = array_intersect($menu[$desc],$allowed)) {
+if (!isset($header_displayed) && !($menu_title=='Diagnostics')) {
+echo "\n <strong>".$menu_title.'</strong><br>';
+$header_displayed = true;
 }
 else {
-	$menu['System']['User password']  = array('system_usermanager.php');
+if (!isset($header_displayed)) {
+if (isset($config['system']['webgui']['expanddiags']) || strstr($_SERVER['SCRIPT_FILENAME'], "diag_") || strstr($_SERVER['SCRIPT_FILENAME'], "reboot")): ?>
+<a href="javascript:showhide('diag','tri_diag')"><img src="/images/tri_o.gif" id="tri_diag" width="14" height="10" border="0"></a><strong><a href="javascript:showhide('diag','tri_diag')" class="navlnk">Diagnostics</a></strong><br>
+<span id="diag">
+<?php else: ?>
+<a href="javascript:showhide('diag','tri_diag')"><img src="/images/tri_c.gif" id="tri_diag" width="14" height="10" border="0"></a><strong><a href="javascript:showhide('diag','tri_diag')" class="navlnk">Diagnostics</a></strong><br>
+<span id="diag" style="display: none">
+<?php endif;
+$header_displayed = true;
 }
-
-$menu['Firewall']['ALTQ']           =array('firewall_altq.php');
-//$menu['Firewall']['Abusive Sites']  = array('firewall_abusive_sites.php');
-$menu['Firewall']['Aliases']        = array('firewall_aliases.php'); 
+ 
+}
+// $intersect may contain one or more links, but we only need the first one
+// BUT, we are doing a foreach here because it might not be element [0]
+foreach ($intersect as $link) {
+// Below lines are spaced out oddly to help improve the look of resulting HTML code.
+?>
+ 
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="/<?=$link?>" class="navlnk"><?=$desc?></a><br><?
+// Only need the first one, so break out of foreach
+break;
+}
+}
+}
+}
+ 
+$menu['System']['General setup'] = array('system.php');
+$menu['System']['Static routes'] = array('system_routes.php');
+$menu['System']['Firmware'] = array('system_firmware.php');
+$menu['System']['Advanced'] = array('system_advanced.php');
+$menu['System']['Networking'] = array('system_networking.php');
+$menu['System']['Manage Certificates'] = array('system_camanager.php');
+$menu['System']['User manager'] = array('system_usermanager.php');
+ 
+$menu['Firewall']['ALTQ'] =array('firewall_altq.php');
+//$menu['Firewall']['Abusive Sites'] = array('firewall_abusive_sites.php');
+$menu['Firewall']['Aliases'] = array('firewall_aliases.php');
 $menu['Firewall']['Global Options'] = array('firewall_options_edit.php');
-$menu['Firewall']['NAT']            = array('firewall_nat.php');
-$menu['Firewall']['Rules']          = array('firewall_rules.php');
-
-$menu['Services']['DHCP server']	= array('services_dhcp.php');
-$menu['Services']['DNS forwarder']	= array('services_dnsmasq.php');
-$menu['Services']['CARP']          	= array('firewall_carp.php');
- $menu['Services']['Config Server']     = array('services_config_server.php');
-// $menu['Services']['Relayd']             = array('firewall_relayd_relays.php');
-
-$menu['VPN']['IPsec']  			= array('vpn_ipsec.php');
-$menu['VPN']['PPTP Client']             = array('vpn_pptp_client.php');
-$menu['VPN']['PPTP Server']             = array('vpn_pptp_server.php');									
-$menu['Status']['System']			= array('index.php');
-$menu['Status']['Interfaces']		= array('status_interfaces.php');
-$menu['Status']['Traffic graph']	= array('status_graph.php');
-$menu['Status']['CPU graph']        = array('status_graph_cpu.php');
-$menu['Status']['PF Traffic graph']        = array('status_graph_rule.php');
-$menu['Status']['PF PPS graph']        = array('status_graph_pps.php');
-$menu['Status']['PF States graph']        = array('status_graph_states.php');
+$menu['Firewall']['NAT'] = array('firewall_nat.php');
+$menu['Firewall']['Rules'] = array('firewall_rules.php');
+ 
+$menu['Services']['DHCP server'] = array('services_dhcp.php');
+$menu['Services']['DNS forwarder'] = array('services_dnsmasq.php');
+$menu['Services']['CARP'] = array('firewall_carp.php');
+ $menu['Services']['Config Server'] = array('services_config_server.php');
+// $menu['Services']['Relayd'] = array('firewall_relayd_relays.php');
+ 
+$menu['VPN']['IPsec'] = array('vpn_ipsec.php');
+$menu['VPN']['PPTP Client'] = array('vpn_pptp_client.php');
+$menu['VPN']['PPTP Server'] = array('vpn_pptp_server.php');
+$menu['Status']['System'] = array('index.php');
+$menu['Status']['Interfaces'] = array('status_interfaces.php');
+$menu['Status']['Traffic graph'] = array('status_graph.php');
+$menu['Status']['CPU graph'] = array('status_graph_cpu.php');
+$menu['Status']['PF Traffic graph'] = array('status_graph_rule.php');
+$menu['Status']['PF PPS graph'] = array('status_graph_pps.php');
+$menu['Status']['PF States graph'] = array('status_graph_states.php');
 if (isset($config['captiveportal']['enable'])) {
-	$menu['Status']['Captive portal']	= array('status_captiveportal.php');
+$menu['Status']['Captive portal'] = array('status_captiveportal.php');
 }
-
+ 
 // Add Extensions, if they exist
 if (is_dir("{$g['www_path']}/ext")){
       $dh = @opendir("{$g['www_path']}/ext");
@@ -155,136 +134,136 @@ if (is_dir("{$g['www_path']}/ext")){
         closedir($dh);
       }
 }
-
-$menu['Diagnostics']['PF'] 	= array('diag_pfconf.php',
-					'diag_pfrules.php',
-					'diag_pfnat.php',
-					'diag_pfstates.php');
-
+ 
+$menu['Diagnostics']['PF'] = array('diag_pfconf.php',
+'diag_pfrules.php',
+'diag_pfnat.php',
+'diag_pfstates.php');
+ 
 /*
-$menu['Diagnostics']['Relays'] = array('diag_relaydconf.php', 
-				       'diag_relaydsummary.php');
+$menu['Diagnostics']['Relays'] = array('diag_relaydconf.php',
+'diag_relaydsummary.php');
 */
-$menu['Diagnostics']['System']	= array ('diag_top.php',
-					 'diag_dhcp_leases.php',
-					 'diag_arp.php',
-					 'diag_df.php',
-					 'diag_routes.php');
-		
-$menu['Diagnostics']['Logs']	= array	('diag_logs.php',
-					 'diag_logs_settings.php');
+$menu['Diagnostics']['System'] = array ('diag_top.php',
+'diag_dhcp_leases.php',
+'diag_arp.php',
+'diag_df.php',
+'diag_routes.php');
+ 
+$menu['Diagnostics']['Logs'] = array ('diag_logs.php',
+'diag_logs_settings.php');
   
-$menu['Diagnostics']['IPsec'] 	= array('diag_ipsecconf.php',
-					'diag_isakmpdconf.php');
-
+$menu['Diagnostics']['IPsec'] = array('diag_ipsecconf.php',
+'diag_isakmpdconf.php');
+ 
 $menu['Diagnostics']['Utilities'] = array('diag_ping.php',
-				       	'diag_traceroute.php',
-					'diag_tcpdump.php');
+'diag_traceroute.php',
+'diag_tcpdump.php');
 ?>
-
+ 
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
 "http://www.w3.org/TR/html4/strict.dtd">
 <html>
 <head>
 <title><?=genhtmltitle($pgtitle);?></title>
-
+ 
 <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
 <link href="gui.css" rel="stylesheet" type="text/css">
-
+<link href="/images/logo.jpg" rel="shortcut icon"/>
+ 
 </head>
-
+ 
 <body link="#0000CC" vlink="#0000CC" alink="#0000CC">
 <script language="javascript">
 <!--
 var tri_open = "";
 var tri_closed = "";
-
+ 
 window.onload = preload;
-
+ 
 function preload() {
-	if (document.images) {
-		tri_open = new Image(14,10);
-		tri_closed = new Image(14,10);
-		tri_open.src = "/images/tri_o.gif";
-		tri_closed.src = "/images/tri_c.gif";
-	}
+if (document.images) {
+tri_open = new Image(14,10);
+tri_closed = new Image(14,10);
+tri_open.src = "/images/tri_o.gif";
+tri_closed.src = "/images/tri_c.gif";
 }
-
+}
+ 
 function showhide(tspan, tri) {
-	tspanel = document.getElementById(tspan);
-	triel = document.getElementById(tri);
-	if (tspanel.style.display == 'none') {
-		tspanel.style.display = '';
-		triel.src = "/images/tri_o.gif";
-	} else {
-		tspanel.style.display = 'none';
-		triel.src = "/images/tri_c.gif";
-	}
+tspanel = document.getElementById(tspan);
+triel = document.getElementById(tri);
+if (tspanel.style.display == 'none') {
+tspanel.style.display = '';
+triel.src = "/images/tri_o.gif";
+} else {
+tspanel.style.display = 'none';
+triel.src = "/images/tri_c.gif";
+}
 }
 -->
 </script>
 <table width="800" border="0" cellspacing="0" cellpadding="0">
-  <tr valign="bottom"> 
+  <tr valign="bottom">
     <td width="150"><strong><a href="http://www.northshoresoftware.com/" target="_blank"><img src="/images/logo.gif" align="center" width="100%" height="65" border="0"></a></strong></td>
     <td height="65" bgcolor="#435370">
-	<table border="0" cellspacing="0" cellpadding="0" width="100%">
-	<tr><td align="left" valign="bottom"><span class="tfrtitle">&nbsp;webGUI 
+<table border="0" cellspacing="0" cellpadding="0" width="100%">
+<tr><td align="left" valign="bottom"><span class="tfrtitle">&nbsp;webGUI
       Configuration</span></td>
-	  <td align="right" valign="bottom">
-	  <span class="hostname"><?=$config['system']['hostname'] . "." . $config['system']['general']['domain'];?>&nbsp;</span>
-	  </td></tr></table>
-	</td>
+<td align="right" valign="bottom">
+<span class="hostname"><a href="/logout.php">Logout&nbsp;&nbsp;</a><?=$config['system']['hostname'] . "." . $config['system']['general']['domain'];?>&nbsp;</span>
+</td></tr></table>
+</td>
   </tr>
-  <tr valign="top"> 
+  <tr valign="top">
     <td width="100" bgcolor="#435370">
-	<table width="100%" border="0" cellpadding="6" cellspacing="0">
+<table width="100%" border="0" cellpadding="6" cellspacing="0">
         <tr>
-          <td><span class="navlnk"><font color="#FFFFFF"> 
-            <?php 
+          <td><span class="navlnk"><font color="#FFFFFF">
+            <?php
                    
 dynamic_menu($menu['System'], 'System');
             
 // The Interfaces menu is different than the rest because of the Assign link and
 // The dynamic nature of the optional interfaces.
 $if_menu = array('(assign)' => 'interfaces_assign.php',
-    			 'LAN' => 'interfaces_lan.php',
-			  	 'WAN' => 'interfaces_wan.php',
-			     'OPTx' => 'interfaces_opt.php');
-if ($_SERVER['REMOTE_USER'] === $config['system']['username']) {
-	$allowed = $if_menu;
-}
+     'LAN' => 'interfaces_lan.php',
+'WAN' => 'interfaces_wan.php',
+'OPTx' => 'interfaces_opt.php');
+ 
+$allowed = $if_menu;
 if (array_intersect($if_menu,$allowed)) {
-	echo '<strong>Interfaces</strong>';
-        /*if ((!isset($config['system']['webgui']['noassigninterfaces'])) && 
-	    (in_array('interfaces_assign.php',$allowed))) {
-		echo '<a href="/interfaces_assign.php" class="navlnks"> (assign)</a>';
-	}*/
+echo '<strong>Interfaces</strong>';
+        /*if ((!isset($config['system']['webgui']['noassigninterfaces'])) &&
+(in_array('interfaces_assign.php',$allowed))) {
+echo '<a href="/interfaces_assign.php" class="navlnks"> (assign)</a>';
+}*/
     echo '<br>';
     if (in_array('interfaces_lan.php',$allowed)) {
-    	echo '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="/interfaces_lan.php" class="navlnk">LAN</a><br>';
+     echo '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="/interfaces_lan.php" class="navlnk">LAN</a><br>';
     }
     if (in_array('interfaces_wan.php',$allowed)) {
-    	echo '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="/interfaces_wan.php" class="navlnk">WAN</a><br>';
+     echo '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="/interfaces_wan.php" class="navlnk">WAN</a><br>';
     }
     if (in_array('interfaces_opt.php',$allowed)) {
-    	for ($i = 1; isset($config['interfaces']['opt' . $i]); $i++) {
-			echo '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="/interfaces_opt.php?index=' .$i.
-			     '" class="navlnk">'.htmlspecialchars($config['interfaces']['opt' . $i]['descr']).'</a><br>';
-    	}
+     for ($i = 1; isset($config['interfaces']['opt' . $i]); $i++) {
+echo '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="/interfaces_opt.php?index=' .$i.
+'" class="navlnk">'.htmlspecialchars($config['interfaces']['opt' . $i]['descr']).'</a><br>';
+     }
     }
-}             
-
+}
+ 
 dynamic_menu($menu['Firewall'], 'Firewall');
 dynamic_menu($menu['Services'], 'Services');
 dynamic_menu($menu['VPN'], 'VPN');
 dynamic_menu($menu['Status'], 'Status');
 // If Extensions exist, add them to the menu
-if (isset($menu['Extensions'])) 
+if (isset($menu['Extensions']))
     dynamic_menu($menu['Extensions'], 'Extensions');
 dynamic_menu($menu['Diagnostics'], 'Diagnostics');
 ?>
-			  </span>
-			  </font></span>
+</span>
+</font></span>
             </td>
         </tr></table></td>
     <td width="600"><table width="100%" border="0" cellpadding="10" cellspacing="0">

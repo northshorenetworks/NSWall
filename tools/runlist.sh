@@ -12,6 +12,11 @@ if [ "${SUBSTRING}" = "list.debug" ]; then
 	fi
 fi
 
+if [ "${SUBSTRING}" = "list.dnsserver" ]; then
+        if [ "$MODULE" != "DNS-SERVER" ]; then
+                exit
+        fi
+fi
 
 if [ "X$1" = "X-d" ]; then
 	SHELLCMD=cat

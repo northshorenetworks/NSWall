@@ -42,7 +42,7 @@ require_once("config.inc");
 require_once("functions.inc");
 
 /* ensure the user is authorized to view the current page */
-require_once("auth.inc");
+//require_once("auth.inc");
 
 $d_natconfdirty_path = $g['varrun_path'] . "/nat.conf.dirty";
 $d_relaydconfdirty_path = $g['varrun_path'] . "/relay.conf.dirty";
@@ -273,6 +273,17 @@ function pprint_port($port) {
 	return $pport;
 }
 
+function filter_rulesets_sort() {
+        global $g, $config;
+
+        function rulesetcmp($a, $b) {
+                return strcmp($a['name'], $b['name']);
+        }
+
+        usort($config['grouppolicies']['ruleset'], "rulesetcmp");
+}
+
+
 /* sort by interface only, retain the original order of rules that apply to
    the same interface */
 function filter_rules_sort() {
@@ -294,6 +305,29 @@ function filter_rules_sort() {
 	/* strip the sequence numbers again */
 	for ($i = 0; isset($config['filter']['rule'][$i]); $i++)
 		unset($config['filter']['rule'][$i]['seq']);
+}
+
+/* sort by interface only, retain the original order of rules that apply to
+   the same interface */
+function filter_rulesets_rules_sort($id) {
+        global $g, $config;
+
+        /* mark each rule with the sequence number (to retain the order while sorting) */
+        for ($i = 0; isset($config['grouppolices']['ruleset'][$id]['rule'][$i]); $i++)
+                $config['grouppolicies']['ruleset'][$id]['rule'][$i]['seq'] = $i;
+
+        function filtercmp($a, $b) {
+                if ($a['interface'] == $b['interface'])
+                        return $a['seq'] - $b['seq'];
+                else
+                        return -strcmp($a['interface'], $b['interface']);
+        }
+
+        usort($config['grouppolicies']['ruleset'][$id]['rule'], "filtercmp");
+
+        /* strip the sequence numbers again */
+        for ($i = 0; isset($config['grouppolicies']['ruleset'][$id]['rule'][$i]); $i++)
+                unset($config['grouppolcies']['ruleset'][$id]['rule'][$i]['seq']);
 }
 
 function nat_rules_sort() {
@@ -622,11 +656,7 @@ function ipsec_ca_sort() {
 function dynamic_tab_menu(&$tabs) {
 	global $allowed, $config;
 	
-	if ($_SERVER['REMOTE_USER'] == $config['system']['username']) {
-		$authorized = &$tabs;
-	} else {
-		$authorized = &$allowed;
-	}
+	$authorized = &$tabs;
 	
 	// Below needed to add the "1" onto the end of the class name for the first tab, if it is inactive.
     $linkStyle = '1';

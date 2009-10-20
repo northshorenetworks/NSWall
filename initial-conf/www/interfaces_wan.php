@@ -230,7 +230,7 @@ if (isset($optcfg['wireless'])) {
 
 ?>
 <?php include("fbegin.inc"); ?>
-<script language="javascript" src="/nss.js"></script>
+<script language="javascript" src="js/nss.js"></script>
 <script language="javascript">
 <!--
 var tabs=new Array('Static', 'DHCP', 'PPPoE');

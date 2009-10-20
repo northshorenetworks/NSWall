@@ -1,0 +1,28 @@
+html, body { padding: 0; border: 0px none; font-family: Verdana; font-size: 11px; }
+
+/* Label */  
+label { width: 60px; padding-left: 5px; margin: 5px; float: left; text-align: left; }  
+
+/* Input text */
+input { margin: 10px; padding-left: 5px; float: left; border: 1px solid #cdcdcd; background-color: white; -moz-border-radius: 2px; }
+
+br { clear: left; }  
+
+.textbox { border: 1px solid #999999;  border-top-color: #CCCCCC;  border-left-color: #CCCCCC; color: #333333;  font: 90% Verdana, Helvetica, Arial, sans-serif; font-size: 11px; }
+
+h1 { font-size: 17px; }
+
+div { font-family: Verdana; font-size: 11px; }
+
+/* 'Login' Button */
+#submit { margin: 10px; padding: 0px; float: left; width: 50px; background-color: white; }
+
+#notification_error { color: red; height: auto; padding: 4px; text-align: center; }
+
+#login_response { overflow: auto; }
+ 
+#ajax_loading { display: none; font-size: 12px; font-family: Tahoma; }
+
+#logged_in { padding: 5px; margin: 23px 0 100px 43px; padding: 5px; text-align: center; width: 400px; }
+
+#status { margin-top: 20px; width: 310px; }

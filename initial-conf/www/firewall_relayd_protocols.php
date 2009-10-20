@@ -100,14 +100,14 @@ if ($_GET['act'] == "del") {
                   <td class="listbg"> 
                     <?=htmlspecialchars($protocolent['descr']);?>&nbsp;
                   </td>
-                  <td class="list" nowrap> <a href="firewall_relayd_protocols_edit.php?id=<?=$i;?>"><img src="e.gif" title="edit proxy action" width="17" height="17" border="0"></a>
-                    <a href="firewall_relayd_protocols.php?act=del&id=<?=$i;?>" onclick="return confirm('Do you really want to delete this proxy action?')"><img src="x.gif" title="delete protocol" width="17" height="17" border="0"></a>
-		    <a href="firewall_relayd_protocols_edit.php?dup=<?=$i;?>"><img src="plus.gif" title="add a new protocol based on this one" width="17" height="17" border="0"></a></td>
+                  <td class="list" nowrap> <a href="firewall_relayd_protocols_edit.php?id=<?=$i;?>"><img src="images/e.gif" title="edit proxy action" width="17" height="17" border="0"></a>
+                    <a href="firewall_relayd_protocols.php?act=del&id=<?=$i;?>" onclick="return confirm('Do you really want to delete this proxy action?')"><img src="images/x.gif" title="delete protocol" width="17" height="17" border="0"></a>
+		    <a href="firewall_relayd_protocols_edit.php?dup=<?=$i;?>"><img src="images/plus.gif" title="add a new protocol based on this one" width="17" height="17" border="0"></a></td>
 				</tr>
 			  <?php $i++; endforeach; ?>
                 <tr> 
                   <td class="list" colspan="4"></td>
-                  <td class="list"> <a href="firewall_relayd_protocols_edit.php"><img src="plus.gif" title="add mapping" width="17" height="17" border="0"></a></td>
+                  <td class="list"> <a href="firewall_relayd_protocols_edit.php"><img src="images/plus.gif" title="add mapping" width="17" height="17" border="0"></a></td>
 				</tr>
 </td>
 </tr>

@@ -220,12 +220,44 @@ function filter_nat_rules_generate_if($if, $src, $dst, $target, $portmap = true)
 
 function filter_tables_generate() {
 	 global $config, $g;
-                $line = "##############\n";
-                $line .= "### Tables ###\n";
-                $line .= "##############\n";
-		$line .= 'table <abusive_hosts> persist' . "\n\n";
+
+    $line = <<<EOD
+
+################
+#### Tables  ###
+################
+table <abusive_hosts> persist
+
+#############
+### Users ###
+#############
+
+EOD;
+	if (is_array($config['system']['accounts']['user'])) {
+		foreach ($config['system']['accounts']['user'] as $user) {
+			$line .= 'table <' . $user['name'] . '> persist' . "\n";
+		}
+	} 
+
+$line .= <<<EOD
+
+##############
+### Groups ###
+##############
+
+EOD;
+
+	if (is_array($config['system']['accounts']['group'])) {
+                foreach ($config['system']['accounts']['group'] as $group) {
+                        $line .= 'table <' . $group['name'] . '> persist' . "\n";
+                }
+        }
+
+ 	$line .= "\n";
+	
 	return $line;
 }
+
 function filter_aliasrules_generate() {
         global $config, $g;
                 $line = "###############\n";
@@ -747,8 +779,8 @@ EOD;
 		}
 }
 	foreach ($optcfg as $oc) {
-		if($config['interfaces']['opt2']['wireless']['ifmode'] != 'lanbridge' && $config['interfaces']['opt2']['wireless']['ifmode'] != 'dmzbridge')
-		$ipfrules .= "block in $log quick on $wanif from {$oc['sa']}/{$oc['sn']} to any\n";
+		if($config['interfaces']['opt2']['wireless']['ifmode'] != 'lanbridge' && $config['interfaces']['opt2']['wirelless']['ifmode'] != 'dmzbridge')
+	               	$ipfrules .= "block in $log quick on $wanif from {$oc['sa']}/{$oc['sn']} to any\n";
 	}
 	
 	/* allow PPTP traffic if PPTP client is enabled on WAN */
@@ -1110,9 +1142,13 @@ EOD;
 				$srclist = $rule['srclist'];
 				for($i=0;$i<sizeof($srclist); $i++) {
 					$src = "src" . "$i";
+                                        $srclist[$src] = preg_replace("/^user:/", "<", $srclist[$src]);	
+				        $srclist[$src] = preg_replace("/:user$/", ">", $srclist[$src]);
 					$line .= "$srclist[$src], ";
 				}
 				$line = preg_replace("/\, $/", "", $line);
+				$line = preg_replace("/user:/", "<", $line);	
+				$line = preg_replace("/:user/", ">", $line);
 				$line.= " }";
 			}
 			

@@ -42,6 +42,15 @@ if (file_exists("{$g['etc_path']}/platform")) {
 	$g['platform'] = $g['fullplatform'] = "unknown";
 }
 
+/* read module */
+if (file_exists("{$g['etc_path']}/module")) {
+        $g['fullmodule'] = chop(file_get_contents("{$g['etc_path']}/module"));
+        $mod = explode("_", $g['fullmodule']);
+        $g['module'] = $mod[0];
+} else {
+        $g['module'] = $g['fullmodule'] = "unknown";
+}
+
 if ($g['booting']) {
 	/* find the device where config.xml resides and write out an fstab */
 	unset($cfgdevice);
