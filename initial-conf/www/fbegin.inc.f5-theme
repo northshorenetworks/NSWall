@@ -156,7 +156,14 @@ $menu['Diagnostics']['Utilities'] = array('diag_ping.php',
 <div id="webui">
 <div class="containfloat" id="header">
 		<div id="logout"><a href="logout.php">Log out</a></div>
-		<div id="deviceid"><div style=""><label>Hostname:</label><a target="contentframe" title="<?php readfile("/etc/version"); ?>" href="system.php"><?php echo $config['system']['hostname'] . "." . $config['system']['general']['domain']; ?></a></div><div style=""><label>IP Address:</label><?php echo $config['interfaces']['lan']['ipaddr']; ?></div></div>
+		<div id="deviceid"><div style=""><label>Hostname:</label><a target="contentframe" title="<?php readfile("/etc/version"); ?>" href="system.php"><?php echo $config['system']['hostname'] . "." . $config['system']['general']['domain']; ?></a></div><div style=""><label>IP Address:</label>
+	<?php if (!$pgtitle_omit): ?>
+		<?php echo $config['interfaces']['lan']['ipaddr']; ?>
+	<?php else: ?>
+		<?php echo get_current_wan_address(); ?>
+	<?php endif; ?>
+
+</div></div>
 	
 <div id="uptimeload"></div>
 
