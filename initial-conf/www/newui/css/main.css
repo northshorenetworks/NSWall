@@ -1,0 +1,66 @@
+body {margin:0; padding:0; height:999px; overflow:hidden; font-family:Tahoma,Verdana,Arial,Helvetica,sans-serif; color:#000000; line-height:1.4em;} 
+	body a{color:#000000; text-decoration:none;}
+	body a:hover{color:#000000;border-bottom:1px solid #f1f1f1;}
+#wrapper{height:100%;}
+
+#toolbar { padding: 4px 18px; border: 3px solid #66A00D; background-color: #666; color: #ccc; font-size: 76%; min-width:870px; }
+	#toolbar a { color: #fff; }
+	#toolbar a:hover { text-decoration: underline; }
+	#toolbar span { color: #fff; }	
+	#logout { float: right; padding-left: 5px; border-left: 1px dotted #444; }
+	#logout a { display: block; line-height: 1.7em; margin: .4em 0; padding: 0 1.5em; border: .1em solid #444; background-color: #66a00d; color: #fff; text-shadow: #444 1px 1px 2px; }
+	#logout a:hover { border-color: #fc0; text-decoration: none; }	
+	#deviceid { float: left; padding-right: 5px; border-right: 1px dotted #444; }
+	#uptimeload { float: left; padding: 0 5px; border-right: 1px dotted #444; }
+	#userinfo { float: left; padding: 0 5px; border-right: 1px dotted #444; }
+	#pingstatus { float: left; padding: 0 5px; border-right: 1px dotted #444; }	
+	#partition { float: right; padding: 0 5px; border-left: 1px dotted #444; }	
+	#deviceid label { float: left; width: 5.75em; }
+	#uptimeload label { float: left; width: 4em; }
+	#userinfo label { float: left; width: 10em; }
+	#pingstatus label { float: left; width: 5em; }
+	#partition label { line-height: 2.7em; }
+	.containfloat:after {clear:both; content:"."; display:block; height:0; visibility:hidden;}
+
+#container{	
+	height:100%;	
+}
+#header-inside{
+	background:#DDEEF6 url(../images/bgtop.jpg) repeat-x scroll 0 0;
+	height:47px;
+}
+#leftlogo{
+	float:left;
+	background:#DDEEF6 url(../images/top_corner.jpg);
+	width:232px;
+	height:47px;
+}
+#leftnav{
+	float:left;
+	width:166px;
+	height:100%;
+	background:transparent url(../images/navbg.jpg) repeat-y scroll left top;	
+}
+#navtop{
+	height:13px;
+	width:166px;
+	background:#DDEEF6 url(../images/navtop.jpg);
+}
+#leftnav ol, ul {
+	list-style-image:none;
+	list-style-position:outside;
+	list-style-type:none;
+	width:145px;
+	padding-left:5px;
+}
+#leftnav li{
+	border:1px solid #f1f1f1;	
+	padding-left:5px;
+	background:white;
+}
+#leftnav li:hover{
+	border:1px solid #000000;
+}
+#container{
+	overflow:auto;
+}
