@@ -38,28 +38,6 @@ if (!is_array($config['staticroutes']['route']))
 staticroutes_sort();
 $a_routes = &$config['staticroutes']['route'];
 
-if ($_POST) {
-
-	$pconfig = $_POST;
-
-	if ($_POST['apply']) {
-		$retval = 0;
-		if (!file_exists($d_sysrebootreqd_path)) {
-			$retval = system_routing_configure();
-			$retval |= filter_configure();
-			push_config('staticroutes');
-		}
-		$savemsg = get_std_save_message($retval);
-		if ($retval == 0) {
-			if (file_exists($d_staticroutesdirty_path)) {
-				config_lock();
-				unlink($d_staticroutesdirty_path);
-				config_unlock();
-			}
-		}
-	}
-}
-
 if ($_GET['act'] == "del") {
 	if ($a_routes[$_GET['id']]) {
 		unset($a_routes[$_GET['id']]);
@@ -70,8 +48,21 @@ if ($_GET['act'] == "del") {
 	}
 }
 ?>
-<?php include("fbegin.inc"); ?>
-<form action="system_routes.php" method="post">
+
+<script type="text/javascript">
+        // wait for the DOM to be loaded
+    $(document).ready(function() {
+            var options = {
+                        target:        '#save_config'   // target element(s) to be updated with server response
+            };
+
+           // bind form using 'ajaxForm'
+           $('#iform').ajaxForm(options);
+    });
+</script>
+
+<form action="form_submit.php" onSubmit="return showdiv('save_config')" method="post" name="iform" id="iform">
+           <input name="formname" type="hidden" value="system_routes">
 <?php if ($savemsg) print_info_box($savemsg); ?>
 <?php if (file_exists($d_staticroutesdirty_path)): ?><p>
 <?php print_info_box_np("The static route configuration has been changed.<br>You must apply the changes in order for them to take effect.");?><br>
@@ -113,4 +104,3 @@ if ($_GET['act'] == "del") {
 				</tr>
               </table>
             </form>
-<?php include("fend.inc"); ?>

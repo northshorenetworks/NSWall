@@ -130,7 +130,6 @@ defCmdT("ipfstat -nio", "/sbin/ipfstat -nio");
 
 defStrT("unparsed ipnat rules", filter_nat_rules_generate());
 defStrT("unparsed ipfilter rules", filter_rules_generate());
-defStrT("unparsed ipfw rules", shaper_rules_generate());
 
 defCmdT("resolv.conf","cat /etc/resolv.conf");
 

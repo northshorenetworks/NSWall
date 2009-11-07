@@ -71,116 +71,59 @@ function check_firmware_version() {
 	return null;
 }
 
-if ($_POST && !file_exists($d_firmwarelock_path)) {
-
-	unset($input_errors);
-	unset($sig_warning);
-	
-	if (stristr($_POST['Submit'], "Enable"))
-		$mode = "enable";
-	else if (stristr($_POST['Submit'], "Disable"))
-		$mode = "disable";
-	else if (stristr($_POST['Submit'], "Upgrade") || $_POST['sig_override'])
-		$mode = "upgrade";
-	else if ($_POST['sig_no'])
-		unlink("{$g['ftmp_path']}/firmware.img");
-		
-	if ($mode) {
-		if ($mode == "enable") {
-			exec_rc_script("/etc/rc.firmware enable");
-			touch($d_fwupenabled_path);
-		} else if ($mode == "disable") {
-			exec_rc_script("/etc/rc.firmware disable");
-			if (file_exists($d_fwupenabled_path))
-				unlink($d_fwupenabled_path);
-		} else if ($mode == "upgrade") {
-			if (is_uploaded_file($_FILES['ulfile']['tmp_name'])) {
-				/* verify firmware image(s) */
-				if (!stristr($_FILES['ulfile']['name'], $g['fullplatform']) && !$_POST['sig_override'])
-					$input_errors[] = "The uploaded image file is not for this platform ({$g['fullplatform']}).";
-				else if (!file_exists($_FILES['ulfile']['tmp_name'])) {
-					/* probably out of memory for the MFS */
-					$input_errors[] = "Image upload failed (out of memory?)";
-					exec_rc_script("/etc/rc.firmware disable");
-					if (file_exists($d_fwupenabled_path))
-						unlink($d_fwupenabled_path);
-				} else {
-					/* move the image so PHP won't delete it */
-					rename($_FILES['ulfile']['tmp_name'], "{$g['ftmp_path']}/firmware.img");
-					
-					/* check digital signature */
-					$sigchk = verify_digital_signature("{$g['ftmp_path']}/firmware.img");
-					
-					if ($sigchk == 1)
-						$sig_warning = "The digital signature on this image is invalid.";
-					else if ($sigchk == 2)
-						$sig_warning = "This image is not digitally signed.";
-					else if (($sigchk == 3) || ($sigchk == 4))
-						$sig_warning = "There has been an error verifying the signature on this image.";
-				
-					if (!verify_gzip_file("{$g['ftmp_path']}/firmware.img")) {
-						$input_errors[] = "The image file is corrupt.";
-						unlink("{$g['ftmp_path']}/firmware.img");
-					}
-				}
-			}
-
-			if (!$input_errors && !file_exists($d_firmwarelock_path) && (!$sig_warning || $_POST['sig_override'])) {			
-				/* fire up the update script in the background */
-				touch($d_firmwarelock_path);
-				exec_rc_script_async("/etc/rc.firmware upgrade {$g['ftmp_path']}/firmware.img");
-				
-				$savemsg = "The firmware is now being installed. The firewall will reboot automatically.";
-			}
-		}
-	}
-} else {
-	if (!isset($config['system']['disablefirmwarecheck']))
-		$fwinfo = check_firmware_version();
-}
+if (!isset($config['system']['disablefirmwarecheck']))
+	$fwinfo = check_firmware_version();
 ?>
-<?php include("fbegin.inc"); ?>
+
+<script type="text/javascript">
+
+// pre-submit callback 
+function showRequest(formData, jqForm, options) { 
+    displayProcessingDiv(); 
+    return true; 
+}
+
+// post-submit callback 
+function showResponse(responseText, statusText)  {
+    if(responseText.match(/SUBMITSUCCESS/)) {  
+           setTimeout(function(){ $('#save_config').fadeOut('slow'); }, 2000);
+    }
+} 
+
+        // wait for the DOM to be loaded
+    $(document).ready(function() {
+            var options = {
+                        target:        '#save_config',  // target element(s) to be updated with server response
+                        beforeSubmit:  showRequest,  // pre-submit callback 
+                        success:       showResponse  // post-submit callback
+            };
+
+           // bind form using 'ajaxForm'
+           $('#iform').ajaxForm(options);
+    });
+</script>
+
 <?php if ($input_errors) print_input_errors($input_errors); ?>
 <?php if ($savemsg) print_info_box($savemsg); ?>
 <?php if ($fwinfo) echo $fwinfo; ?>
 <?php if (!in_array($g['platform'], $fwupplatforms)): ?>
 <p><strong>Firmware uploading is not supported on this platform.</strong></p>
-<?php elseif ($sig_warning && !$input_errors): ?>
-<form action="system_firmware.php" method="post">
-<?php 
-$sig_warning = "<strong>" . $sig_warning . "</strong><br>This means that the image you uploaded " .
-	"is not an official/supported image and may lead to unexpected behavior or security " .
-	"compromises. Only install images that come from sources that you trust, and make sure ".
-	"that the image has not been tampered with.<br><br>".
-	"Do you want to install this image anyway (on your own risk)?";
-print_info_box($sig_warning);
-?>
-<input name="sig_override" type="submit" class="formbtn" id="sig_override" value=" Yes ">
-<input name="sig_no" type="submit" class="formbtn" id="sig_no" value=" No ">
-</form>
 <?php else: ?>
             <?php if (!file_exists($d_firmwarelock_path)): ?>
             <p>Click &quot;Begin 
               Upgrade&quot; below, then choose the image file (<?=$g['fullplatform'];?>-*.img)
 			  to be uploaded.<br>Click &quot;Upgrade firmware&quot; 
               to start the upgrade process.</p>
-            <form action="system_firmware.php" method="post" enctype="multipart/form-data">
-              <table width="100%" border="0" cellpadding="6" cellspacing="0">
+         <form action="forms/system_firmware_form_submit.php" method="post" name="iform" id="iform">
+           <input name="formname" type="hidden" value="system_firmware">
+	      <table width="100%" border="0" cellpadding="6" cellspacing="0">
                 <tr> 
                   <td width="22%" valign="top">&nbsp;</td>
                   <td width="78%"> 
-                    <?php if (!file_exists($d_sysrebootreqd_path)): ?>
-                    <?php if (!file_exists($d_fwupenabled_path)): ?>
-                    <input name="Submit" type="submit" class="formbtn" value="Enable firmware upload">
-				  <?php else: ?>
-				   <input name="Submit" type="submit" class="formbtn" value="Disable firmware upload">
                     <br><br>
-					<strong>Firmware image file: </strong>&nbsp;<input name="ulfile" type="file" class="formfld">
+		    <strong>Firmware image file: </strong>&nbsp;<input name="ulfile" type="file" class="formfld">
                     <br><br>
                     <input name="Submit" type="submit" class="formbtn" value="Upgrade firmware">
-				  <?php endif; else: ?>
-				    <strong>You must reboot the system before you can upgrade the firmware.</strong>
-				  <?php endif; ?>
                   </td>
                 </tr>
                 <tr> 
@@ -193,5 +136,3 @@ print_info_box($sig_warning);
               </table>
 </form>
 <?php endif; endif; ?>
-<?php include("fend.inc"); ?>
-

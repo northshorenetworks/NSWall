@@ -55,22 +55,13 @@ unset($allowed);
  
 foreach ($menu as $desc => $links) {
 if ($intersect = array_intersect($menu[$desc],$allowed)) {
-if (!isset($header_displayed) && !($menu_title=='Diagnostics')) {
+if (!isset($header_displayed)) {
 echo "\n <strong>".$menu_title.'</strong><br>';
 $header_displayed = true;
 }
 else {
 if (!isset($header_displayed)) {
-if (isset($config['system']['webgui']['expanddiags']) || strstr($_SERVER['SCRIPT_FILENAME'], "diag_") || strstr($_SERVER['SCRIPT_FILENAME'], "reboot")): ?>
-<a href="javascript:showhide('diag','tri_diag')"><img src="/images/tri_o.gif" id="tri_diag" width="14" height="10" border="0"></a><strong><a href="javascript:showhide('diag','tri_diag')" class="navlnk">Diagnostics</a></strong><br>
-<span id="diag">
-<?php else: ?>
-<a href="javascript:showhide('diag','tri_diag')"><img src="/images/tri_c.gif" id="tri_diag" width="14" height="10" border="0"></a><strong><a href="javascript:showhide('diag','tri_diag')" class="navlnk">Diagnostics</a></strong><br>
-<span id="diag" style="display: none">
-<?php endif;
-$header_displayed = true;
-}
- 
+} 
 }
 // $intersect may contain one or more links, but we only need the first one
 // BUT, we are doing a foreach here because it might not be element [0]
@@ -78,7 +69,7 @@ foreach ($intersect as $link) {
 // Below lines are spaced out oddly to help improve the look of resulting HTML code.
 ?>
  
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="/<?=$link?>" class="navlnk"><?=$desc?></a><br><?
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="javascript:loadContent('<?=$link?>');" class="navlnk"><?=$desc?></a><br><?
 // Only need the first one, so break out of foreach
 break;
 }
@@ -100,16 +91,21 @@ $menu['Firewall']['Aliases'] = array('firewall_aliases.php');
 $menu['Firewall']['Global Options'] = array('firewall_options_edit.php');
 $menu['Firewall']['NAT'] = array('firewall_nat.php');
 $menu['Firewall']['Rules'] = array('firewall_rules.php');
- 
-$menu['Services']['DHCP server'] = array('services_dhcp.php');
-$menu['Services']['DNS forwarder'] = array('services_dnsmasq.php');
+
+if ($g['module'] == 'FIREWALL') { 
+	$menu['Services']['DHCP server'] = array('services_dhcp.php');
+	$menu['Services']['DNS forwarder'] = array('services_dnsmasq.php');
+}
 $menu['Services']['CARP'] = array('firewall_carp.php');
- $menu['Services']['Config Server'] = array('services_config_server.php');
+$menu['Services']['Config Server'] = array('services_config_server.php');
 // $menu['Services']['Relayd'] = array('firewall_relayd_relays.php');
  
-$menu['VPN']['IPsec'] = array('vpn_ipsec.php');
-$menu['VPN']['PPTP Client'] = array('vpn_pptp_client.php');
-$menu['VPN']['PPTP Server'] = array('vpn_pptp_server.php');
+if ($g['module'] == 'FIREWALL') {
+	$menu['VPN']['IPsec'] = array('vpn_ipsec.php');
+	$menu['VPN']['PPTP Client'] = array('vpn_pptp_client.php');
+	$menu['VPN']['PPTP Server'] = array('vpn_pptp_server.php');
+}
+
 $menu['Status']['System'] = array('index.php');
 $menu['Status']['Interfaces'] = array('status_interfaces.php');
 $menu['Status']['Traffic graph'] = array('status_graph.php');
@@ -117,23 +113,6 @@ $menu['Status']['CPU graph'] = array('status_graph_cpu.php');
 $menu['Status']['PF Traffic graph'] = array('status_graph_rule.php');
 $menu['Status']['PF PPS graph'] = array('status_graph_pps.php');
 $menu['Status']['PF States graph'] = array('status_graph_states.php');
-if (isset($config['captiveportal']['enable'])) {
-$menu['Status']['Captive portal'] = array('status_captiveportal.php');
-}
- 
-// Add Extensions, if they exist
-if (is_dir("{$g['www_path']}/ext")){
-      $dh = @opendir("{$g['www_path']}/ext");
-      if ($dh) {
-        while (($extd = readdir($dh)) !== false) {
-          if (($extd === ".") || ($extd === ".."))
-            continue;
-          $extfiles=explode("\n",trim(file_get_contents("{$g['www_path']}/ext/" . $extd . "/menu2.inc")));
-          $menu['Extensions'][array_shift($extfiles)]=$extfiles;
-         }
-        closedir($dh);
-      }
-}
  
 $menu['Diagnostics']['PF'] = array('diag_pfconf.php',
 'diag_pfrules.php',
@@ -168,12 +147,120 @@ $menu['Diagnostics']['Utilities'] = array('diag_ping.php',
 <title><?=genhtmltitle($pgtitle);?></title>
  
 <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<link href="/images/logo.jpg" type="image/x-icon" rel="shortcut icon"/>
 <link href="gui.css" rel="stylesheet" type="text/css">
-<link href="/images/logo.jpg" rel="shortcut icon"/>
  
 </head>
- 
+<script src="js/jquery-1.3.2.min.js"></script> 
 <body link="#0000CC" vlink="#0000CC" alink="#0000CC">
+<div id="webui">
+<div class="containfloat" id="header">
+		<div id="logout"><a href="logout.php">Log out</a></div>
+		<div id="deviceid"><div style=""><label>Hostname:</label><a target="contentframe" title="<?php readfile("/etc/version"); ?>" href="system.php"><?php echo $config['system']['hostname'] . "." . $config['system']['general']['domain']; ?></a></div><div style=""><label>IP Address:</label>
+	<?php if (!$pgtitle_omit): ?>
+		<?php echo $config['interfaces']['lan']['ipaddr']; ?>
+	<?php else: ?>
+		<?php echo get_current_wan_address(); ?>
+	<?php endif; ?>
+
+</div></div>
+	
+<div id="uptimeload"></div>
+
+		<div id="userinfo"><div style=""><label>User:</label><a target="contentframe" href="/tmui/Control/jspmap/tmui/system/user/properties.jsp?name=admin">admin</a></div>
+                <div style=""><label>Last Config Change:</label><?=htmlspecialchars(date("D M j G:i:s T Y", $config['lastchange']));?></a></div>
+                </div>
+
+</div>
+<div class="containfloat" id="banner">
+		<div id="logo"><a onclick="return loadContent(path_startPage ? path_startPage : $('#mainpanel div.module ul a:first').attr('href'));" href="http://www.northshoresoftware.com"><img alt="NSS Logo" title="Click to return to the start page" class="png" width="50" height="50" src="/images/logo.jpg"/></a></div>
+		<div id="title"/>
+		<div id="status"><div id="bannerstatus" class="green" title="Current System State"><a href="/index.php">State: ARMED</a></div><div id="bannermodule" title="Current Loaded Module"><a href="/index.php">Module: <?=htmlspecialchars($g['module']);?></a></div></div>
+		
+		<div class="right" id="message"/>
+		<div id="navbar">
+			<div class="left" id="tabs"><ul class="containfloat"><li id="maintab" class="current"><a href="#">Main</a></li><li id="helptab"><a href="#">Help</a></li><li id="abouttab"><a href="#">About</a></li></ul></div>
+			<div class="right" id="trail"><a href="#">System</a><span>  ..  <a href="/tmui/Control/jspmap/tmui/system/setup/platform.jsp" class="current">Platform</a></span></div>
+		</div>
+	</div></div>
+</div>
+<div class="left" id="panels">
+
+<?php
+echo '<div id="systempanel" class="panel"><a href="javascript:showhide(\'system\',\'system_img\')"><img src="/images/system.png" id="system_img" border="0"></a><strong><ahref="javascript:showhide(\'system\',\'system_img\')" class="navlnk">System</a></strong><br>
+<span id="system" style="display: none">';
+dynamic_menu($menu['System'], '');
+echo '</span></div>';
+
+echo '<div id="ifpanel" class="panel"><a href="javascript:showhide(\'if\',\'if_img\')"><img src="/images/interface.png" id="if_img" border="0"></a><strong><ahref="javascript:showhide(\'if\',\'if_img\')" class="navlnk">Interfaces</a></strong><br>
+<span id="if" style="display: none">';
+
+// The Interfaces menu is different than the rest because of the Assign link and
+// The dynamic nature of the optional interfaces.
+$if_menu = array('(assign)' => 'interfaces_assign.php',
+     'LAN' => 'interfaces_lan.php',
+'WAN' => 'interfaces_wan.php',
+'OPTx' => 'interfaces_opt.php');
+
+$allowed = $if_menu;
+if (array_intersect($if_menu,$allowed)) {
+        /*if ((!isset($config['system']['webgui']['noassigninterfaces'])) &&
+(in_array('interfaces_assign.php',$allowed))) {
+echo '<a href="/interfaces_assign.php" class="navlnks"> (assign)</a>';
+}*/
+    echo '<br>';
+    if (in_array('interfaces_wan.php',$allowed)) {
+     echo '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="/interfaces_wan.php" class="navlnk">WAN</a><br>';
+    }
+    if ($g['module'] == 'FIREWALL') { 
+    if (in_array('interfaces_lan.php',$allowed)) {
+     echo '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="/interfaces_lan.php" class="navlnk">LAN</a><br>';
+    }
+    if (in_array('interfaces_opt.php',$allowed)) {
+     for ($i = 1; isset($config['interfaces']['opt' . $i]); $i++) {
+echo '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="/interfaces_opt.php?index=' .$i.
+'" class="navlnk">'.htmlspecialchars($config['interfaces']['opt' . $i]['descr'])
+.'</a><br>';
+     }
+    }
+    }
+}
+echo '</span></div>';
+
+echo '<div id="firewallpanel" class="panel"><a href="javascript:showhide(\'firewall\',\'firewall_img\')"><img src="/images/firewall.png" id="firewall_img" border="0"></a><strong><ahref="javascript:showhide(\'firewall\',\'firewall_img\')" class="navlnk">Firewall</a></strong><br>
+<span id="firewall" style="display: none">';
+dynamic_menu($menu['Firewall'], '');
+echo '</span></div>';
+
+
+echo '<div id="servicespanel" class="panel"><a href="javascript:showhide(\'services\',\'services_img\')"><img src="/images/service.png" id="services_img" border="0"></a><strong><ahref="javascript:showhide(\'services\',\'services_img\'
+)" class="navlnk">Services</a></strong><br>
+<span id="services" style="display: none">';
+dynamic_menu($menu['Services'], '');
+echo '</span></div>';
+
+if ($g['module'] == 'FIREWALL') {
+echo '<div id="vpnpanel" class="panel"><a href="javascript:showhide(\'vpn\',\'vpn_img\')"><img src="/images/vpn.png" id="vpn_img" border="0"></a><strong><ahref="javascript:showhide(\'vpn\',\'vpn_img\'
+)" class="navlnk">VPN</a></strong><br>
+<span id="vpn" style="display: none">';
+dynamic_menu($menu['VPN'], '');
+echo '</span></div>';
+}
+
+echo '<div id="statuspanel" class="panel"><a href="javascript:showhide(\'statusmenu\',\'status_img\')"><img src="/images/status.png" id="status_img" border="0"></a><strong><ahref="javascript:showhide(\'statusmenu\',\'status_img\'
+)" class="navlnk">Status</a></strong><br>
+<span id="statusmenu" style="display: none">';
+dynamic_menu($menu['Status'], '');
+echo '</span></div>';
+
+echo '<div id="diagpanel" class="panel"><a href="javascript:showhide(\'diagnostics\',\'diagnostics_img\')"><img src="/images/diagnostics.png" id="diagnostics_img" border="0"></a><strong><ahref="javascript:showhide(\'diagnostics\',\'diagnostics_img\'
+)" class="navlnk">Diagnostics</a></strong><br>
+<span id="diagnostics" style="display: none">';
+dynamic_menu($menu['Diagnostics'], '');
+echo '</span></div>';
+
+?>
+</div>
 <script language="javascript">
 <!--
 var tri_open = "";
@@ -181,6 +268,16 @@ var tri_closed = "";
  
 window.onload = preload;
  
+function loadContent(id) {
+      $("#content").load(id);
+}
+
+function updateUptimeLoad () {
+  $('#uptimeload').load('uptimeload.php?top' + "&random=" + Math.random());
+}
+var refreshId = setInterval("updateUptimeLoad()", 45000);
+
+
 function preload() {
 if (document.images) {
 tri_open = new Image(14,10);
@@ -192,82 +289,37 @@ tri_closed.src = "/images/tri_c.gif";
  
 function showhide(tspan, tri) {
 tspanel = document.getElementById(tspan);
-triel = document.getElementById(tri);
 if (tspanel.style.display == 'none') {
 tspanel.style.display = '';
-triel.src = "/images/tri_o.gif";
 } else {
 tspanel.style.display = 'none';
-triel.src = "/images/tri_c.gif";
 }
 }
+
+updateUptimeLoad()
+
 -->
 </script>
-<table width="800" border="0" cellspacing="0" cellpadding="0">
-  <tr valign="bottom">
-    <td width="150"><strong><a href="http://www.northshoresoftware.com/" target="_blank"><img src="/images/logo.gif" align="center" width="100%" height="65" border="0"></a></strong></td>
-    <td height="65" bgcolor="#435370">
-<table border="0" cellspacing="0" cellpadding="0" width="100%">
-<tr><td align="left" valign="bottom"><span class="tfrtitle">&nbsp;webGUI
-      Configuration</span></td>
-<td align="right" valign="bottom">
-<span class="hostname"><a href="/logout.php">Logout&nbsp;&nbsp;</a><?=$config['system']['hostname'] . "." . $config['system']['general']['domain'];?>&nbsp;</span>
-</td></tr></table>
-</td>
-  </tr>
-  <tr valign="top">
-    <td width="100" bgcolor="#435370">
-<table width="100%" border="0" cellpadding="6" cellspacing="0">
-        <tr>
-          <td><span class="navlnk"><font color="#FFFFFF">
-            <?php
-                   
-dynamic_menu($menu['System'], 'System');
-            
-// The Interfaces menu is different than the rest because of the Assign link and
-// The dynamic nature of the optional interfaces.
-$if_menu = array('(assign)' => 'interfaces_assign.php',
-     'LAN' => 'interfaces_lan.php',
-'WAN' => 'interfaces_wan.php',
-'OPTx' => 'interfaces_opt.php');
- 
-$allowed = $if_menu;
-if (array_intersect($if_menu,$allowed)) {
-echo '<strong>Interfaces</strong>';
-        /*if ((!isset($config['system']['webgui']['noassigninterfaces'])) &&
-(in_array('interfaces_assign.php',$allowed))) {
-echo '<a href="/interfaces_assign.php" class="navlnks"> (assign)</a>';
-}*/
-    echo '<br>';
-    if (in_array('interfaces_lan.php',$allowed)) {
-     echo '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="/interfaces_lan.php" class="navlnk">LAN</a><br>';
-    }
-    if (in_array('interfaces_wan.php',$allowed)) {
-     echo '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="/interfaces_wan.php" class="navlnk">WAN</a><br>';
-    }
-    if (in_array('interfaces_opt.php',$allowed)) {
-     for ($i = 1; isset($config['interfaces']['opt' . $i]); $i++) {
-echo '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="/interfaces_opt.php?index=' .$i.
-'" class="navlnk">'.htmlspecialchars($config['interfaces']['opt' . $i]['descr']).'</a><br>';
-     }
-    }
-}
- 
-dynamic_menu($menu['Firewall'], 'Firewall');
-dynamic_menu($menu['Services'], 'Services');
-dynamic_menu($menu['VPN'], 'VPN');
-dynamic_menu($menu['Status'], 'Status');
-// If Extensions exist, add them to the menu
-if (isset($menu['Extensions']))
-    dynamic_menu($menu['Extensions'], 'Extensions');
-dynamic_menu($menu['Diagnostics'], 'Diagnostics');
-?>
-</span>
-</font></span>
-            </td>
-        </tr></table></td>
-    <td width="600"><table width="100%" border="0" cellpadding="10" cellspacing="0">
+
+<div id="content">
+    <td><table border="0" cellpadding="10" cellspacing="0">
         <tr><td>
 <?php if (!$pgtitle_omit): ?>
       <p class="pgtitle"><?=gentitle($pgtitle);?></p>
 <?php endif; ?>
+
+</td></tr></table></td>
+  </tr>
+  <tr align="center" valign="top" bgcolor="#435370">
+    <td colspan="2" class="cpline">NSWall is &copy; 2009 by Northshore Software Inc.
+      All rights reserved.&nbsp; [<a href="/license.php" class="tblnk">view license</a>]</td>
+  </tr>
+</table>
+
+</div>
+<div id="save_config" class="testclass">
+Writing Config Changes...
+</div>
+</div>
+</body>
+</html>

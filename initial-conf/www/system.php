@@ -66,112 +66,39 @@ exec('/bin/tar -tzf /usr/share/zoneinfo.tgz', $timezonelist);
 $timezonelist = array_filter($timezonelist, 'is_timezone');
 sort($timezonelist);
 
-if ($_POST) {
-
-	unset($input_errors);
-	$pconfig = $_POST;
-
-	/* input validation */
-	$reqdfields = split(" ", "hostname domain username");
-	$reqdfieldsn = split(",", "Hostname,Domain,Username");
-	
-	do_input_validation($_POST, $reqdfields, $reqdfieldsn, &$input_errors);
-	
-	if ($_POST['hostname'] && !is_hostname($_POST['hostname'])) {
-		$input_errors[] = "The hostname may only contain the characters a-z, 0-9 and '-'.";
-	}
-	if ($_POST['domain'] && !is_domain($_POST['domain'])) {
-		$input_errors[] = "The domain may only contain the characters a-z, 0-9, '-' and '.'.";
-	}
-	if (($_POST['dns1'] && !is_ipaddr($_POST['dns1'])) || ($_POST['dns2'] && !is_ipaddr($_POST['dns2'])) || ($_POST['dns3'] && !is_ipaddr($_POST['dns3']))) {
-		$input_errors[] = "A valid IP address must be specified for the primary/secondary/tertiary DNS server.";
-	}
-	if ($_POST['username'] && !preg_match("/^[a-zA-Z0-9]*$/", $_POST['username'])) {
-		$input_errors[] = "The username may only contain the characters a-z, A-Z and 0-9.";
-	}
-	if ($_POST['webguiport'] && (!is_numericint($_POST['webguiport']) || 
-			($_POST['webguiport'] < 1) || ($_POST['webguiport'] > 65535))) {
-		$input_errors[] = "A valid TCP/IP port must be specified for the webGUI port.";
-	}
-	if (($_POST['password']) && ($_POST['password'] != $_POST['password2'])) {
-		$input_errors[] = "The passwords do not match.";
-	}
-	
-	$t = (int)$_POST['timeupdateinterval'];
-	if (($t < 0) || (($t > 0) && ($t < 6)) || ($t > 1440)) {
-		$input_errors[] = "The time update interval must be either 0 (disabled) or between 6 and 1440.";
-	}
-	foreach (explode(' ', $_POST['timeservers']) as $ts) {
-		if (!is_domain($ts)) {
-			$input_errors[] = "A NTP Time Server name may only contain the characters a-z, 0-9, '-' and '.'.";
-		}
-	}
-
-	if (!$input_errors) {
-		$config['system']['hostname'] = strtolower($_POST['hostname']);
-		$config['system']['general']['domain'] = strtolower($_POST['domain']);
-		$oldwebguiproto = $config['system']['general']['webgui']['protocol'];
-		$config['system']['username'] = $_POST['username'];
-		$config['system']['general']['webgui']['protocol'] = $pconfig['webguiproto'];
-		$config['system']['general']['webgui']['certificate'] = $_POST['cert'];
-		$oldwebguiport = $config['system']['general']['webgui']['port'];
-		$config['system']['general']['webgui']['port'] = $pconfig['webguiport'];
-		$config['system']['general']['timezone'] = $_POST['timezone'];
-		$config['system']['general']['timeservers'] = strtolower($_POST['timeservers']);
-		$config['system']['general']['time-update-interval'] = $_POST['timeupdateinterval'];
-		
-		unset($config['system']['general']['dnsserver']);
-		if ($_POST['dns1'])
-			$config['system']['general']['dnsserver'][] = $_POST['dns1'];
-		if ($_POST['dns2'])
-			$config['system']['general']['dnsserver'][] = $_POST['dns2'];
-		if ($_POST['dns3'])
-			$config['system']['general']['dnsserver'][] = $_POST['dns3'];
-		
-		$olddnsallowoverride = $config['system']['general']['dnsallowoverride'];
-		$config['system']['general']['dnsallowoverride'] = $_POST['dnsallowoverride'] ? true : false;
-
-		$oldsshd = isset($config['system']['general']['sshd']['enabled']);	
-		$config['system']['general']['sshd']['enabled'] = $_POST['sshdenabled'] ? true : false;
-		$config['system']['general']['symon']['enabled'] = $_POST['symonenabled'] ? true : false;
-                if ($_POST['muxip'])
-			$config['system']['general']['symon']['muxip'] = $_POST['muxip'];
-		if ($_POST['password']) {
-			$config['system']['password'] = base64_encode($_POST['password']);
-		}
-		
-		write_config();
-		
-		if (($oldwebguiproto != $config['system']['general']['webgui']['protocol']) ||
-			($oldwebguiport != $config['system']['general']['webgui']['port']) ||
-			($oldsshd != isset($config['system']['general']['sshd']['enabled'])))
-			touch($d_sysrebootreqd_path);
-		
-		$retval = 0;
-		if (!file_exists($d_sysrebootreqd_path)) {
-			config_lock();
-			$retval = system_hostname_configure();
-			$retval |= system_hosts_generate();
-			$retval |= system_resolvconf_generate();
-			$retval |= system_password_configure();
-			$retval |= services_dnsmasq_configure();
-			$retval |= system_timezone_configure();
- 			$retval |= system_ntp_configure();
- 			
- 			if ($olddnsallowoverride != $config['system']['general']['dnsallowoverride'])
- 				$retval |= interfaces_wan_configure();
- 			
-			config_unlock();
-		}
-		
-		$savemsg = get_std_save_message($retval);
-	}
-}
 ?>
-<?php include("fbegin.inc"); ?>
+
+<script type="text/javascript">
+
+// pre-submit callback 
+function showRequest(formData, jqForm, options) { 
+    displayProcessingDiv(); 
+    return true; 
+}
+
+// post-submit callback 
+function showResponse(responseText, statusText)  {
+    if(responseText.match(/SUBMITSUCCESS/)) {  
+           setTimeout(function(){ $('#save_config').fadeOut('slow'); }, 2000);
+    }
+} 
+
+        // wait for the DOM to be loaded
+    $(document).ready(function() {
+            var options = {
+                        target:        '#save_config',  // target element(s) to be updated with server response
+                        beforeSubmit:  showRequest,  // pre-submit callback 
+                        success:       showResponse  // post-submit callback
+            };
+
+           // bind form using 'ajaxForm'
+           $('#iform').ajaxForm(options);
+    });
+</script>
 <?php if ($input_errors) print_input_errors($input_errors); ?>
 <?php if ($savemsg) print_info_box($savemsg); ?>
-		<form action="system.php" method="post">
+	<form action="form_submit.php" method="post" name="iform" id="iform">    
+	   <input name="formname" type="hidden" value="system_general">	
               <table width="100%" border="0" cellpadding="6" cellspacing="0">
                 <tr> 
                   <td width="22%" valign="top" class="vncellreq">Hostname</td>
@@ -285,4 +212,3 @@ if ($_POST) {
                 </tr>
               </table>
 </form>
-<?php include("fend.inc"); ?>

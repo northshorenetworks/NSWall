@@ -133,59 +133,7 @@ if ($_GET['act'] == "del") {
 	}
 }	
 	
-if ($_POST) {
-
-	unset($input_errors);
-	$pconfig = $_POST;
-
-	/* input validation */
-	$reqdfields = explode(" ", "groupname");
-	$reqdfieldsn = explode(",", "Group Name");
-	
-	do_input_validation($_POST, $reqdfields, $reqdfieldsn, &$input_errors);
-	
-	if (preg_match("/[^a-zA-Z0-9\.\-_ ]/", $_POST['groupname']))
-		$input_errors[] = "The group name contains invalid characters.";
-		
-	if (!$input_errors && !(isset($id) && $a_group[$id])) {
-		/* make sure there are no dupes */
-		foreach ($a_group as $group) {
-			if ($group['name'] == $_POST['groupname']) {
-				$input_errors[] = "Another entry with the same group name already exists.";
-				break;
-			}
-		}
-	}
-	
-	if (!$input_errors) {
-	
-		if (isset($id) && $a_group[$id])
-			$group = $a_group[$id];
-		
-		$group['name'] = $_POST['groupname'];
-		$group['description'] = $_POST['description'];
-		unset($group['pages']);
-		foreach ($pages as $fname => $title) {
-			$identifier = str_replace('.php','',$fname);
-			if ($_POST[$identifier] == 'yes') {
-				$group['pages'][] = $fname;
-			}			
-		}		
-		
-		if (isset($id) && $a_group[$id])
-			$a_group[$id] = $group;
-		else
-			$a_group[] = $group;
-		
-		write_config();
-	  	push_config('accounts');	
-		header("Location: system_groupmanager.php");
-		exit;
-	}
-}
-
 ?>
-<?php include("fbegin.inc"); ?>
 <?php if ($input_errors) print_input_errors($input_errors); ?>
 <?php if ($savemsg) print_info_box($savemsg); ?>
 <table width="100%" border="0" cellpadding="0" cellspacing="0">
@@ -210,8 +158,37 @@ if($_GET['act']=="new" || $_GET['act']=="edit"){
         }
 	}
 ?>
-<form action="system_groupmanager.php" method="post" name="iform" id="iform">
-          <table width="100%" border="0" cellpadding="6" cellspacing="0">
+
+<script type="text/javascript">
+
+// pre-submit callback 
+function showRequest(formData, jqForm, options) { 
+    displayProcessingDiv(); 
+    return true; 
+}
+
+// post-submit callback 
+function showResponse(responseText, statusText)  {
+    if(responseText.match(/SUBMITSUCCESS/)) {  
+           setTimeout(function(){ $('#save_config').fadeOut('slow'); }, 2000);
+    }
+} 
+
+        // wait for the DOM to be loaded
+    $(document).ready(function() {
+            var options = {
+                        target:        '#save_config',  // target element(s) to be updated with server response
+                        beforeSubmit:  showRequest,  // pre-submit callback 
+                        success:       showResponse  // post-submit callback
+            };
+
+           // bind form using 'ajaxForm'
+           $('#iform').ajaxForm(options);
+    });
+</script>
+<form action="form_submit.php" method="post" name="iform" id="iform">
+           <input name="formname" type="hidden" value="system_groups">
+	<table width="100%" border="0" cellpadding="6" cellspacing="0">
             <tr> 
               <td width="22%" valign="top" class="vncellreq">Group name</td>
               <td width="78%" class="vtable"> 
@@ -304,4 +281,3 @@ if($_GET['act']=="new" || $_GET['act']=="edit"){
   </td>
   </tr>
   </table>
-<?php include("fend.inc"); ?>

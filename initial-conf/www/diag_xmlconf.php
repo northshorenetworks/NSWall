@@ -1,7 +1,7 @@
 #!/bin/php
 <?php 
 /*
-	$Id: diag_df.php,v 1.2 2008/08/12 23:07:58 jrecords Exp $
+	$Id: diag_xml_config.php,v 1.3 2009/04/20 06:52:09 jrecords Exp $
 	part of m0n0wall (http://m0n0.ch/wall)
 	
 	Copyright (C) 2003-2006 Manuel Kasper <mk@neon1.net>.
@@ -29,14 +29,16 @@
 	POSSIBILITY OF SUCH DAMAGE.
 */
 
-$pgtitle = array("Diagnostics", "Disk Usage");
+$pgtitle = array("Diagnostics", "XML Config");
 require("guiconfig.inc");
 
-function dump_df() {
+function dump_xml() {
         global $g, $config;
-        printf("<pre>");
-        $df = `/bin/df -h`;
-	echo $df;
+        printf("<strong><pre>\n");
+        $xml = `cat /conf/config.xml`;
+	$xml = htmlentities($xml);
+	echo $xml;
+        printf("</pre></strong>\n");
 }
 
 
@@ -61,11 +63,11 @@ function dump_df() {
     <td class="tabcont">
 		<table width="100%" border="0" cellspacing="0" cellpadding="0">
 		  <tr> 
-			<td colspan="2" class="listtopic"> 
+			<td colspan="2" class="listxmlic"> 
 		  </tr>
-		  <?php dump_df(); ?>
+		  <?php dump_xml(); ?>
 		</table>
-		<br><form action="diag_df.php" method="post">
+		<br><form action="diag_xml_conf.php" method="post">
 </form>
 	</td>
   </tr>

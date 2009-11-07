@@ -46,6 +46,9 @@
 
 	/* initialize gpios for leds and reset */
 	system_init_gpios();
+	
+	/* create a ramdisk for firmware uploads */
+	mwexec("/etc/rc.firmware enable");
 
 	/* check filesystems with FSCK */
 	system_check_filesystems(); 

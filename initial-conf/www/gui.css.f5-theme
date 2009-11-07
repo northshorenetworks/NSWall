@@ -49,11 +49,25 @@ visibility:hidden;
  background: #deddd9 url(../images/background_panel.gif) repeat-x scroll right bottom; 
 }
 
+.save_config {
+    position:absolute;
+    display:none;
+    background: #FFFFFF;
+    margin-left: -120px;
+    top: 50%;
+    left: 50%;
+    width: 250px;
+    height: 150px;
+    z-index: 1;
+    border: 1px solid #999999;
+}
+
 #webui { padding-bottom: 9em; }
 #header { padding: 4px 18px; border-bottom: 1px solid #333; background: #666 url(../images/background_pagemenu.gif) top left repeat-x; color: #ccc; font-size: 90%; }
 	#deviceid { float: left; padding-right: 15px; border-right: 1px dotted #444; }
 	#uptimeload { float: left; padding: 0 15px; border-right: 1px dotted #444; }
 	#userinfo { float: left; padding: 0 15px; border-right: 1px dotted #444; }
+	#pingstatus { float: left; padding: 0 15px; border-right: 1px dotted #444; }	
 	#partition { float: right; padding: 0 15px; border-left: 1px dotted #444; }
 	#logout { float: right; padding-left: 15px; border-left: 1px dotted #444; }
 #alert { display: none; border-bottom: 1px solid #333; background: #fff9d8; color: #333; text-align: center; }
@@ -69,7 +83,7 @@ visibility:hidden;
 
 #panels { position: relative; z-index: 1; background: #deddd9; }
 	 
-	#content { position: relative; }
+	#content { position: relative; width: 100%; }
 		#contentframe { width: 100%; overflow-x: auto; overflow-y: hidden; }
 		
 /* Header */ 
@@ -79,6 +93,7 @@ visibility:hidden;
 #deviceid label { float: left; width: 5.75em; }
 #uptimeload label { float: left; width: 4em; }
 #userinfo label { float: left; width: 10em; }
+#pingstatus label { float: left; width: 5em; }
 #partition label { line-height: 2.7em; }
 #logout a { display: block; line-height: 1.7em; margin: .4em 0; padding: 0 1.5em; border: .1em solid #444; background: #66a00d url(../images/background_logout.gif) top left repeat-x; color: #fff; text-shadow: #444 1px 1px 2px; }
 #logout a:hover { border-color: #fc0; text-decoration: none; }
@@ -115,6 +130,12 @@ body,td,th,input,select {
 	font-size: 11px;
         margin: 0;
 }
+
+table,tr {
+        padding-left: 2em;
+        width: 80%;
+}
+
 form {
 	margin: 0px;
 }
@@ -132,7 +153,7 @@ p {
 	font-weight: bold;
 }
 .vncell {
-	background-color: #DDDDDD;
+	background-color: #DEDDD9;
 	padding-right: 20px;
 	padding-left: 8px;
 	border-bottom: 1px solid #999999;

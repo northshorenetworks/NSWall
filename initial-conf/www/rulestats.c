@@ -20,7 +20,7 @@ int
              pf_dev = open("/dev/pf", O_RDONLY);
              if (pf_dev == -1)
                 err(1, "open(\"/dev/pf\")");
- 		
+ 	
 	     if (ioctl(pf_dev, DIOCGETRULES, &pr)) {
              		err(1, "DIOCGETRULES");
      			return (-1);

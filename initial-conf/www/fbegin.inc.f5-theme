@@ -69,7 +69,7 @@ foreach ($intersect as $link) {
 // Below lines are spaced out oddly to help improve the look of resulting HTML code.
 ?>
  
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="/<?=$link?>" class="navlnk"><?=$desc?></a><br><?
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="javascript:loadContent('<?=$link?>');" class="navlnk"><?=$desc?></a><br><?
 // Only need the first one, so break out of foreach
 break;
 }
@@ -152,6 +152,9 @@ $menu['Diagnostics']['Utilities'] = array('diag_ping.php',
  
 </head>
 <script src="js/jquery-1.3.2.min.js"></script> 
+<script src="js/nss.js"></script>
+<script type="text/javascript" src="js/jquery.form.js"></script>
+
 <body link="#0000CC" vlink="#0000CC" alink="#0000CC">
 <div id="webui">
 <div class="containfloat" id="header">
@@ -170,7 +173,7 @@ $menu['Diagnostics']['Utilities'] = array('diag_ping.php',
 		<div id="userinfo"><div style=""><label>User:</label><a target="contentframe" href="/tmui/Control/jspmap/tmui/system/user/properties.jsp?name=admin">admin</a></div>
                 <div style=""><label>Last Config Change:</label><?=htmlspecialchars(date("D M j G:i:s T Y", $config['lastchange']));?></a></div>
                 </div>
-
+<div id="pingstatus"></div>
 </div>
 <div class="containfloat" id="banner">
 		<div id="logo"><a onclick="return loadContent(path_startPage ? path_startPage : $('#mainpanel div.module ul a:first').attr('href'));" href="http://www.northshoresoftware.com"><img alt="NSS Logo" title="Click to return to the start page" class="png" width="50" height="50" src="/images/logo.jpg"/></a></div>
@@ -268,11 +271,18 @@ var tri_closed = "";
  
 window.onload = preload;
  
+function loadContent(id) {
+      $("#content").load(id);
+}
+
 function updateUptimeLoad () {
   $('#uptimeload').load('uptimeload.php?top' + "&random=" + Math.random());
 }
-var refreshId = setInterval("updateUptimeLoad()", 5000);
-
+function updatePingStatus () {
+  $('#pingstatus').load('pingtest.php?host=4.2.2.1' + "&random=" + Math.random());
+}
+var refreshId = setInterval("updateUptimeLoad()", 60000);
+var refreshId = setInterval("updatePingStatus()", 60000);
 
 function preload() {
 if (document.images) {
@@ -293,9 +303,11 @@ tspanel.style.display = 'none';
 }
 
 updateUptimeLoad()
+updatePingStatus()
 
 -->
 </script>
+<div id="save_config" class="save_config"></div>
 
 <div id="content">
     <td><table border="0" cellpadding="10" cellspacing="0">
@@ -303,3 +315,4 @@ updateUptimeLoad()
 <?php if (!$pgtitle_omit): ?>
       <p class="pgtitle"><?=gentitle($pgtitle);?></p>
 <?php endif; ?>
+

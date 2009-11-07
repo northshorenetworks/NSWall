@@ -108,16 +108,41 @@ if ($_POST) {
     $savemsg = get_std_save_message($retval);
 }
 ?>
-<?php include("fbegin.inc"); ?>
-<script language="JavaScript">
-<!--
-// -->
+
+<script type="text/javascript">
+
+// pre-submit callback 
+function showRequest(formData, jqForm, options) { 
+    displayProcessingDiv(); 
+    return true; 
+}
+
+// post-submit callback 
+function showResponse(responseText, statusText)  {
+    if(responseText.match(/SUBMITSUCCESS/)) {  
+           setTimeout(function(){ $('#save_config').fadeOut('slow'); }, 2000);
+    }
+} 
+
+        // wait for the DOM to be loaded
+    $(document).ready(function() {
+            var options = {
+                        target:        '#save_config',  // target element(s) to be updated with server response
+                        beforeSubmit:  showRequest,  // pre-submit callback 
+                        success:       showResponse  // post-submit callback
+            };
+
+           // bind form using 'ajaxForm'
+           $('#iform').ajaxForm(options);
+    });
 </script>
 <?php if ($input_errors) print_input_errors($input_errors); ?>
 <?php if ($savemsg) print_info_box($savemsg); ?>
 <p><span class="vexpl"><span class="red"><strong>Note: </strong></span>the
 options on this page are intended for use by advanced users only.</span></p>
-<form action="system_networking.php" method="post" name="iform" id="iform">
+
+<form action="form_submit.php" method="post" name="iform" id="iform">
+           <input name="formname" type="hidden" value="system_networking">
 <table width="100%" border="0" cellpadding="6" cellspacing="0">
 <tr>
 <td colspan="2" class="list" height="12"></td>
@@ -199,4 +224,3 @@ options on this page are intended for use by advanced users only.</span></p>
 enable_change(false);
 //-->
 </script>
-<?php include("fend.inc"); ?>

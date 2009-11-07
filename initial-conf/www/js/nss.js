@@ -53,13 +53,13 @@ document.getElementById(selectbox).options.add(optn);
 optn.text = text;
 optn.value = value;
 }
-if (document.getElementById(selectbox).name=="MEMBERS") {
+if (document.getElementById(selectbox).name=="MEMBERS[]") {
 document.iform.srchost.value="";
 document.iform.srcnet.value="";
 document.iform.srcalias.value="";
 document.iform.srcuser.value="";
 }
-if (document.getElementById(selectbox).name=="SRCADDR") {
+if (document.getElementById(selectbox).name=="SRCADDR[]") {
 document.iform.srchost.value="";
 document.iform.srcnet.value="";
 document.iform.srcalias.value="";
@@ -68,7 +68,7 @@ if (document.getElementById(selectbox).options[0].text == "any") {
 document.getElementById(selectbox).remove(0);
 }
 }
-if (document.getElementById(selectbox).name=="DSTADDR") {
+if (document.getElementById(selectbox).name=="DSTADDR[]") {
 document.iform.dsthost.value="";
 document.iform.dstnet.value="";
 document.iform.snatint.value="";
@@ -90,7 +90,7 @@ for(i=selectbox.options.length-1;i>=0;i--)
 if(selectbox.options[i].selected)
 selectbox.remove(i);
 if(selectbox.options.length == 0) {
-if(selectbox.name == 'DSTADDR' || selectbox.name == 'SRCADDR') {
+if(selectbox.name == 'DSTADDR[]' || selectbox.name == 'SRCADDR[]') {
 var optn = document.createElement("OPTION");
 document.getElementById(selectbox.name).options.add(optn);
 optn.text = 'any';
@@ -343,4 +343,10 @@ if(links[i].id==obj){
 links[i].className='tabact';
 }
 }
+}
+
+function displayProcessingDiv(){
+	var content = '<center><img alt="NSS Logo" title="Click to return to the start page" class="png" width="50" height="50" src="/images/logo.jpg"/><br><br><img class="png" width="16" height="16" src="/images/spinner.gif"/><br><br>Saving Configuration Changes...</center>';
+        document.getElementById('save_config').innerHTML = content;
+        showdiv('save_config');
 }

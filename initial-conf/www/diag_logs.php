@@ -98,7 +98,6 @@ function dump_clog($logfile, $tail, $withorig = true) {
 }
 
 ?>
-<?php include("fbegin.inc"); ?>
 <script src="js/jquery-1.3.2.min.js"></script>
 
 <script>
@@ -124,5 +123,3 @@ var refreshId = setInterval(function()
    </td>
   </tr>
 </table>
-<?php include("fend.inc"); ?>
-

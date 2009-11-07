@@ -84,7 +84,6 @@ function get_interface_addr($ifdescr) {
 	return false;
 }
 ?>
-<?php include("fbegin.inc"); ?>
 <table width="100%" border="0" cellpadding="0" cellspacing="0">
   <tr><td class="tabnavtbl">
   <ul id="tabnav">
@@ -161,4 +160,3 @@ function get_interface_addr($ifdescr) {
 			</table>
 </form>
 </td></tr></table>
-<?php include("fend.inc"); ?>

@@ -292,7 +292,7 @@ COPY ${DESTDIR}/usr/sbin/watchdogd		usr/sbin/watchdogd
 SPECIAL sh ${CURDIR}/tools/runlist.sh ${CURDIR}/list.debug 
 
 # Run list for each module
-SPECIAL sh ${CURDIR}/tools/runlist.sh ${CURDIR}/list.dnsserver
+#SPECIAL sh ${CURDIR}/tools/runlist.sh ${CURDIR}/list.dnsserver
 
 # Link pseudonymous binaries
 SPECIAL ln bin/chmod bin/chgrp

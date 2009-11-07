@@ -41,22 +41,20 @@ function dump_interfaces() {
 
 
 ?>
-<?php include("fbegin.inc"); ?>
 <table width="100%" border="0" cellpadding="0" cellspacing="0">
-  <tr><td class="tabnavtbl">
-  <ul id="tabnav">
-  <?php
-	$tabs = array(    'TOP' => 'diag_top.php',
-                          'Disk Usage' => 'diag_df.php',
-                          'Routes' => 'diag_routes.php',
-                          'DHCP Leases' => 'diag_dhcp_leases.php',
-                          'ARP Table' => 'diag_arp.php',
-                          'Interfaces' => 'diag_interfaces.php',
-        		  'XML Config' => 'diag_xml_config.php',
-                          'dmesg' => 'diag_dmesg.php');
-	dynamic_tab_menu($tabs);
+<tr><td class="tabnavtbl">
+<ul id="tabnav">
+<?php
+        $tabs = array(    'TOP' => 'javascript:loadContent(\'diag_top.php\');',
+                          'Disk Usage' => 'javascript:loadContent(\'diag_df.php\');',
+                          'Routes' => 'javascript:loadContent(\'diag_routes.php\');',
+                          'DHCP Leases' => 'javascript:loadContent(\'diag_dhcp_leases.php\');',
+                          'ARP Table' => 'javascript:loadContent(\'diag_arp.php\');',
+                          'Interfaces' => 'javascript:loadContent(\'diag_interfaces.php\');',
+                          'XML Config' => 'javascript:loadContent(\'diag_xmlconf.php\');',
+                          'dmesg' => 'javascript:loadContent(\'diag_dmesg.php\');' );
+        dynamic_tab_menu($tabs);
 ?>
- 
   </ul>
   </td></tr>
   <tr> 
@@ -72,4 +70,3 @@ function dump_interfaces() {
 	</td>
   </tr>
 </table>
-<?php include("fend.inc"); ?>

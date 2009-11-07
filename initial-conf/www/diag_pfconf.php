@@ -43,17 +43,16 @@ function dump_pfconf() {
 }
 
 ?>
-<?php include("fbegin.inc"); ?>
 <table width="100%" border="0" cellpadding="0" cellspacing="0">
   <tr><td class="tabnavtbl">
   <ul id="tabnav">
   <?php
         $tabs = array('pf.conf' => 'diag_pfconf.php',
-                          'Rules' => 'diag_pfrules.php',
-                          'Nat' => 'diag_pfnat.php',
-                          'States' => 'diag_pfstates.php',
-        		  'Options' => 'diag_pfoptions.php',
-                          'Queues' => 'diag_pfqueues.php');
+        'Rules' => 'diag_pfrules.php',
+        'Nat' => 'diag_pfnat.php',
+        'States' => 'diag_pfstates.php',
+		'Options' => 'diag_pfoptions.php',
+        'Queues' => 'diag_pfqueues.php');
 	dynamic_tab_menu($tabs);
 ?>
  
@@ -72,4 +71,3 @@ function dump_pfconf() {
 	</td>
   </tr>
 </table>
-<?php include("fend.inc"); ?>

@@ -34,52 +34,43 @@ require("guiconfig.inc");
 
 $pconfig['disableconsolemenu'] = isset($config['system']['disableconsolemenu']);
 $pconfig['disablefirmwarecheck'] = isset($config['system']['disablefirmwarecheck']);
-$pconfig['expanddiags'] = isset($config['system']['webgui']['expanddiags']);
 $pconfig['bypassstaticroutes'] = isset($config['filter']['bypassstaticroutes']);
 $pconfig['noantilockout'] = isset($config['system']['webgui']['noantilockout']);
+?> 
+<script type="text/javascript">
 
-if ($_POST) {
-
-	unset($input_errors);
-	$pconfig = $_POST;
-
-	/* input validation */
-	if (!$input_errors) {
-		$config['system']['disableconsolemenu'] = $_POST['disableconsolemenu'] ? true : false;
-		$config['system']['disablefirmwarecheck'] = $_POST['disablefirmwarecheck'] ? true : false;
-		$config['system']['webgui']['expanddiags'] = $_POST['expanddiags'] ? true : false;
-		$config['system']['webgui']['noantilockout'] = $_POST['noantilockout'] ? true : false;
-		$config['filter']['bypassstaticroutes'] = $_POST['bypassstaticroutes'] ? true : false;
-		
-		write_config();
-	 	push_config('networking');	
-			
-			touch($d_sysrebootreqd_path);
-		}
-		
-		$retval = 0;
-		if (!file_exists($d_sysrebootreqd_path)) {
-			config_lock();
-			$retval = filter_configure();
-			$retval |= interfaces_optional_configure();
-			$retval |= system_polling_configure();
-			$retval |= system_set_termcap();
-			$retval |= system_advancednetwork_configure();
-			config_unlock();
-		}
-		$savemsg = get_std_save_message($retval);
+// pre-submit callback 
+function showRequest(formData, jqForm, options) { 
+    displayProcessingDiv(); 
+    return true; 
 }
-?>
-<?php include("fbegin.inc"); ?>
-<script language="JavaScript">
-<!--
-// -->
+
+// post-submit callback 
+function showResponse(responseText, statusText)  {
+    if(responseText.match(/SUBMITSUCCESS/)) {  
+           setTimeout(function(){ $('#save_config').fadeOut('slow'); }, 2000);
+    }
+} 
+
+        // wait for the DOM to be loaded
+    $(document).ready(function() {
+            var options = {
+                        target:        '#save_config',  // target element(s) to be updated with server response
+                        beforeSubmit:  showRequest,  // pre-submit callback 
+                        success:       showResponse  // post-submit callback
+            };
+
+           // bind form using 'ajaxForm'
+           $('#iform').ajaxForm(options);
+    });
 </script>
-            <?php if ($input_errors) print_input_errors($input_errors); ?>
+            
+	<?php if ($input_errors) print_input_errors($input_errors); ?>
             <?php if ($savemsg) print_info_box($savemsg); ?>
             <p><span class="vexpl"><span class="red"><strong>Note: </strong></span>the 
               options on this page are intended for use by advanced users only.</span></p>
-            <form action="system_advanced.php" method="post" name="iform" id="iform">
+            <form action="forms/system_form_submit.php" method="post" name="iform" id="iform">
+		<input name="formname" type="hidden" value="system_advanced">
               <table width="100%" border="0" cellpadding="6" cellspacing="0">
                 <tr> 
                   <td colspan="2" valign="top" class="listtopic">Miscellaneous</td>
@@ -98,11 +89,6 @@ if ($_POST) {
                     <strong>Disable firmware version check</strong><span class="vexpl"><br>
     This will cause NSWall not to check for newer firmware versions when the <a href="system_firmware.php">System: Firmware</a> page is viewed.</span></td>
 		</tr>
-		  <td width="22%" valign="top" class="vncell">Diagnostics Menu</td>
-                  <td width="78%" class="vtable"> 
-                    <input name="expanddiags" type="checkbox" id="expanddiags" value="yes" <?php if ($pconfig['expanddiags']) echo "checked"; ?>>
-                    <strong>Keep diagnostics in navigation expanded </strong></td>
-                </tr>
 		<tr> 
                   <td width="22%" valign="top" class="vncell">Static route filtering</td>
                   <td width="78%" class="vtable"> 
@@ -122,14 +108,8 @@ if ($_POST) {
 		<tr> 
                   <td width="22%" valign="top">&nbsp;</td>
                   <td width="78%"> 
-                    <input name="Submit" type="submit" class="formbtn" value="Save" onclick="enable_change(true)"> 
+                    <input name="Submit" type="submit" class="formbtn" value="Save"> 
                   </td>
                 </tr>
               </table>
 </form>
-<script language="JavaScript">
-<!--
-enable_change(false);
-//-->
-</script>
-<?php include("fend.inc"); ?>

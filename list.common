@@ -34,7 +34,7 @@ COPY ${CURDIR}/initial-conf/www/diag_routes.php			usr/www/diag_routes.php
 COPY ${CURDIR}/initial-conf/www/diag_tcpdump.php		usr/www/diag_tcpdump.php
 COPY ${CURDIR}/initial-conf/www/diag_top.php			usr/www/diag_top.php
 COPY ${CURDIR}/initial-conf/www/diag_traceroute.php		usr/www/diag_traceroute.php
-COPY ${CURDIR}/initial-conf/www/diag_xml_config.php		usr/www/diag_xml_config.php
+COPY ${CURDIR}/initial-conf/www/diag_xmlconf.php		usr/www/diag_xmlconf.php
 COPY ${CURDIR}/initial-conf/www/dump_logs.php			usr/www/dump_logs.php
 COPY ${CURDIR}/initial-conf/www/firewall_aliases.php		usr/www/firewall_aliases.php
 COPY ${CURDIR}/initial-conf/www/firewall_abusive_sites.php	usr/www/firewall_abusive_sites.php
@@ -64,6 +64,9 @@ COPY ${CURDIR}/initial-conf/www/firewall_relayd_redirects.php	usr/www/firewall_r
 COPY ${CURDIR}/initial-conf/www/firewall_relayd_relays.php	usr/www/firewall_relayd_relays.php
 COPY ${CURDIR}/initial-conf/www/firewall_relayd_relays_edit.php	usr/www/firewall_relayd_relays_edit.php
 COPY ${CURDIR}/initial-conf/www/firewall_relays_edit.php	usr/www/firewall_relays_edit.php
+COPY ${CURDIR}/initial-conf/www/forms/system_form_submit.php    usr/www/forms/system_form_submit.php
+COPY ${CURDIR}/initial-conf/www/forms/system_firmware_form_submit.php    usr/www/forms/system_firmware_form_submit.php
+COPY ${CURDIR}/initial-conf/www/forms/vpn_form_submit.php       usr/www/forms/vpn_form_submit.php
 COPY ${CURDIR}/initial-conf/www/graph.php			usr/www/graph.php
 COPY ${CURDIR}/initial-conf/www/firewall_rules.php		usr/www/firewall_rules.php
 COPY ${CURDIR}/initial-conf/www/firewall_rules_edittabs.php	usr/www/firewall_rules_edittabs.php
@@ -83,6 +86,7 @@ COPY ${CURDIR}/initial-conf/www/interfaces_vlan.php		usr/www/interfaces_vlan.php
 COPY ${CURDIR}/initial-conf/www/interfaces_vlan_edit.php	usr/www/interfaces_vlan_edit.php
 COPY ${CURDIR}/initial-conf/www/interfaces_wan.php		usr/www/interfaces_wan.php
 COPY ${CURDIR}/initial-conf/www/license.php			usr/www/license.php
+COPY ${CURDIR}/initial-conf/www/pingtest.php                    usr/www/pingtest.php
 COPY ${CURDIR}/initial-conf/www/reboot.php			usr/www/reboot.php
 COPY ${CURDIR}/initial-conf/www/services_config_server.php	usr/www/services_config_server.php
 COPY ${CURDIR}/initial-conf/www/services_dhcp.php		usr/www/services_dhcp.php
@@ -129,21 +133,27 @@ COPY ${CURDIR}/initial-conf/www/vpn_pptp_server.php		usr/www/vpn_pptp_server.php
 COPY ${CURDIR}/initial-conf/www/vpn_pptp_users.php		usr/www/vpn_pptp_users.php
 COPY ${CURDIR}/initial-conf/www/vpn_pptp_users_edit.php		usr/www/vpn_pptp_users_edit.php
 COPY ${CURDIR}/initial-conf/www/wizard_initial.php		usr/www/wizard_initial.php
-
 COPY ${CURDIR}/initial-conf/www/fbegin.inc.f5-theme                      usr/www/fbegin.inc
 COPY ${CURDIR}/initial-conf/www/fend.inc                        usr/www/fend.inc
 COPY ${CURDIR}/initial-conf/www/guiconfig.inc                   usr/www/guiconfig.inc
 COPY ${CURDIR}/initial-conf/www/interfaces_wlan.inc             usr/www/interfaces_wlan.inc
 COPY ${CURDIR}/initial-conf/www/auth.inc  		        usr/www/auth.inc
-
 COPY ${CURDIR}/initial-conf/www/rulestats.cgi                   usr/www/rulestats.cgi
 COPY ${CURDIR}/initial-conf/www/stats.cgi                       usr/www/stats.cgi
 COPY ${CURDIR}/initial-conf/www/statuspps.cgi                   usr/www/statuspps.cgi
 COPY ${CURDIR}/initial-conf/www/statusstates.cgi                usr/www/statusstates.cgi
-
 COPY ${CURDIR}/initial-conf/www/wizard_initial.htm              usr/www/wizard_initial.htm
 COPY ${CURDIR}/initial-conf/www/gui.css.f5-theme		                usr/www/gui.css
 COPY ${CURDIR}/initial-conf/www/jqModal.css 	                usr/www/jqModal.css
-SPECIAL cp -R -p ${CURDIR}/initial-conf/www/images              usr/www/images/
-SPECIAL cp -R -p ${CURDIR}/initial-conf/www/js                  usr/www/js/
+
+# copy over js files
+
+COPY ${CURDIR}/initial-conf/www/js/jquery.simplemodal.js        usr/www/js/jquery.simplemodal.js
+COPY ${CURDIR}/initial-conf/www/js/jquery-1.3.2.min.js          usr/www/js/jquery-1.3.2.min.js
+COPY ${CURDIR}/initial-conf/www/js/init.js                      usr/www/js/init.js
+COPY ${CURDIR}/initial-conf/www/js/jquery.form.js               usr/www/js/jquery.form.js
+COPY ${CURDIR}/initial-conf/www/js/nss.js     		        usr/www/js/nss.js
+
+SPECIAL cp -R -p ${CURDIR}/initial-conf/www/images              usr/www/
+SPECIAL cp -R -p ${CURDIR}/initial-conf/www/newui               usr/www/
 SPECIAL cp -R -p ${CURDIR}/initial-conf/www/style               usr/www/style/

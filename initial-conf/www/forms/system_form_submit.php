@@ -21,7 +21,6 @@ if ($_POST) {
 				$config['system']['webgui']['expanddiags'] = $_POST['expanddiags'] ? true : false;
 				$config['system']['webgui']['noantilockout'] = $_POST['noantilockout'] ? true : false;
 				$config['filter']['bypassstaticroutes'] = $_POST['bypassstaticroutes'] ? true : false;
-		
 				write_config();
 	 			push_config('networking');	
 			}
@@ -128,7 +127,7 @@ if ($_POST) {
 				}
 				if ($retval == 0) {
                                 	sleep(2);
-                                	echo '<center>Configuration saved successfully<br><INPUT TYPE="button" value="OK" onClick="hidediv(\'save_config\')"></center>';
+                         	       echo '<!-- SUBMITSUCCESS --><center>Configuration saved successfully</center>';
                         	}
 			} else {
 				sleep(2);
@@ -157,7 +156,7 @@ if ($_POST) {
         		}
 			if ($retval == 0) {
                                 sleep(2);
-                                echo '<center>Configuration saved successfully<br><INPUT TYPE="button" value="OK" onClick="hidediv(\'save_config\')"></center>';
+                                echo '<!-- SUBMITSUCCESS --><center>Configuration saved successfully</center>';
                         }
 			return $retval;
 		case "system_networking":
@@ -191,10 +190,21 @@ if ($_POST) {
     			$savemsg = get_std_save_message($retval);
 			if ($retval == 0) {
                                 sleep(2);
-                                echo '<center>Configuration saved successfully<br><INPUT TYPE="button" value="OK" onClick="hidediv(\'save_config\')"></center>';
+                                echo '<!-- SUBMITSUCCESS --><center>Configuration saved successfully</center>';
                         }
 			return $retval;	
 		case "system_users":
+
+			if (isset($_POST['id']))
+	   			$id = $_POST['id'];
+       
+    			if (!is_array($config['system']['accounts']['user']))
+    				$config['system']['accounts']['user'] = array();
+    			
+			admin_users_sort();
+ 			
+			$a_user = &$config['system']['accounts']['user'];
+
         		unset($input_errors);
 
 		        /* input validation */
@@ -252,7 +262,7 @@ if ($_POST) {
 			}
 			if ($retval == 0) {
                                 sleep(2);
-                                echo '<center>Configuration saved successfully<br><INPUT TYPE="button" value="OK" onClick="hidediv(\'save_config\')"></center>';
+                                echo '<!-- SUBMITSUCCESS --><center>Configuration saved successfully</center>';
                         }
 			return $retval;
 		case "system_groups":
@@ -299,93 +309,13 @@ if ($_POST) {
 
  	               write_config();
         	       push_config('accounts');
-		       if ($retval == 0) {
+			if ($retval == 0) {
                                 sleep(2);
-                                echo '<center>Configuration saved successfully<br><INPUT TYPE="button" value="OK" onClick="hidediv(\'save_config\')"></center>';
+                                echo '<!-- SUBMITSUCCESS --><center>Configuration saved successfully</center>';
                         }
 			return 0; 
-		case "system_firmware":
-			
-        		if (stristr($_POST['Submit'], "Upgrade") || $_POST['sig_override'])
-                		$mode = "upgrade";
-        		else if ($_POST['sig_no'])
-                		unlink("{$g['ftmp_path']}/firmware.img");
-
-			if ($mode) {
-                		if ($mode == "upgrade") {
-                        		if (is_uploaded_file($_FILES['ulfile']['tmp_name'])) {
- 		                               	/* verify firmware image(s) */
-               		                 	if (!stristr($_FILES['ulfile']['name'], $g['fullplatform']) && !$_POST['sig_override'])
-                        	                	$input_errors[] = "The uploaded image file is not for this platform ({$g['fullplatform']}).";
-                                		else if (!file_exists($_FILES['ulfile']['tmp_name'])) {
-                                        		/* probably out of memory for the MFS */
-                                        		$input_errors[] = "Image upload failed (out of memory?)";
-                                        		exec_rc_script("/etc/rc.firmware disable");
-                                        		if (file_exists($d_fwupenabled_path))
-                                                		unlink($d_fwupenabled_path);
-                                		} else {
-                                        		/* move the image so PHP won't delete it */
-                                        		rename($_FILES['ulfile']['tmp_name'], "{$g['ftmp_path']}/firmware.img");
-						}
-					}
-	                	}
-			}
-                         /* check digital signature */
-$sigchk = verify_digital_signature("{$g['ftmp_path']}/firmware.img");
- 
-if ($sigchk == 1)
-$sig_warning = "The digital signature on this image is invalid.";
-else if ($sigchk == 2)
-$sig_warning = "This image is not digitally signed.";
-else if (($sigchk == 3) || ($sigchk == 4))
-$sig_warning = "There has been an error verifying the signature on this image.";
- 
-if (!verify_gzip_file("{$g['ftmp_path']}/firmware.img")) {
-$input_errors[] = "The image file is corrupt.";
-unlink("{$g['ftmp_path']}/firmware.img");
-}
-                        if ($sig_warning) {
-                               $sig_warning = "<strong>" . $sig_warning . "</strong><br>This means that the image you uploaded " .
-"is not an official/supported image and may lead to unexpected behavior or security " .
-"compromises. Only install images that come from sources that you trust, and make sure ".
-"that the image has not been tampered with.<br><br>".
-"Do you want to install this image anyway (on your own risk)?";
-                               echo "<center>$sig_warning</center>";
-                        echo '<script type="text/javascript">
-
-// pre-submit callback
-function showRequest(formData, jqForm, options) {
-    displayProcessingDiv();
-    return true;
-}
-
-// post-submit callback
-function showResponse(responseText, statusText)  {
-    if(responseText.match(/SUBMITSUCCESS/)) {
-           setTimeout(function(){ $(\'#save_config\').fadeOut(\'slow\'); }, 2000);
-    }
-}
-
-        // wait for the DOM to be loaded
-    $(document).ready(function() {
-            var options = {
-                        target:        \'#save_config\',  // target element(s) to be updated with server response
-                        beforeSubmit:  showRequest,  // pre-submit callback
-                        success:       showResponse  // post-submit callback
-            };
-
-           // bind form using \'ajaxForm\'
-           $(\'#iform\').ajaxForm(options);
-    });
-</script>
-<form action="form_submit.php" method="post"><input name="sig_override" type="submit" class="formbtn" id="sig_override" value=" Yes ">
-<input name="sig_no" type="submit" class="formbtn" id="sig_no" value=" No "></form>';
-                        return 0;
-                        }
-                        echo '<center>File Upload Complete<br><INPUT TYPE="button" value="OK" name="SUBMITSUCCESS" onClick="hidediv(\'save_config\')"></center>';
-			return 0;
 			default;
- echo '<center>Unknown form submited!<br><INPUT TYPE="button" value="OK" name="SUBMITSUCCESS" onClick="hidediv(\'save_config\')"></center>';
+ echo '<center>Unknown form submited!<br><INPUT TYPE="button" value="OK" name="OK" onClick="hidediv(\'save_config\')"></center>';
 			return 0;
 	}
 }

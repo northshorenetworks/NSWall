@@ -122,7 +122,6 @@ $pgtitle = array("System", "User password");
     	}
   }
 ?>
-<?php include("fbegin.inc"); ?>
 <?php if ($input_errors) print_input_errors($input_errors); ?>
 <?php if ($savemsg) print_info_box($savemsg); ?>
 <table width="100%" border="0" cellpadding="0" cellspacing="0">
@@ -146,8 +145,37 @@ if($_GET['act']=="new" || $_GET['act']=="edit" || $input_errors){
         }
 	}	
 ?>
-	<form action="system_usermanager.php" method="post" name="iform" id="iform">
-              <table width="100%" border="0" cellpadding="6" cellspacing="0">
+
+<script type="text/javascript">
+
+// pre-submit callback 
+function showRequest(formData, jqForm, options) { 
+    displayProcessingDiv(); 
+    return true; 
+}
+
+// post-submit callback 
+function showResponse(responseText, statusText)  {
+    if(responseText.match(/SUBMITSUCCESS/)) {  
+           setTimeout(function(){ $('#save_config').fadeOut('slow'); }, 2000);
+    }
+} 
+
+        // wait for the DOM to be loaded
+    $(document).ready(function() {
+            var options = {
+                        target:        '#save_config',  // target element(s) to be updated with server response
+                        beforeSubmit:  showRequest,  // pre-submit callback 
+                        success:       showResponse  // post-submit callback
+            };
+
+           // bind form using 'ajaxForm'
+           $('#iform').ajaxForm(options);
+    });
+</script>
+<form action="form_submit.php" method="post" name="iform" id="iform">
+        <input name="formname" type="hidden" value="system_users">
+	<table width="100%" border="0" cellpadding="6" cellspacing="0">
                 <tr> 
                   <td width="22%" valign="top" class="vncellreq">Username</td>
                   <td width="78%" class="vtable"> 
@@ -196,13 +224,13 @@ if($_GET['act']=="new" || $_GET['act']=="edit" || $input_errors){
                   <td class="listr">
                     <?=htmlspecialchars($userent['fullname']);?>&nbsp;
                   </td>
-                  <td valign="middle" nowrap class="list"> <a href="system_usermanager.php?act=edit&id=<?=$i; ?>"><img src="images/e.gif" title="edit user" width="17" height="17" border="0"></a>
-                     &nbsp;<a href="system_usermanager.php?act=del&id=<?=$i; ?>" onclick="return confirm('Do you really want to delete this User?')"><img src="images/x.gif" title="delete user" width="17" height="17" border="0"></a></td>
+                  <td valign="middle" nowrap class="list"> <a href="javascript:loadContent('system_usermanager.php?act=edit&id=<?=$i; ?>');"><img src="images/e.gif" title="edit user" width="17" height="17" border="0"></a>
+                     &nbsp;<a href="javascript:loadContent('system_usermanager.php?act=del&id=<?=$i; ?>');" onclick="return confirm('Do you really want to delete this User?')"><img src="images/x.gif" title="delete user" width="17" height="17" border="0"></a></td>
 		</tr>
 	<?php $i++; endforeach; ?>
 	    <tr> 
 			<td class="list" colspan="3"></td>
-			<td class="list"> <a href="system_usermanager.php?act=new"><img src="images/plus.gif" title="add user" width="17" height="17" border="0"></a></td>
+			<td class="list"><a href="javascript:loadContent('system_usermanager.php?act=new');"><img src="images/plus.gif" title="add user" width="17" height="17" border="0"></a></td>
 		</tr>
 		<tr>
 			<td colspan="3">
@@ -216,4 +244,3 @@ if($_GET['act']=="new" || $_GET['act']=="edit" || $input_errors){
   </tr>
   </table>
   </form>		    
-<?php include("fend.inc"); ?>

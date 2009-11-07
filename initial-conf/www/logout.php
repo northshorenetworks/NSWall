@@ -40,6 +40,6 @@ if (isset($_SESSION['basic_is_logged_in'])) {
 ?>
 
 <center>
-<a href="adminLogin.php">Login Again</a>
+<a href="login.htm">Login Again</a>
 </center>
 
