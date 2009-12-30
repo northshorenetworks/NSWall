@@ -101,8 +101,26 @@ function dump_dhcp() {
 function get_cgi_stat($stat, $tabname) {
     $divstring = '#' . $tabname . 'tabs';
     $output = <<<EOD
-    <script type="text/javascript">
-        
+
+
+<script type="text/javascript">
+       
+function updateLivediag() {
+	$.get('stats.cgi?$stat' + "&random=" + Math.random(), function(response){
+	if("$stat" == "logs"){
+		count = $(response).length, countMax = 1000;
+		if ( count < countMax ) {
+			$('#livediag').append(scrub_raw_log(response)).find('tr').slice(0, count - countMax).remove();
+			$('#livediag').attr({ scrollTop: $('#livediag').attr("scrollHeight") });
+		} else {
+			$('#livediag').html(scrub_raw_log(response));
+		}
+	} else {
+		$('#livediag').html(response);
+	}
+	});
+}
+ 
 function scrub_raw_log(log) {
     log = log.replace(/block/g, '<font color="red">block</font>');
     log = log.replace(/pass/g, '<font color="chartreuse">pass</font>');
@@ -110,30 +128,18 @@ function scrub_raw_log(log) {
     log = log.replace(/\.\d\/\(match\) \[uid \d\, pid \d+\]/g, "");
     return log;
 }
-        $(function() {
-           $("$divstring").resizable({
-              alsoResize: '#livediag'
-           });
-        });
-        clearInterval(refreshId);
-        $('#livediag').html('Loading Content...');
-        var refreshId = setInterval(function()
-        {
-            $.get('stats.cgi?$stat' + "&random=" + Math.random(), function(response){
-                if("$stat" == "logs"){
-                     count = $(response).length, countMax = 1000;
-                        if ( count < countMax ) {
-                            $('#livediag').append(scrub_raw_log(response)).find('tr').slice(0, count - countMax).remove();
-        					$('#livediag').attr({ scrollTop: $('#livediag').attr("scrollHeight") });
-						} else {
-                            $('#livediag').html(scrub_raw_log(response));
-                        }
-                } else {
-                        $('#livediag').html(response);
-                }
-            });
-        }, 5000);
-    </script>
+
+$(function() {
+	$("$divstring").resizable({
+		alsoResize: '#livediag'
+	});
+});
+
+clearInterval(refreshId);
+updateLivediag();
+var refreshId = setInterval(updateLivediag, 5000);
+
+</script>
 EOD;
     printf("$output");
 }
@@ -244,4 +250,3 @@ switch ($stat) {
         break;
 }
 ?>
-
