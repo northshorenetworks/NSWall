@@ -151,6 +151,7 @@ $menu['Diagnostics']['Utilities'] = array('diag_util.php');
 <div id="save_config" title="Saving Configuration"></div>
 <div id="upload_firmware" title="Uploading Firmware Image"></div>
 <div id="reboot_nswall" title="Rebooting NSWall"></div>
+<div id="load_content"></div>
 
 <div class="ui-widget-content" id="header">
 		<div id="logout"><a href="logout.php">Log out</a></div>
@@ -288,10 +289,11 @@ $(document).ready(function() {
 		   var displayLoadUptime = setInterval("updateUptimeLoad()", 60000);
 }  
       //Initialize all of our dialogs
-	 $.ui.dialog.defaults.bgiframe = true;
-	 $("#save_config").dialog({ autoOpen: false, width: 400, height: 200, hide: 'scale', show: 'scale', resizable: false, draggable: false, closeOnEscape: false });
-	 $("#upload_firmware").dialog({ autoOpen: false, width: 400, height: 200, hide: 'scale', show: 'scale', resizable: false, draggable: false, closeOnEscape: false });
-		$("#reboot_nswall").dialog({ autoOpen: false, width: 800, height: 600, hide: 'scale', show: 'scale', resizable: false, draggable: false, closeOnEscape: false, modal: true });
+	$.ui.dialog.defaults.bgiframe = true;
+	$("#save_config").dialog({ autoOpen: false, width: 400, height: 200, hide: 'scale', show: 'scale', resizable: false, draggable: false, closeOnEscape: false });
+	$("#upload_firmware").dialog({ autoOpen: false, width: 400, height: 200, hide: 'scale', show: 'scale', resizable: false, draggable: false, closeOnEscape: false });
+	$("#reboot_nswall").dialog({ autoOpen: false, width: 800, height: 600, hide: 'scale', show: 'scale', resizable: false, draggable: false, closeOnEscape: false, modal: true });
+        $("#load_content").dialog({  width: 125, height: 75, resizable: false, draggable: false, closeOnEscape: false });
 });
 
 function showhide(tspan, tri) {
@@ -305,7 +307,3 @@ function showhide(tspan, tri) {
 
 -->
 </script>
-
-<div id="content" style="margin-top: .5em; margin-left: 18.5em; margin-right: 2.5em">
-Loading...
-</div>
