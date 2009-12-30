@@ -315,19 +315,8 @@ function internalca_change() {
     if ($savemsg)
         print_info_box($savemsg);
 ?>
+
 <table width="100%" border="0" cellpadding="0" cellspacing="0">
-    <tr>
-        <td class="tabnavtbl">
-        <ul id="tabnav">
-	<?php
-            $tabs = array();
-            $tabs = array("CAs" => "system_camanager.php",
-            		  "Certificates" => "system_certmanager.php");
-            dynamic_tab_menu($tabs);
-        ?>
- 	</ul>
-        </td>
-    </tr>
     <tr>
         <td id="mainarea">
             <div class="tabcont">

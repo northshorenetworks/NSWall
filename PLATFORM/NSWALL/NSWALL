@@ -14,6 +14,7 @@ include		"../../../conf/GENERIC"
 maxusers	32			# estimated number of users
 
 option		I586_CPU
+option 		I686_CPU
 
 option		USER_PCICONF	# user-space PCI configuration
 
@@ -48,20 +49,9 @@ isa0	at gscpcib?
 eisa0	at mainbus0
 pci*	at mainbus0
 
-#option		ACPIVERBOSE
-#option		ACPI_ENABLE
-
 acpi0		at bios?	disable
-#acpitimer*	at acpi?
-#acpihpet*	at acpi?
-#acpiac*	at acpi?
-#acpibat*	at acpi?
-#acpibtn*	at acpi?
-#acpicpu*	at acpi?
-#acpidock*	at acpi?
 acpiec*		at acpi?	disable
 acpiprt*	at acpi?
-#acpitz*	at acpi?
 
 option		PCIVERBOSE
 option		EISAVERBOSE
@@ -78,15 +68,6 @@ gscpcib* at pci?		# NS Geode SC1100 PCI-ISA bridge
 gpio*	at gscpcib?
 glxpcib* at pci? # AMD CS5536 PCI-ISA bridge
 gpio* at glxpcib?  
-
-# power management and other environmental stuff
-elansc*	at pci?			# AMD Elan SC520 System Controller
-gpio*	at elansc?
-geodesc* at pci?		# Geode SC1100/SCx200 IAOC
-#gscpm*	at pci?			# NS Geode SC1100 SMI/ACPI module
-#ichwdt* at pci?		# Intel 6300ESB ICH watchdog timer
-wdt0	at pci?			# Ind Computer Source PCI-WDT50x driver
-pwdog0	at pci?			# Quancom PWDOG1 watchdog timer
 
 # National Semiconductor LM7[89] and compatible hardware monitors
 lm0	at isa? port 0x290
@@ -155,26 +136,9 @@ pcppi0		at isa?
 com0	at isa? port 0x3f8 irq 4	# standard PC serial ports
 com1	at isa? port 0x2f8 irq 3
 com2	at isa? port 0x3e8 irq 5
-#com3	at isa? port 0x2e8 irq 9	# (conflicts with some video cards)
 ast0	at isa? port 0x1a0 irq 5	# AST 4-port serial card
-#ast1	at isa? port 0x2a0 irq 6	# 2nd AST 4-port serial card
 com*	at ast?
-#boca0	at isa? port 0x100 irq 5	# BOCA 8-port serial cards
-#com*	at boca?
-#addcom0	at isa? port 0x108 irq 5	# Addonics FlexPort
-#com*	at addcom?
-#rtfps0	at isa? port 0x1230 irq 10	# RT 4-port serial cards
-#com*	at rtfps?
-#hsq0	at isa? port 0x140 irq 10	# Hostess 4-port serial card
-#com*	at hsq?
 com*	at isapnp?
-
-# option for using CD1400 handshaking for incoming data
-# requires a special cable that exchanges the RTS and DTR lines
-# options CY_HW_RTS
-cy0	at isa? iomem 0xd4000 irq 12	# ISA cyclom serial card
-cy*	at pci?				# PCI cyclom serial card
-#cz*	at pci?				# Cyclades-Z multi-port serial boards
 
 lpt0	at isa? port 0x378 irq 7	# standard PC parallel ports
 lpt1	at isa? port 0x278
@@ -193,6 +157,9 @@ wd*	at pciide? flags 0x0000
 
 # Networking devices
 vr*	at pci?				# VIA Rhine ethernet
+ne* at pci?             # RealTek 81[23]9 ethernet (for qemu tests)
+re* at pci?				# Realtek driver for Gbe nics
+vic*    at pci?         # VMWARE VMNET Ethernet
 
 # Wireless network cards
 ral*	at pci?				# Ralink RT2500/RT2501/RT2600

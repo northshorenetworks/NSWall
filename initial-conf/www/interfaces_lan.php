@@ -1,91 +1,10 @@
 #!/bin/php
-<?php 
-/*
-	$Id: interfaces_lan.php,v 1.10 2008/10/18 04:52:40 jrecords Exp $
-	part of m0n0wall (http://m0n0.ch/wall)
-	
-	Copyright (C) 2003-2006 Manuel Kasper <mk@neon1.net>.
-	All rights reserved.
-	
-	Redistribution and use in source and binary forms, with or without
-	modification, are permitted provided that the following conditions are met:
-	
-	1. Redistributions of source code must retain the above copyright notice,
-	   this list of conditions and the following disclaimer.
-	
-	2. Redistributions in binary form must reproduce the above copyright
-	   notice, this list of conditions and the following disclaimer in the
-	   documentation and/or other materials provided with the distribution.
-	
-	THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
-	INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
-	AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
-	AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
-	OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
-	SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-	INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
-	CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-	ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-	POSSIBILITY OF SUCH DAMAGE.
-*/
+<?php
 
 $pgtitle = array("Interfaces", "LAN");
 require("guiconfig.inc");
 
 $lancfg = &$config['interfaces']['lan'];
-
-if ($_POST) {
-
-	unset($input_errors);
-	$pconfig = $_POST;
-
-	/* input validation */
-	$reqdfields = explode(" ", "ipaddr subnet");
-	$reqdfieldsn = explode(",", "IP address,Subnet bit count");
-	
-	do_input_validation($_POST, $reqdfields, $reqdfieldsn, &$input_errors);
-	
-	if (($_POST['ipaddr'] && !is_ipaddr($_POST['ipaddr']))) {
-		$input_errors[] = "A valid IP address must be specified.";
-	}
-	if (($_POST['subnet'] && !is_numeric($_POST['subnet']))) {
-		$input_errors[] = "A valid subnet bit count must be specified.";
-	}
-	
-	/* Wireless interface? */
-	if (isset($optcfg['wireless'])) {
-		$wi_input_errors = wireless_config_post();
-		if ($wi_input_errors) {
-			$input_errors = array_merge($input_errors, $wi_input_errors);
-		}
-	}
-
-	if (!$input_errors) {
-		$config['interfaces']['lan']['ipaddr'] = $_POST['ipaddr'];
-		$config['interfaces']['lan']['subnet'] = $_POST['subnet'];
-		unset($lancfg['aliaslist']);
-		$aliaslist = explode(',', $_POST['memberslist']);
-                for($i=0;$i<sizeof($aliaslist); $i++) {
-                      $alias = 'alias'."$i";
-                      $prop = preg_replace("/ /", "", $aliaslist[$i]);
-                      $lancfg['aliaslist'][$alias] = $prop;
-                }
-		$dhcpd_was_enabled = 0;
-		if (isset($config['dhcpd']['enable'])) {
-			unset($config['dhcpd']['enable']);
-			$dhcpd_was_enabled = 1;
-		}
-			
-		write_config();
-		#touch($d_sysrebootreqd_path);
-		
-		$savemsg = get_std_save_message(0);
-		
-		if ($dhcpd_was_enabled)
-			$savemsg .= "<br>Note that the DHCP server has been disabled.<br>Please review its configuration " .
-				"and enable it again prior to rebooting.";
-	}
-}
 
 $pconfig['ipaddr'] = $config['interfaces']['lan']['ipaddr'];
 $pconfig['subnet'] = $config['interfaces']['lan']['subnet'];
@@ -97,92 +16,108 @@ if (isset($optcfg['wireless'])) {
         wireless_config_init();
 }
 
-?>
-<?php include("fbegin.inc"); ?>
-<script language="JavaScript">
-<!--
-function gen_bits(ipaddr) {
-    if (ipaddr.search(/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/) != -1) {
-        var adr = ipaddr.split(/\./);
-        if (adr[0] > 255 || adr[1] > 255 || adr[2] > 255 || adr[3] > 255)
-            return "";
-        if (adr[0] == 0 && adr[1] == 0 && adr[2] == 0 && adr[3] == 0)
-            return "";
-		
-		if (adr[0] <= 127)
-			return "8";
-		else if (adr[0] <= 191)
-			return "16";
-		else
-			return "24";
-    }
-    else
-        return "";
-}
-function ipaddr_change() {
-	document.iform.subnet.value = gen_bits(document.iform.ipaddr.value);
-}
-// -->
-</script>
-<script language="javascript" src="js/nss.js"></script>
-<?php if ($input_errors) print_input_errors($input_errors); ?>
-<?php if ($savemsg) print_info_box($savemsg); ?>
-              <form action="interfaces_lan.php" onSubmit="return prepareSubmit(MEMBERS)" method="post" name="iform" id="iform"> 
-	      <table width="100%" border="0" cellpadding="6" cellspacing="0">
-                <tr> 
-                  <td width="22%" valign="top" class="vncellreq">IP address</td>
-                  <td width="78%" class="vtable"> 
-                    <?=$mandfldhtml;?><input name="ipaddr" type="text" class="formfld" id="ipaddr" size="20" value="<?=htmlspecialchars($pconfig['ipaddr']);?>" onchange="ipaddr_change()">
-                    / 
+
+?> 
+
+<script type="text/javascript">
+// when a user changes the type of memeber, change the related div to sytle = display: block and hide all others
+
+// wait for the DOM to be loaded
+$(document).ready(function() {
+     $('div fieldset div').addClass('ui-widget ui-widget-content ui-corner-content');
+
+     // When a user clicks on the host add button, validate and add the host.
+     $("#hostaddbutton").click(function () {
+          var ip = $("#srchost");
+	  $('#MEMBERS').append("<option value='" + ip.val() + "'>"+ip.val() + '</option>');
+          ip.val("");
+          return false;
+     });
+
+     // When a user highlights an item and clicks remove, remove it
+          $('#remove').click(function() {  
+          return !$('#MEMBERS option:selected').remove();  
+     });
+
+     // When a user clicks on the submit button, post the form.
+     $(".buttonrow").click(function () {
+	  displayProcessingDiv();
+	  var Options = $.map($('#MEMBERS option'), function(e) { return $(e).val(); } );
+	  var str = Options.join(' ');
+	  var QueryString = $("#iform").serialize()+'&memberslist='+str;
+	  $.post("forms/firewall_form_submit.php", QueryString, function(output) {
+               $("#save_config").html(output);	  
+               setTimeout(function(){ $('#save_config').fadeOut('slow'); }, 1000);            
+	  });
+	  return false;
+     });
+  
+});
+</script> 
+
+<div id="wrapper">
+        <div class="form-container ui-tabs ui-widget ui-corner-all">
+
+	<form action="forms/interfaces_form_submit.php" method="post" name="iform" id="iform">
+        <input name="formname" type="hidden" value="interface_lan">
+	<input name="id" type="hidden" value="<?=$id;?>">
+	<fieldset>
+		<legend><?=join(": ", $pgtitle);?></legend>
+			<div>
+                             <label for="ipaddr">IP address</label>
+                             <input name="ipaddr" type="text" class="formfld" id="ipaddr" size="20" value="<?=htmlspecialchars($pconfig['ipaddr']);?>">
+                    /
                     <select name="subnet" class="formfld" id="subnet">
                       <?php for ($i = 31; $i > 0; $i--): ?>
                       <option value="<?=$i;?>" <?php if ($i == $pconfig['subnet']) echo "selected"; ?>>
                       <?=$i;?>
                       </option>
                       <?php endfor; ?>
-                    </select></td>
-                </tr>
-                 <tr>
-                   <td width="22%" valign="top" class="vncellreq">Aliases</td>
-                   <td width="78%" class="vtable">
-        		 <select name="MEMBERS" style="width: 150px; height: 100px" id="MEMBERS" multiple>
-     	                 <?php for ($i = 0; $i<sizeof($pconfig['aliaslist']); $i++): ?>
-                         <option value="<?=$pconfig['aliaslist']["alias$i"];?>">
-                 <?=$pconfig['aliaslist']["alias$i"];?>
-                 </option>
-                 <?php endfor; ?>
-                 </select>
-		 <input type=button onClick="removeOptions(MEMBERS)"; name='removebtn'; value='Remove Selected'><br><br>
-                 <strong>Address</strong>
-                 <?=$mandfldhtml;?><input name="srchost" type="text" class="formfld" id="srchost" size="16" value="<?=htmlspecialchars($pconfig['address']);?>">
-                 <input type=button onClick="addOption('MEMBERS',document.iform.srchost.value + '/32','host' + ':' + document.iform.srchost.value + '/32')"; name='addbtn'; value='Add'>
-                 </select>
-		 <input name="memberslist" type="hidden" value="">
-                                </tr>		
-				<?php /* Wireless interface? */
-				if (isset($optcfg['wireless']))
-					wireless_config_print();
-				?>
-                <tr> 
-                  <td width="22%" valign="top">&nbsp;</td>
-                  <td width="78%"> 
-                    <input name="Submit" type="submit" class="formbtn" value="Save"> 
-                  </td>
-                </tr>
-                <tr> 
-                  <td width="22%" valign="top">&nbsp;</td>
-                  <td width="78%"><span class="vexpl"><span class="red"><strong>Warning:<br>
-                    </strong></span>after you click &quot;Save&quot;, you must 
-                    reboot your firewall for changes to take effect. You may also 
-                    have to do one or more of the following steps before you can 
-                    access your firewall again: 
-                    <ul>
-                      <li>change the IP address of your computer</li>
-                      <li>renew its DHCP lease</li>
-                      <li>access the webGUI with the new IP address</li>
-                    </ul>
-                    </span></td>
-                </tr>
-              </table>
-</form>
-<?php include("fend.inc"); ?>
+                    </select>
+			</div>
+                        <div>
+                             <label for="members">Alias IP's</label>
+                             <select name="MEMBERS" style="width: 160px; height: 100px" id="MEMBERS" multiple>
+        <?php for ($i = 0; $i<sizeof($pconfig['aliaslist']); $i++): ?>
+                <option value="<?=$pconfig['aliaslist']["member$i"];?>">
+                <?=$pconfig['aliaslist']["member$i"];?>
+                </option>
+                <?php endfor; ?>
+        </select>
+                <input type=button id='remove' value='Remove Selected'><br><br>
+                </div>
+                <div id='srchostdiv' style="display:block;">
+                 <label for="srchost">Address</label>
+                  <input name="srchost" type="text" class="formfld" id="srchost" size="16" value="<?=htmlspecialchars($pconfig['address']);?>">
+                <input type=button id='hostaddbutton' value='Add'>
+                </div>
+			 	<div>
+                             <label for="spoofmac">MAC Address Override</label>
+                             <input name="spoofmac" type="text" class="formfld" id="spoofmac" size="30" value="<?=htmlspecialchars($pconfig['spoofmac']);?>">
+                             <p class="note">This field can be used to modify (&quot;spoof&quot;) the MAC
+                    address of the WAN interface<br>
+                    (may be required with some cable connections)<br>
+                    Enter a MAC address in the following format: xx:xx:xx:xx:xx:xx
+                    or leave blank</p>
+                        </div>
+                        <div>
+                             <label for="mtu">MTU</label>
+                              <input name="mtu" type="text" class="formfld" id="mtu" size="8" value="<?=htmlspecialchars($pconfig['mtu']);?>">
+                             <p class="note">If you enter a value in this field, then MSS clamping for
+                    TCP connections to the value entered above minus 40 (TCP/IP
+                    header size) will be in effect. If you leave this field blank,
+                    an MTU of 1492 bytes for PPPoE and 1500 bytes for all other
+                    connection types will be assumed.</p>
+                        </div>
+               </div>	
+	</fieldset>
+	
+	<div class="buttonrow">
+		<input type="submit" value="Save" class="button" />
+	</div>
+
+	</form>
+	
+	</div><!-- /form-container -->
+	
+</div><!-- /wrapper -->

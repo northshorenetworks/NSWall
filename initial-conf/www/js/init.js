@@ -58,8 +58,8 @@ $('#simplemodal-container').css("height","120px");
 
  $(this).html(login_response); // Refers to 'status'
 
-// After 3 seconds redirect the
-setTimeout('go_to_admin_page()', 3000);
+// After 2 seconds redirect the
+setTimeout('go_to_admin_page()', 2000);
  } 
  else if (msg == 'USEROK') // LOGIN OK?
  {
@@ -78,8 +78,8 @@ $('#simplemodal-container').css("height","120px");
 
  $(this).html(login_response); // Refers to 'status'
 
-// After 3 seconds redirect the
-setTimeout('go_to_user_page()', 3000);
+// After 2 seconds redirect the
+setTimeout('go_to_user_page()', 2000);
  }
  else // ERROR?
  {
@@ -103,10 +103,10 @@ return false;
 
 function go_to_admin_page()
 {
-window.location = 'index.php'; // Members Area
+	window.location = '/#index'; // Members Area
 }
 
 function go_to_user_page()
 {
-window.location = 'sessioninfo.php'; // Members Area
+	window.location = 'sessioninfo.php'; // Members Area
 }

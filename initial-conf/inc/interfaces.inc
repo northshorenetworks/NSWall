@@ -183,12 +183,15 @@ function interfaces_vlan_configure() {
 
 function interfaces_lan_configure() {
 	global $config, $g;
-	
+
+	system_determine_hwplatform();
+
 	if ($g['booting'])
 		echo "Configuring LAN interface... ";
 	
 	$lancfg = $config['interfaces']['lan'];
-		
+	$lancfg['if'] = $g['hwplatformconfig'][INTERFACES][LAN];
+
 	/* wireless configuration? */
 	if (is_array($lancfg['wireless']))
 		interfaces_wireless_configure($lancfg['if'], $lancfg['wireless']);
@@ -445,9 +448,12 @@ function interfaces_wireless_configure($if, $wlcfg) {
 
 function interfaces_wan_configure() {
 	global $config, $g;
-	
+
+	system_determine_hwplatform();
+
 	$wancfg = $config['interfaces']['wan'];
-	
+	$wancfg['if'] = $g['hwplatformconfig'][INTERFACES][WAN];
+
 	if ($g['booting'])
 		echo "Configuring WAN interface... ";
 	else {
@@ -563,8 +569,11 @@ function interfaces_wan_configure() {
 
 function interfaces_wan_dhcp_configure() {
 	global $config, $g;
-	
+
+	system_determine_hwplatform();
+
 	$wancfg = $config['interfaces']['wan'];
+	$wancfg['if'] = $g['hwplatformconfig'][INTERFACES][WAN];
 
 	/* generate dhclient.conf */
 	$fd = fopen("{$g['varetc_path']}/dhclient.conf", "w");
@@ -925,9 +934,11 @@ EOD;
 
 function get_real_wan_interface() {
 	global $config, $g;
-	
+
+	system_determine_hwplatform();
+
 	$wancfg = $config['interfaces']['wan'];
-	
+ 	$wancfg['if'] = $g['hwplatformconfig'][INTERFACES][WAN];
 	$wanif = $wancfg['if'];
 	if (($wancfg['ipaddr'] == "pppoe") || ($wancfg['ipaddr'] == "pptp")) {
 		$wanif = $g['pppoe_interface'];

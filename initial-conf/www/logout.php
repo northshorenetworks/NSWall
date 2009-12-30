@@ -31,15 +31,11 @@ if ($exists != "no") {
 }
 session_clear();
 if(!session_is_registered(session_name())) {
-echo "<center><b>Logged out</center></p>";
 }
 if (isset($_SESSION['basic_is_logged_in'])) {
    unset($_SESSION['basic_is_logged_in']);
 }
 // mwexec("/sbin/pfctl -k {$_SESSION['IPaddress']}");
+header("Location: login.htm");
+exit;
 ?>
-
-<center>
-<a href="login.htm">Login Again</a>
-</center>
-

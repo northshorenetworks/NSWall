@@ -1,143 +1,146 @@
 #!/bin/php
-<?php 
-/*
-	$Id: firewall_aliases_edit.php,v 1.9 2009/04/20 06:56:52 jrecords Exp $
-	part of m0n0wall (http://m0n0.ch/wall)
-	
-	Copyright (C) 2003-2006 Manuel Kasper <mk@neon1.net>.
-	All rights reserved.
-	
-	Redistribution and use in source and binary forms, with or without
-	modification, are permitted provided that the following conditions are met:
-	
-	1. Redistributions of source code must retain the above copyright notice,
-	   this list of conditions and the following disclaimer.
-	
-	2. Redistributions in binary form must reproduce the above copyright
-	   notice, this list of conditions and the following disclaimer in the
-	   documentation and/or other materials provided with the distribution.
-	
-	THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
-	INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
-	AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
-	AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
-	OR CONowing conditions are met:
-	
-	1. Redistributions of source code must retain the above copyright notice,
-	   this list of conditions and the following disclaimer.
-	
-	2. Redistributions in binary form must reproduce the above copyright
-	   notice, this list of conditions and the following disclaimer in the
-	   documentation and/or othWARE, EVEN IF ADVISED OF THE
-	POSSIBILITY OF SUCH DAMAGE.
-*/
-
+<?php
 $pgtitle = array("Firewall", "Aliases", "Edit Alias");
+ 
 require("guiconfig.inc");
 
 if (!is_array($config['aliases']['alias']))
-	$config['aliases']['alias'] = array();
+    $config['aliases']['alias'] = array();
 
 aliases_sort();
 $a_aliases = &$config['aliases']['alias'];
 
 $id = $_GET['id'];
 if (isset($_POST['id']))
-	$id = $_POST['id'];
+    $id = $_POST['id'];
 
 if (isset($id) && $a_aliases[$id]) {
-	$pconfig['name'] = $a_aliases[$id]['name'];
-	$pconfig['memberlist'] = $a_aliases[$id]['memberlist'];
-	$pconfig['descr'] = $a_aliases[$id]['descr'];
+    $pconfig['name'] = $a_aliases[$id]['name'];
+    $pconfig['memberlist'] = $a_aliases[$id]['memberlist'];
+    $pconfig['descr'] = $a_aliases[$id]['descr'];
 }
 
-if ($_POST) {
+?> 
 
-	unset($input_errors);
-	$pconfig = $_POST;
+<script type="text/javascript">
+// when a user changes the type of memeber, change the related div to sytle = display: block and hide all others
+$(function(){
+     $("#srctype").change(function() {
+          var val = $(this).val();
+          switch(val){
+		case 'srchostdiv':
+			$("#srchostdiv").show();
+			$("#srcnetdiv").hide();
+            $("#srctablediv").hide();
+            $("#srcuserdiv").hide();
+			break;
+		case 'srcnetdiv':
+			$("#srcnetdiv").show();
+			$("#srchostdiv").hide();
+            $("#srctablediv").hide();
+            $("#srcuserdiv").hide();
+			break;
+        case 'srctablediv':
+			$("#srctablediv").show();
+			$("#srchostdiv").hide();
+            $("#srcnetdiv").hide();
+            $("#srcuserdiv").hide();
+			break;
+        case 'srcuserdiv':
+            $("#srcuserdiv").show();
+			$("#srctablediv").hide();
+			$("#srchostdiv").hide();
+            $("#srcnetdiv").hide();
+			break;
+		}  
+     });
+}); 
 
-	/* input validation */
-	$reqdfields = explode(" ", "name memberslist");
-	$reqdfieldsn = explode(",", "Name,Memberslist");
-	
-	do_input_validation($_POST, $reqdfields, $reqdfieldsn, &$input_errors);
-	
-	$alias = array();
-        $alias['name'] = $_POST['name'];
-        $alias['descr'] = $_POST['descr'];
-	$memberslist = array_reverse(explode(',', $_POST['memberslist']));
-        for($i=0;$i<sizeof($memberslist); $i++) {
-                $member = 'member'."$i";
-                $prop = preg_replace("/ /", "", $memberslist[$i]);
-                $alias['memberlist'][$member] = $prop;
-       	} 
-        if (isset($id) && $a_aliases[$id])
-                $a_aliases[$id] = $alias;
-        else
-                $a_aliases[] = $alias;
+// wait for the DOM to be loaded
+$(document).ready(function() {
+     $('div fieldset div').addClass('ui-widget ui-widget-content ui-corner-content');
 
-	$xmlconfig = dump_xml_config($config, $g['xml_rootobj']);
-        
-        if (filter_parse_config($xmlconfig)) {
-		$input_errors[] = "Could not parse the generated config file";
-		$input_errors[] = "See log file for details";
-		$input_errors[] = "XML Config file not modified";
-	}
+     // When a user clicks on the host add button, validate and add the host.
+     $("#hostaddbutton").click(function () {
+          var ip = $("#srchost");
+	  $('#MEMBERS').append("<option value='" + ip.val() + "'>"+ip.val() + '</option>');
+          ip.val("");
+          return false;
+     });
 
-	if (!$input_errors) {
-		
-		write_config();
-	 	touch($d_filterconfdirty_path);	
-		header("Location: firewall_aliases.php");
-		exit;
-	}
-}
-?>
-<?php include("fbegin.inc"); ?>
-<script language="javascript" src="/nss.js"></script>
+     // When a user clicks on the net add button, validate and add the host.
+     $("#netaddbutton").click(function () {
+          var ip = $("#srcnet");
+          var netmask = $("#srcmask");
+	  $('#MEMBERS').append("<option value='" + ip.val() + "/" + netmask.val() + "'>"+ip.val() + "/" + netmask.val() + '</option>');
+          ip.val("");
+          return false;
+     });
 
-<?php if ($input_errors) print_input_errors($input_errors); ?>
-	<id="Address">
-             <form action="firewall_aliases_edit.php" onSubmit="return prepareSubmit(MEMBERS)" method="post" name="iform" id="iform">
-	      <table width="100%" border="0" cellpadding="6" cellspacing="0">
-        	<tr>
-                  <td width="22%" valign="top" class="vncellreq">Name</td>
-                  <td width="78%" class="vtable">
-                    <input name="name" type="text" class="formfld" id="name" size="20" value="<?=htmlspecialchars($pconfig['name']);?>">
-                    <input name="memberslist" type="hidden" value="">
-                </tr>
-                <tr> 
-                  <td width="22%" valign="top" class="vncell">Description</td>
-                  <td width="78%" class="vtable"> 
-                    <input name="descr" type="text" class="formfld" id="descr" size="40" value="<?=htmlspecialchars($pconfig['descr']);?>"> 
-                    <br> <span class="vexpl">You may enter a description here 
-                    for your reference (not parsed).</span></td>
-                </tr>
-		<tr>
-                <td width="22%" valign="top" class="vncellreq">Members</td>
-                <td width="78%" class="vtable">
-                <select name="MEMBERS" style="width: 150px; height: 100px" id="MEMBERS" multiple>
-		<?php for ($i = 0; $i<sizeof($pconfig['memberlist']); $i++): ?>
+     // When a user highlights an item and clicks remove, remove it
+          $('#remove').click(function() {  
+          return !$('#MEMBERS option:selected').remove();  
+     });
+
+     // When a user clicks on the submit button, post the form.
+     $(".buttonrow").click(function () {
+	  displayProcessingDiv();
+	  var Options = $.map($('#MEMBERS option'), function(e) { return $(e).val(); } );
+	  var str = Options.join(' ');
+	  var QueryString = $("#iform").serialize()+'&memberslist='+str;
+	  $.post("forms/firewall_form_submit.php", QueryString, function(output) {
+               $("#save_config").html(output);	  
+               setTimeout(function(){ $('#save_config').fadeOut('slow'); }, 1000);            
+	  });
+	  return false;
+     });
+  
+});
+</script> 
+
+<div id="wrapper">
+        <div class="form-container ui-tabs ui-widget ui-corner-all">
+
+	<form action="forms/firewall_form_submit.php" method="post" name="iform" id="iform">
+        <input name="formname" type="hidden" value="firewall_alias">
+	<input name="id" type="hidden" value="<?=$id;?>">
+	<fieldset>
+		<legend><?=join(": ", $pgtitle);?></legend>
+			<div>
+                             <label for="name">Name</label>
+                             <input id="name" type="text" name="name" value="<?=htmlspecialchars($pconfig['name']);?>" />
+			</div>
+                        <div>
+                             <label for="descr">Description</label>
+                             <input id="descr" type="text" size="50" name="descr" value="<?=htmlspecialchars($pconfig['descr']);?>" />
+			     <p class="note">You may enter a description here for your reference (not parsed).</p>
+			</div>
+                        <div>
+                             <label for="members">Members</label>
+                             <select name="MEMBERS" style="width: 160px; height: 100px" id="MEMBERS" multiple>
+        <?php for ($i = 0; $i<sizeof($pconfig['memberlist']); $i++): ?>
                 <option value="<?=$pconfig['memberlist']["member$i"];?>">
                 <?=$pconfig['memberlist']["member$i"];?>
                 </option>
                 <?php endfor; ?>
-		</select>
-                <input type=button onClick="removeOptions(MEMBERS)"; value='Remove Selected'><br><br>
-                  <strong>Type</strong>
-                    <select name="srctype" class="formfld" id="srctype" onChange="switchsrcid(document.iform.srctype.value)">
-                      <option value="srchost" selected>Host</option>
-                      <option value="srcnet" >Network</option>
-                      <option value="srctable" >Alias</option>
-                    </select>
-                <div id='srchost' style="display:block;">
-                 <strong>Address</strong>
-                  <?=$mandfldhtml;?><input name="srchost" type="text" class="formfld" id="srchost" size="16" value="<?=htmlspecialchars($pconfig['address']);?>">
-                <input type=button onClick="addOption('MEMBERS',document.iform.srchost.value + '/32','host' + ':' + document.iform.srchost.value + '/32')"; value='Add'>
+        </select>
+                <input type=button id='remove' value='Remove Selected'><br><br>
+                  <label for="members">Type</label>
+                    <select name="srctype" class="formfld" id="srctype">
+                      <option value="srchostdiv" selected>Host</option>
+                      <option value="srcnetdiv" >Network</option>
+                      <option value="srctablediv" >Alias</option>
+        			  <option value="srcuserdiv" >User</option>
+		            </select>
                 </div>
-                <div id='srcnet' style="display:none;">
-                 <strong>Address</strong>
-                  <?=$mandfldhtml;?><input name="srcnet" type="text" class="formfld" id="srcnet" size="16" value="<?=htmlspecialchars($pconfig['address']);?>">
+                <div id='srchostdiv' style="display:block;">
+                 <label for="srchost">Address</label>
+                  <input name="srchost" type="text" class="formfld" id="srchost" size="16" value="<?=htmlspecialchars($pconfig['address']);?>">
+                <input type=button id='hostaddbutton' value='Add'>
+                </div>
+                <div id='srcnetdiv' style="display:none;">
+                 <label for="srcnet">Address</label>
+                  <input name="srcnet" type="text" class="formfld" id="srcnet" size="16" value="<?=htmlspecialchars($pconfig['address']);?>">
                    <strong>/</strong>
                     <select name="srcmask" class="formfld" id="srcmask">
                       <?php for ($i = 30; $i >= 1; $i--): ?>
@@ -146,10 +149,10 @@ if ($_POST) {
                       </option>
                       <?php endfor; ?>
                     </select>
-                <input type=button onClick="addOption('MEMBERS',document.iform.srcnet.value + '/' + document.iform.srcmask.value,'net' + ':' + document.iform.srcnet.value + '/' + document.iform.srcmask.value)"; value='Add'>
+                <input type=button id='netaddbutton' value='Add'>
                 </div>
-                <div id='srctable' style="display:none;">
-                 <strong>Alias</strong>
+                <div id='srctablediv' style="display:none;">
+                 <label for="srctable">Alias</label>
                     <select name="srctable" class="formfld" id="srctable">
                       <?php foreach($config['tablees']['table'] as $i): ?>
                       <option value="<?='$' . $i['name'];?>" <?php if ($i == $pconfig['address_subnet']) echo "selected"; ?>>
@@ -157,26 +160,28 @@ if ($_POST) {
                       </option>
                       <?php endforeach; ?>
                     </select>
-                <input type=button onClick="addOption('MEMBERS',document.iform.srctable.value + '/32','net' + ':' + document.iform.srctable.value + '/32')"; value='Add'>
+                <input type=button value='Add'>
                 </div>
-                </td>
-                </tr>
-                <tr>
-		<tr>
-                  <td width="22%" valign="top">&nbsp;</td>
-                  <td width="78%">
-                    <input name="Submit" type="submit" class="formbtn" value="Save">
-                    <?php if (isset($id) && $a_aliases[$id]): ?>
-                    <input name="id" type="hidden" value="<?=$id;?>">
-                     <?php endif; ?>
-                    <input name="after" type="hidden" value="<?=$after;?>">
-                  </td>
-                </tr>
-		</tr>
-              </table>
-<script language="JavaScript">
-<!--
-//-->
-</script>
-<?php include("fend.inc"); ?>
+               	<div id='srcuser' style="display:none;">
+                <strong>User</strong>
+                    <select name="srcuser" class="formfld" id="srcuser">
+                      <?php foreach($config['system']['accounts']['user'] as $i): ?>
+                      <option value="<?=$i['name'];?>">
+                        <?=$i['name'];?>
+                      </option>
+                      <?php endforeach; ?>
+                    </select>
+                <input type=button value='Add'>
+                </div> 
+				</div>      
+	</fieldset>
+	
+	<div class="buttonrow">
+		<input type="submit" value="Save" class="button" />
+	</div>
 
+	</form>
+	
+	</div><!-- /form-container -->
+	
+</div><!-- /wrapper -->

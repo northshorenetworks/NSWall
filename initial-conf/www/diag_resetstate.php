@@ -47,7 +47,6 @@ if ($_POST) {
 	}
 }
 ?>
-<?php include("fbegin.inc"); ?>
 <?php if ($input_errors) print_input_errors($input_errors); ?>
 <?php if ($savemsg) print_info_box($savemsg); ?>
             <form action="diag_resetstate.php" method="post" name="iform" id="iform">
@@ -83,4 +82,3 @@ if ($_POST) {
                 </tr>
               </table>
 </form>
-<?php include("fend.inc"); ?>

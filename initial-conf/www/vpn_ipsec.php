@@ -83,7 +83,8 @@ if ($_GET['act'] == "del") {
 	}
 }
 ?>
-<?php include("fbegin.inc"); ?>
+<p class="pgtitle"><?=join(": ", $pgtitle);?></p>
+<script type="text/javascript" src="js/contentload.js"></script>
 <form action="vpn_ipsec.php" method="post">
 <?php if ($savemsg) print_info_box($savemsg); ?>
 <?php if (file_exists($d_ipsecconfdirty_path)): ?><p>
@@ -148,4 +149,3 @@ if ($_GET['act'] == "del") {
 	</tr>
 </table>
 </form>
-<?php include("fend.inc"); ?>

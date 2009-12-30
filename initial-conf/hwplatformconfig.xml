@@ -1,0 +1,33 @@
+<?xml version="1.0"?>
+<nswall>
+	<qemu>
+		<interfaces>
+			<wan>ne0</wan>
+			<lan>ne1</lan>
+			<dmz>ne2</dmz>
+		</interfaces>	
+	</qemu>
+	<vmware>
+        <interfaces>
+            <wan>vic0</wan>
+            <lan>vic1</lan>
+            <dmz>vic2</dmz>
+        </interfaces>
+    </vmware>
+	<alix>
+		<interfaces>
+            <wan>vr0</wan>
+            <lan>vr1</lan>
+            <dmz>vr2</dmz>
+            <wireless>ral0</wireless>
+        </interfaces>	
+	</alix>	
+	<jetway>	
+        <interfaces>
+            <wan>re0</wan>
+            <lan>re1</lan>
+            <dmz>re2</dmz>
+            <dmz2>re3</dmz2>
+        </interfaces>
+    </jetway>
+</nswall>

@@ -65,9 +65,9 @@ function filter_print_pfconf() {
 	$tables = htmlentities(filter_tables_generate());
 	printf("$tables");
 	printf("$aliasrules");
-        printf("$pfoptions\n");
+    printf("$pfoptions\n");
 	printf("$pfnormalization\n");
-        printf("$altqconf\n");
+    printf("$altqconf\n");
 	printf("$rdrrules\n");
 	printf("$natrules\n");
 	printf("$pfrules\n");
@@ -374,16 +374,22 @@ function filter_expand_alias($name) {
 
 function filter_nat_rules_generate() {
 	global $config, $g;
-	
-	$wancfg = $config['interfaces']['wan'];
-	$lancfg = $config['interfaces']['lan'];
-	
-	$pptpdcfg = $config['pptpd'];
-	$wanif = get_real_wan_interface();
-	
+
+	system_determine_hwplatform();
+
+    $wancfg = $config['interfaces']['wan'];
+    $lancfg = $config['interfaces']['lan'];
+    $lancfg['if'] = $g['hwplatformconfig'][INTERFACES][LAN];
+    $wancfg['if'] = $g['hwplatformconfig'][INTERFACES][WAN];
+    $pptpdcfg = $config['pptpd'];
+    
+    $lanif = $lancfg['if'];
+    $wanif = get_real_wan_interface();
+    $curwanip = get_current_wan_address();
+
 	$lansa = gen_subnet($lancfg['ipaddr'], $lancfg['subnet']);
 	
-	$natrules = "#################\n";
+	$natrules = "\n#################\n";
 	$natrules .= "### NAT rules ###\n";
 	$natrules .= "#################\n";	
 
@@ -573,6 +579,7 @@ function filter_normalization_generate() {
 #############################
 ### Traffic Normalization ###
 #############################
+
 EOD;
 
         if (isset($config['filter']['options']['scrub']['dfbit']))
@@ -689,14 +696,17 @@ function filter_system_aliases_names_generate() {
 
 function filter_rules_generate() {
 	global $config, $g;
-	
+
+	system_determine_hwplatform();
+
 	$wancfg = $config['interfaces']['wan'];
 	$lancfg = $config['interfaces']['lan'];
+	$lancfg['if'] = $g['hwplatformconfig'][INTERFACES][LAN];
+	$wancfg['if'] = $g['hwplatformconfig'][INTERFACES][WAN];
 	$pptpdcfg = $config['pptpd'];
 	
 	$lanif = $lancfg['if'];
 	$wanif = get_real_wan_interface();
-	
 	$curwanip = get_current_wan_address();
 	
 	/* rule groups (optional interfaces: see below) */
@@ -749,54 +759,35 @@ function filter_rules_generate() {
 		$log = 'log ';
 	$defaultlog = $log . 'all';
 	$ipfrules .= <<<EOD
+
 #######################
 #### Default Policy ###
 #######################
 anchor "default" {
 	block in $defaultlog 
 	pass out all
-}
 
 EOD;
 	if($config['interfaces']['opt2']['wireless']['ifmode'] == 'lanbridge' || $config['interfaces']['opt2']['wireless']['ifmode'] == 'dmzbridge') {
  	$ipfrules .= <<<EOD
 
-##############################################
-### Allow all traffic into Wireless bridge ###
-##############################################
-anchor "Wireless_Bridge" {
-	pass in quick on ral0 all
-}
+	##############################################
+	### Allow all traffic into Wireless bridge ###
+	##############################################
+	anchor "Wireless_Bridge" {
+		pass in quick on ral0 all
+	}
 
 EOD;
 	}
 	$ipfrules .= <<<EOD
 
-#######################################################
-#### Activate spoofing protection on all interfaces ###
-#######################################################
-block in quick from urpf-failed
+	#######################################################
+	#### Activate spoofing protection on all interfaces ###
+	#######################################################
+	block in quick from urpf-failed
 
 EOD;
-
-
-	/* allow access to DHCP server on optional interfaces */
-	foreach ($optcfg as $on => $oc) {
-		if ((isset($config['dhcpd'][$on]['enable']) && !$oc['bridge']) ||
-				($oc['bridge'] && isset($config['dhcpd'][$oc['bridge_if']]['enable']))) {
-					
-			$ipfrules .= <<<EOD
-
-#############################################
-### Allow access to DHCP server on {$on} ###
-#############################################
-pass in quick on {$oc['if']} proto udp from any port 68 to 255.255.255.255 port 67
-pass in quick on {$oc['if']} proto udp from any port 68 to {$oc['ip']} port 67
-pass out quick on {$oc['if']} proto udp from {$oc['ip']} port 67 to any port 68
-\n\n
-EOD;
-		}
-	}
 	
 	/* pass traffic between statically routed subnets and the subnet on the
 	   interface in question to avoid problems with complicated routing
@@ -825,10 +816,10 @@ EOD;
 			
 			if ($sa) {
 				$ipfrules .= <<<EOD
-pass in quick on {$if} from {$sa}/{$sn} to {$route['network']}
-pass in quick on {$if} from {$route['network']} to {$sa}/{$sn}
-pass out quick on {$if} from {$sa}/{$sn} to {$route['network']}
-pass out quick on {$if} from {$route['network']} to {$sa}/{$sn}
+	pass in quick on {$if} from {$sa}/{$sn} to {$route['network']}
+	pass in quick on {$if} from {$route['network']} to {$sa}/{$sn}
+	pass out quick on {$if} from {$sa}/{$sn} to {$route['network']}
+	pass out quick on {$if} from {$route['network']} to {$sa}/{$sn}
 
 EOD;
 			}
@@ -843,36 +834,23 @@ EOD;
 	if ($wancfg['ipaddr'] == "pptp") {
 		$ipfrules .= <<<EOD
 
-#########################
-### Allow PPTP client ###
-#########################
-pass in quick on {$wancfg['if']} proto gre from any to any
-pass out quick on {$wancfg['if']} proto gre from any to any
-pass in quick on {$wancfg['if']} proto tcp from any port 1723 to any
-pass out quick on {$wancfg['if']} proto tcp from any to any port 1723
-
-EOD;
-	}
-	
-	if ($wancfg['ipaddr'] == "dhcp") {
-		$ipfrules .= <<<EOD
-
-############################################
-### Allow our DHCP client out to the WAN ###
-############################################
-pass out quick on $wanif proto udp from any port 68 to any port 67
-block in $log quick on $wanif proto udp from any port 67 to $lansa/$lansn port 68
-pass in quick on $wanif proto udp from any port 67 to any port 68
+	#########################
+	### Allow PPTP client ###
+	#########################
+	pass in quick on {$wancfg['if']} proto gre from any to any
+	pass out quick on {$wancfg['if']} proto gre from any to any
+	pass in quick on {$wancfg['if']} proto tcp from any port 1723 to any
+	pass out quick on {$wancfg['if']} proto tcp from any to any port 1723
 
 EOD;
 	}
 
 $ipfrules .= <<<EOD
 
-########################### 
-### LAN/OPT spoof check ###
-###########################
-anchor "spoofed-source" {\n
+	########################### 
+	### LAN/OPT spoof check ###
+	###########################
+	anchor "spoofed-source" {\n
 EOD;
 	/* LAN spoof check */
 	/* omit if any interface is bridged to LAN and the filtering bridge is on */
@@ -882,7 +860,7 @@ EOD;
                 $lanbridge = true;
         }
 	if (!$lanbridge)
-		$ipfrules .= "\t" . filter_rules_spoofcheck_generate('lan', $lanif, $lansa, $lansn, $log);
+		$ipfrules .= "\t\t" . filter_rules_spoofcheck_generate('lan', $lanif, $lansa, $lansn, $log);
 
 	/* OPT spoof check */
 	/* omit for bridged interfaces when the filtering bridge is on */
@@ -894,15 +872,15 @@ EOD;
         if (!$isbridged && isset($config['interfaces']['opt' . $i]['enable']))
 		$ipfrules .= filter_rules_spoofcheck_generate($on, $oc['if'], $oc['sa'], $oc['sn'], $log);
 
-	$ipfrules .= "}\n";
+	$ipfrules .= "\t}\n";
 
 	/* block private networks on WAN? */
 	if (isset($config['interfaces']['wan']['blockpriv'])) {
 		$ipfrules .= <<<EOD
 
-#############################################################
-### Block anything from private networks on WAN interface ###
-#############################################################
+	#############################################################
+	### Block anything from private networks on WAN interface ###
+	#############################################################
 EOD;
 $ipfrules .= "\nanchor \"Block RFC1918\" {\n\tblock in $log quick on $wanif from" . ' $RFC_1918 ' . "to any\n}\n";
 	}
@@ -954,14 +932,17 @@ $ipfrules .= "\nanchor \"Block RFC1918\" {\n\tblock in $log quick on $wanif from
 		$webuiport .= $sshdport;
 	$ipfrules .= <<<EOD
 	
-###########################
-### WebGUI anti-lockout ###
-###########################
-pass in quick on $lanif proto tcp from $lansa/$lansn to $lanip \
-port { $webuiport }  
+	###########################
+	### WebGUI anti-lockout ###
+	###########################
+	pass in quick on $lanif proto tcp from $lansa/$lansn to $lanip port { $webuiport }
 
 EOD;
 	}
+
+/* End of Default Packet Handling */
+$ipfrules .= "\n}";
+
 /* CARP code */
         if (isset($config['carp']['carpenable'])) {
         $ipfrules .= <<<EOD
@@ -989,10 +970,10 @@ EOD;
 EOD;
                 $syncdev = $config['interfaces'][$config['pfsync']['interface']]['if'];
 		$syncip = $config['interfaces'][$config['pfsync']['interface']]['ipaddr'];
-                $ipfrules .= "\npass in quick on $syncdev proto pfsync from any to 224.0.0.240";
+        $ipfrules .= "\npass in quick on $syncdev proto pfsync from any to 224.0.0.240";
 		$ipfrules .= "\npass in quick on $syncdev proto tcp from any to $syncip port www";
 		$ipfrules .= "\npass in quick on $syncdev proto udp from any to $syncip port dhcpd-sync";
-	        $ipfrules .= "\npass in quick on $syncdev proto igmp from any to 224.0.1.240\n";	
+	    $ipfrules .= "\npass in quick on $syncdev proto igmp from any to 224.0.1.240\n";	
         }
 
 	/* PPTPd enabled? */
@@ -1345,8 +1326,9 @@ EOD;
 ##########################
 ##### System Anchors #####
 ##########################
-anchor "ftp-proxy/*"\n
-anchor "vpn/*"\n
+anchor "ftp-proxy/*"
+anchor "vpn/*"
+
 EOD;
 if(isset($config['relays']['pfanchor']))
 	$ipfrules .= 'anchor "relayd/*"' . "\n";
@@ -1357,13 +1339,16 @@ if(isset($config['relays']['pfanchor']))
 function filter_rdrrules_generate() {
 	global $config, $g;
 	
-	$wancfg = $config['interfaces']['wan'];
-	$lancfg = $config['interfaces']['lan'];
-	$pptpdcfg = $config['pptpd'];
-	
+	system_determine_hwplatform();
+
+    $wancfg = $config['interfaces']['wan'];
+    $lancfg = $config['interfaces']['lan'];
+    $lancfg['if'] = $g['hwplatformconfig'][INTERFACES][LAN];
+    $wancfg['if'] = $g['hwplatformconfig'][INTERFACES][WAN];
+    $pptpdcfg = $config['pptpd'];
+
 	$lanif = $lancfg['if'];
 	$wanif = get_real_wan_interface();
-	
 	$curwanip = get_current_wan_address();
 	
 	/* rule groups (optional interfaces: see below) */
@@ -1405,7 +1390,7 @@ function filter_rdrrules_generate() {
 		}
 	}
 	
-	$ipfrules = "#################\n";
+	$ipfrules = "\n#################\n";
 	$ipfrules .= "### RDR rules ###\n";
 	$ipfrules .= "#################\n";
 
@@ -1571,7 +1556,7 @@ function filter_rdrrules_generate() {
 					$line .= "\\\nport{ $string } -> $internal";	
 				}	
 			
-				$line .= "\n\n";
+				$line .= "\n";
 				}
 			}	
 		}	

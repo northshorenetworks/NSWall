@@ -91,7 +91,6 @@ if ($_GET['act'] == "del") {
  	}
 }
 ?>
-<?php include("fbegin.inc"); ?>
 <form action="services_dnsmasq.php" method="post">
 <?php if ($savemsg) print_info_box($savemsg); ?>
 <?php if (file_exists($d_dnsmasqdirty_path)): ?><p>
@@ -202,4 +201,3 @@ if ($_GET['act'] == "del") {
 				</tr>
 			  </table>
             </form>
-<?php include("fend.inc"); ?>

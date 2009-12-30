@@ -1,118 +1,134 @@
 #!/bin/php
 <?php 
-/*
-	$Id: firewall_aliases.php,v 1.9 2009/04/20 06:56:53 jrecords Exp $
-	part of m0n0wall (http://m0n0.ch/wall)
-	
-	Copyright (C) 2003-2006 Manuel Kasper <mk@neon1.net>.
-	All rights reserved.
-	
-	Redistribution and use in source and binary forms, with or without
-	modification, are permitted provided that the following conditions are met:
-	
-	1. Redistributions of source code must retain the above copyright notice,
-	   this list of conditions and the following disclaimer.
-	
-	2. Redistributions in binary form must reproduce the above copyright
-	   notice, this list of conditions and the following disclaimer in the
-	   documentation and/or other materials provided with the distribution.
-	
-	THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
-	INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
-	AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
-	AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
-	OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
-	SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-	INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
-	CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-	ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-	POSSIBILITY OF SUCH DAMAGE.
-*/
-
-$pgtitle = array("Firewall", "Aliases");
-require("guiconfig.inc");
-
-if (!is_array($config['aliases']['alias'])) {
-	$config['aliases']['alias'] = array();
-}
-$a_alias = &$config['aliases']['alias'];
-aliases_sort();
-
-if ($_POST) {
-
-	$pconfig = $_POST;
-
-	if ($_POST['apply']) {
-		$retval = 0;
-		if (!file_exists($d_sysrebootreqd_path)) {
-			config_lock();
-			$retval |= filter_configure();
-			$retval |= services_proxyarp_configure();
-			config_unlock();
-			push_config('aliases');
-		}
-		$savemsg = get_std_save_message($retval);
-                if ($retval == 0) {
-                        if (file_exists($d_natconfdirty_path))
-                                unlink($d_natconfdirty_path);
-                        if (file_exists($d_filterconfdirty_path))
-                                unlink($d_filterconfdirty_path);
-                }
-		header("Location: firewall_aliases.php");
-	}
-}
-
-if ($_GET['act'] == "del") {
-	if ($a_alias[$_GET['id']]) {
-		unset($a_alias[$_GET['id']]);
-		write_config();
-		touch($d_filterconfdirty_path);
-		header("Location: firewall_aliases.php");
-		exit;
-	}
-}
+$pgtitle = array("Firewall", "Aliases");    
+require("guiconfig.inc");    
+     
+if (!is_array($config['aliases']['alias'])) {    
+    $config['aliases']['alias'] = array();    
+}    
+$a_alias = &$config['aliases']['alias'];    
+aliases_sort(); 
 ?>
-<?php include("fbegin.inc"); ?>
-<form action="firewall_aliases.php" method="post">
-<?php if ($savemsg) print_info_box($savemsg); ?>
-<?php if (file_exists($d_filterconfdirty_path)): ?><p>
-<?php print_info_box_np("The firewall rule configuration has been changed.<br>You must apply the changes in order for them to
- take effect.");?><br>
-<input name="apply" type="submit" class="formbtn" id="apply" value="Apply changes"></p>
-<?php endif; ?>
-<table width="100%" border="0" cellpadding="0" cellspacing="0">
-<tr><td class="tabnavtbl">
-  <ul id="tabnav">
-  <?php
-  $tabs = array('Aliases' => 'firewall_aliases.php');
-        dynamic_tab_menu($tabs);
-  ?>    
-  </ul>
-</td></tr>
-                <tr> 
-		  <td width="20%" class="listhdrr">Name</td>
-                  <td width="70%" class="listhdr">Description</td>
-                  <td width="10%" class="list"></td>
-		</tr>
-		  <?php $i = 0; foreach ($a_alias as $aliasent): ?>
-                <tr> 
-                  <td class="listr"> 
-                    <?php echo $aliasent['name']; ?>
-                  </td>
-                  <td class="listbg"> 
-                    <?=htmlspecialchars($aliasent['descr']);?>&nbsp;
-                  </td>
-                  <td class="list" nowrap> <a href="firewall_aliases_edit.php?id=<?=$i;?>"><img src="images/e.gif" title="edit alias" width="17" height="17" border="0"></a>
-                     &nbsp;<a href="firewall_aliases.php?act=del&id=<?=$i;?>" onclick="return confirm('Do you really want to delete this alias?')"><img src="images/x.gif" title="delete alias" width="17" height="17" border="0"></a></td>
-				</tr>
-			  <?php $i++; endforeach; ?>
-                <tr> 
-                  <td class="list" colspan="4"></td>
-                  <td class="list"> <a href="firewall_aliases_edit.php"><img src="images/plus.gif" title="add mapping" width="17" height="17" border="0"></a></td>
-				</tr>
-</table><br>
-</td>
-</tr>
-</alias>
+
+<style type="text/css">
+    #aliassortable { list-style-type: none; margin: auto auto 1em; padding: 0; width: 95%; }
+    #aliassortable li { margin: 0px 3px 3px 3px; padding: 0.1em; margin-left: 0; padding-left: 1.5em; font-size: 1.4em;
+height: 18px; border-style:solid;
+border-color:#CCCCCC; font-size:0.8em; }
+    #aliassortable li span.col1 { position:relative; float:left; width:2.5%; }
+    #aliassortable li span.col2 { position:relative; float:left; width:15%; }
+    #aliassortable li span.col3 { position:relative; float:left; width:2.5%; }
+    #aliassortable li span.col4 { position:relative; float:left; width:2.5%; }
+    #aliassortable li span.col5 { position:relative; float:left; width:60%; }
+</style>
+
+<script type="text/javascript">
+
+// Make the list of rules for this interface sortable
+$("aliassortable").sortable({
+   axis: 'y',
+   containment: 'parent',
+   items: 'li:not(.ui-state-disabled)'
+});
+
+
+// When a user clicks on the rule edit button, load firewall_rules_edittabs.php?id=$id
+$(".col3 a, #newalias a").click(function () {
+    var toLoad = $(this).attr('href');
+        clearInterval(refreshId);
+        $('#content').load(toLoad);
+        return false;
+});
+
+// When a user clicks on the rule delete button, load firewall_rules_edittabs.php?id=$id
+$(".col4 a").click(function () {
+        if (confirm('Are you sure you want to delete this alias?')){  
+             displayProcessingDiv();
+             var id = $(this).attr('href');
+             $("#currentorder").load(id);
+             $("#aliassortable").sortable('refresh');
+             setTimeout(function(){ $('#save_config').fadeOut('slow'); }, 1000);
+        }
+        return false;
+});
+
+// pre-submit callback
+function showRequest(formData, jqForm, options) {
+    displayProcessingDiv();
+    return true;
+}
+
+// post-submit callback
+function showResponse(responseText, statusText)  {
+    if(responseText.match(/SUBMITSUCCESS/)) {
+        setTimeout(function(){ $('#save_config').fadeOut('slow'); }, 1000);
+    }
+}
+
+        // wait for the DOM to be loaded
+    $(document).ready(function() {
+            $('div fieldset div').addClass('ui-widget ui-widget-content ui-corner-content');
+            var options = {
+                        target:        '#save_config',  // target element(s) to be updated with server response
+                        beforeSubmit:  showRequest,  // pre-submit callback
+                        success:       showResponse  // post-submit callback
+            };
+
+           // bind form using 'ajaxForm'
+           $('#iform').ajaxForm(options);
+    });
+    
+	$(function() {
+        $("#firewalloptionstabs").tabs();
+    });
+</script>
+<div class="demo">
+<div id="wrapper">
+<div class="form-container ui-tabs ui-widget ui-widget-content ui-corner-content">
+ 
+<div id="firewalloptionstabs">
+    <ul>
+        <li><a href="#tabTimeouts">Aliases</a></li>
+    </ul>
+         <form action="forms/firewall_form_submit.php" method="post" name="iform" id="iform">
+	     <input name="formname" type="hidden" value="firewall_options">
+             <div id="tabTimeouts">
+             <fieldset>
+	     <legend><?=join(": ", $pgtitle);?></legend>
+             <ul id="aliassortable">
+<li id="element_<?=$i;?>" class="connectedSortable ui-state-disabled">
+<span class="col1">Id</span>
+<span class="col2">Rule Name</span>
+<span class="col3">Action</span>
+<span class="col4">&nbsp</span>
+<span class="col5">Description</span>
+</li>
+<?php $nrules = 0; for ($i = 0; isset($a_alias[$i]); $i++):
+$filterent = $a_alias[$i]; ?>
+<li id="listItem_<?=$i;?>" class="ui-corner-all">
+<span class="col1"><?=$i;?></span>
+<span class="col2"><?php if (isset($filterent['name'])) echo strtoupper($filterent['name']); else echo "*";?><?=$textse;?></span>
+<span class="col3">
+<a href="firewall_aliases_edit.php?id=<?=$i;?>">
+<img src="images/e.gif" title="edit rule" width="17" height="17" border="0">
+</a>
+</span>
+<span class="col4">
+<a href="forms/firewall_form_submit.php?id=<?=$i;?>&action=delete&type=alias">
+<img src="images/x.gif" title="delete alias" width="17" height="17" border="0">
+</a>
+</span>
+<span class="col5"><?php if (isset($filterent['descr'])) echo $filterent['descr'];?></span>
+</li>
+<?php $nrules++; endfor; ?>
+</ul>
+</div>
+<div id="newalias"><center><a href="firewall_aliases_edit.php"><img src="images/plus.gif" title="add new alias" width="17" height="17" border="0"></a></center></div>
+	     </fieldset>
+	
 </form>
-<?php include("fend.inc"); ?>
+</div>
+</div>
+</div>
+</div>
+<div id="currentorder"></div>

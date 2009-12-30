@@ -77,7 +77,6 @@ if ($_GET['act'] == "del") {
 }
 
 ?>
-<?php include("fbegin.inc"); ?>
 <form action="interfaces_trunk.php" method="post">
 <?php if ($savemsg) print_info_box($savemsg); ?>
 <?php if (file_exists($d_natconfdirty_path)): ?><p>
@@ -121,4 +120,3 @@ if ($_GET['act'] == "del") {
   </tr>
 </table>
             </form>
-<?php include("fend.inc"); ?>

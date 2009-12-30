@@ -32,10 +32,9 @@
 $pgtitle = array("Status", "CPU load");
 require("guiconfig.inc");
 ?>
-<?php include("fbegin.inc"); ?>
+<p class="pgtitle"><?=join(": ", $pgtitle);?></p>
 <div align="center">
 <embed src="graph_cpu.php" type="image/svg+xml"
 		width="550" height="275" pluginspage="http://www.adobe.com/svg/viewer/install/auto" />
 </div>
-<br><span class="red"><strong>Note:</strong></span> if you can't see the graph, you may have to install the <a href="http://www.adobe.com/svg/viewer/install/" target="_blank">Adobe SVG viewer</a>.
-<?php include("fend.inc"); ?>
+<br><center><span class="red"><strong>Note:</strong></span> if you can't see the graph, you may have to install the <a href="http://www.adobe.com/svg/viewer/install/" target="_blank">Adobe SVG viewer</a></center>.

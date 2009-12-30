@@ -1,8 +1,6 @@
 #!/bin/php
 <?php
 
-$pgtitle = array("Diagnostics", "Factory defaults");
-
 require("guiconfig.inc");
 
 if ($_POST) {
@@ -16,25 +14,9 @@ if ($_POST) {
         }
 }
 ?>
-<?php include("fbegin.inc"); ?>
-<table width="100%" border="0" cellpadding="0" cellspacing="0">
-  <tr><td class="tabnavtbl">
-  <ul id="tabnav">
-<?php
-        $tabs = array('Ping' => 'diag_ping.php',
-                          'Traceroute' => 'diag_traceroute.php',
-                          'TCPDump' => 'diag_tcpdump.php',
-                          'Backup/Restore' => 'diag_backup.php',
-                          'Factory Default' => 'diag_defaults.php',
-                          'Reboot' => 'reboot.php');
-        dynamic_tab_menu($tabs);
-?>
-  </ul>
-  </td></tr>
-<tr>
+
 <table width="100%" border="0" cellpadding="6" cellspacing="0">
 <tr>
-<?php if ($rebootmsg): echo print_info_box($rebootmsg); else: ?>
 <form action="diag_defaults.php" method="post">
               <p><strong>If you click &quot;Yes&quot;, the firewall will be reset
                 to factory defaults and will reboot immediately. The entire system
@@ -49,6 +31,4 @@ if ($_POST) {
         </p>
       
       </form>
-<?php endif; ?>
-</td></tr></table>
-<?php include("fend.inc"); ?>
+</tr></table>

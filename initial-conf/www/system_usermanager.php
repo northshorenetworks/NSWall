@@ -122,18 +122,11 @@ $pgtitle = array("System", "User password");
     	}
   }
 ?>
+<p class="pgtitle"><?=join(": ", $pgtitle);?></p>
+<script type="text/javascript" src="js/contentload.js"></script>
 <?php if ($input_errors) print_input_errors($input_errors); ?>
 <?php if ($savemsg) print_info_box($savemsg); ?>
 <table width="100%" border="0" cellpadding="0" cellspacing="0">
-  <tr><td class="tabnavtbl">
-  <ul id="tabnav">
-	<?php 
-    	$tabs = array('Users' => 'system_usermanager.php',
-            		  'Groups' => 'system_groupmanager.php');
-		dynamic_tab_menu($tabs);
-    ?>     
-  </ul>
-  </td></tr>    
 <tr>
   <td class="tabcont">
 <?php

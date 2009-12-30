@@ -43,7 +43,6 @@ function dump_relaydconf() {
 }
 
 ?>
-<?php include("fbegin.inc"); ?>
 <table width="100%" border="0" cellpadding="0" cellspacing="0">
   <tr><td class="tabnavtbl">
   <ul id="tabnav">
@@ -69,4 +68,3 @@ function dump_relaydconf() {
 	</td>
   </tr>
 </table>
-<?php include("fend.inc"); ?>

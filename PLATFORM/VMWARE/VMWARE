@@ -41,8 +41,9 @@ cpu0	at mainbus?
 bios0	at mainbus0
 apm0	at bios0 flags 0x0000	# flags 0x0101 to force protocol version 1.1
 pcibios0 at bios0 flags 0x0000	# use 0x30 for a total verbose
-ipmi0	at mainbus?		# IPMI
-esm0	at mainbus? 		# Dell Embedded Server Management
+ipmi0	at mainbus?				# IPMI
+esm0	at mainbus? 			# Dell Embedded Server Management
+vmt0 at mainbus0				# VMWare tools kernel driver
 
 isa0	at mainbus0
 isa0	at pcib?
@@ -203,8 +204,8 @@ wd*	at wdc? flags 0x0000
 wd*	at pciide? flags 0x0000
 
 # Networking devices
-dc*	at pci?				# 21143, "tulip" clone ethernet
-pcn*    at pci?                         # AMD PCnet-PCI Ethernet
+dc*	at pci?				    # 21143, "tulip" clone ethernet
+pcn*    at pci?             # AMD PCnet-PCI Ethernet
 vic*    at pci?				# VMWARE VMNET Ethernet
 
 # Media Independent Interface (mii) drivers

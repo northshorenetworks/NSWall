@@ -115,7 +115,6 @@ if ($_POST) {
 }
 
 ?>
-<?php include("fbegin.inc"); ?>
 <form action="firewall_carp_vid_edit.php" method="post">
 <?php if ($savemsg) print_info_box($savemsg); ?>
 <table width="100%" border="0" cellpadding="0" cellspacing="0">
@@ -201,4 +200,3 @@ if ($_POST) {
         </tr>
 </table>
 </form>
-<?php include("fend.inc"); ?>

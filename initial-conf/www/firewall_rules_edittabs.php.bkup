@@ -1,0 +1,567 @@
+#!/bin/php
+<?php 
+/*
+	$Id: firewall_rules_edittabs.php,v 1.31 2009/03/18 07:34:47 jrecords Exp $
+	part of m0n0wall (http://m0n0.ch/wall)
+	
+	Copyright (C) 2003-2006 Manuel Kasper <mk@neon1.net>.
+	All rights reserved.
+	
+	Redistribution and use in source and binary forms, with or without
+	modification, are permitted provided that the following conditions are met:
+	
+	1. Redistributions of source code must retain the above copyright notice,
+	   this list of conditions and the following disclaimer.
+	
+	2. Redistributions in binary form must reproduce the above copyright
+	   notice, this list of conditions and the following disclaimer in the
+	   documentation and/or other materials provided with the distribution.
+	
+	THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
+	INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
+	AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+	AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
+	OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+	SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+	INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+	CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+	ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+	POSSIBILITY OF SUCH DAMAGE.
+*/
+
+$pgtitle = array("Firewall", "Rules", "Edit");
+require("guiconfig.inc");
+
+$specialsrcdst = explode(" ", "any wanip lan pptp");
+
+if (isset($_POST['rulesetid']) || isset($_GET['rulesetid'])) {
+
+	if (!is_array($config['grouppolicies']['ruleset']))
+        	$config['grouppolicies']['ruleset'] = array();
+
+	filter_rulesets_sort();
+
+	$a_ruleset = &$config['grouppolicies']['ruleset'];
+
+	$rulesetid = $_GET['rulesetid'];
+	if (isset($_POST['rulesetid']))
+        	$rulesetid = $_POST['rulesetid'];
+
+	if (isset($_POST['after']))
+        	$after = $_POST['after'];
+
+	$id = $_GET['id'];
+	if (is_numeric($_POST['id']))
+ 	       $id = $_POST['id'];
+
+	$after = $_GET['after'];
+
+	if (isset($_POST['after']))
+ 	       $after = $_POST['after'];
+
+	if (isset($_GET['dup'])) {
+        	$id = $_GET['dup'];
+        	$after = $_GET['dup'];
+	}
+
+        $a_filter = &$config['grouppolicies']['ruleset'][$rulesetid]['rule'];
+
+} else {
+	if (!is_array($config['filter']['rule']))
+		$config['filter']['rule'] = array();
+	
+	filter_rules_sort();
+	$a_filter = &$config['filter']['rule'];
+
+	$id = $_GET['id'];
+	if (is_numeric($_POST['id']))
+		$id = $_POST['id'];
+	
+	$after = $_GET['after'];
+
+	if (isset($_POST['after']))
+		$after = $_POST['after'];
+
+	if (isset($_GET['dup'])) {
+		$id = $_GET['dup'];
+		$after = $_GET['dup'];
+	}
+}
+
+function is_specialnet($net) {
+	global $specialsrcdst;
+	
+	if (in_array($net, $specialsrcdst) || (strstr($net, "opt") && !is_alias($net)))
+		return true;
+	else
+		return false;
+}
+
+if (isset($_GET['dup']))
+	unset($id);
+
+if (isset($id) && $a_filter[$id]) {
+        $pconfig['name'] = $a_filter[$id]['name'];
+        $pconfig['descr'] = $a_filter[$id]['descr'];
+        $pconfig['type'] = $a_filter[$id]['type'];
+        $pconfig['proto'] = $a_filter[$id]['protocol'];
+        $pconfig['interface'] = $a_filter[$id]['interface'];
+        $pconfig['srclist'] = $a_filter[$id]['srclist'];
+        $pconfig['dstlist'] = $a_filter[$id]['dstlist'];
+        $pconfig['dstrelay'] = $a_filter[$id]['dstrelay'];
+        $pconfig['portforward'] = isset($a_filter[$id]['portforward']);
+        $pconfig['tcplist'] = $a_filter[$id]['tcplist'];
+        $pconfig['udplist'] = $a_filter[$id]['udplist'];
+        $pconfig['disabled'] = isset($a_filter[$id]['disabled']);
+        $pconfig['log'] = isset($a_filter[$id]['log']);
+        $pconfig['altqbucket'] = $a_filter[$id]['options']['altqbucket'];
+        $pconfig['altqlowdelay'] = isset($a_filter[$id]['options']['altqlowdelay']);
+        $pconfig['state'] = $a_filter[$id]['options']['state'];
+        $pconfig['maxstates'] = $a_filter[$id]['options']['maxstates'];
+        $pconfig['srctrack'] = $a_filter[$id]['options']['srctrack'];
+        $pconfig['maxsrcnodes'] = $a_filter[$id]['options']['maxsrcnodes'];
+        $pconfig['maxsrcstates'] = $a_filter[$id]['options']['maxsrcstates'];
+        $pconfig['maxsrcconns'] = $a_filter[$id]['options']['maxsrcconns'];
+        $pconfig['maxsrcconnrate'] = $a_filter[$id]['options']['maxsrcconnrate'];
+        $pconfig['overload'] = isset($a_filter[$id]['options']['overload']);
+        $pconfig['flush'] = isset($a_filter[$id]['options']['flush']);
+} else {
+        /* defaults */
+        if ($_GET['if'])
+                $pconfig['interface'] = $_GET['if'];
+        $pconfig['type'] = "pass";
+        $pconfig['srclist']['src0'] = "any";
+        $pconfig['dstlist']['dst0'] = "any";
+}
+
+?>
+<link rel="stylesheet" href="style/ui.tabs.css" type="text/css">
+<script src="js/ui.core.js" type="text/javascript"></script>
+<script src="js/ui.tabs.js" type="text/javascript"></script>
+<script type="text/javascript">
+
+// pre-submit callback
+function showRequest(formData, jqForm, options) {
+    displayProcessingDiv();
+    return true;
+}
+
+// post-submit callback
+function showResponse(responseText, statusText)  {
+    if(responseText.match(/SUBMITSUCCESS/)) {
+    	setTimeout(function(){ $('#save_config').fadeOut('slow'); }, 1000);
+    	loadContent("firewall_rules.php?if=<?=$pconfig['interface'];?>");
+	}
+}
+
+        // wait for the DOM to be loaded
+    $(document).ready(function() {
+            var options = {
+                        target:        '#save_config',  // target element(s) to be updated with server response
+                        beforeSubmit:  showRequest,  // pre-submit callback
+                        success:       showResponse  // post-submit callback
+            };
+
+           // bind form using 'ajaxForm'
+           $('#iform').ajaxForm(options);
+    });
+</script>
+<p class="pgtitle"><?=join(": ", $pgtitle);?></p>
+<table width="100%" id="navigator" border="0" cellpadding="0" cellspacing="0">
+<tr><td class="tabnavtbl">
+  <ul id="tabnav">
+<li class="tabact" id="addresstab" onclick="activate('addresstab'); switchtab('tabAddress')"><a>Addresses</a></li>
+<li class="tabinact" id="protocoltab" onclick="activate('protocoltab'); switchtab('tabProtocol')"><a>Protocol</a></li>
+<li class="tabinact" id="optionstab" onclick="activate('optionstab'); javascript:switchtab('tabOptions')"><a>Options<a/></li>
+  </ul>
+  </td></tr>
+  <tr>
+    <td class="tabcont">
+        <form action="forms/firewall_form_submit.php" onSubmit="return prepareRuleSubmit(SRCADDR,DSTADDR,PROTOLIST)" method="post" name="iform" id="iform">
+		<input name="formname" type="hidden" value="firewall_rule">
+		<div id="tabAddress" style="display:block;">
+		  <table width="100%" border="0" cellpadding="6" cellspacing="0">
+		    <tr>
+                  <td width="22%" valign="top" class="vncellreq">Name</td>
+                  <td width="78%" class="vtable">
+                    <input name="name" type="text" class="formfld" id="name" size="16" value="<?=htmlspecialchars($pconfig['name']);?>">
+                    <input name="srclist" type="hidden" value="">
+		    <input name="dstlist" type="hidden" value="">
+		    <input name="tcpports" type= "hidden" value="">
+		    <input name="udpports" type= "hidden" value="">
+ 		    <input name="rdrlist" type= "hidden" value="">
+		    <input name="ipprotos" type= "hidden" value="">
+		    <br> <span class="vexpl">You may enter a nameiption here
+                    for your reference (not parsed).</span></td>
+                </tr>
+      		<tr> 
+                  <td width="22%" valign="top" class="vncell">Description</td>
+                  <td width="78%" class="vtable"> 
+                    <input name="descr" type="text" class="formfld" id="descr" size="40" value="<?=htmlspecialchars($pconfig['descr']);?>"> 
+                    <br> <span class="vexpl">You may enter a description here 
+                    for your reference (not parsed).</span></td>
+                </tr>
+		<tr>
+                  <td width="22%" valign="top" class="vncellreq">Action</td>
+                  <td width="78%" class="vtable">
+                                        <select name="type" class="formfld">
+                      <?php $types = explode(" ", "Pass Block Reject"); foreach ($types as $type): ?>
+                      <option value="<?=strtolower($type);?>" <?php if (strtolower($type) == strtolower($pconfig['type'])) echo "selected"; ?>>
+                      <?=htmlspecialchars($type);?>
+                      </option>
+                      <?php endforeach; ?>
+                    </select> <br>
+                </tr>
+                <tr>	
+		<tr>
+                  <td width="22%" valign="top" class="vncellreq">Interface</td>
+                  <td width="78%" class="vtable">
+                                        <select name="interface" class="formfld">
+                      <?php $interfaces = array('wan' => 'WAN', 'lan' => 'LAN', 'pptp' => 'PPTP');
+                                          for ($i = 1; isset($config['interfaces']['opt' . $i]); $i++) {
+                                                $interfaces['opt' . $i] = $config['interfaces']['opt' . $i]['descr'];
+                                          }
+                                          foreach ($interfaces as $iface => $ifacename): ?>
+                      <option value="<?=$iface;?>" <?php if ($iface == $pconfig['interface']) echo "selected"; ?>>
+                      <?=htmlspecialchars($ifacename);?>
+                      </option>
+                      <?php endforeach; ?>
+                    </select> <br>
+                    <span class="vexpl">Choose on which interface packets must
+                    come in to match this rule.</span></td>
+                </tr>
+                  <tr>
+                <td width="22%" valign="top" class="vncellreq">Source</td>
+                <td width="78%" class="vtable">
+		<select name="SRCADDR" style="width: 150px; height: 100px" id="SRCADDR" multiple>
+                <?php for ($i = 0; $i<sizeof($pconfig['srclist']); $i++): ?>
+                <option value="<?=$pconfig['srclist']["src$i"];?>">
+                <?php $display = preg_replace('/user:|:user/', '', $pconfig['srclist']["src$i"]);?>
+                <?=$display;?>
+                </option>
+                <?php endfor; ?>
+                </select>
+		<input type=button onClick="removeOptions(SRCADDR)"; value='Remove Selected'><br><br>
+                  <strong>Type</strong>
+                    <select name="srctype" class="formfld" id="srctype" onChange="switchsrcid(document.iform.srctype.value)">
+                      <option value="srchost" selected>Host</option>
+                      <option value="srcnet" >Network</option>
+                      <option value="srcalias" >Alias</option>
+		      <option value="srcuser" >User</option>
+                    </select><br><br>
+                <div id='srchost' style="display:block;">
+                 <strong>Address</strong>
+                  <?=$mandfldhtml;?><input name="srchost" type="text" class="formfld" id="srchost" size="16" value="<?=htmlspecialchars($pconfig['address']);?>">
+                <input type=button onClick="addOption('SRCADDR',document.iform.srchost.value + '/32','host' + ':' + document.iform.srchost.value + '/32')"; value='Add'>
+		</div>
+                <div id='srcnet' style="display:none;">
+                 <strong>Address</strong>
+                  <?=$mandfldhtml;?><input name="srcnet" type="text" class="formfld" id="srcnet" size="16" value="<?=htmlspecialchars($pconfig['address']);?>">
+                   <strong>/</strong>
+                    <select name="srcmask" class="formfld" id="srcmask">
+                      <?php for ($i = 30; $i >= 1; $i--): ?>
+                      <option value="<?=$i;?>" <?php if ($i == $pconfig['address_subnet']) echo "selected"; ?>>
+                      <?=$i;?>
+                      </option>
+                      <?php endfor; ?>
+                    </select>
+                <input type=button onClick="addOption('SRCADDR',document.iform.srcnet.value + '/' + document.iform.srcmask.value,'net' + ':' + document.iform.srcnet.value + '/' + document.iform.srcmask.value)"; value='Add'>
+		</div>
+                <div id='srcalias' style="display:none;">
+                <strong>Alias</strong>
+                    <select name="srcalias" class="formfld" id="srcalias">
+                      <?php
+                       $defaults = filter_system_aliases_names_generate();
+                       $defaults = split(' ', $defaults);
+                       foreach( $defaults as $i): ?>
+                      <option value="<?='$' . $i;?>"><?=$i;?>
+                      </option>
+                      <?php endforeach; ?>
+                      <?php foreach($config['aliases']['alias'] as $i): ?>
+                      <option value="<?='$' . $i['name'];?>" <?php if ($i == $pconfig['address_subnet']) echo "selected"; ?>>
+                        <?=$i['name'];?>
+                      </option>
+                      <?php endforeach; ?>
+                    </select>
+		<input type=button onClick="addOption('SRCADDR',document.iform.srcalias.value + '/32','alias' + ':' + document.iform.srcalias.value + '/32')"; value='Add'>
+		</div>
+                <div id='srcuser' style="display:none;">
+                <strong>User</strong>
+                    <select name="srcuser" class="formfld" id="srcuser">
+                      <?php foreach($config['system']['accounts']['user'] as $i): ?>
+                      <option value="<?=$i['name'];?>">
+                        <?=$i['name'];?>
+                      </option>
+                      <?php endforeach; ?>
+                    </select>
+                <input type=button onClick="addOption('SRCADDR',document.iform.srcuser.value + '/32','user:' + document.iform.srcuser.value + ':user')"; value='Add'>
+                </div>
+		</td>
+                </tr> 
+		<tr>
+                <td width="22%" valign="top" class="vncellreq">Destination</td>
+                <td width="78%" class="vtable">
+                <select name="DSTADDR" style="width: 150px; height: 100px" id="DSTADDR" multiple>
+       		<?php for ($i = 0; $i<sizeof($pconfig['dstlist']); $i++): ?>
+                <option value="<?=$pconfig['dstlist']["dst$i"];?>">
+                <?=$pconfig['dstlist']["dst$i"];?>
+                </option>
+                <?php endfor; ?>
+		</select>
+		<input type=button onClick="removeOptions(DSTADDR)"; value='Remove Selected'><br><br>
+		<strong>Type</strong>
+                    <select name="dsttype" class="formfld" id="dsttype" onChange="switchdstid(document.iform.dsttype.value)">
+                      <option value="dsthost" selected>Host</option>
+                      <option value="dstnet" >Network</option>
+                      <option value="dstalias" >Alias</option>
+               	      <option value="dstsnat" >SNAT</option> 
+		      <option value="dstredir" >Redirect</option>
+                <!--  <option value="dstrelay" >Relay</option> -->
+		</select><br><br>
+                <div id='dsthost' style="display:block;">
+                 <strong>Address</strong>
+                  <?=$mandfldhtml;?><input name="dsthost" type="text" class="formfld" id="dsthost" size="16" value="<?=htmlspecialchars($pconfig['address']);?>">
+                <input type=button onClick="addOption('DSTADDR',document.iform.dsthost.value + '/32','host' + ':' + document.iform.dsthost.value + '/32')"; value='Add'>
+                </div>
+                <div id='dstnet' style="display:none;">
+                 <strong>Address</strong>
+                  <?=$mandfldhtml;?><input name="dstnet" type="text" class="formfld" id="dstnet" size="16" value="<?=htmlspecialchars($pconfig['address']);?>">
+                   <strong>/</strong>
+                    <select name="dstmask" class="formfld" id="dstmask"><?php for ($i = 30; $i >= 1; $i--): ?>
+                      <option value="<?=$i;?>" <?php if ($i == $pconfig['address_subnet']) echo "selected"; ?>>
+                      <?=$i;?>
+                      </option>
+                      <?php endfor; ?>
+                    </select>
+                <input type=button onClick="addOption('DSTADDR',document.iform.dstnet.value + '/' + document.iform.dstmask.value,'net' + ':' + document.iform.dstnet.value + '/' + document.iform.dstmask.value)"
+; value='Add'>
+                </div>
+                <div id='dstalias' style="display:none;">
+                 <strong>Alias</strong>
+                    <select name="dstalias" class="formfld" id="dstalias">
+		      <?php
+		       $defaults = filter_system_aliases_names_generate();
+		       $defaults = split(' ', $defaults);
+                       foreach( $defaults as $i): ?>
+                      <option value="<?='$' . $i;?>"><?=$i;?>
+                      </option>
+                      <?php endforeach; ?>
+                      <?php foreach($config['aliases']['alias'] as $i): ?>
+                      <option value="<?='$' . $i['name'];?>" <?php if ($i == $pconfig['address_subnet']) echo "selected"; ?>>
+                        <?=$i['name'];?>
+                      </option>
+                      <?php endforeach; ?>
+                    </select>
+                <input type=button onClick="addOption('DSTADDR',document.iform.dstalias.value + '/32','net' + ':' + document.iform.dstalias.value + '/32')"; value='Add'>
+                </div>
+		<div id='dstsnat' style="display:none;">
+                 <strong>External</strong>
+                  <?=$mandfldhtml;?><input name="snatext" type="text" class="formfld" id="snatext" size="16" value="<?=htmlspecialchars($pconfig['address']);?>">
+                   <strong>Internal</strong>
+		<?=$mandfldhtml;?><input name="snatint" type="text" class="formfld" id="snatint" size="16" value="<?=htmlspecialchars($pconfig['address']);?>">
+                <input type=button onClick="addOption('DSTADDR',document.iform.snatext.value + ':' + document.iform.snatint.value,'snat' + ':' + document.iform.snatext.value + ':' + document.iform.snatint.value)"
+; value='Add'>
+                </div>
+                <div id='dstredir' style="display:none;">
+                 <strong>Listener</strong>
+                  <?=$mandfldhtml;?><input name="redirext" type="text" class="formfld" id="redirext" size="16" value="<?=htmlspecialchars($pconfig['address']);?>">
+                <strong>Server Pool</strong>
+                    <select name="dstredir" class="formfld" id="dstredir">
+                      <?php foreach($config['aliases']['alias'] as $i): ?>
+                      <option value="<?='$' . $i['name'];?>" <?php if ($i == $pconfig['address_subnet']) echo "selected"; ?>> 
+                        <?=$i['name'];?>
+                      </option>
+                      <?php endforeach; ?>
+                    </select>
+		<input type=button onClick="addOption('DSTADDR',document.iform.redirext.value + ':' + document.iform.redirint.value,'snat' + ':' + document.iform.redirext.value + ':' + document.iform.redirint.value)"
+; value='Add'>
+                </div>
+		<div id='dstrelay' style="display:none;">
+                <strong>Relay</strong>
+                    <select name="dstrelayname" class="formfld" id="dstrelayname">
+                    <?php foreach($config['relays']['relay'] as $i): ?>
+                    	<?php if ($i['forward'] != 'nat lookup'): ?>    
+                    		<option value="<?= $i['name'];?>" <?php if ($i == $pconfig['dstrelay']) echo "selected"; ?>> 
+                    		<?=$i['name'];?>
+                    		</option>
+                    	<?php endif; ?>
+                    <?php endforeach; ?>
+		    </select>
+                <input type=button onClick="addOption('DSTADDR',document.iform.dstrelayname.value,'relay:' + document.iform.dstrelayname.value)"; value='Add'>
+                </div>
+		</td>
+		<tr> 
+                  <td width="22%" valign="top">&nbsp;</td>
+                  <td width="78%"> 
+                    <input name="Submit" type="submit" class="formbtn" value="Save"> 
+                    <?php if (isset($id) && $a_filter[$id]): ?>
+                    <input name="id" type="hidden" value="<?=$id;?>">
+                     <?php endif; ?>
+                    <input name="after" type="hidden" value="<?=$after;?>"> 
+                  </td>
+                </tr>
+              </table>
+	</div>
+        <div id="tabProtocol" style="display:none;"> 
+	<table width="100%" border="0" cellpadding="6" cellspacing="0">
+                <tr>
+                <td width="22%" valign="top" class="vncellreq">Protocol</td>
+                <td width="78%" class="vtable">
+                <!--<br><br><input name="portforward" type="checkbox" id="portforward" value="yes" <?php if ($pconfig['portforward']) echo "checked"; ?>> 
+                <strong>Forward Connections on this port to a nat lookup relay</strong><br>
+                <div id='dstrelay' style="display:block;">
+                <strong>Relay</strong>
+                    <select name="dstrelay" class="formfld" id="dstrelay">
+                      <?php foreach($config['relays']['relay'] as $i): ?>
+                                <?php if ($i['forward'] == 'nat lookup'): ?>    
+                                <option value="<?= $i['name'];?>" <?php if ($i == $pconfig['dstrelay']) echo "selected"; ?>> 
+                                <?=$i['name'];?>
+                                </option>
+                                <?php endif; ?>
+                        <?php endforeach; ?>
+                    </select><br><br> -->
+		<select name="PROTOLIST" style="width: 150px; height: 100px" id="PROTOLIST" multiple>
+                <?php for ($i = 0; $i<sizeof($pconfig['tcplist']); $i++): ?>
+                <option value="tcp/<?=$pconfig['tcplist']["tcp$i"];?>">
+                tcp/<?=$pconfig['tcplist']["tcp$i"];?>
+                </option>
+                <?php endfor; ?>
+		</select>
+		<?php for ($i = 0; $i<sizeof($pconfig['udplist']); $i++): ?>
+                <option value="udp/<?=$pconfig['udplist']["udp$i"];?>">
+                udp/<?=$pconfig['udplist']["udp$i"];?>
+                </option>
+                <?php endfor; ?>
+		<input type=button onClick="removeOptions(PROTOLIST)"; value='Remove Selected'><br><br>
+                    <select name="proto" class="formfld" id="proto">
+                      <option value="tcp" selected>TCP</option>
+                      <option value="udp">UDP</option>
+		      <option value="ip">IP</option>
+                    </select>
+                  <input name="fromport" type="text" class="formfld" id="fromport" size="5" value="">
+                   <strong> To </strong>
+                    <input name="toport" type="text" class="formfld" id="toport" size="5" value="">
+                    <input type=button onClick="addOption('PROTOLIST',document.iform.proto.value + '/' + document.iform.fromport.value + ':' + document.iform.toport.value,document.iform.proto.value + '/' + document.iform.fromport.value + ':' + document.iform.toport.value)"; value='Add'>
+                </div>
+		</td>
+		</tr>  
+	 	<tr>
+                  <td width="22%" valign="top">&nbsp;</td>
+                  <td width="78%">
+                    <input name="Submit" type="submit" class="formbtn" value="Save">
+                    <?php if (isset($id) && $a_filter[$id]): ?>
+                    <input name="id" type="hidden" value="<?=$id;?>">
+                     <?php endif; ?>
+                    <input name="after" type="hidden" value="<?=$after;?>">
+                  </td>
+                </tr>	
+		</table>
+	</div>
+	<div id="tabOptions" style="display:none;"> 
+		<table width="100%" border="0" cellpadding="6" cellspacing="0">
+                <tr> 
+                  <td width="22%" valign="top" class="vncellreq">Log</td>
+                  <td width="78%" class="vtable"> 
+                    <input name="log" type="checkbox" id="log" value="yes" <?php if ($pconfig['log']) echo "checked"; ?>>
+                    <strong>Log packets that are handled by this rule</strong><br>
+                    </td>
+                </tr>
+		<tr>
+                <td width="22%" valign="top" class="vncellreq">ALTQ</td>
+                <td width="78%" class="vtable">
+                    <select name="altqbucket" class="formfld" id="altqbucket">
+	 	    <?php foreach ($altqbuckets as $bucket): ?>
+                      <option value="<?=$bucket;?>" <?php if ($bucket == $pconfig['altqbucket']) echo "selected"; ?>>
+                      <?=htmlspecialchars($bucket);?>
+                      </option>
+                      <?php endforeach; ?>
+                    
+		<strong>Add packetes handled by this rule to ALTQ Bucket</strong><br>
+		</td>
+		<tr>
+                <tr>
+                <td width="22%" valign="top" class="vncellreq">ALTQ Lowdelay</td>
+                <td width="78%" class="vtable">
+                    <input name="altqlowdelay" type="checkbox" id="altqlowdelay" value="yes" <?php if ($pconfig['altqlowdelay']) echo "checked"; ?>>
+                </tr>
+                <tr>	
+		<tr>
+                <td width="22%" valign="top" class="vncellreq">State</td>
+                <td width="78%" class="vtable">
+                    <select name="state" class="formfld" id="state">
+		    <?php foreach ($statetypes as $statetype): ?>
+                      <option value="<?=$statetype;?>" <?php if ($statetype == $pconfig['state']) echo "selected"; ?>>
+                      <?=htmlspecialchars($statetype);?>
+                      </option>
+                      <?php endforeach; ?>
+		</td>
+		<tr>
+                <td width="22%" valign="top" class="vncellreq">Max States</td>
+                <td width="78%" class="vtable">
+                <input name="maxstates" type="text" class="formfld" id="maxstates" size="5" value="<?=htmlspecialchars($pconfig['maxstates']);?>">
+		</td>
+		</tr>
+                <tr>
+                <td width="22%" valign="top" class="vncellreq">Source Tracking</td>
+                <td width="78%" class="vtable">
+                    <select name="srctrack" class="formfld" id="srctrack">
+                    <?php foreach ($srctracktypes as $srctracktype): ?>
+                      <option value="<?=$srctracktype;?>" <?php if ($srctracktype == $pconfig['srctrack']) echo "selected"; ?>>
+                      <?=htmlspecialchars($srctracktype);?>
+                      </option>
+                      <?php endforeach; ?> 	
+		</td>
+		<tr>
+                <td width="22%" valign="top" class="vncellreq">Max Src Nodes</td>
+                <td width="78%" class="vtable">
+                <input name="maxsrcnodes" type="text" class="formfld" id="maxsrcnodes" size="5" value="<?=htmlspecialchars($pconfig['maxsrcnodes']);?>">
+                </td>
+                </tr>
+		<tr>
+                <td width="22%" valign="top" class="vncellreq">Max Src States</td>
+                <td width="78%" class="vtable">
+                <input name="maxsrcstates" type="text" class="formfld" id="maxsrcstates" size="5" value="<?=htmlspecialchars($pconfig['maxsrcstates']);?>">
+                </td>
+                </tr>
+		<tr>
+                <td width="22%" valign="top" class="vncellreq">Max Src Conns</td>
+                <td width="78%" class="vtable">
+                <input name="maxsrcconns" type="text" class="formfld" id="maxsrcconns" size="5" value="<?=htmlspecialchars($pconfig['maxsrcconns']);?>">
+                </td>
+                </tr>
+<!--		<tr>
+                <td width="22%" valign="top" class="vncellreq">Max Src Conn Rate</td>
+                <td width="78%" class="vtable">
+                <input name="maxsrcconnrate" type="text" class="formfld" id="maxsrcconrate" size="5" value="<?=htmlspecialchars($pconfig['maxsrcconnrate']);?>">
+                </td>
+                </tr> 
+		<tr>
+                <td width="22%" valign="top" class="vncellreq">Overload</td>
+                <td width="78%" class="vtable">
+                    <input name="overload" type="checkbox" id="overload" value="yes" <?php if ($pconfig['overload']) echo "checked"; ?>>
+		</tr>
+                <tr>
+                <tr>
+                <td width="22%" valign="top" class="vncellreq">Flush</td>
+                <td width="78%" class="vtable">
+                    <input name="flush" type="checkbox" id="flush" value="yes" <?php if ($pconfig['flush']) echo "checked"; ?>>
+                </tr>
+                <tr> -->	
+		  <td width="22%" valign="top">&nbsp;</td>
+                  <td width="78%"> 
+                    <input name="Submit" type="submit" class="formbtn" value="Save"> 
+                    <?php if (isset($id) && $a_filter[$id]): ?>
+                    <input name="id" type="hidden" value="<?=$id;?>"> 
+                    <?php endif; ?>
+		    <?php if (isset($rulesetid)): ?>
+                    <input name="rulesetid" type="hidden" value="<?=$rulesetid;?>">
+                    <?php endif; ?>
+                    <input name="after" type="hidden" value="<?=$after;?>"> 
+                  </td>
+                </tr>
+              </table>
+	</form>
+	</div>
+<script language="JavaScript">
+<!--
+</script>

@@ -217,7 +217,7 @@ function get_interface_info($ifdescr) {
 }
 
 ?>
-<?php include("fbegin.inc"); ?>
+<p class="pgtitle"><?=join(": ", $pgtitle);?></p>
 <form action="" method="post">
             <table width="100%" border="0" cellspacing="0" cellpadding="0">
               <?php $i = 0; $ifdescrs = array('wan' => 'WAN', 'lan' => 'LAN');
@@ -360,4 +360,3 @@ function get_interface_info($ifdescr) {
 triggers it. To substantiate this point: disconnecting manually 
 will <strong>not</strong> prevent dial-on-demand from making connections
 to the outside! Don't use dial-on-demand if you want to make sure that the line is kept disconnected.
-<?php include("fend.inc"); ?>

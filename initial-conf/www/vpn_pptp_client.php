@@ -1,196 +1,251 @@
 #!/bin/php
 <?php
-/*
-$Id: services_config_server.php,v 1.1 2009/04/20 06:59:37 jrecords Exp $
-part of m0n0wall (http://m0n0.ch/wall)
-Copyright (C) 2003-2006 Manuel Kasper <mk@neon1.net>.
-All rights reserved.
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are met:
-1. Redistributions of source code must retain the above copyright notice,
-this list of conditions and the following disclaimer.
-2. Redistributions in binary form must reproduce the above copyright
-notice, this list of conditions and the following disclaimer in the
-documentation and/or other materials provided with the distribution.
-THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
-INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
-AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
-AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
-OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
-SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
-CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-POSSIBILITY OF SUCH DAMAGE.
-*/
- 
 $pgtitle = array("VPN", "PPTP Client");
+ 
 require("guiconfig.inc");
- 
-$pconfig['enable'] = isset($config['pptp']['client']['enable']);
-$pconfig['connectonboot'] = isset($config['pptp']['client']['connectonboot']);
-$pconfig['server'] = $config['pptp']['client']['server'];
-$pconfig['username'] = $config['pptp']['client']['username'];
-$pconfig['password'] = $config['pptp']['client']['password'];
-$pconfig['routelist'] = $config['pptp']['client']['routelist'];
-$pconfig['autonat'] = isset($config['pptp']['client']['autonat']);
-$pconfig['lcplog'] = isset($config['pptp']['client']['lcplog']);
- 
-?>
+
+if (!is_array($config['pptp']['client']))
+    $config['pptp']['client'] = array();
+
+$a_client = &$config['pptp']['client'];
+
+$pconfig['enable'] = isset($a_client['enable']);
+$pconfig['connectonboot'] = isset($a_client['connectonboot']);
+$pconfig['server'] = $a_client['server'];
+$pconfig['username'] = $a_client['username'];
+$pconfig['password'] = $a_client['password'];
+$pconfig['routelist'] = $a_client['routelist'];
+$pconfig['autonat'] = isset($a_client['autonat']);
+$pconfig['lcplog'] = isset($a_client['lcplog']);
+
+?> 
 
 <script type="text/javascript">
+// when a user changes the type of memeber, change the related div to sytle = display: block and hide all others
+$(function(){
+     $("#srctype").change(function() {
+          var val = $(this).val();
+          switch(val){
+		case 'srchostdiv':
+			$("#srchostdiv").show();
+			$("#srcnetdiv").hide();
+            $("#srctablediv").hide();
+            $("#srcuserdiv").hide();
+			break;
+		case 'srcnetdiv':
+			$("#srcnetdiv").show();
+			$("#srchostdiv").hide();
+            $("#srctablediv").hide();
+            $("#srcuserdiv").hide();
+			break;
+        case 'srctablediv':
+			$("#srctablediv").show();
+			$("#srchostdiv").hide();
+            $("#srcnetdiv").hide();
+            $("#srcuserdiv").hide();
+			break;
+        case 'srcuserdiv':
+            $("#srcuserdiv").show();
+			$("#srctablediv").hide();
+			$("#srchostdiv").hide();
+            $("#srcnetdiv").hide();
+			break;
+		}  
+     });
+}); 
 
-// pre-submit callback 
-function showRequest(formData, jqForm, options) { 
-    displayProcessingDiv(); 
-    return true; 
-}
+// wait for the DOM to be loaded
+$(document).ready(function() {
+     $('div fieldset div').addClass('ui-widget ui-widget-content ui-corner-content');
 
-// post-submit callback 
-function showResponse(responseText, statusText)  {
-    if(responseText.match(/SUBMITSUCCESS/)) {  
-           setTimeout(function(){ $('#save_config').fadeOut('slow'); }, 2000);
-    }
-} 
+     // When a user clicks the forceall button, grey out the route configuration area
+     $("#forcetunnel").click(function () {
+               if ($("#forcetunnel").is(":checked")) {    
+                    $('#MEMBERS').attr("disabled", true);
+                    $('#remove').attr("disabled", true);
+                    $('#srchost').attr("disabled", true);
+                    $('#hostaddbutton').attr("disabled", true);
+                    $('#netaddbutton').attr("disabled", true);
+                    $('#srcnet').attr("disabled", true);
+                    $('#srctable').attr("disabled", true);
+                    $('#srcuser').attr("disabled", true);
+                    $('#srctype').attr("disabled", true);
+                    $('#tunnelforceoverride').attr("disabled", false);
+                    return true;
+               } else {
+                    $('#MEMBERS').attr("disabled", false);
+                    $('#remove').attr("disabled", false);
+                    $('#srchost').attr("disabled", false);
+                    $('#hostaddbutton').attr("disabled", false);
+                    $('#netaddbutton').attr("disabled", false);
+                    $('#srcnet').attr("disabled", false);
+                    $('#srctable').attr("disabled", false);
+                    $('#srcuser').attr("disabled", false);
+                    $('#srctype').attr("disabled", false);
+                    $('#tunnelforceoverride').attr("disabled", true);
+                    return true;
+               }
+     });
 
-        // wait for the DOM to be loaded
-    $(document).ready(function() {
-            var options = {
-                        target:        '#save_config',  // target element(s) to be updated with server response
-                        beforeSubmit:  showRequest,  // pre-submit callback 
-                        success:       showResponse  // post-submit callback
-            };
+     // When a user clicks on the host add button, validate and add the host.
+     $("#hostaddbutton").click(function () {
+          var ip = $("#srchost");
+	  $('#MEMBERS').append("<option value='" + ip.val() + "'>"+ip.val() + '</option>');
+          ip.val("");
+          return false;
+     });
 
-           // bind form using 'ajaxForm'
-           $('#iform').ajaxForm(options);
-    });
+     // When a user clicks on the net add button, validate and add the host.
+     $("#netaddbutton").click(function () {
+          var ip = $("#srcnet");
+          var netmask = $("#srcmask");
+	  $('#MEMBERS').append("<option value='" + ip.val() + "/" + netmask.val() + "'>"+ip.val() + "/" + netmask.val() + '</option>');
+          ip.val("");
+          return false;
+     });
 
-var ids=new Array('srchost','srcnet','srcalias');
+     // When a user highlights an item and clicks remove, remove it
+          $('#remove').click(function() {  
+          return !$('#MEMBERS option:selected').remove();  
+     });
 
-</script>
+     // When a user clicks on the submit button, post the form.
+     $(".buttonrow").click(function () {
+	  displayProcessingDiv();
+	  var Options = $.map($('#MEMBERS option'), function(e) { return $(e).val(); } );
+	  var str = Options.join(' ');
+	  var QueryString = $("#iform").serialize()+'&submit=Save&routelist='+str;
+          alert(QueryString);
+	  $.post("forms/vpn_form_submit.php", QueryString, function(output) {
+               $("#save_config").html(output);	  
+               //setTimeout(function(){ $('#save_config').fadeOut('slow'); }, 1000);            
+	  });
+	  return false;
+     });
+  
+});
+</script> 
 
-<?php if ($input_errors) print_input_errors($input_errors); ?>
-<?php if ($savemsg) print_info_box($savemsg); ?>
-<p><span class="vexpl"><span class="red"><strong>Note: </strong></span>the
-options on this page are intended for use by advanced users only.</span></p>
-<form action="forms/vpn_form_submit.php" onSubmit="selectAllOptions(MEMBERS)" method="post" name="iform" id="iform">
-<input name="formname" type="hidden" value="vpn_pptp_client">
-<table width="100%" border="0" cellpadding="6" cellspacing="0">
-<?php if (!file_exists($d_pptpclient_pid)): ?><p>
-<input name="submit" type="submit" class="formbtn" id="Connect" value="Connect"></p>
-<?php endif; ?>
-<?php if (file_exists($d_pptpclient_pid)): ?><p>
-<input name="submit" type="submit" class="formbtn" id="Disconnect" value="Disconnect"></p>
-<?php endif; ?>
-<tr>
-<td colspan="2" valign="top" class="listtopic">PPTP Server</td>
-</tr>
-<tr>
-<td width="22%" valign="top" class="vncellreq">Enable PPTP Client</td>
-<td width="78%" class="vtable">
-<input name="enable" type="checkbox" id="enable" value="Yes" <?php if ($pconfig['enable']) echo "checked";
-?>>
-</span></td>
-</tr>
-<tr>
-<td width="22%" valign="top" class="vncellreq">Attempt Connection on Bootup</td>
-<td width="78%" class="vtable">
-<input name="connectonboot" type="checkbox" id="connectonboot" value="Yes" <?php if ($pconfig['connectonboot']) echo "checked";
-?>>
-</span></td>
-</tr>
-<tr>
-<td width="22%" valign="top" class="vncellreq">Server Address</td>
-<td width="78%" class="vtable">
-<input name="server" type="text" class="formfld" id="server" size="25" value="<?=htmlspecialchars($pconfig['server']);?>">
-</span></td>
-</tr>
-<tr>
-<td width="22%" valign="top" class="vncellreq">Username</td>
-<td width="78%" class="vtable">
-<input name="username" type="text" class="formfld" id="username" size="10" value="<?=htmlspecialchars($pconfig['username']);?>">
-</span></td>
-</tr>
-<tr>
-<td width="22%" valign="top" class="vncellreq">Password</td>
-<td width="78%" class="vtable">
-<input name="password" type="password" class="formfld" id="password" size="10" value="<?=htmlspecialchars($pconfig['password']);?>">
-</span></td>
-</tr>
-<tr>
-<td width="22%" valign="top" class="vncellreq">Remote Network(s)</td>
-<td width="78%" class="vtable">
-<select name="MEMBERS[]" style="width: 150px; height: 100px" id="MEMBERS" multiple>
-<?php for ($i = 0; $i<sizeof($pconfig['routelist']); $i++): ?>
-<option value="<?=$pconfig['routelist']["route$i"];?>">
-<?=$pconfig['routelist']["route$i"];?>
-</option>
-<?php endfor; ?>
-</select>
-<input type=button onClick="removeOptions(MEMBERS)"; value='Remove Selected'><br><br>
-<strong>Type</strong>
-<select name="srctype" class="formfld" id="srctype" onChange="switchsrcid(document.iform.srctype.value)">
-<option value="srchost" selected>Host</option>
-<option value="srcnet" >Network</option>
-<option value="srcalias" >Alias</option>
-</select><br><br>
-<div id='srchost' style="display:block;">
-<strong>Address</strong>
-<?=$mandfldhtml;?><input name="srchost" type="text" class="formfld" id="srchost" size="16" value="<?=htmlspecialchars($pconfig['address']);?>">
-<input type=button onClick="addOption('MEMBERS',document.iform.srchost.value + '/32',document.iform.srchost.value + '/32')"; value='Add'>
-</div>
-<div id='srcnet' style="display:none;">
-<strong>Address</strong>
-<?=$mandfldhtml;?><input name="srcnet" type="text" class="formfld" id="srcnet" size="16" value="<?=htmlspecialchars($pconfig['address']);?>">
-<strong>/</strong>
-<select name="srcmask" class="formfld" id="srcmask">
-<?php for ($i = 30; $i >= 1; $i--): ?>
-<option value="<?=$i;?>" <?php if ($i == $pconfig['address_subnet']) echo "selected"; ?>>
-<?=$i;?>
-</option>
-<?php endfor; ?>
-</select>
-<input type=button onClick="addOption('MEMBERS',document.iform.srcnet.value + '/' + document.iform.srcmask.value,document.iform.srcnet.value + '/' + document.iform.srcmask.value)"; value='Add'>
-</div>
-<div id='srcalias' style="display:none;">
-<strong>Alias</strong>
-<select name="srcalias" class="formfld" id="srcalias">
-<?php
-                       $defaults = filter_system_aliases_names_generate();
-                       $defaults = split(' ', $defaults);
-                       foreach( $defaults as $i): ?>
-<option value="<?='$' . $i;?>"><?=$i;?>
-</option>
-<?php endforeach; ?>
-<?php foreach($config['aliases']['alias'] as $i): ?>
-<option value="<?='$' . $i['name'];?>" <?php if ($i == $pconfig['address_subnet']) echo "selected"; ?>>
-<?=$i['name'];?>
-</option>
-<?php endforeach; ?>
-</select>
-<input type=button onClick="addOption('MEMBERS',document.iform.srcalias.value + '/32',document.iform.srcalias.value + '/32')"; value='Add'>
-</div>
-</td>
-</tr>
-<tr>
-<td width="22%" valign="top" class="vncellreq">Generate NAT rules for PPTP</td>
-<td width="78%" class="vtable">
-<input name="autonat" type="checkbox" id="autonat" value="Yes" <?php if ($pconfig['autonat']) echo "checked";
-?>>
-</span></td>
-</tr>
-<tr>
-<tr>
-<td width="22%" valign="top" class="vncellreq">LCP debug log</td>
-<td width="78%" class="vtable">
-<input name="lcplog" type="checkbox" id="lcplog" value="Yes" <?php if ($pconfig['lcplog']) echo "checked";
-?>>
-</span></td>
-</tr>
-<td width="22%" valign="top">&nbsp;</td>
-<td width="78%">
-<input name="submit" type="submit" class="formbtn" value="Save">
-</td>
-</tr>
-</table>
-</form>
+<div id="wrapper">
+        <div class="form-container ui-tabs ui-widget ui-corner-all">
+
+	<form action="forms/vpn_form_submit.php" method="post" name="iform" id="iform">
+        <input name="formname" type="hidden" value="vpn_pptp_client">
+	<input name="id" type="hidden" value="<?=$id;?>">
+	<fieldset>
+		<legend><?=join(": ", $pgtitle);?></legend>
+			<div>
+                             <label for="enable">Enable PPTP Client</label>
+                             <input name="enable" type="checkbox" id="enable" value="Yes" <?php if ($pconfig['enable']) echo "checked"; ?>>
+                             <p class="note">You may enter a description here for your reference (not parsed).</p>
+			</div>
+                        <div>
+                             <label for="connectonboot">Attempt Connection on Bootup</label>
+                             <input name="connectonboot" type="checkbox" id="connectonboot" value="Yes" <?php if ($pconfig['connectonboot']) echo "checked"; ?>>
+			     <p class="note">You may enter a description here for your reference (not parsed).</p>
+			</div>
+                        <div>
+                             <label for="server">Server Address</label>
+                             <input name="server" type="text" class="formfld" id="server" size="25" value="<?=htmlspecialchars($pconfig['server']);?>">
+			     <p class="note">You may enter a description here for your reference (not parsed).</p>
+			</div>
+                        <div>
+                             <label for="username">Username</label>
+                             <input name="username" type="text" class="formfld" id="username" size="10" value="<?=htmlspecialchars($pconfig['username']);?>">
+			     <p class="note">You may enter a description here for your reference (not parsed).</p>
+			</div>
+                        <div>
+                             <label for="password">Password</label>
+                             <input name="password" type="password" class="formfld" id="password" size="10" value="<?=htmlspecialchars($pconfig['password']);?>">
+			     <p class="note">You may enter a description here for your reference (not parsed).</p>
+			</div>
+			<div>
+                    <label for="tunnelforce">PPTP Connection Force</label>
+                    <input name="tunnelforce" type="checkbox" id="forcetunnel" value="Yes" <?php if ($pconfig['forcetunnel']) echo "checked"; ?>>
+                    <p class="note">Check this box to force all traffic to be routed to the PPTP server instead of the WAN default gateway ip.</p>
+        	</div>
+			<div>
+                    <label for="tunnelforceoverride">PPTP Connection Force Override</label>
+                    <input name="tunnelforceoverride" type="checkbox" id="tunnelforceoverride" value="Yes" <?php if ($pconfig['forcetunneloverride']) echo "checked"; ?>>
+                    <p class="note">In the event of a PPTP tunnel failure, connections will be sent to the WAN default gateway ip.</p>
+            </div>
+                        <div id="routes">
+                             <label for="members">Remote Network(s)</label>
+                             <select name="MEMBERS" style="width: 160px; height: 100px" id="MEMBERS" multiple>
+        <?php for ($i = 0; $i<sizeof($pconfig['routelist']); $i++): ?>
+                <option value="<?=$pconfig['routelist']["route$i"];?>">
+                <?=$pconfig['routelist']["route$i"];?>
+                </option>
+                <?php endfor; ?>
+        </select>
+                <input type=button id='remove' value='Remove Selected'><br><br>
+                  <label for="members">Type</label>
+                    <select name="srctype" class="formfld" id="srctype">
+                      <option value="srchostdiv" selected>Host</option>
+                      <option value="srcnetdiv" >Network</option>
+                      <option value="srctablediv" >Alias</option>
+        			  <option value="srcuserdiv" >User</option>
+		            </select>
+                </div>
+                <div id='srchostdiv' style="display:block;">
+                 <label for="srchost">Address</label>
+                  <input name="srchost" type="text" class="formfld" id="srchost" size="16" value="<?=htmlspecialchars($pconfig['address']);?>">
+                <input type=button id='hostaddbutton' value='Add'>
+                </div>
+                <div id='srcnetdiv' style="display:none;">
+                 <label for="srcnet">Address</label>
+                  <input name="srcnet" type="text" class="formfld" id="srcnet" size="16" value="<?=htmlspecialchars($pconfig['address']);?>">
+                   <strong>/</strong>
+                    <select name="srcmask" class="formfld" id="srcmask">
+                      <?php for ($i = 30; $i >= 1; $i--): ?>
+                      <option value="<?=$i;?>" <?php if ($i == $pconfig['address_subnet']) echo "selected"; ?>>
+                      <?=$i;?>
+                      </option>
+                      <?php endfor; ?>
+                    </select>
+                <input type=button id='netaddbutton' value='Add'>
+                </div>
+                <div id='srctablediv' style="display:none;">
+                 <label for="srctable">Alias</label>
+                    <select name="srctable" class="formfld" id="srctable">
+                      <?php foreach($config['tablees']['table'] as $i): ?>
+                      <option value="<?='$' . $i['name'];?>" <?php if ($i == $pconfig['address_subnet']) echo "selected"; ?>>
+                        <?=$i['name'];?>
+                      </option>
+                      <?php endforeach; ?>
+                    </select>
+                <input type=button value='Add'>
+                </div>
+               	<div id='srcuser' style="display:none;">
+                <strong>User</strong>
+                    <select name="srcuser" class="formfld" id="srcuser">
+                      <?php foreach($config['system']['accounts']['user'] as $i): ?>
+                      <option value="<?=$i['name'];?>">
+                        <?=$i['name'];?>
+                      </option>
+                      <?php endforeach; ?>
+                    </select>
+                <input type=button value='Add'>
+                </div>
+                <div>
+                    <label for="autonat">Generate NAT rules for PPTP</label>
+                    <input name="autonat" type="checkbox" id="autonat" value="Yes" <?php if ($pconfig['autonat']) echo "checked"; ?>>
+                    <p class="note">You may enter a description here for your reference (not parsed).</p>
+		</div>
+                <div>
+                    <label for="lcplog">LCP debug log</label>
+                    <input name="lcplog" type="checkbox" id="lcplog" value="Yes" <?php if ($pconfig['lcplog']) echo "checked"; ?>>
+                    <p class="note">You may enter a description here for your reference (not parsed).</p>
+		</div> 
+		</div>      
+	</fieldset>
+	
+	<div class="buttonrow">
+		<input type="submit" value="Save" class="button" />
+	</div>
+
+	</form>
+	
+	</div><!-- /form-container -->
+	
+</div><!-- /wrapper -->

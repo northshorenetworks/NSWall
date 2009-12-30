@@ -96,6 +96,7 @@ COPY    ${CURDIR}/initial-conf/rc.queryconfigserver     etc/rc.queryconfigserver
 COPY    ${CURDIR}/initial-conf/rc.reboot                etc/rc.reboot
 COPY    ${CURDIR}/initial-conf/php.ini			etc/php.ini
 COPY    ${CURDIR}/initial-conf/config.xml               conf.default/config.xml
+COPY    ${CURDIR}/initial-conf/hwplatformconfig.xml     etc/hwplatformconfig.xml
 COPY	${BINDIR}/zoneinfo.tgz				usr/share/zoneinfo.tgz
 COPY    ${DESTDIR}/usr/bin/nohup			usr/bin/nohup
 

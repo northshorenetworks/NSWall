@@ -65,20 +65,11 @@ if ($_GET['act'] == "del") {
 	}
 }
 ?>
-<?php include("fbegin.inc"); ?>
 <form action="firewall_carp_vid.php" method="post">
 <?php if ($savemsg) print_info_box($savemsg); ?>
 <table width="100%" border="0" cellpadding="0" cellspacing="0">
 <tr><td class="tabnavtbl">
   <ul id="tabnav">
-  <?php
- $tabs = array('Configuration' => 'firewall_carp.php',
-                'Virtual Host IDs' => 'firewall_carp_vid.php',
-                'Sync' => 'firewall_pfsync.php',
-                'Config Sync Hosts' => 'firewall_carp_sync_hosts.php');
- 
-  dynamic_tab_menu($tabs);
-  ?>    
   </ul>
   </ul>
   </td></tr>
@@ -122,4 +113,3 @@ if ($_GET['act'] == "del") {
 </tr>
 </table>
 </form>
-<?php include("fend.inc"); ?>

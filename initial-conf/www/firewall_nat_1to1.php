@@ -73,7 +73,8 @@ if ($_GET['act'] == "del") {
 	}
 }
 ?>
-<?php include("fbegin.inc"); ?>
+<script type="text/javascript" src="js/contentload.js"></script>
+<p class="pgtitle"><?=join(": ", $pgtitle);?></p>
 <form action="firewall_nat_1to1.php" method="post">
 <?php if ($savemsg) print_info_box($savemsg); ?>
 <?php if (file_exists($d_natconfdirty_path)): ?><p>
@@ -136,4 +137,3 @@ if ($_GET['act'] == "del") {
 </tr>
 </table>
 </form>
-<?php include("fend.inc"); ?>

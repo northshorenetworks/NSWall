@@ -3,47 +3,61 @@
 <head>
 <title>NSWall User Login</title>
 
-<script type="text/javascript" src="js/jquery-1.3.2.min.js"></script>
-<script type="text/javascript" src="js/jquery.simplemodal.js"></script>
-<script type="text/javascript" src="js/init.js"></script>
-
-<link type='text/css' href='style/stylesheet.css' rel='stylesheet' media='screen' />
-
-<link type='text/css' href='style/basic.css' rel='stylesheet' media='screen' />
+<link href="gui.css" rel="stylesheet" type="text/css">
+<link type="text/css" href="style/jquery-ui-1.7.2.custom.css" rel="stylesheet" />
 
 </head>
 
+<script type="text/javascript" src="js/jquery-1.3.2.min.js"></script>
+<script type="text/javascript" src="js/ui.core.js"></script>
+<script type="text/javascript" src="js/ui.dialog.js"></script>
+<script type="text/javascript" src="js/jquery.form.js"></script>
+
+
+<script language="javascript">
+
+     $(document).ready(function() {
+		$("#login_nswall").dialog({ width: 800, height: 600, hide: 'scale', show: 'scale', resizable: false, draggable: false, closeOnEscape: false, modal: true });
+        $('div fieldset div').addClass('ui-widget ui-widget-content ui-corner-content');
+        // When a user clicks on the submit button, post the form.
+          $(".buttonrow").click(function () {
+               var QueryString = $("#login").serialize();
+               $.post("do-login.php", QueryString, function(output) {
+                    $("#login_nswall").html(output);
+               });
+           return false;
+          });
+     });
+</script>
+
 <body>
 
-<div id="login_form" style='display:none'>
-
-<div id="banner" style='display:block'>
-
-<center><h1><img src="images/key.png" align="absmiddle">&nbsp;LOGIN</h1>
-
-</div>
-
-<div id="status" align="left" style="margin-top: 20px; width: 150px;">
-
-<div id="login_response"><!-- spanner --></div> </center>
-
-<form id="login" action="javascript:alert('success!');">
+<div id="login_nswall" title="NSWall Login">
+<div id="wrapper">
+<div class="form-container ui-tabs ui-widget ui-corner-all">
+<form id="login" action="do-login.php" method="post" name="login">
 <input type="hidden" name="action" value="user_login">
 <input type="hidden" name="module" value="login">
 
-<label>Username</label><br /><input type="text" size="10" name="username"><br/>
-<label>Password</label><br/><input type="password" size="10" name="password"><br/>  
-
-<input value="Login" name="Login" id="submit" class="big" type="submit" /><br/>
+ <fieldset>
+        <legend>System : User : Login</legend>
+            <div>
+                             <label for="username">Username</label>
+                             <input type="text" size="10" name="username">
+            </div>
+            <div>
+                             <label for="password">Password</label>
+                             <input type="password" size="10" name="password">
+            </div>
+            <div class="buttonrow">
+                             <input type="submit" value="Login" class="button" />
+            </div>
+ </fieldset>
 
 </form>
 
 </div>
-
-<div id="ajax_loading">
-<center><img align="absmiddle" src="images/spinner.gif">&nbsp;Processing...</center>
 </div>
-
 </div>
 
 </body>

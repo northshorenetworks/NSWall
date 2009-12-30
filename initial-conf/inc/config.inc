@@ -42,6 +42,29 @@ if (file_exists("{$g['etc_path']}/platform")) {
 	$g['platform'] = $g['fullplatform'] = "unknown";
 }
 
+/* determine hwplatform */
+	exec('/sbin/sysctl machdep.cpufeature', $cpufeature);
+	exec('/sbin/sysctl hw.vendor', $hwvendor);
+
+    if ($cpufeature[0] == 'machdep.cpufeature=125938685') {
+        $fh = fopen('/etc/hwplatform', 'w+');
+        fwrite($fh, 'QEMU');
+        fclose($fh);
+	} elseif ($cpufeature[0] == 'machdep.cpufeature=-1075184641') {
+        $fh = fopen('/etc/hwplatform', 'w+');
+        fwrite($fh, 'JETWAY');
+        fclose($fh);		
+	} elseif ($hwvendor[0] == 'hw.vendor=VMware, Inc.') {
+		$fh = fopen('/etc/hwplatform', 'w+');
+		fwrite($fh, 'VMWARE');
+		fclose($fh);
+	} else {
+        $fh = fopen('/etc/hwplatform', 'w+');
+        fwrite($fh, 'ALIX');
+        fclose($fh);
+    }
+
+
 /* read module */
 if (file_exists("{$g['etc_path']}/module")) {
         $g['fullmodule'] = chop(file_get_contents("{$g['etc_path']}/module"));
@@ -50,6 +73,8 @@ if (file_exists("{$g['etc_path']}/module")) {
 } else {
         $g['module'] = $g['fullmodule'] = "unknown";
 }
+
+
 
 if ($g['booting']) {
 	/* find the device where config.xml resides and write out an fstab */
@@ -94,7 +119,7 @@ if ($g['booting']) {
 *******************************************************************************
 * FATAL ERROR                                                                 *
 * The device that contains the configuration file (config.xml) could not be   *
-* found. m0n0wall cannot continue booting.                                    *
+* found. NSWall cannot continue booting.                                      *
 *******************************************************************************
 
 
@@ -150,7 +175,7 @@ if (!$noparseconfig) {
 					echo "file is inserted. If it isn't, your configuration changes will be lost\n";
 					echo "on reboot.\n";
 				} else {
-					echo "XML configuration file not found. m0n0wall cannot continue booting.\n"; 
+					echo "XML configuration file not found. NSWall cannot continue booting.\n"; 
 
 					#mwexec("/sbin/halt");
 					exit;
@@ -170,9 +195,9 @@ if (!$noparseconfig) {
 
 *******************************************************************************
 * WARNING!                                                                    *
-* The current configuration has been created with a newer version of m0n0wall *
+* The current configuration has been created with a newer version of NSWall   *
 * than this one! This can lead to serious misbehavior and even security       *
-* holes! You are urged to either upgrade to a newer version of m0n0wall or    *
+* holes! You are urged to either upgrade to a newer version of NSWall or      *
 * revert to the default configuration immediately!                            *
 *******************************************************************************
 

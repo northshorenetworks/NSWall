@@ -8,6 +8,7 @@ COPY ${DESTDIR}/usr/libexec/sftp-server         usr/libexec/sftp-server
 COPY ${DESTDIR}/usr/libexec/tftpd               usr/libexec/tftpd
 COPY ${DESTDIR}/usr/bin/systat                  usr/bin/systat
 COPY ${DESTDIR}/usr/bin/nc                  	usr/bin/nc
+COPY ${BINDIR}/iperf	                        usr/bin/iperf
 
 SPECIAL chown root.kmem         usr/bin/systat
 SPECIAL chmod 2755              usr/bin/systat

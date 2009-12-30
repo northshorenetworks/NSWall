@@ -82,8 +82,8 @@ $menu['System']['Static routes'] = array('system_routes.php');
 $menu['System']['Firmware'] = array('system_firmware.php');
 $menu['System']['Advanced'] = array('system_advanced.php');
 $menu['System']['Networking'] = array('system_networking.php');
-$menu['System']['Manage Certificates'] = array('system_camanager.php');
-$menu['System']['User manager'] = array('system_usermanager.php');
+//$menu['System']['Manage Certificates'] = array('system_camanager.php');
+//$menu['System']['User manager'] = array('system_usermanager.php');
  
 $menu['Firewall']['ALTQ'] =array('firewall_altq.php');
 //$menu['Firewall']['Abusive Sites'] = array('firewall_abusive_sites.php');
@@ -96,8 +96,8 @@ if ($g['module'] == 'FIREWALL') {
 	$menu['Services']['DHCP server'] = array('services_dhcp.php');
 	$menu['Services']['DNS forwarder'] = array('services_dnsmasq.php');
 }
-$menu['Services']['CARP'] = array('firewall_carp.php');
-$menu['Services']['Config Server'] = array('services_config_server.php');
+//$menu['Services']['CARP'] = array('firewall_carp.php');
+//$menu['Services']['Config Server'] = array('services_config_server.php');
 // $menu['Services']['Relayd'] = array('firewall_relayd_relays.php');
  
 if ($g['module'] == 'FIREWALL') {
@@ -152,6 +152,7 @@ $menu['Diagnostics']['Utilities'] = array('diag_ping.php',
  
 </head>
 <script src="js/jquery-1.3.2.min.js"></script> 
+<script src="js/jquery-ui-1.7.2.custom.min.js</script>
 <body link="#0000CC" vlink="#0000CC" alink="#0000CC">
 <div id="webui">
 <div class="containfloat" id="header">

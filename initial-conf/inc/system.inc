@@ -30,6 +30,18 @@
 /* include all configuration functions */
 require_once("functions.inc");
 
+function system_determine_hwplatform(){
+	global $g;
+	/* read hwplatform */
+    if (file_exists("{$g['etc_path']}/hwplatform")) {
+        $g['hwplatform'] = chop(file_get_contents("{$g['etc_path']}/hwplatform"));
+        $pla = explode("_", $g['hwplatform']);
+        $g['hwplatform'] = $pla[0];
+    }
+    $hwplatformconfig = parse_nonconfig_xml("{$g['etc_path']}/hwplatformconfig.xml");
+    $g['hwplatformconfig'] = $hwplatformconfig[strtoupper($g['hwplatform'])];
+}
+
 function system_build_ps_database(){
 	mwexec("dev_mkdb");
 }
@@ -392,7 +404,7 @@ function system_advancednetwork_configure() {
 	/* UDP receive window */
         $udprcv = $config['system']['networking']['udprcv'];        
         mwexec("/sbin/sysctl net.inet.udp.recvspace=$udprcv");
-        /* TCP send window */
+        /* UDP send window */
         $udpsnd = $config['system']['networking']['udpsnd'];        
         mwexec("/sbin/sysctl net.inet.udp.sendspace=$udpsnd");
 }	

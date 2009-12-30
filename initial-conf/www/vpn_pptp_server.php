@@ -86,7 +86,6 @@ if ($_POST) {
 	}
 }
 ?>
-<?php include("fbegin.inc"); ?>
 <script language="JavaScript">
 <!--
 function get_radio_value(obj)
@@ -109,6 +108,7 @@ function enable_change() {
 }
 //-->
 </script>
+<p class="pgtitle"><?=join(": ", $pgtitle);?></p>
 <form action="vpn_pptp_server.php" method="post" name="iform" id="iform">
 <?php if ($input_errors) print_input_errors($input_errors); ?>
 <?php if ($savemsg) print_info_box($savemsg); ?>
@@ -171,4 +171,3 @@ function enable_change() {
 enable_change();
 //-->
 </script>
-<?php include("fend.inc"); ?>

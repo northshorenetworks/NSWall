@@ -79,21 +79,24 @@ if (!isset($config['system']['disablefirmwarecheck']))
 
 // pre-submit callback 
 function showRequest(formData, jqForm, options) { 
-    displayProcessingDiv(); 
+    $("#upload_firmware").html('');
+    $('#upload_firmware').dialog('open'); 
     return true; 
 }
 
 // post-submit callback 
 function showResponse(responseText, statusText)  {
-    if(responseText.match(/SUBMITSUCCESS/)) {  
-           setTimeout(function(){ $('#save_config').fadeOut('slow'); }, 2000);
-    }
+          $("#upload_firmware").html(responseText);
+               if(output.match(/SUBMITSUCCESS/))
+                   setTimeout(function(){ $('#upload_firmware').dialog('close'); }, 2000);
+          return false;
+   	
 } 
 
         // wait for the DOM to be loaded
     $(document).ready(function() {
             var options = {
-                        target:        '#save_config',  // target element(s) to be updated with server response
+                        target:        '#upload_firmware',  // target element(s) to be updated with server response
                         beforeSubmit:  showRequest,  // pre-submit callback 
                         success:       showResponse  // post-submit callback
             };
@@ -102,14 +105,11 @@ function showResponse(responseText, statusText)  {
            $('#iform').ajaxForm(options);
     });
 </script>
-
+<p class="pgtitle"><?=join(": ", $pgtitle);?></p>
 <?php if ($input_errors) print_input_errors($input_errors); ?>
 <?php if ($savemsg) print_info_box($savemsg); ?>
 <?php if ($fwinfo) echo $fwinfo; ?>
-<?php if (!in_array($g['platform'], $fwupplatforms)): ?>
-<p><strong>Firmware uploading is not supported on this platform.</strong></p>
-<?php else: ?>
-            <?php if (!file_exists($d_firmwarelock_path)): ?>
+<?php if (!file_exists($d_firmwarelock_path)): ?>
             <p>Click &quot;Begin 
               Upgrade&quot; below, then choose the image file (<?=$g['fullplatform'];?>-*.img)
 			  to be uploaded.<br>Click &quot;Upgrade firmware&quot; 
@@ -135,4 +135,4 @@ function showResponse(responseText, statusText)  {
                 </tr>
               </table>
 </form>
-<?php endif; endif; ?>
+<?php endif; ?>

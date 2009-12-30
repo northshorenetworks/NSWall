@@ -85,7 +85,6 @@ if ($_GET['act'] == "del") {
 }
 
 ?>
-<?php include("fbegin.inc"); ?>
 <?php if ($input_errors) print_input_errors($input_errors); ?>
 <?php if (file_exists($d_sysrebootreqd_path)) print_info_box(get_std_save_message(0)); ?>
 <table width="100%" border="0" cellpadding="0" cellspacing="0">
@@ -135,4 +134,3 @@ if ($_GET['act'] == "del") {
 			  </td>
 	</tr>
 </table>
-<?php include("fend.inc"); ?>

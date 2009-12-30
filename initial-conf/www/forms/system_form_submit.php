@@ -167,18 +167,16 @@ if ($_POST) {
     				$config['system']['networking']['maxinputque'] = $_POST['maxinputque'];
     				$config['system']['networking']['maxicmperror'] = $_POST['maxicmperror'];
     				$config['system']['networking']['ackonpush'] = $_POST['ackonpush'] ? true : false;
-    				$config['system']['networking']['ecn'] = $_POST['system']['ecn'] ? true : false;
+    				$config['system']['networking']['ecn'] = $_POST['ecn'] ? true : false;
     				$config['system']['networking']['tcpscaling'] = $_POST['tcpscaling'] ? true : false;
     				$config['system']['networking']['tcprcv'] = $_POST['tcprcv'];
-                		$config['system']['networking']['tcpsnd'] = $_POST['tcpsnd'];
+                	$config['system']['networking']['tcpsnd'] = $_POST['tcpsnd'];
     				$config['system']['networking']['sack'] = $_POST['sack'] ? true : false;
     				$config['system']['networking']['udprcv'] = $_POST['udprcv'];
     				$config['system']['networking']['udpsnd'] = $_POST['udpsnd'];
 
- 	   			write_config();
+ 	   				write_config();
      				push_config('networking');
-
- 	     			touch($d_sysrebootreqd_path);
     			}
 
     			$retval = 0;
@@ -189,10 +187,15 @@ if ($_POST) {
     			}
     			$savemsg = get_std_save_message($retval);
 			if ($retval == 0) {
-                                sleep(2);
-                                echo '<!-- SUBMITSUCCESS --><center>Configuration saved successfully</center>';
-                        }
-			return $retval;	
+                   	sleep(2);
+            	    echo '<!-- SUBMITSUCCESS --><center>Configuration saved successfully</center>';
+			} else {
+				sleep(2);
+                    echo '<center>Errors were found<br>Configuration not saved<br>';
+					print_input_errors($input_errors);
+					echo '<INPUT TYPE="button" value="OK" onClick="hidediv(\'save_config\')"></center>';
+			}
+			return $retval;
 		case "system_users":
 
 			if (isset($_POST['id']))
@@ -314,9 +317,50 @@ if ($_POST) {
                                 echo '<!-- SUBMITSUCCESS --><center>Configuration saved successfully</center>';
                         }
 			return 0; 
+			case "system_reboot":
+                    $reboot = $_POST['reboot'];
+			if($reboot == 'yes') {
+			echo '<script type="text/javascript">				
+								setTimeout(function(){ $("#save_config").dialog("close"); }, 2000);
+                                setTimeout(function(){ $("#reboot_nswall").dialog("open"); }, 2250);
+                                setTimeout(function(){ $("#reboot_nswall").dialog("close"); window.location = "/login.htm"; }, 75000);
+                        </script>';	
+                                echo "<center>The device will now reboot!</center>";
+				system_reboot();						
+			}
+			return 0;	
+			case "system_status":
+            	$config['system']['notes'] = base64_encode($_POST['notes']);
+				write_config();
+				sleep(2);
+                echo '<!-- SUBMITSUCCESS --><center>Configuration saved successfully</center>';
+			return 0;	
 			default;
- echo '<center>Unknown form submited!<br><INPUT TYPE="button" value="OK" name="OK" onClick="hidediv(\'save_config\')"></center>';
+ 				echo '<center>Unknown form submited!<br><INPUT TYPE="button" value="OK" name="OK"></center>';
+				 // When a user clicks on the submit button, post the form.
+				echo '<script type="text/javascript">
+					$(".buttonrow").click(function () {
+               			setTimeout(function(){ $("#save_config").fadeOut("slow"); }, 1000);
+      				});
+				</script>';
 			return 0;
 	}
+}
+if ($_GET) {
+     $id = $_GET['id'];
+     $action = $_GET['action'];
+     $type = $_GET['type'];
+
+     if ($type == 'routes') {
+	 if (!is_array($config['staticroutes']['route']))  
+     	 $config['staticroutes']['route'] = array();  
+        
+	 staticroutes_sort();  
+	 $a_routes = &$config['staticroutes']['route'];  
+		  if ($action == 'delete') {
+               unset($a_routes[$id]);
+               write_config();
+          }
+     }
 }
 ?>

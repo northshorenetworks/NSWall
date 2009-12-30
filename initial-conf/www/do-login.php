@@ -39,8 +39,9 @@ if($formuser != ADMINUSER) {
 	}
 } else {
         if($formpassword != ADMINPASSWORD ) {
-        	$auth_error = '<div id="notification_error">The login info is not correct.</div>';
-    		echo $auth_error;
+        	echo '<script type="text/javascript">                                      
+                                        setTimeout(function(){ window.location = "/login.htm"; }, 1000);
+                                        </script>';
 	}
 }
 
@@ -57,7 +58,10 @@ if (($formuser == ADMINUSER ) && ($formpassword == ADMINPASSWORD )) {
         $adminHome = ADMINHOME;
         mwexec("/usr/bin/logger -p local0.info -t webui user: {$_SESSION['adminUser']} successfully logged in from: {$_SERVER
 ['REMOTE_ADDR']}");
-        echo 'ADMINOK'; // this response is checked in 'process-login.js'
+        echo '<script type="text/javascript">                                      
+          $("#login_nswall").dialog("close");
+		  window.location = "/#index";
+          </script>';
 }
 // Successful nonadmin login
 

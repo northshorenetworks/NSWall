@@ -43,6 +43,8 @@ function dump_ipsecconf() {
 }
 
 ?>
+<script type="text/javascript" src="js/contentload.js"></script>
+<p class="pgtitle"><?=join(": ", $pgtitle);?></p>
 <table width="100%" border="0" cellpadding="0" cellspacing="0">
   <tr><td class="tabnavtbl">
   <ul id="tabnav">

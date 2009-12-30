@@ -64,7 +64,6 @@ if ($_POST) {
 		$savemsg = get_std_save_message($retval);
 }
 ?>
-<?php include("fbegin.inc"); ?>
 <script language="JavaScript">
 <!--
 // -->
@@ -127,4 +126,3 @@ if ($_POST) {
 enable_change(false);
 //-->
 </script>
-<?php include("fend.inc"); ?>

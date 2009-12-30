@@ -33,7 +33,6 @@ $pgtitle = array("Diagnostics", "IPsec");
 
 require("guiconfig.inc");
 ?>
-<?php include("fbegin.inc"); ?>
 <table width="100%" border="0" cellpadding="0" cellspacing="0">
   <tr><td class="tabnavtbl">
   <ul id="tabnav">
@@ -129,4 +128,3 @@ foreach ($sad as $sa): ?>
 <p><strong>No IPsec security associations.</strong></p>
 <?php endif; ?>
 </td></tr></table>
-<?php include("fend.inc"); ?>

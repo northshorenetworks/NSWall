@@ -1,133 +1,91 @@
 #!/bin/php
-<?php 
-/*
-	$Id: system_routes_edit.php,v 1.1.1.1 2008/08/01 07:56:20 root Exp $
-	part of m0n0wall (http://m0n0.ch/wall)
-	
-	Copyright (C) 2003-2006 Manuel Kasper <mk@neon1.net>.
-	All rights reserved.
-	
-	Redistribution and use in source and binary forms, with or without
-	modification, are permitted provided that the following conditions are met:
-	
-	1. Redistributions of source code must retain the above copyright notice,
-	   this list of conditions and the following disclaimer.
-	
-	2. Redistributions in binary form must reproduce the above copyright
-	   notice, this list of conditions and the following disclaimer in the
-	   documentation and/or other materials provided with the distribution.
-	
-	THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
-	INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
-	AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
-	AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
-	OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
-	SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-	INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
-	CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-	ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-	POSSIBILITY OF SUCH DAMAGE.
-*/
-
+<?php
+ 
 $pgtitle = array("System", "Static routes", "Edit");
 require("guiconfig.inc");
 
 if (!is_array($config['staticroutes']['route']))
-	$config['staticroutes']['route'] = array();
+    $config['staticroutes']['route'] = array();
 
 staticroutes_sort();
 $a_routes = &$config['staticroutes']['route'];
 
 $id = $_GET['id'];
 if (isset($_POST['id']))
-	$id = $_POST['id'];
+    $id = $_POST['id'];
 
 if (isset($id) && $a_routes[$id]) {
-	$pconfig['interface'] = $a_routes[$id]['interface'];
-	list($pconfig['network'],$pconfig['network_subnet']) = 
-		explode('/', $a_routes[$id]['network']);
-	$pconfig['gateway'] = $a_routes[$id]['gateway'];
-	$pconfig['descr'] = $a_routes[$id]['descr'];
+    $pconfig['interface'] = $a_routes[$id]['interface'];
+    list($pconfig['network'],$pconfig['network_subnet']) =
+        explode('/', $a_routes[$id]['network']);
+    $pconfig['gateway'] = $a_routes[$id]['gateway'];
+    $pconfig['descr'] = $a_routes[$id]['descr'];
 }
 
-if ($_POST) {
-
-	unset($input_errors);
-	$pconfig = $_POST;
-
-	/* input validation */
-	$reqdfields = explode(" ", "interface network network_subnet gateway");
-	$reqdfieldsn = explode(",", "Interface,Destination network,Destination network bit count,Gateway");
-	
-	do_input_validation($_POST, $reqdfields, $reqdfieldsn, &$input_errors);
-	
-	if (($_POST['network'] && !is_ipaddr($_POST['network']))) {
-		$input_errors[] = "A valid destination network must be specified.";
-	}
-	if (($_POST['network_subnet'] && !is_numeric($_POST['network_subnet']))) {
-		$input_errors[] = "A valid destination network bit count must be specified.";
-	}
-	if (($_POST['gateway'] && !is_ipaddr($_POST['gateway']))) {
-		$input_errors[] = "A valid gateway IP address must be specified.";
-	}
-
-	/* check for overlaps */
-	$osn = gen_subnet($_POST['network'], $_POST['network_subnet']) . "/" . $_POST['network_subnet'];
-	foreach ($a_routes as $route) {
-		if (isset($id) && ($a_routes[$id]) && ($a_routes[$id] === $route))
-			continue;
-
-		if ($route['network'] == $osn) {
-			$input_errors[] = "A route to this destination network already exists.";
-			break;
-		}
-	}
-
-	if (!$input_errors) {
-		$route = array();
-		$route['interface'] = $_POST['interface'];
-		$route['network'] = $osn;
-		$route['gateway'] = $_POST['gateway'];
-		$route['descr'] = $_POST['descr'];
-
-		if (isset($id) && $a_routes[$id])
-			$a_routes[$id] = $route;
-		else
-			$a_routes[] = $route;
-		
-		touch($d_staticroutesdirty_path);
-		
-		write_config();
-		
-		header("Location: system_routes.php");
-		exit;
-	}
-}
 ?>
-<?php if ($input_errors) print_input_errors($input_errors); ?>
-            <form action="system_routes_edit.php" method="post" name="iform" id="iform">
-              <table width="100%" border="0" cellpadding="6" cellspacing="0">
-                <tr> 
-                  <td width="22%" valign="top" class="vncellreq">Interface</td>
-                  <td width="78%" class="vtable">
-					<select name="interface" class="formfld">
-                      <?php $interfaces = array('lan' => 'LAN', 'wan' => 'WAN', 'pptp' => 'PPTP');
-					  for ($i = 1; isset($config['interfaces']['opt' . $i]); $i++) {
-					  	$interfaces['opt' . $i] = $config['interfaces']['opt' . $i]['descr'];
-					  }
-					  foreach ($interfaces as $iface => $ifacename): ?>
-                      <option value="<?=$iface;?>" <?php if ($iface == $pconfig['interface']) echo "selected"; ?>> 
-                      <?=htmlspecialchars($ifacename);?>
-                      </option>
-                      <?php endforeach; ?>
-                    </select> <br>
-                    <span class="vexpl">Choose which interface this route applies to.</span></td>
-                </tr>
-                <tr>
-                  <td width="22%" valign="top" class="vncellreq">Destination network</td>
-                  <td width="78%" class="vtable"> 
-                    <?=$mandfldhtml;?><input name="network" type="text" class="formfld" id="network" size="20" value="<?=htmlspecialchars($pconfig['network']);?>"> 
-				  / 
+
+<script type="text/javascript">
+
+// pre-submit callback 
+function showRequest(formData, jqForm, options) { 
+    displayProcessingDiv(); 
+    return true; 
+}
+
+// post-submit callback 
+function showResponse(responseText, statusText)  {
+    if(responseText.match(/SUBMITSUCCESS/)) {  
+           setTimeout(function(){ $('#save_config').fadeOut('slow'); }, 2000);
+    }
+} 
+
+        // wait for the DOM to be loaded
+    $(document).ready(function() {
+            $('div fieldset div').addClass('ui-widget ui-widget-content ui-corner-content');
+            var options = {
+                        target:        '#save_config',  // target element(s) to be updated with server response
+                        beforeSubmit:  showRequest,  // pre-submit callback 
+                        success:       showResponse  // post-submit callback
+            };
+
+           // bind form using 'ajaxForm'
+           $('#iform').ajaxForm(options);
+    });
+</script> 
+
+<div id="wrapper">
+        <div class="form-container ui-tabs ui-widget ui-corner-all">
+
+	<form action="forms/firewall_form_submit.php" method="post" name="iform" id="iform">
+              <input name="formname" type="hidden" value="system_routes">
+			  <input name="id" type="hidden" value="<?=$id;?>">
+	<fieldset>
+		<legend><?=join(": ", $pgtitle);?></legend>
+			<div>
+                             <label for="interface">Interface</label>
+                             <select name="interface" class="formfld">
+                        <?php
+                        $interfaces = array('wan' => 'WAN', 'pptp' => 'PPTP');
+                        for ($i = 1; isset($config['interfaces']['opt' . $i]); $i++) {
+                            $interfaces['opt' . $i] = $config['interfaces']['opt' . $i]['descr'];
+                        }
+                        foreach ($interfaces as $iface => $ifacename): ?>
+                        <option value="<?=$iface;?>" <?php if ($iface == $pconfig['interface']) echo "selected"; ?>>
+                        <?=htmlspecialchars($ifacename);?>
+                        </option>
+                        <?php endforeach; ?>
+                    </select>
+			     <p class="note">Choose which interface this rule applies to.  Hint: in most cases, you'll want to use WAN here..</p>
+			</div>
+                        <div>
+                             <label for="descr">Description</label>
+                             <input id="descr" type="text" size="50" name="descr" value="<?=htmlspecialchars($pconfig['descr']);?>" />
+			     <p class="note">You may enter a description here for your reference (not parsed).</p>
+			</div>
+                        <div>
+                             <label for="network">Destination</label>
+                             <input name="network" type="text" class="formfld" id="network" size="20" value="<?=htmlspecialchars($pconfig['network']);?>">
+                  /
                     <select name="network_subnet" class="formfld" id="network_subnet">
                       <?php for ($i = 32; $i >= 1; $i--): ?>
                       <option value="<?=$i;?>" <?php if ($i == $pconfig['network_subnet']) echo "selected"; ?>>
@@ -135,29 +93,23 @@ if ($_POST) {
                       </option>
                       <?php endfor; ?>
                     </select>
-                    <br> <span class="vexpl">Destination network for this static route</span></td>
-                </tr>
-				<tr>
-                  <td width="22%" valign="top" class="vncellreq">Gateway</td>
-                  <td width="78%" class="vtable"> 
-                    <?=$mandfldhtml;?><input name="gateway" type="text" class="formfld" id="gateway" size="40" value="<?=htmlspecialchars($pconfig['gateway']);?>">
-                    <br> <span class="vexpl">Gateway to be used to reach the destination network</span></td>
-                </tr>
-				<tr>
-                  <td width="22%" valign="top" class="vncell">Description</td>
-                  <td width="78%" class="vtable"> 
-                    <input name="descr" type="text" class="formfld" id="descr" size="40" value="<?=htmlspecialchars($pconfig['descr']);?>">
-                    <br> <span class="vexpl">You may enter a description here
-                    for your reference (not parsed).</span></td>
-                </tr>
-                <tr>
-                  <td width="22%" valign="top">&nbsp;</td>
-                  <td width="78%"> 
-                    <input name="Submit" type="submit" class="formbtn" value="Save">
-                    <?php if (isset($id) && $a_routes[$id]): ?>
-                    <input name="id" type="hidden" value="<?=$id;?>">
-                    <?php endif; ?>
-                  </td>
-                </tr>
-              </table>
-</form>
+			     <p class="note">Destination network for this static route.</p>
+			</div>
+                        <div>
+                             <label for="gateway">Gateway</label>
+                             <input name="gateway" type="text" class="formfld" id="gateway" size="20" value="<?=htmlspecialchars($pconfig['gateway']);?>">
+                             <p class="note">Gateway to be used to reach the destination network.</p>
+                        </div>
+	</fieldset>
+	
+	<div class="buttonrow">
+		<input type="submit" value="Save" class="button" />
+	</div>
+
+	</form>
+	
+	</div><!-- /form-container -->
+	
+	<p id="copyright">Created by <a href="http://nidahas.com/">Prabhath Sirisena</a>. This stuff is in public domain.</p>
+	
+</div><!-- /wrapper -->

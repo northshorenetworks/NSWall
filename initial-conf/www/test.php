@@ -1,4 +1,4 @@
-#!/bin/php
+#!/bin/ph
 <?php 
 /*
 	Northshore Software Header
@@ -11,250 +11,472 @@ if ($_POST) {
 	$form = $_POST['formname'];
 
 	switch($form) {
-		case "system_advanced":
+		case "firewall_rule":
 			unset($input_errors);
+                
+            if (!is_array($config['filter']['rule']))
+            	$config['filter']['rule'] = array();
 
-			/* input validation */
-			if (!$input_errors) {
-				$config['system']['disableconsolemenu'] = $_POST['disableconsolemenu'] ? true : false;
-				$config['system']['disablefirmwarecheck'] = $_POST['disablefirmwarecheck'] ? true : false;
-				$config['system']['webgui']['expanddiags'] = $_POST['expanddiags'] ? true : false;
-				$config['system']['webgui']['noantilockout'] = $_POST['noantilockout'] ? true : false;
-				$config['filter']['bypassstaticroutes'] = $_POST['bypassstaticroutes'] ? true : false;
-		
-				write_config();
-	 			push_config('networking');	
-			}
-		
-			$retval = 0;
-			if (!file_exists($d_sysrebootreqd_path)) {
-				config_lock();
-				$retval = filter_configure();
-				$retval |= system_polling_configure();
-				$retval |= system_set_termcap();
-				config_unlock();
-			}
-			$savemsg = get_std_save_message($retval);
-			if ($retval == 0) {
-				sleep(2);
-				echo '<!-- SUBMITSUCCESS --><center>Configuration saved successfully</center>';
-                        }
-			return $retval;
-		case "system_general":
-			unset($input_errors);
+            filter_rules_sort();
+            $a_filter = &$config['filter']['rule'];
 
+            $id = $_GET['id'];
+            if (is_numeric($_POST['id']))
+            	$id = $_POST['id'];
+
+            $after = $_GET['after'];
+
+            if (isset($_POST['after']))
+        	    $after = $_POST['after'];
+
+            if (isset($_GET['dup'])) {
+    	        $id = $_GET['dup'];
+	            $after = $_GET['dup'];
+            }
+
+			$pconfig = $_POST;
+ 
 			/* input validation */
-			$reqdfields = split(" ", "hostname domain username");
-			$reqdfieldsn = split(",", "Hostname,Domain,Username");
-	
+			$reqdfields = explode(" ", "type interface srclist dstlist");
+			$reqdfieldsn = explode(",", "Type,Interface,Source,Destination");
+ 
 			do_input_validation($_POST, $reqdfields, $reqdfieldsn, &$input_errors);
-	
-			if ($_POST['hostname'] && !is_hostname($_POST['hostname']))
-				$input_errors[] = "The hostname may only contain the characters a-z, 0-9 and '-'.";
-			if ($_POST['domain'] && !is_domain($_POST['domain']))
-				$input_errors[] = "The domain may only contain the characters a-z, 0-9, '-' and '.'.";
-			if (($_POST['dns1'] && !is_ipaddr($_POST['dns1'])) || ($_POST['dns2'] && !is_ipaddr($_POST['dns2'])) || ($_POST['dns3'] && !is_ipaddr($_POST['dns3'])))
-				$input_errors[] = "A valid IP address must be specified for the primary/secondary/tertiary DNS server.";
-			if ($_POST['username'] && !preg_match("/^[a-zA-Z0-9]*$/", $_POST['username']))
-				$input_errors[] = "The username may only contain the characters a-z, A-Z and 0-9.";
-			if ($_POST['webguiport'] && (!is_numericint($_POST['webguiport']) || 
-				($_POST['webguiport'] < 1) || ($_POST['webguiport'] > 65535)))
-				$input_errors[] = "A valid TCP/IP port must be specified for the webGUI port.";
-			if (($_POST['password']) && ($_POST['password'] != $_POST['password2']))
-				$input_errors[] = "The passwords do not match.";
-	
-			$t = (int)$_POST['timeupdateinterval'];
-			if (($t < 0) || (($t > 0) && ($t < 6)) || ($t > 1440))
-				$input_errors[] = "The time update interval must be either 0 (disabled) or between 6 and 1440.";
-			foreach (explode(' ', $_POST['timeservers']) as $ts) {
-				if (!is_domain($ts))
-					$input_errors[] = "A NTP Time Server name may only contain the characters a-z, 0-9, '-' and '.'.";
+ 
+			$filterent = array();
+			$filterent['name'] = $_POST['name'];
+			$filterent['descr'] = $_POST['descr'];
+  			$filterent['type'] = $_POST['type'];
+			$filterent['interface'] = $_POST['interface'];
+			if ($_POST['rdrlist']) {
+				$filterent['rdrlist'] = $_POST['rdrlist'];
 			}
+			$srclist = array_reverse(explode(',', $_POST['srclist']));
+			for($i=0;$i<sizeof($srclist); $i++) {
+				$member = 'src'."$i";
+				$source = preg_replace("/ /", "", $srclist[$i]);
+				$filterent['srclist'][$member] = $source;
+			}
+			$dstlist = array_reverse(explode(',', $_POST['dstlist']));
+            for($i=0;$i<sizeof($dstlist); $i++) {
+            	$member = 'dst'."$i";
+            	$dest = preg_replace("/ /", "", $dstlist[$i]);
+            	$filterent['dstlist'][$member] = $dest;
+            }
 
-			if (!$input_errors) {
-				$config['system']['hostname'] = strtolower($_POST['hostname']);
-				$config['system']['general']['domain'] = strtolower($_POST['domain']);
-				$oldwebguiproto = $config['system']['general']['webgui']['protocol'];
-				$config['system']['username'] = $_POST['username'];
-				$config['system']['general']['webgui']['protocol'] = $_POST['webguiproto'];
-				$config['system']['general']['webgui']['certificate'] = $_POST['cert'];
-				$oldwebguiport = $config['system']['general']['webgui']['port'];
-				$config['system']['general']['webgui']['port'] = $_POST['webguiport'];
-				$config['system']['general']['timezone'] = $_POST['timezone'];
-				$config['system']['general']['timeservers'] = strtolower($_POST['timeservers']);
-				$config['system']['general']['time-update-interval'] = $_POST['timeupdateinterval'];
-		
-				unset($config['system']['general']['dnsserver']);
-				if ($_POST['dns1'])
-					$config['system']['general']['dnsserver'][] = $_POST['dns1'];
-				if ($_POST['dns2'])
-					$config['system']['general']['dnsserver'][] = $_POST['dns2'];
-				if ($_POST['dns3'])
-					$config['system']['general']['dnsserver'][] = $_POST['dns3'];
-		
-				$olddnsallowoverride = $config['system']['general']['dnsallowoverride'];
-				$config['system']['general']['dnsallowoverride'] = $_POST['dnsallowoverride'] ? true : false;
-				$oldsshd = isset($config['system']['general']['sshd']['enabled']);	
-				$config['system']['general']['sshd']['enabled'] = $_POST['sshdenabled'] ? true : false;
-				$config['system']['general']['symon']['enabled'] = $_POST['symonenabled'] ? true : false;
-                		if ($_POST['muxip'])
-					$config['system']['general']['symon']['muxip'] = $_POST['muxip'];
-				if ($_POST['password'])
-					$config['system']['password'] = base64_encode($_POST['password']);
-		
-				write_config();
-		
-				if (($oldwebguiproto != $config['system']['general']['webgui']['protocol']) ||
-					($oldwebguiport != $config['system']['general']['webgui']['port']) ||
-					($oldsshd != isset($config['system']['general']['sshd']['enabled'])))
-					touch($d_sysrebootreqd_path);
-		
-				$retval = 0;
-		
-				if (!file_exists($d_sysrebootreqd_path)) {
-					config_lock();
-					$retval = system_hostname_configure();
-					$retval |= system_hosts_generate();
-					$retval |= system_resolvconf_generate();
-					$retval |= system_password_configure();
-					$retval |= services_dnsmasq_configure();
-					$retval |= system_timezone_configure();
- 					$retval |= system_ntp_configure();
- 			
-		 			if ($olddnsallowoverride != $config['system']['general']['dnsallowoverride'])
- 						$retval |= interfaces_wan_configure();
- 			
-					config_unlock();
-				}
-				if ($retval == 0) {
-                                	sleep(2);
-                                	echo '<center>Configuration saved successfully<br><INPUT TYPE="button" value="OK" onClick="hidediv(\'save_config\')"></center>';
-                        	}
-			} else {
-				sleep(2);
-                                        echo '<center>Errors were found<br>Configuration not saved<br>';
-					print_input_errors($input_errors);
-					echo '<INPUT TYPE="button" value="OK" onClick="hidediv(\'save_config\')"></center>';
+			if ($_POST['tcpports']) {
+                $tcplist = array_reverse(explode(',', $_POST['tcpports']));
+				for($i=0;$i<sizeof($tcplist); $i++) {
+                	$member = 'tcp'."$i";
+                	$tcp = preg_replace("/ /", "", $tcplist[$i]);
+                	$filterent['tcplist'][$member] = $tcp;
+                }
 			}
-			return $retval;
-		case "system_routes":
-        		unset($input_errors);	
-			if ($_POST['apply']) {
-                		$retval = 0;
-                		if (!file_exists($d_sysrebootreqd_path)) {
-                        		$retval = system_routing_configure();
-                        		$retval |= filter_configure();
-                        		push_config('staticroutes');
-                		}
-                		$savemsg = get_std_save_message($retval);
-                		if ($retval == 0) {
-                        		if (file_exists($d_staticroutesdirty_path)) {
-                                		config_lock();
-                                		unlink($d_staticroutesdirty_path);
-                                		config_unlock();
-                        		}
-                		}
-        		}
-			if ($retval == 0) {
-                                sleep(2);
-                                echo '<center>Configuration saved successfully<br><INPUT TYPE="button" value="OK" onClick="hidediv(\'save_config\')"></center>';
-                        }
-			return $retval;
-		case "system_networking":
+			if ($_POST['udpports']) {
+            	$udplist = array_reverse(explode(',', $_POST['udpports']));
+				for($i=0;$i<sizeof($udplist); $i++) {
+            	    $member = 'udp'."$i";
+                	$udp = preg_replace("/ /", "", $udplist[$i]);
+                	$filterent['udplist'][$member] = $udp;
+                }
+            }
+            if ($_POST['ipprotos']) {
+            	$ipprotolist = array_reverse(explode(',', $_POST['ipprotos']));
+				for($i=0;$i<sizeof($ipprotolist); $i++) {
+                	$member = 'ip'."$i";
+                	$ip = preg_replace("/ /", "", $ipprotolist[$i]);
+                	$filterent['ipprotolist'][$member] = $ip;
+                }
+            }
+			$filterent['disabled'] = $_POST['disabled'] ? true : false;
+			if ($_POST['portforward']) {
+				$filterent['portforward'] = $_POST['portforward'] ? true : false;
+				$filterent['dstrelay'] = $_POST['dstrelay'];
+			}
+			$filterent['log'] = $_POST['log'] ? true : false;
+			
+			/* options stuff */
+            if ($_POST['altqbucket'])
+            	$filterent['options']['altqbucket'] = $_POST['altqbucket'];
+            if ($_POST['altqlowdelay'])
+            	$filterent['options']['altqlowdelay'] = $_POST['altqlowdelay'] ? true : false;
+            if ($_POST['state'])
+            	$filterent['options']['state'] = $_POST['state'];
+            if ($_POST['maxstates'])
+            	$filterent['options']['maxstates'] = $_POST['maxstates'];
+            if ($_POST['srctrack'])
+            	$filterent['options']['srctrack'] = $_POST['srctrack'];
+            if ($_POST['maxsrcnodes'])
+            	$filterent['options']['maxsrcnodes'] = $_POST['maxsrcnodes'];
+            if ($_POST['maxsrcstates'])
+            	$filterent['options']['maxsrcstates'] = $_POST['maxsrcstates'];
+            if ($_POST['maxsrcconns'])
+            	$filterent['options']['maxsrcconns'] = $_POST['maxsrcconns'];
+            if ($_POST['maxsrcconnrate'])
+            	$filterent['options']['maxsrcconnrate'] = $_POST['maxsrcconnrate'];
+            if ($_POST['overload'])
+            	$filterent['options']['overload'] = $_POST['overload'] ? true : false;
+            if ($_POST['flush'])
+            	$filterent['options']['flush'] = $_POST['flush'] ? true : false;
+            if (isset($id) && $a_filter[$id]) {
+            	$a_filter[$id] = $filterent;
+            } else {
+            	if (is_numeric($after)) {
+            		array_splice($a_filter, $after+1, 0, array($filterent));
+            	} else  
+            		$a_filter[] = $filterent;
+            }
+ 
+			$xmlconfig = dump_xml_config($config, $g['xml_rootobj']);
+ 
+        	if (filter_parse_config($config)) {
+                $input_errors[] = "Could not parse the generated config file";
+                $input_errors[] = "See log file for details";
+                $input_errors[] = "XML Config file not modified";
+        	}
+ 
+            if (!$input_errors) {
+                write_config();
+                sleep(2);
+                echo '<!-- SUBMITSUCCESS --><center>Configuration saved successfully</center>';
+            } else {
+                sleep(2);
+                echo '<center>Errors were found<br>Configuration not saved<br>';
+                print_r($input_errors);
+                echo '<INPUT TYPE="button" value="OK" onClick="hidediv(\'save_config\')"></center>';
+            }
+            return $retval;
+		case "firewall_altq":
 			unset($input_errors);
+        	$config['altq']['enable'] = $_POST['enable'] ? true : false;
+        	$config['altq']['bandwidth'] = $_POST['bandwidth'];
 
- 			/* input validation */
-  			if (!$input_errors) {
-    				$config['system']['networking']['maxinputque'] = $_POST['maxinputque'];
-    				$config['system']['networking']['maxicmperror'] = $_POST['maxicmperror'];
-    				$config['system']['networking']['ackonpush'] = $_POST['ackonpush'] ? true : false;
-    				$config['system']['networking']['ecn'] = $_POST['system']['ecn'] ? true : false;
-    				$config['system']['networking']['tcpscaling'] = $_POST['tcpscaling'] ? true : false;
-    				$config['system']['networking']['tcprcv'] = $_POST['tcprcv'];
-                		$config['system']['networking']['tcpsnd'] = $_POST['tcpsnd'];
-    				$config['system']['networking']['sack'] = $_POST['sack'] ? true : false;
-    				$config['system']['networking']['udprcv'] = $_POST['udprcv'];
-    				$config['system']['networking']['udpsnd'] = $_POST['udpsnd'];
+        	$retval = 0;
+            	write_config();
+				config_lock();
+            	$retval = filter_configure();
+            	config_unlock();
+            	push_config('altq');
+        	if ($retval == 0) {
+                sleep(2);
+                echo '<!-- SUBMITSUCCESS --><center>Configuration saved successfully</center>';
+            } else {
+                sleep(2);
+                echo '<center>Errors were found<br>Configuration not saved<br>';
+                print_r($input_errors);
+                echo '<INPUT TYPE="button" value="OK" onClick="hidediv(\'save_config\')"></center>';
+            }
+            return $retval;
+		case "firewall_rule_delete":
+			if (!is_array($config['filter']['rule']))
+				$config['filter']['rule'] = array();
 
- 	   			write_config();
-     				push_config('networking');
-
- 	     			touch($d_sysrebootreqd_path);
-    			}
-
-    			$retval = 0;
-    			if (!file_exists($d_sysrebootreqd_path)) {
-      				config_lock();
-      				$retval |= system_advancednetwork_configure();
-      				config_unlock();
-    			}
-    			$savemsg = get_std_save_message($retval);
-			if ($retval == 0) {
-                                sleep(2);
-                                echo '<center>Configuration saved successfully<br><INPUT TYPE="button" value="OK" onClick="hidediv(\'save_config\')"></center>';
-                        }
-			return $retval;	
-		case "system_users":
-        		unset($input_errors);
-
-		        /* input validation */
-       			if (isset($id) && ($a_user[$id])) {
-                		$reqdfields = explode(" ", "username");
-                		$reqdfieldsn = explode(",", "Username");
-        		} else {
-                		$reqdfields = explode(" ", "username password");
-                		$reqdfieldsn = explode(",", "Username,Password");
-        		}
-
-        		do_input_validation($_POST, $reqdfields, $reqdfieldsn, &$input_errors);
-
- 		       	if (preg_match("/[^a-zA-Z0-9\.\-_]/", $_POST['username']))
-                       		$input_errors[] = "The username contains invalid characters.";
-
-      	                if($_POST['username']==$config['system']['username'])
-        	                $input_errors[] = "username can not match the administrator username!";
-
-        		if (($_POST['password']) && ($_POST['password'] != $_POST['password2']))
-                		$input_errors[] = "The passwords do not match.";
-
- 		       if (!$input_errors && !(isset($id) && $a_user[$id])) {
-                		/* make sure there are no dupes */
-                		foreach ($a_user as $userent) {
-                        		if ($userent['name'] == $_POST['username']) {
-                                		$input_errors[] = "Another entry with the same username already exists.";
-                                		break;
-                        		}
-                		}
-        		}
-
- 		        if (!$input_errors) {
-
- 		                if (isset($id) && $a_user[$id])
-        	 	                $userent = $a_user[$id];
-
- 	                        $userent['name'] = $_POST['username'];
-        	        		$userent['fullname'] = $_POST['fullname'];
-
- 		               	if ($_POST['password'])
- 		                       	$userent['password'] = base64_encode($_POST['password']);
-
- 		               	if (isset($id) && $a_user[$id])
-                	        	$a_user[$id] = $userent;
-                		else
-                        		$a_user[] = $userent;
-
- 		               	write_config();
-                		push_config('accounts');
-				$retval = 0;
-                        	$retval = system_password_configure();
-                        	$savemsg = get_std_save_message($retval);
-
+			filter_rules_sort();
+			$a_filter = &$config['filter']['rule'];
+ 
+			if ($_POST['if'])
+				$if = $_POST['if'];	
+			
+			if (isset($_POST['del_x'])) {
+				/* delete selected rules */
+				if (is_array($_POST['rule']) && count($_POST['rule'])) {
+					foreach ($_POST['rule'] as $rulei) {
+                    	unset($a_filter[$rulei]);
+                    }
+				}
 			}
-			if ($retval == 0) {
-                                sleep(2);
-                                echo '<center>Configuration saved successfully<br><INPUT TYPE="button" value="OK" onClick="hidediv(\'save_config\')"></center>';
-                        }
-			return $retval;
+			$retval = 0;
+            if (!file_exists($d_sysrebootreqd_path)) {
+                write_config();
+                config_lock();
+                $retval = filter_configure();
+                config_unlock();
+                push_config('fwrules');
+            }
+            if ($retval == 0) {
+                sleep(2);
+                echo '<!-- SUBMITSUCCESS --><center>Configuration saved successfully</center>';
+            } else {
+                sleep(2);
+                echo '<center>Errors were found<br>Configuration not saved<br>';
+                print_r($input_errors);
+                echo '<INPUT TYPE="button" value="OK" onClick="hidediv(\'save_config\')"></center>';
+            }
+            return $retval;
+		case "firewall_options":
+			unset($input_errors);
+			$a_filter = &$config['filter']['options'];	
+ 
+			/* input validation
+			$reqdfields = explode(" ", "type interface srclist dstlist");
+			$reqdfieldsn = explode(",", "Type,Interface,Source,Destination");
+			do_input_validation($_POST, $reqdfields, $reqdfieldsn, &$input_errors);
+			*/
+
+				$filterent['timeouts'] = array();
+				if($_POST['tcpfirst'] != '120')
+					$filterent['timeouts']['tcpfirst'] = $_POST['tcpfirst'];
+				if($_POST['tcpopening'] != '30')
+					$filterent['timeouts']['tcpopening'] = $_POST['tcpopening'];
+				if($_POST['tcpestablished'] != '86400')
+					$filterent['timeouts']['tcpestablished'] = $_POST['tcpestablished'];
+				if($_POST['tcpclosing'] != '900')
+					$filterent['timeouts']['tcpclosing'] = $_POST['tcpclosing'];
+				if($_POST['tcpfinwait'] != '45')
+					$filterent['timeouts']['tcpfinwait'] = $_POST['tcpfinwait'];
+				if($_POST['tcpclosed'] != '90')
+					$filterent['timeouts']['tcpclosed'] = $_POST['tcpclosed'];
+				if($_POST['udpfirst'] != '60')
+					$filterent['timeouts']['udpfirst'] = $_POST['udpfirst'];
+                if($_POST['udpsingle'] != '30')
+					$filterent['timeouts']['udpsingle'] = $_POST['udpsingle'];
+                if($_POST['udpmultiple'] != '60')
+					$filterent['timeouts']['udpmultiple'] = $_POST['udpmultiple'];
+                if($_POST['icmpfirst'] != '20')
+					$filterent['timeouts']['icmpfirst'] = $_POST['icmpfirst'];
+                if($_POST['icmperror'] != '10')
+					$filterent['timeouts']['icmperror'] = $_POST['icmperror'];
+                if($_POST['otherfirst'] != '60')
+					$filterent['timeouts']['otherfirst'] = $_POST['otherfirst'];
+				if($_POST['othersingle'] != '30')
+					$filterent['timeouts']['othersingle'] = $_POST['othersingle'];
+                if($_POST['othermultiple'] != '60')
+					$filterent['timeouts']['othermultiple'] = $_POST['othermultiple'];
+                if($_POST['adaptivestart'] != '6000')
+					$filterent['timeouts']['adaptivestart'] = $_POST['adaptivestart'];
+                if($_POST['adaptiveend'] != '12000')
+					$filterent['timeouts']['adaptiveend'] = $_POST['adaptiveend'];
+				if($_POST['maxstates'] != '10000')
+                    $filterent['limits']['maxstates'] = $_POST['maxstates'];
+				if($_POST['maxfrags'] != '5000')
+                    $filterent['limits']['maxfrags'] = $_POST['maxfrags'];
+				if($_POST['srcnodes'] != '10000')
+                    $filterent['limits']['srcnodes'] = $_POST['srcnodes'];
+         		if($_POST['rulesetopt'] != 'basic')
+                    $filterent['opt']['rulesetopt'] = $_POST['rulesetopt'];
+				if($_POST['stateopt'] != 'normal')
+                    $filterent['opt']['stateopt'] = $_POST['stateopt'];
+				if($_POST['blockpol'] != 'drop')
+                    $filterent['opt']['blockpol'] = $_POST['blockpol'];
+				if($_POST['statepol'] != 'floating')
+                    $filterent['opt']['statepol'] = $_POST['statepol'];
+				if ($_POST['dfbit']) 
+                    $filterent['scrub']['dfbit'] = $_POST['dfbit'] ? true : false;
+				if ($_POST['minttl'] != "") 
+                    $filterent['scrub']['minttl'] = $_POST['minttl'];
+				if ($_POST['maxmss'] != "") 
+                    $filterent['scrub']['maxmss'] = $_POST['maxmss'];
+				if ($_POST['randid'])
+                    $filterent['scrub']['randid'] = $_POST['randid'] ? true : false;
+				if ($_POST['fraghandle'])
+                    $filterent['scrub']['fraghandle'] = $_POST['fraghandle'];
+                if ($_POST['reassembletcp'])
+					$filterent['scrub']['reassembletcp'] = $_POST['reassembletcp'];
+				if ($_POST['logdefault'])
+                        $filterent['logging']['default'] = $_POST['logdefault'] ? true : false;
+
+				$a_filter = $filterent;
+
+				$xmlconfig = dump_xml_config($config, $g['xml_rootobj']);
+ 
+				if (filter_parse_config($config)) {
+    	            $input_errors[] = "Could not parse the generated config file";
+        	        $input_errors[] = "See log file for details";
+            	    $input_errors[] = "XML Config file not modified";
+	            }
+
+				$retval = 0;
+	            if (!$input_errors) {
+    	            write_config();
+        	        config_lock();
+            	    $retval = filter_configure();
+                	config_unlock();
+                	push_config('pfoptions');
+            	}
+            	if ($retval == 0) {
+                	sleep(2);
+                	echo '<!-- SUBMITSUCCESS --><center>Configuration saved successfully</center>';
+            	} else {
+                	sleep(2);
+                	echo '<center>Errors were found<br>Configuration not saved<br>';
+                	print_r($input_errors);
+                	echo '<INPUT TYPE="button" value="OK" onClick="hidediv(\'save_config\')"></center>';
+            	}
+            	return $retval;
+		case "firewall_alias":
+		 	if (!is_array($config['aliases']['alias']))
+    			$config['aliases']['alias'] = array();
+
+			aliases_sort();
+			$a_aliases = &$config['aliases']['alias'];
+
+			if (isset($_POST['id']))
+    			$id = $_POST['id'];
+
+			unset($input_errors);
+			$pconfig = $_POST;
+
+    		/* input validation */
+    		$reqdfields = explode(" ", "name memberslist");
+    		$reqdfieldsn = explode(",", "Name,Memberslist");
+
+    		do_input_validation($_POST, $reqdfields, $reqdfieldsn, &$input_errors);
+
+    		$alias = array();
+        	$alias['name'] = $_POST['name'];
+        	$alias['descr'] = $_POST['descr'];
+    		$memberslist = array_reverse(explode(',', $_POST['memberslist']));
+        	for($i=0;$i<sizeof($memberslist); $i++) {
+                $member = 'member'."$i";
+                $prop = preg_replace("/ /", "", $memberslist[$i]);
+                $alias['memberlist'][$member] = $prop;
+        	}
+        	if (isset($id) && $a_aliases[$id])
+                $a_aliases[$id] = $alias;
+        	else
+                $a_aliases[] = $alias;
+
+    		$xmlconfig = dump_xml_config($config, $g['xml_rootobj']);
+
+        	if (filter_parse_config($xmlconfig)) {
+        		$input_errors[] = "Could not parse the generated config file";
+        		$input_errors[] = "See log file for details";
+        		$input_errors[] = "XML Config file not modified";
+    		}
+
+			$retval = 0;
+                if (!$input_errors) {
+                    write_config();
+                    config_lock();
+                    $retval = filter_configure();
+                    config_unlock();
+                    push_config('pfaliases');
+                }
+                if ($retval == 0 && !$input_errors) {
+                    sleep(2);
+                    echo '<!-- SUBMITSUCCESS --><center>Configuration saved successfully</center>';
+                } else {
+                    sleep(2);
+                    echo '<center>Errors were found<br>Configuration not saved<br>';
+                    print_r($input_errors);
+                    echo '<INPUT TYPE="button" value="OK" onClick="hidediv(\'save_config\')"></center>';
+                }
+                return $retval;
+		case "firewall_nat":
+				if (!is_array($config['nat']['advancedoutbound']['rule']))
+    				$config['nat']['advancedoutbound']['rule'] = array();
+    
+				$a_out = &$config['nat']['advancedoutbound']['rule'];
+				nat_out_rules_sort();
+ 
+				if (isset($_POST['id']))
+    				$id = $_POST['id'];	
+
+			    if ($_POST['destination_type'] == "any") {
+     			   $_POST['destination'] = "any";
+    			   $_POST['destination_subnet'] = 24;
+    			}
+    
+    			unset($input_errors);
+    			$pconfig = $_POST;
+ 
+			    /* input validation */
+  			    $reqdfields = explode(" ", "interface source source_subnet destination destination_subnet");
+    			$reqdfieldsn = explode(",", "Interface,Source,Source bit count,Destination,Destination bit count");
+    
+    			do_input_validation($_POST, $reqdfields, $reqdfieldsn, &$input_errors);
+ 
+			    if ($_POST['source'] && !is_ipaddr($_POST['source']))
+      			$input_errors[] = "A valid source must be specified.";
+    
+				if ($_POST['source_subnet'] && !is_numericint($_POST['source_subnet']))
+        			$input_errors[] = "A valid source bit count must be specified.";
+    
+				if ($_POST['destination_type'] != "any") {
+        			if ($_POST['destination'] && !is_ipaddr($_POST['destination'])) {
+            			$input_errors[] = "A valid destination must be specified.";
+        			}
+        			if ($_POST['destination_subnet'] && !is_numericint($_POST['destination_subnet'])) {
+            			$input_errors[] = "A valid destination bit count must be specified.";
+        			}
+    			}
+    			if ($_POST['target'] && !is_ipaddr($_POST['target']))
+        			$input_errors[] = "A valid target IP address must be specified.";
+    
+  				/* check for existing entries */
+    			$osn = gen_subnet($_POST['source'], $_POST['source_subnet']) . "/" . $_POST['source_subnet'];
+    			if ($_POST['destination_type'] == "any")
+        			$ext = "any";
+    			else
+        			$ext = gen_subnet($_POST['destination'], $_POST['destination_subnet']) . "/"
+            		. $_POST['destination_subnet'];
+ 
+				if ($_POST['target']) {
+					/* check for clashes with 1:1 NAT (Server NAT is OK) */
+					if (is_array($config['nat']['onetoone'])) {
+						foreach ($config['nat']['onetoone'] as $natent) {
+							if (check_subnets_overlap($_POST['target'], 32, $natent['external'], $natent['subnet'])) {
+								$input_errors[] = "A 1:1 NAT mapping overlaps with the specified target IP address.";
+								break;
+							}
+						}
+					}
+				}
+    
+    			foreach ($a_out as $natent) {
+        			if (isset($id) && ($a_out[$id]) && ($a_out[$id] === $natent))
+            			continue;
+        
+					if (!$natent['interface'])
+						$natent['interface'] == "wan";
+ 
+					if (($natent['interface'] == $_POST['interface']) && ($natent['source']['network'] == $osn)) {
+						if (isset($natent['destination']['not']) == isset($_POST['destination_not'])) {
+							if ((isset($natent['destination']['any']) && ($ext == "any")) ||
+							($natent['destination']['network'] == $ext)) {
+								$input_errors[] = "There is already an outbound NAT rule with the specified settings.";
+								break;
+							}
+						}
+					}
+    			}
+ 
+				$retval = 0;
+                if (!$input_errors) {
+					$natent = array();
+                    $natent['source']['network'] = $osn;
+                    $natent['descr'] = $_POST['descr'];
+                    $natent['target'] = $_POST['target'];
+                    $natent['interface'] = $_POST['interface'];
+                    $natent['noportmap'] = $_POST['noportmap'] ? true : false;
+
+                    if ($ext == "any")
+                        $natent['destination']['any'] = true;
+                    else
+                        $natent['destination']['network'] = $ext;
+
+                    if (isset($_POST['destination_not']) && $ext != "any")
+                        $natent['destination']['not'] = true;
+
+                    if (isset($id) && $a_out[$id])
+                        $a_out[$id] = $natent;
+                    else
+                        $a_out[] = $natent;
+                    write_config();
+                    config_lock();
+                    $retval = filter_configure();
+                    config_unlock();
+                    push_config('pfnats');
+                }
+                if ($retval == 0 && !$input_errors) {
+                    sleep(2);
+                    echo '<!-- SUBMITSUCCESS --><center>Configuration saved successfully</center>';
+                } else {
+                    sleep(2);
+                    echo '<center>Errors were found<br>Configuration not saved<br>';
+                    print_r($input_errors);
+                    echo '<INPUT TYPE="button" value="OK" onClick="hidediv(\'save_config\')"></center>';
+                }
+                return $retval;
 		case "system_groups":
 			unset($input_errors);
 
@@ -299,94 +521,56 @@ if ($_POST) {
 
  	               write_config();
         	       push_config('accounts');
-		       if ($retval == 0) {
+			if ($retval == 0) {
                                 sleep(2);
-                                echo '<center>Configuration saved successfully<br><INPUT TYPE="button" value="OK" onClick="hidediv(\'save_config\')"></center>';
+                                echo '<!-- SUBMITSUCCESS --><center>Configuration saved successfully</center>';
                         }
 			return 0; 
-		case "system_firmware":
-			
-        		if (stristr($_POST['Submit'], "Upgrade") || $_POST['sig_override'])
-                		$mode = "upgrade";
-        		else if ($_POST['sig_no'])
-                		unlink("{$g['ftmp_path']}/firmware.img");
-
-			if ($mode) {
-                		if ($mode == "upgrade") {
-                        		if (is_uploaded_file($_FILES['ulfile']['tmp_name'])) {
- 		                               	/* verify firmware image(s) */
-               		                 	if (!stristr($_FILES['ulfile']['name'], $g['fullplatform']) && !$_POST['sig_override'])
-                        	                	$input_errors[] = "The uploaded image file is not for this platform ({$g['fullplatform']}).";
-                                		else if (!file_exists($_FILES['ulfile']['tmp_name'])) {
-                                        		/* probably out of memory for the MFS */
-                                        		$input_errors[] = "Image upload failed (out of memory?)";
-                                        		exec_rc_script("/etc/rc.firmware disable");
-                                        		if (file_exists($d_fwupenabled_path))
-                                                		unlink($d_fwupenabled_path);
-                                		} else {
-                                        		/* move the image so PHP won't delete it */
-                                        		rename($_FILES['ulfile']['tmp_name'], "{$g['ftmp_path']}/firmware.img");
-						}
-					}
-	                	}
-			}
-                         /* check digital signature */
-$sigchk = verify_digital_signature("{$g['ftmp_path']}/firmware.img");
- 
-if ($sigchk == 1)
-$sig_warning = "The digital signature on this image is invalid.";
-else if ($sigchk == 2)
-$sig_warning = "This image is not digitally signed.";
-else if (($sigchk == 3) || ($sigchk == 4))
-$sig_warning = "There has been an error verifying the signature on this image.";
- 
-if (!verify_gzip_file("{$g['ftmp_path']}/firmware.img")) {
-$input_errors[] = "The image file is corrupt.";
-unlink("{$g['ftmp_path']}/firmware.img");
-}
-                        if ($sig_warning) {
-                               $sig_warning = "<strong>" . $sig_warning . "</strong><br>This means that the image you uploaded " .
-"is not an official/supported image and may lead to unexpected behavior or security " .
-"compromises. Only install images that come from sources that you trust, and make sure ".
-"that the image has not been tampered with.<br><br>".
-"Do you want to install this image anyway (on your own risk)?";
-                               echo "<center>$sig_warning</center>";
-                        echo '<script type="text/javascript">
-
-// pre-submit callback
-function showRequest(formData, jqForm, options) {
-    displayProcessingDiv();
-    return true;
-}
-
-// post-submit callback
-function showResponse(responseText, statusText)  {
-    if(responseText.match(/SUBMITSUCCESS/)) {
-           setTimeout(function(){ $(\'#save_config\').fadeOut(\'slow\'); }, 2000);
-    }
-}
-
-        // wait for the DOM to be loaded
-    $(document).ready(function() {
-            var options = {
-                        target:        \'#save_config\',  // target element(s) to be updated with server response
-                        beforeSubmit:  showRequest,  // pre-submit callback
-                        success:       showResponse  // post-submit callback
-            };
-
-           // bind form using \'ajaxForm\'
-           $(\'#iform\').ajaxForm(options);
-    });
-</script>
-<form action="form_submit.php" method="post"><input name="sig_override" type="submit" class="formbtn" id="sig_override" value=" Yes ">
-<input name="sig_no" type="submit" class="formbtn" id="sig_no" value=" No "></form>';
-                        return 0;
-                        }
-                        echo '<center>File Upload Complete<br><INPUT TYPE="button" value="OK" name="SUBMITSUCCESS" onClick="hidediv(\'save_config\')"></center>';
-			return 0;
 			default;
- echo '<center>Unknown form submited!<br><INPUT TYPE="button" value="OK" name="SUBMITSUCCESS" onClick="hidediv(\'save_config\')"></center>';
+ echo '<center>Unknown form submited!<br><INPUT TYPE="button" value="OK" name="OK" onClick="hidediv(\'save_config\')"></center>';
 			return 0;
 	}
 }
+if ($_GET) {
+print_r($_GET);
+
+     $id = $_GET['id'];
+     $action = $_GET['action'];
+     $type = $_GET['type'];
+
+     if ($type == 'rules') {
+          if (!is_array($config['filter']['rule']))
+               $config['filter']['rule'] = array();
+
+          filter_rules_sort();
+          $a_filter = &$config['filter']['rule'];
+          if ($action == 'delete') {
+               unset($a_filter[$id]);
+               write_config();            
+          }
+     }
+	 if ($type == 'alias') {
+          if (!is_array($config['aliases']['alias'])) {    
+               $config['aliases']['alias'] = array();    
+          }    
+          $a_alias = &$config['aliases']['alias'];    
+          aliases_sort(); 
+          if ($action == 'delete') {
+               unset($a_alias[$id]);
+               write_config();
+          }
+     } 
+	 if ($type == 'dnat') {
+          if (!is_array($config['nat']['advancedoutbound']['rule']))
+               $config['nat']['advancedoutbound']['rule'] = array();
+    
+          $a_dnat = &$config['nat']['advancedoutbound']['rule'];
+          nat_out_rules_sort(); 
+		  if ($action == 'delete') {
+               unset($a_dnat[$id]);
+               write_config();
+          }
+     }
+}
 ?>
+

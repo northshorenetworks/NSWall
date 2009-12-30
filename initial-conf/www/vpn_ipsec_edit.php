@@ -255,7 +255,6 @@ if ($_POST) {
 	}
 }
 ?>
-<?php include("fbegin.inc"); ?>
 <script language="JavaScript">
 <!--
 function typesel_change() {

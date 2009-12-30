@@ -150,17 +150,11 @@ function spacepad($string, $length) {
 } 
 
 function print_input_errors($input_errors) {
-	echo "<p><table border=\"0\" cellspacing=\"0\" cellpadding=\"4\" width=\"100%\">\n";
-	echo "<tr><td bgcolor=\"#A12A2A\" width=\"36\" align=\"center\" valign=\"top\"><img src=\"/err.gif\" width=\"28\" height=\"32\"></td>\n";
-	echo "<td bgcolor=\"#FFD9D1\" style=\"padding-left: 8px; padding-top: 6px\">";
-	
 	echo "<span class=\"errmsg\"><p>The following input errors were detected:<ul>\n";
 	foreach ($input_errors as $ierr) {
 		echo "<li>" . htmlspecialchars($ierr) . "</li>\n";
 	}
 	echo "</ul></span>";
-	
-	echo "</td></tr></table></p>";
 }
 
 function exec_rc_script($scriptname) {
@@ -678,8 +672,8 @@ function dynamic_tab_menu(&$tabs) {
    				$linkStyle = '';
    			}
    			else {
-   				echo '<li class="tabinact'.$linkStyle.'"><a href="'.$link.'">'.$desc.'</a></li>';
-   				$linkStyle = '';
+				echo '<li class="tabinact'.$linkStyle.'"><a href="'.$link.'">'.$desc.'</a></li>';
+				$linkStyle = '';
    			}
    		}
     }	

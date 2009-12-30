@@ -346,7 +346,5 @@ links[i].className='tabact';
 }
 
 function displayProcessingDiv(){
-	var content = '<center><img alt="NSS Logo" title="Click to return to the start page" class="png" width="50" height="50" src="/images/logo.jpg"/><br><br><img class="png" width="16" height="16" src="/images/spinner.gif"/><br><br>Saving Configuration Changes...</center>';
-        document.getElementById('save_config').innerHTML = content;
-        showdiv('save_config');
+	$('#save_config').dialog('open');
 }

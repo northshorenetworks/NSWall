@@ -28,33 +28,8 @@
     POSSIBILITY OF SUCH DAMAGE.
 */
 
-##|+PRIV
-##|*IDENT=page-diagnostics-editfile
-##|*NAME=Diagnostics: Edit File page
-##|*DESCR=Allow access to the 'Diagnostics: Edit File' page.
-##|*MATCH=edit.php*
-##|-PRIV
-
 
 require("guiconfig.inc");
-
-if (($_GET['submit'] == "Load") && file_exists($_GET['savetopath'])) {
-	$fd = fopen($_GET['savetopath'], "r");
-	if ((filesize($_GET['savetopath']) != 0)) {  $content = fread($fd, filesize($_GET['savetopath'])); } else { $content = ""; }
-	fclose($fd);
-	$edit_area="";
-	$loadmsg = gettext("Loaded text from")." " . $_GET['savetopath'];
-	if(stristr($_GET['savetopath'], ".php") == true)
-		$language = "php";
-	else if(stristr($_GET['savetopath'], ".inc") == true)
-		$language = "php";
-	else if(stristr($_GET['savetopath'], ".sh") == true)
-		$language = "core";
-	else if(stristr($_GET['savetopath'], ".xml") == true)
-		$language = "xml";
-
-	$savetopath = $_GET['savetopath'];
-}
 
 if (($_POST['submit'] == "Load") && file_exists($_POST['savetopath'])) {
 	$fd = fopen($_POST['savetopath'], "r");
@@ -68,6 +43,8 @@ if (($_POST['submit'] == "Load") && file_exists($_POST['savetopath'])) {
 		$language = "php";
 	else if(stristr($_POST['savetopath'], ".sh") == true)
 		$language = "core";
+	else if(stristr($_POST['savetopath'], "rc.") == true)
+		        $language = "core";
 	else if(stristr($_POST['savetopath'], ".xml") == true)
 		$language = "xml";
 	$savetopath = $_POST['savetopath'];
@@ -94,30 +71,13 @@ if($_POST['highlight'] <> "") {
 	  $_POST['highlight'] == "enabled") {
 		$highlight = "yes";
 	} else {
-		$highlight = "no";
+		$highlight = "yes";
 	}
 } else {
-	$highlight = "no";
+	$highlight = "yes";
 }
-
-if($_POST['rows'] <> "")
-	$rows = $_POST['rows'];
-else
-	$rows = 30;
-
-if($_POST['cols'] <> "")
-	$cols = $_POST['cols'];
-else
-	$cols = 66;
 ?>
 <?php
-
-/*
-	Exec+ v1.02-000 - Copyright 2001-2003, All rights reserved
-	Created by technologEase (http://www.technologEase.com).
-	(modified for m0n0wall by Manuel Kasper <mk@neon1.net>)
-        (modified for {$g['product_name']} Edit/Save file by Scott Ullrich, Copyright 2004, 2005)
-*/
 
 // Function: is Blank
 // Returns true or false depending on blankness of argument.
@@ -143,7 +103,6 @@ $pgtitle = array("Debug","Edit File");
 
 ?>
 
-<?php include("fbegin.inc"); ?>
 
 <script language="Javascript">
 function sf() { document.forms[0].savetopath.focus(); }
@@ -161,10 +120,6 @@ function sf() { document.forms[0].savetopath.focus(); }
 	Save/Load from path: <input size="42" id="savetopath" class="formfld unknown" name="savetopath" value="<?php echo $savetopath; ?>">
 	<input name="submit" type="submit"  class="button" id="Load" value="Load"> <input name="submit" type="submit"  class="button" id="Save" value="Save">
 	<hr noshade>
-	<?php if($_POST['highlight'] == "no"): ?>
-	   Rows: <input size="3" name="rows" value="<? echo $rows; ?>">
-	   Cols: <input size="3" name="cols" value="<? echo $cols; ?>">
-	<?php endif; ?>
   </td>
  </tr>
 </table>
@@ -177,15 +132,13 @@ function sf() { document.forms[0].savetopath.focus(); }
       <td valign="top" class="label">
 	<div style="background:#eeeeee" id="textareaitem">
 	&nbsp;<br>&nbsp;
-	<center>
-	<textarea style="width:98%" name="code" language="<?php echo $language; ?>" rows="<?php echo $rows; ?>" cols="<?php echo $cols; ?>" name="content"><?php echo htmlentities($content); ?></textarea><br>
+	<textarea style="width:98%" name="code" language="<?php echo $language; ?>" rows="30" cols="66" name="content"><?php echo htmlentities($content); ?></textarea><br>
 	&nbsp;
 	</div>
         <p>
     </td>
     </tr>
   </table>
-<?php include("fend.inc"); ?>
 </form>
 </body>
 </html>
@@ -195,26 +148,14 @@ sf();
 </script>
 
 </div>
-<script language="javascript" src="/code-syntax-highlighter/shCore.js"></script>
-<script language="javascript" src="/code-syntax-highlighter/shBrushCSharp.js"></script>
-<script language="javascript" src="/code-syntax-highlighter/shBrushPhp.js"></script>
-<script language="javascript" src="/code-syntax-highlighter/shBrushJScript.js"></script>
-<script language="javascript" src="/code-syntax-highlighter/shBrushVb.js"></script>
-<script language="javascript" src="/code-syntax-highlighter/shBrushSql.js"></script>
-<script language="javascript" src="/code-syntax-highlighter/shBrushXml.js"></script>
-<script language="javascript" src="/code-syntax-highlighter/shBrushDelphi.js"></script>
-<script language="javascript" src="/code-syntax-highlighter/shBrushPython.js"></script>
+<link href="style/SyntaxHighlighter.css" rel="stylesheet" type="text/css">
+<script language="javascript" src="js/shCore.js"></script>
+<script language="javascript" src="js/shBrushPhp.js"></script>
+<script language="javascript" src="js/shBrushJScript.js"></script>
+<script language="javascript" src="js/shBrushXml.js"></script>
 
-<?php if($_POST['highlight'] == "yes") {
+<?php
 	echo "<script language=\"javascript\">\n";
 	echo "dp.SyntaxHighlighter.HighlightAll('code', true, true);\n";
 	echo "</script>\n";
-}
 ?>
-
-<script type="text/javascript">
-NiftyCheck();
-Rounded("div#shapeme","all","#FFF","#eeeeee","smooth");
-Rounded("div#textareaitem","all","#FFF","#eeeeee","smooth");
-</script>
-

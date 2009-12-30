@@ -1,115 +1,23 @@
 #!/bin/php
-<?php 
-/*
-	$Id: interfaces_opt.php,v 1.8 2008/09/15 21:29:19 jrecords Exp $
-	part of m0n0wall (http://m0n0.ch/wall)
-	
-	Copyright (C) 2003-2006 Manuel Kasper <mk@neon1.net>.
-	All rights reserved.
-	
-	Redistribution and use in source and binary forms, with or without
-	modification, are permitted provided that the following conditions are met:
-	
-	1. Redistributions of source code must retain the above copyright notice,
-	   this list of conditions and the following disclaimer.
-	
-	2. Redistributions in binary form must reproduce the above copyright
-	   notice, this list of conditions and the following disclaimer in the
-	   documentation and/or other materials provided with the distribution.
-	
-	THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
-	INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
-	AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
-	AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
-	OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
-	SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-	INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
-	CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-	ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-	POSSIBILITY OF SUCH DAMAGE.
-*/
+<?php
 
 require("guiconfig.inc");
 
 unset($index);
 if ($_GET['index'])
-	$index = $_GET['index'];
+    $index = $_GET['index'];
 else if ($_POST['index'])
-	$index = $_POST['index'];
-	
+    $index = $_POST['index'];
+
 if (!$index)
-	exit;
+    exit;
 
 $optcfg = &$config['interfaces']['opt' . $index];
 
 /* Wireless interface? */
 if (isset($optcfg['wireless'])) {
-	require("interfaces_wlan.inc");
-	wireless_config_init();
-}
-
-if ($_POST) {
-
-	unset($input_errors);
-	$pconfig = $_POST;
-
-	/* input validation */
-	if ($_POST['enable']) {
-	
-		/* description unique? */
-		for ($i = 1; isset($config['interfaces']['opt' . $i]); $i++) {
-			if ($i != $index) {
-				if ($config['interfaces']['opt' . $i]['descr'] == $_POST['descr']) {
-					$input_errors[] = "An interface with the specified description already exists.";
-				}
-			}
-		}
-		
-	}
-	
-	/* Wireless interface? */
-	if (isset($optcfg['wireless'])) {
-		$wi_input_errors = wireless_config_post();
-		if ($wi_input_errors) {
-			$input_errors = array_merge($input_errors, $wi_input_errors);
-		}
-	}
-	
-	if (!$input_errors) {
-		if ($index == 1)
-			$optcfg['descr'] = 'DMZ';
-		if ($index == 2)
-                        $optcfg['descr'] = 'Wireless';
-		if ($index > 2)
-			$optcfg['descr'] = $_POST['descr'];
-		$optcfg['ipaddr'] = $_POST['ipaddr'];
-		$optcfg['subnet'] = $_POST['subnet'];
-		unset($optcfg['aliaslist']);
-		$aliaslist = explode(',', $_POST['memberslist']);
-                for($i=0;$i<sizeof($aliaslist); $i++) {
-                      $alias = 'alias'."$i";
-                      $prop = preg_replace("/ /", "", $aliaslist[$i]);
-                      $optcfg['aliaslist'][$alias] = $prop;
-                }
-		$optcfg['enable'] = $_POST['enable'] ? true : false;
-		$optcfg['gateway'] = $_POST['gateway'];
-
-		write_config();
-		
-		$retval = 0;
-		if (!file_exists($d_sysrebootreqd_path)) {
-			config_lock();
-			$retval = interfaces_optional_configure();
-			
-			/* is this the captive portal interface? */
-			if (isset($config['captiveportal']['enable']) && 
-				($config['captiveportal']['interface'] == ('opt' . $index))) {
-				captiveportal_configure();
-			}
-			config_unlock();
-		}
-		$savemsg = get_std_save_message($retval);
-	}
+    require("interfaces_wlan.inc");
+    wireless_config_init();
 }
 
 $pconfig['descr'] = $optcfg['descr'];
@@ -120,171 +28,116 @@ $pconfig['enable'] = isset($optcfg['enable']);
 $pconfig['gateway'] = $optcfg['gateway'];
 
 $pgtitle = array("Interfaces", htmlspecialchars($optcfg['descr']));
-?>
 
-<?php include("fbegin.inc"); ?>
-<script language="javascript" src="js/nss.js"></script>
-<script language="JavaScript">
-<!--
-function enable_change(enable_over) {
-	var endis;
-	endis = !(document.iform.enable.checked || enable_over);
-	document.iform.descr.disabled = endis;
-	document.iform.ipaddr.disabled = endis;
-	document.iform.subnet.disabled = endis;
-	document.iform.srchost.disabled = endis;
-	document.iform.ALIASES.disabled = endis;
-	document.iform.addbtn.disabled = endis;
-        document.iform.removebtn.disabled = endis;
+?> 
 
-	if (document.iform.mode) {
-		 document.iform.mode.disabled = endis;
-		 document.iform.ssid.disabled = endis;
-		 document.iform.channel.disabled = endis;
-		 document.iform.stationname.disabled = endis;
-		 document.iform.wep_enable.disabled = endis;
-		 document.iform.key1.disabled = endis;
-		 document.iform.key2.disabled = endis;
-		 document.iform.key3.disabled = endis;
-		 document.iform.key4.disabled = endis;
-	}
-}
+<script type="text/javascript">
+// when a user changes the type of memeber, change the related div to sytle = display: block and hide all others
 
-function gen_bits(ipaddr) {
-    if (ipaddr.search(/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/) != -1) {
-        var adr = ipaddr.split(/\./);
-        if (adr[0] > 255 || adr[1] > 255 || adr[2] > 255 || adr[3] > 255)
-            return 0;
-        if (adr[0] == 0 && adr[1] == 0 && adr[2] == 0 && adr[3] == 0)
-            return 0;
-		
-		if (adr[0] <= 127)
-			return 23;
-		else if (adr[0] <= 191)
-			return 15;
-		else
-			return 7;
-    }
-    else
-        return 0;
-}
-function ipaddr_change() {
-	document.iform.subnet.selectedIndex = gen_bits(document.iform.ipaddr.value);
-}
-//-->
-</script>
-<?php if ($input_errors) print_input_errors($input_errors); ?>
-<?php if ($savemsg) print_info_box($savemsg); ?>
-<?php if ($optcfg['if']): ?>
-            <form action="interfaces_opt.php" onSubmit="return prepareSubmit()" method="post" name="iform" id="iform">
-	      <table width="100%" border="0" cellpadding="6" cellspacing="0">
-                <tr> 
-                  <td width="22%" valign="top" class="vtable">&nbsp;</td>
-                  <td width="78%" class="vtable">
-		  <input name="enable" type="checkbox" value="yes" <?php if ($pconfig['enable']) echo "checked"; ?> onClick="enable_change(false);bridge_change(false)">
-		  <?php if ($index == 1) echo "<strong>Enable DMZ interface</strong>"; ?>
-		  <?php if ($index == 2) echo "<strong>Enable Wireless interface</strong>"; ?>
-		  <?php if ($index > 2) echo "<strong>Enable Optional <?=$index;?> interface</strong>"; ?>
-		</td>
-		</tr>
-                <tr> 
-                  <td colspan="2" valign="top" height="16"></td>
-				</tr>
-				<tr> 
-                  <td colspan="2" valign="top" class="listtopic">IP configuration</td>
-		</tr>
-		<?php if ($index == 2): ?> 
-                <tr> 
-                  <td width="22%" valign="top" class="vncell">Wireless Interface Mode</td>
-                  <td width="78%" class="vtable"> 
-                    <select name="ifmode" class="formfld" id="ifmode" onChange="switchwifibridge(document.iform.ifmode.value)">
-                	<?php $modes = array('nobridge' => 'Independant Network', 'lanbridge' => 'Bridge to LAN', 'dmzbridge' => 'Bridge to DMZ');
-		        	foreach ($modes as $mode => $modename): ?>
-                  			<option value="<?=$mode;?>" <?php if ($mode == $pconfig['ifmode']) echo "selected"; ?>>
-					<?=htmlspecialchars($modename);?>
-					</option>
-                	<?php endforeach; ?>
-		    </select>
-                </td>
-                </tr>
-		<?php endif; ?>
-                <tr id='ipdisp' style="display:none;"> 
-                 <td width="22%" valign="top" class="vncellreq">IP address</td>
-                 <td width="78%" class="vtable"> 
-                    <?=$mandfldhtml;?><input name="ipaddr" type="text" class="formfld" id="ipaddr" size="20" value="<?=htmlspecialchars($pconfig['ipaddr']);?>" onchange="ipaddr_change()">
+// wait for the DOM to be loaded
+$(document).ready(function() {
+     $('div fieldset div').addClass('ui-widget ui-widget-content ui-corner-content');
+
+     // When a user clicks on the host add button, validate and add the host.
+     $("#hostaddbutton").click(function () {
+          var ip = $("#srchost");
+	  $('#MEMBERS').append("<option value='" + ip.val() + "'>"+ip.val() + '</option>');
+          ip.val("");
+          return false;
+     });
+
+     // When a user highlights an item and clicks remove, remove it
+          $('#remove').click(function() {  
+          return !$('#MEMBERS option:selected').remove();  
+     });
+
+     // When a user clicks on the submit button, post the form.
+     $(".buttonrow").click(function () {
+	  displayProcessingDiv();
+	  var Options = $.map($('#MEMBERS option'), function(e) { return $(e).val(); } );
+	  var str = Options.join(' ');
+	  var QueryString = $("#iform").serialize()+'&memberslist='+str;
+	  $.post("forms/firewall_form_submit.php", QueryString, function(output) {
+               $("#save_config").html(output);	  
+               setTimeout(function(){ $('#save_config').fadeOut('slow'); }, 1000);            
+	  });
+	  return false;
+     });
+  
+});
+</script> 
+
+<div id="wrapper">
+        <div class="form-container ui-tabs ui-widget ui-widget-content ui-corner-all">
+
+	<form action="forms/interfaces_form_submit.php" method="post" name="iform" id="iform">
+        <input name="formname" type="hidden" value="interface_lan">
+	<input name="id" type="hidden" value="<?=$id;?>">
+	<fieldset>
+		<legend><?=join(": ", $pgtitle);?></legend>
+			<div>
+                             <label for="enable">
+                                  <?php if ($index == 1) echo "Enable DMZ interface"; ?>
+                                  <?php if ($index == 2) echo "Enable Wireless interface"; ?>
+                                  <?php if ($index > 2) echo "Enable Optional <?=$index;?> interface"; ?>
+                             </label>
+                             <input id="enable" type="checkbox" name="enable" value="Yes" <?php if ($pconfig['enable']) echo "checked"; ?> />
+                        </div>
+                        <div>
+                             <label for="ipaddr">IP address</label>
+                             <input name="ipaddr" type="text" class="formfld" id="ipaddr" size="20" value="<?=htmlspecialchars($pconfig['ipaddr']);?>">
                     /
- 		 <select name="subnet" class="formfld" id="subnet">
+                    <select name="subnet" class="formfld" id="subnet">
                       <?php for ($i = 31; $i > 0; $i--): ?>
                       <option value="<?=$i;?>" <?php if ($i == $pconfig['subnet']) echo "selected"; ?>>
                       <?=$i;?>
                       </option>
                       <?php endfor; ?>
-                 </select>               
-		 </td>
-		 </tr>
-	         <tr id='ipaliasdisp' style="display:none;">
-                 <td width="22%" valign="top" class="vncellreq">Aliases</td>
-                 <td width="78%" class="vtable">
-                 <select name="MEMBERS" style="width: 150px; height: 100px" id="MEMBERS" multiple>
-		 <?php for ($i = 0; $i<sizeof($pconfig['aliaslist']); $i++): ?>
-                 <option value="<?=$pconfig['aliaslist']["alias$i"];?>">
-                 <?=$pconfig['aliaslist']["alias$i"];?>
-                 </option>
-		 <?php endfor; ?>
-                 <input type=button onClick="removeOptions(MEMBERS)"; name='removebtn'; value='Remove Selected'><br><br>
-                  <strong>Address</strong>
-                   <?=$mandfldhtml;?><input name="srchost" type="text" class="formfld" id="srchost" size="16" value="<?=htmlspecialchars($pconfig['address']);?>">
-                   <input type=button onClick="addOption('MEMBERS',document.iform.srchost.value + '/32','host' + ':' + document.iform.srchost.value + '/32')"; name='addbtn'; value='Add'>
-                     </select>
-		   <input name="memberslist" type="hidden" value="">		
-				</tr>
-				<?php /* Wireless interface? */
-				if (isset($optcfg['wireless']))
-					wireless_config_print();
-				?>
-		<?php if ($optcfg['type'] == 'WAN'): ?>
-    		<tr>
-                  <td valign="top" class="vncellreq">Gateway</td>
-                  <td class="vtable"><?=$mandfldhtml;?><input name="gateway" type="text" class="formfld" id="gateway" size="20" value="<?=htmlspecialchars($pconfig['gateway']);?>">
-                  </td>
-		</tr><?php endif; ?>
-		<tr id='bridgedisp' style="display:none;">
-		</tr>
-                <tr> 
-                  <td width="22%" valign="top">&nbsp;</td>
-                  <td width="78%"> 
-                    <input name="index" type="hidden" value="<?=$index;?>"> 
-				  <input name="Submit" type="submit" class="formbtn" value="Save" onclick="enable_change(true);bridge_change(true)"> 
-                  </td>
-                </tr>
-                <tr> 
-                  <td width="22%" valign="top">&nbsp;</td>
-                  <td width="78%"><span class="vexpl"><span class="red"><strong>Note:<br>
-                    </strong></span>be sure to add firewall rules to permit traffic 
-                    through the interface. Firewall rules for an interface in 
-                    bridged mode have no effect on packets to hosts other than 
-                    m0n0wall itself, unless &quot;Enable filtering bridge&quot; 
-                    is checked on the <a href="system_advanced.php">System: 
-                    Advanced functions</a> page.</span></td>
-                </tr>
-              </table>
-</form>
-<script language="JavaScript">
-<?php if ($index == 2): ?>
-	switchwifibridge(document.iform.ifmode.value);
-<?php endif; ?>
+                    </select>
+			</div>
+                        <div>
+                             <label for="members">Alias IP's</label>
+                             <select name="MEMBERS" style="width: 160px; height: 100px" id="MEMBERS" multiple>
+        <?php for ($i = 0; $i<sizeof($pconfig['aliaslist']); $i++): ?>
+                <option value="<?=$pconfig['aliaslist']["member$i"];?>">
+                <?=$pconfig['aliaslist']["member$i"];?>
+                </option>
+                <?php endfor; ?>
+        </select>
+                <input type=button id='remove' value='Remove Selected'><br><br>
+                </div>
+                <div id='srchostdiv' style="display:block;">
+                 <label for="srchost">Address</label>
+                  <input name="srchost" type="text" class="formfld" id="srchost" size="16" value="<?=htmlspecialchars($pconfig['address']);?>">
+                <input type=button id='hostaddbutton' value='Add'>
+                </div>
+			 	<div>
+                             <label for="spoofmac">MAC Address Override</label>
+                             <input name="spoofmac" type="text" class="formfld" id="spoofmac" size="30" value="<?=htmlspecialchars($pconfig['spoofmac']);?>">
+                             <p class="note">This field can be used to modify (&quot;spoof&quot;) the MAC
+                    address of the WAN interface<br>
+                    (may be required with some cable connections)<br>
+                    Enter a MAC address in the following format: xx:xx:xx:xx:xx:xx
+                    or leave blank</p>
+                        </div>
+                        <div>
+                             <label for="mtu">MTU</label>
+                              <input name="mtu" type="text" class="formfld" id="mtu" size="8" value="<?=htmlspecialchars($pconfig['mtu']);?>">
+                             <p class="note">If you enter a value in this field, then MSS clamping for
+                    TCP connections to the value entered above minus 40 (TCP/IP
+                    header size) will be in effect. If you leave this field blank,
+                    an MTU of 1492 bytes for PPPoE and 1500 bytes for all other
+                    connection types will be assumed.</p>
+                        </div>
+               </div>	
+	</fieldset>
+	
+	<div class="buttonrow">
+		<input type="submit" value="Save" class="button" />
+	</div>
 
-<?php if ($index == 1): ?>
-	switchwifibridge('nobridge');
-<?php endif; ?>
-
-switchwifiencrypt(document.iform.encmode.value);
-<!--
-enable_change(false);
-bridge_change(false);
-//-->
-</script>
-<?php else: ?>
-<strong>Optional <?=$index;?> has been disabled because there is no OPT<?=$index;?> interface.</strong>
-<?php endif; ?>
-<?php include("fend.inc"); ?>
+	</form>
+	
+	</div><!-- /form-container -->
+	
+</div><!-- /wrapper -->

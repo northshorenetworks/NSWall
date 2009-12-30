@@ -125,7 +125,7 @@ void logs() {
     	char inbuf[1000];
         int lineno = 0;
 
-        char *command = "/usr/sbin/syslogc all";
+        char *command = "/usr/sbin/syslogc -c all";
 
        inpipe = popen(command, "r");
        if (!inpipe) {

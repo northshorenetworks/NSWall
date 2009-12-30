@@ -179,6 +179,8 @@ function methodsel_change() {
 }
 //-->
 </script>
+<script type="text/javascript" src="js/contentload.js"></script>
+<p class="pgtitle"><?=join(": ", $pgtitle);?></p>
 <form action="vpn_ipsec.php" method="post">
 <?php if ($input_errors) print_input_errors($input_errors); ?>
 <?php if (file_exists($d_ipsecconfdirty_path)): ?><p>

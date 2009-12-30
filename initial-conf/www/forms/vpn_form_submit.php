@@ -32,10 +32,11 @@ if ($_POST) {
 				$config['pptp']['client']['username'] = $_POST['username'];
 				$config['pptp']['client']['password'] = $_POST['password'];
 				unset($config['pptp']['client']['routelist']);
-				for($i=0;$i<sizeof($_POST['MEMBERS']); $i++) {
-					$member = 'route'."$i";
-					$source = $_POST['MEMBERS'][$i];
-					$config['pptp']['client']['routelist'][$member] = $source;
+				$routelist = array_reverse(explode(' ', $_POST['routelist']));                              
+				for($i=0;$i<sizeof($routelist); $i++) {
+                                       	$routeno = 'route'."$i";
+					$dest = preg_replace("/ /", "", $routelist[$i]);
+					$config['pptp']['client']['routelist'][$routeno] = $dest;
 				}
 				$config['pptp']['client']['autonat'] = $_POST['autonat'] ? true : false;
 				$config['pptp']['client']['lcplog'] = $_POST['lcplog'] ? true : false;
@@ -61,3 +62,4 @@ if ($_POST) {
 	}
 }
 ?>
+

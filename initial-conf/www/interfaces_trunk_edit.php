@@ -108,7 +108,6 @@ if ($_POST) {
 $pgtitle = array("Interfaces", "Optional $index (" . htmlspecialchars($optcfg['descr']) . ")");
 ?>
 
-<?php include("fbegin.inc"); ?>
 <script language="JavaScript">
 <!--
 function enable_change(enable_over) {
@@ -227,4 +226,3 @@ bridge_change(false);
 <?php else: ?>
 <strong>Optional <?=$index;?> has been disabled because there is no OPT<?=$index;?> interface.</strong>
 <?php endif; ?>
-<?php include("fend.inc"); ?>

@@ -17,11 +17,11 @@ IMAGEFILE=$1
 
 echo "Cleanup if something failed the last time... (ignore any not currently mounted and Device not configured warnings)"
 ${SUDO} umount $MOUNTPOINT 
-${SUDO} vnconfig -u $DEVICE
+${SUDO} vnconfig -vu $DEVICE
 
 echo ""
 echo "Mounting the imagefile as a device..."
-${SUDO} vnconfig -c $DEVICE $IMAGEFILE
+${SUDO} vnconfig -vc $DEVICE $IMAGEFILE
 
 echo ""
 echo "Mounting destination to ${MOUNTPOINT}..."

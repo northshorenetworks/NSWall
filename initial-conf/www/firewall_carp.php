@@ -55,20 +55,11 @@ if ($_POST) {
 }
 
 ?>
-<?php include("fbegin.inc"); ?>
 <?php if ($savemsg) print_info_box($savemsg); ?>
 <form action="firewall_carp.php" method="post">
 <table width="100%" border="0" cellpadding="0" cellspacing="0">
 <tr><td class="tabnavtbl">
   <ul id="tabnav">
-<?php
-$tabs = array('Configuration' => 'firewall_carp.php',
-		'Virtual Host IDs' => 'firewall_carp_vid.php',
-		'PFSync' => 'firewall_pfsync.php',
-		'Config Sync Hosts' => 'firewall_carp_sync_hosts.php');
-
-  dynamic_tab_menu($tabs);
-?>    
   </ul>
   </td>
   </tr>
@@ -110,4 +101,3 @@ $tabs = array('Configuration' => 'firewall_carp.php',
                 </tr>
 </table>
 </form>
-<?php include("fend.inc"); ?>

@@ -13,7 +13,7 @@ if ($_POST) {
 	switch($form) {
 		case "system_firmware":
 			
-        		if (stristr($_POST['Submit'], "Upgrade") || $_POST['sig_override'])
+        	if (stristr($_POST['Submit'], "Upgrade") || $_POST['sig_override'])
                 		$mode = "upgrade";
 
 			if ($mode) {
@@ -49,7 +49,7 @@ if ($_POST) {
 			}
                         
 			if ($input_errors) {
-				echo '<center>File Upload Failed<br>$input_errors<INPUT TYPE="button" value="OK" onClick="hidediv(\'save_config\')"></center>';	
+				echo '<center>File Upload Failed<br>$input_errors<INPUT TYPE="button" value="OK" onClick="hidediv(\'upload_firmware\')"></center>';	
 				return 0;
 			}
 			
@@ -62,17 +62,16 @@ if ($_POST) {
 				"Do you want to install this image anyway (on your own risk)?";
                                 echo "<center>$sig_warning</center>";
                                 echo '<script type="text/javascript">
-
+				
 				// pre-submit callback
 				function showRequest(formData, jqForm, options) {
-   					displayProcessingDiv();
-			        	return true;
+						return true;
 				}
 
 			        // wait for the DOM to be loaded
     				$(document).ready(function() {
             			var options = {
-                        		target:        \'#save_config\',  // target element(s) to be updated with server response
+                        		target:        \'#upload_firmware\',  // target element(s) to be updated with server response
                         		beforeSubmit:  showRequest,  // pre-submit callback
            			};
 
@@ -89,29 +88,42 @@ if ($_POST) {
                        	}
                         }
 			if (!$input_errors && !file_exists($d_firmwarelock_path) && (!$sig_warning || $_POST['sig_override'])) {
-				$savemsg = "The firmware is now being installed. The firewall will reboot automatically.";
+                                $savemsg = "The firmware is now being installed. The firewall will reboot automatically.";
                                 echo "<center>$savemsg</center>";
+				echo '<script type="text/javascript">
+                                $("#upload_firmware").dialog("close");
+                                $("#reboot_nswall").dialog("open");
+                                setTimeout(function(){ $("#reboot_nswall").dialog("close"); window.location = "/login.htm"; }, 75000);
+								</script>';
                                 /* fire up the update script in the background */
                                 touch($d_firmwarelock_path);
-                                exec_rc_script_async("/etc/rc.firmware upgrade {$g['ftmp_path']}/firmware.img");
-                                return 0;
+                                exec_rc_script_async("/etc/rc.firmware upgrade {$g['ftmp_path']}/firmware.img"); 
+								return 0;
 			}
 		}
                         case "system_firmware_sig_override" :
                 		if ($_POST['sig_override']) {
 		                	$savemsg = "The firmware is now being installed. The firewall will reboot automatically.";
                                 	echo "<center>$savemsg</center>";
-					/* fire up the update script in the background */
+					echo '<script type="text/javascript">
+                                        $("#upload_firmware").dialog("close");
+                                        $("#reboot_nswall").dialog("open");
+                                        setTimeout(function(){ $("#reboot_nswall").dialog("close"); window.location = "/login.htm"; }, 75000);
+										</script>';
+                                        /* fire up the update script in the background */
 					touch($d_firmwarelock_path);
 					exec_rc_script_async("/etc/rc.firmware upgrade {$g['ftmp_path']}/firmware.img");
                         		return 0;
 				} elseif ($_POST['sig_no']) {
 					unlink("{$g['ftmp_path']}/firmware.img");
 					echo '<!-- SUBMITSUCCESS --><center>System Firmware Update Aborted!!!</center>';
+					echo '<script type="text/javascript">
+					setTimeout(function(){ $("#upload_firmware").dialog("close"); }, 2000);
+					</script>';
 					return 0;
 				}	
 			default;
- 				echo '<center>Unknown form submited!<br><INPUT TYPE="button" value="OK" name="OK" onClick="hidediv(\'save_config\')"></center>';
+ 				echo '<center>Unknown form submited!<br><INPUT TYPE="button" value="OK" name="OK" onClick="hidediv(\'upload_firmware\')"></center>';
 			return 0;
 	}
 }

@@ -265,9 +265,9 @@ function get_interface_list() {
 }
 
 function get_interface_name($ifdescr) {
-        global $config, $g;
+        global $g;
         /* find out interface name */
-        $if = $config['interfaces'][$ifdescr]['if'];
+        $if = $g['hwplatformconfig'][INTERFACES][strtoupper($ifdescr)];
         return $if;
 }
 

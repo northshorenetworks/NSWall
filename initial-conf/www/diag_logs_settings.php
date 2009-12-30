@@ -91,7 +91,6 @@ if ($_POST) {
 }
 
 ?>
-<?php include("fbegin.inc"); ?>
 <script language="JavaScript">
 <!--
 function enable_change(enable_over) {
@@ -113,6 +112,8 @@ function enable_change(enable_over) {
 }
 // -->
 </script>
+<script type="text/javascript" src="js/contentload.js"></script>
+<p class="pgtitle"><?=join(": ", $pgtitle);?></p>
 <form action="diag_logs_settings.php" method="post" name="iform" id="iform">
 <?php if ($input_errors) print_input_errors($input_errors); ?>
 <?php if ($savemsg) print_info_box($savemsg); ?>
@@ -189,4 +190,3 @@ function enable_change(enable_over) {
 enable_change(false);
 //-->
 </script>
-<?php include("fend.inc"); ?>
