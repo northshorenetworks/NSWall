@@ -2,6 +2,7 @@
 <?php
 
 require("guiconfig.inc");
+include("ns-begin.inc");
 
 unset($index);
 if ($_GET['index'])
@@ -32,58 +33,140 @@ $pgtitle = array("Interfaces", htmlspecialchars($optcfg['descr']));
 ?> 
 
 <script type="text/javascript">
-// when a user changes the type of memeber, change the related div to sytle = display: block and hide all others
+// when a user changes the type of member, change the related div to sytle = display: block and hide all others
 
 // wait for the DOM to be loaded
 $(document).ready(function() {
      $('div fieldset div').addClass('ui-widget ui-widget-content ui-corner-content');
 
+     <?php if (isset($optcfg['wireless'])): ?>
+     var wifimode = $("#ifmode");
+     switch(wifimode.val()){
+          case 'nobridge':
+              $("#ipdiv").show();
+              $("#aliasdiv").show();
+              break;
+          default:
+              $("#ipdiv").hide();
+              $("#aliasdiv").hide();
+              break;
+          }
+
+     $("#ifmode").change(function() {
+          var val = $(this).val();
+          switch(val){
+          case 'nobridge':
+              $("#ipdiv").show();
+              $("#aliasdiv").show();
+              break;
+          default:
+              $("#ipdiv").hide();
+              $("#aliasdiv").hide();
+              break;
+          }
+     });
+     <?php endif; ?>
+
+     var encmode = $("#encmode");
+     switch(encmode.val()){
+     case 'open':
+         $("#wpadiv").hide();
+         $("#wepdiv").hide();
+         break;
+     case 'wep':
+         $("#wpadiv").hide();
+         $("#wepdiv").show();
+         break;
+     case 'wpa':
+         $("#wpadiv").show();
+         $("#wepdiv").show();
+         break;
+     }
+  
+     $("#encmode").change(function() {
+          var val = $(this).val();
+          switch(val){
+          case 'open':
+              $("#wpadiv").hide();
+              $("#wepdiv").hide();
+              break;
+          case 'wep':
+              $("#wpadiv").hide();
+              $("#wepdiv").show();
+              break;
+          case 'wpa':
+              $("#wpadiv").show();
+              $("#wepdiv").show();
+              break;
+          }
+     });
+
      // When a user clicks on the host add button, validate and add the host.
      $("#hostaddbutton").click(function () {
           var ip = $("#srchost");
-	  $('#MEMBERS').append("<option value='" + ip.val() + "'>"+ip.val() + '</option>');
+      $('#MEMBERS').append("<option value='" + ip.val() + "'>"+ip.val() + '</option>');
           ip.val("");
           return false;
      });
 
      // When a user highlights an item and clicks remove, remove it
-          $('#remove').click(function() {  
-          return !$('#MEMBERS option:selected').remove();  
+          $('#remove').click(function() {
+          return !$('#MEMBERS option:selected').remove();
      });
 
      // When a user clicks on the submit button, post the form.
-     $(".buttonrow").click(function () {
-	  displayProcessingDiv();
-	  var Options = $.map($('#MEMBERS option'), function(e) { return $(e).val(); } );
-	  var str = Options.join(' ');
-	  var QueryString = $("#iform").serialize()+'&memberslist='+str;
-	  $.post("forms/firewall_form_submit.php", QueryString, function(output) {
-               $("#save_config").html(output);	  
-               setTimeout(function(){ $('#save_config').fadeOut('slow'); }, 1000);            
-	  });
-	  return false;
+     $("#submitbutton").click(function () {
+      $("#save_config").html('<center>Saving Configuration File<br><br><img src="images/ajax-loader.gif" height="25" width="25" name="spinner">');
+      $(".ui-dialog-titlebar").css('display','block');
+      $('#save_config').dialog('open');
+      var Options = $.map($('#MEMBERS option'), function(e) { return $(e).val(); } );
+      var str = Options.join(' ');
+      var QueryString = $("#iform").serialize()+'&memberslist='+str;
+      $.post("forms/interfaces_form_submit.php", QueryString, function(output) {
+            $("#save_config").html(output);
+            if(output.match(/SUBMITSUCCESS/))
+                setTimeout(function(){ $('#save_config').dialog('close'); }, 1000);
+      });
+      return false;
      });
-  
+
 });
 </script> 
 
 <div id="wrapper">
-        <div class="form-container ui-tabs ui-widget ui-widget-content ui-corner-all">
-
+	<div class="form-container ui-tabs ui-widget ui-corner-all">
 	<form action="forms/interfaces_form_submit.php" method="post" name="iform" id="iform">
-        <input name="formname" type="hidden" value="interface_lan">
-	<input name="id" type="hidden" value="<?=$id;?>">
+    <input name="formname" type="hidden" value="interface_opt">
+	<input name="index" type="hidden" value="<?=$index;?>">
 	<fieldset>
 		<legend><?=join(": ", $pgtitle);?></legend>
 			<div>
                              <label for="enable">
-                                  <?php if ($index == 1) echo "Enable DMZ interface"; ?>
-                                  <?php if ($index == 2) echo "Enable Wireless interface"; ?>
-                                  <?php if ($index > 2) echo "Enable Optional <?=$index;?> interface"; ?>
+                                  <?php if ($index == 1) echo "Enable DMZ IF"; ?>
+                                  <?php if ($index == 2) echo "Enable Wireless IF"; ?>
+                                  <?php if ($index > 2) echo "Enable Optional <?=$index;?> IF"; ?>
                              </label>
                              <input id="enable" type="checkbox" name="enable" value="Yes" <?php if ($pconfig['enable']) echo "checked"; ?> />
                         </div>
                         <div>
+			     <label for="descr">Interface Name</label>
+                             <input name="descr" type="text" class="formfld" id="descr" size="30" value="<?=htmlspecialchars($pconfig['descr']);?>">
+                             <p class="note">The name of the interface (not parsed)</p>
+                        </div>
+                        <?php if (isset($optcfg['wireless'])): ?>
+                             <div>
+                                 <label for="ifmode">Wireless Mode</label>
+                                 <select name="ifmode" class="formfld" id="ifmode" onChange="switchwifibridge(document.iform.ifmode.value)">
+                                 <?php $modes = array('nobridge' => 'Independant Network', 'lanbridge' => 'Bridge to LAN', 'dmzbridge' => 'Bridge to DMZ');
+                                 foreach ($modes as $mode => $modename): ?>
+                                     <option value="<?=$mode;?>" <?php if ($mode == $pconfig['ifmode']) echo "selected"; ?>>
+                                         <?=htmlspecialchars($modename);?>
+                                     </option>
+                                 <?php endforeach; ?>
+                                 </select>
+                             </div>
+                        <?php endif; ?>
+                        <div id="ipdiv">
                              <label for="ipaddr">IP address</label>
                              <input name="ipaddr" type="text" class="formfld" id="ipaddr" size="20" value="<?=htmlspecialchars($pconfig['ipaddr']);?>">
                     /
@@ -99,31 +182,30 @@ $(document).ready(function() {
                              <label for="members">Alias IP's</label>
                              <select name="MEMBERS" style="width: 160px; height: 100px" id="MEMBERS" multiple>
         <?php for ($i = 0; $i<sizeof($pconfig['aliaslist']); $i++): ?>
-                <option value="<?=$pconfig['aliaslist']["member$i"];?>">
-                <?=$pconfig['aliaslist']["member$i"];?>
+                <option value="<?=$pconfig['aliaslist']["alias$i"];?>">
+                <?=$pconfig['aliaslist']["alias$i"];?>
                 </option>
                 <?php endfor; ?>
         </select>
                 <input type=button id='remove' value='Remove Selected'><br><br>
-                </div>
-                <div id='srchostdiv' style="display:block;">
                  <label for="srchost">Address</label>
                   <input name="srchost" type="text" class="formfld" id="srchost" size="16" value="<?=htmlspecialchars($pconfig['address']);?>">
                 <input type=button id='hostaddbutton' value='Add'>
                 </div>
-			 	<div>
-                             <label for="spoofmac">MAC Address Override</label>
-                             <input name="spoofmac" type="text" class="formfld" id="spoofmac" size="30" value="<?=htmlspecialchars($pconfig['spoofmac']);?>">
-                             <p class="note">This field can be used to modify (&quot;spoof&quot;) the MAC
-                    address of the WAN interface<br>
-                    (may be required with some cable connections)<br>
-                    Enter a MAC address in the following format: xx:xx:xx:xx:xx:xx
-                    or leave blank</p>
-                        </div>
-                        <div>
-                             <label for="mtu">MTU</label>
-                              <input name="mtu" type="text" class="formfld" id="mtu" size="8" value="<?=htmlspecialchars($pconfig['mtu']);?>">
-                             <p class="note">If you enter a value in this field, then MSS clamping for
+                <?php /* Wireless interface? */
+                    if (isset($optcfg['wireless']))
+                        wireless_config_print();
+                ?>
+	 	<div>
+                    <label for="spoofmac">MAC Address Override</label>
+                    <input name="spoofmac" type="text" class="formfld" id="spoofmac" size="30" value="<?=htmlspecialchars($pconfig['spoofmac']);?>">
+                    <p class="note">This field can be used to modify (&quot;spoof&quot;) the MAC address of the interface<br>
+                    Enter a MAC address in the following format: xx:xx:xx:xx:xx:xx or leave blank</p>
+                </div>
+                <div>
+                    <label for="mtu">MTU</label>
+                    <input name="mtu" type="text" class="formfld" id="mtu" size="8" value="<?=htmlspecialchars($pconfig['mtu']);?>">
+                    <p class="note">If you enter a value in this field, then MSS clamping for
                     TCP connections to the value entered above minus 40 (TCP/IP
                     header size) will be in effect. If you leave this field blank,
                     an MTU of 1492 bytes for PPPoE and 1500 bytes for all other
@@ -133,7 +215,7 @@ $(document).ready(function() {
 	</fieldset>
 	
 	<div class="buttonrow">
-		<input type="submit" value="Save" class="button" />
+		<input type="submit" id="submitbutton" value="Save" class="button" />
 	</div>
 
 	</form>

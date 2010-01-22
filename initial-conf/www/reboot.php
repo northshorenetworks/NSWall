@@ -1,6 +1,6 @@
 #!/bin/php
 <?php
-$pgtitle = array("System", "Reboot");
+$pgtitle = array("Diagnostics", "Reboot");
 
 require("guiconfig.inc");
 
@@ -14,12 +14,11 @@ $(document).ready(function() {
      $('div fieldset div').addClass('ui-widget ui-widget-content ui-corner-content');
 
      // When a user clicks on the submit button, post the form.
-     $(".buttonrow").click(function () {
-	  displayProcessingDiv();
-      var QueryString = $("#rebootform").serialize()+'&reboot=yes';
+     $("#submitbutton").click(function () {
+     $("#reboot_nswall").dialog("open");
+     setTimeout(function(){ $("#reboot_nswall").dialog("close"); window.location = "/login.htm"; }, 75000); 
+	  var QueryString = $("#rebootform").serialize()+'&reboot=yes';
       $.post("forms/system_form_submit.php", QueryString, function(output) {
-               $("#save_config").html(output);
-            //   setTimeout(function(){ $('#save_config').fadeOut('slow'); }, 1000);
       });
       return false;
      });
@@ -35,8 +34,7 @@ $(document).ready(function() {
     <legend><?=join(": ", $pgtitle);?></legend>
         <div>
             <label for="name">Reboot</label>
-            <input name="yes" id="yes" type="submit" class="buttonrow" value=" Yes ">
-            <input name="Submit" type="submit" class="buttonrow" value=" No ">
+            <input name="submitbutton" id="submitbutton" type="submit" class="buttonrow" value=" Yes ">
         </div>
     </fieldset>
     </form>

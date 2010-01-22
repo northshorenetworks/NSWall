@@ -3,7 +3,8 @@
 
 $pgtitle = array("Firewall", "Rules");
 require("guiconfig.inc");
-	
+include("ns-begin.inc");
+
 	$iflist = array("wan" => "WAN","lan" => "LAN");
 
 	if ($config['pptpd']['mode'] == "server")

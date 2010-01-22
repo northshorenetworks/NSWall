@@ -2,7 +2,7 @@
 <?php 
 $pgtitle = array("Firewall", "Aliases");    
 require("guiconfig.inc");    
-     
+include("ns-begin.inc");     
 if (!is_array($config['aliases']['alias'])) {    
     $config['aliases']['alias'] = array();    
 }    
@@ -24,25 +24,33 @@ border-color:#CCCCCC; font-size:0.8em; }
 
 <script type="text/javascript">
 
-// Make the list of rules for this interface sortable
-$("aliassortable").sortable({
-   axis: 'y',
-   containment: 'parent',
-   items: 'li:not(.ui-state-disabled)'
-});
+// wait for the DOM to be loaded
+$(document).ready(function() {
+    $('div fieldset div').addClass('ui-widget ui-widget-content ui-corner-content');
+
+	$(function() {
+        $("#firewalloptionstabs").tabs();
+    });	
+
+	// Make the list of rules for this interface sortable
+	$("aliassortable").sortable({
+    	axis: 'y',
+   		containment: 'parent',
+   		items: 'li:not(.ui-state-disabled)'
+	});
 
 
-// When a user clicks on the rule edit button, load firewall_rules_edittabs.php?id=$id
-$(".col3 a, #newalias a").click(function () {
-    var toLoad = $(this).attr('href');
-        clearInterval(refreshId);
-        $('#content').load(toLoad);
-        return false;
-});
+	// When a user clicks on the rule edit button, load firewall_rules_edittabs.php?id=$id
+	$(".col3 a, #newalias a").click(function () {
+    	var toLoad = $(this).attr('href');
+        	clearInterval(refreshId);
+        	$('#content').load(toLoad);
+        	return false;
+	});
 
-// When a user clicks on the rule delete button, load firewall_rules_edittabs.php?id=$id
-$(".col4 a").click(function () {
-        if (confirm('Are you sure you want to delete this alias?')){  
+	// When a user clicks on the rule delete button, load firewall_rules_edittabs.php?id=$id
+	$(".col4 a").click(function () {
+        if (confirm('Are you sure you want to delete this alias?')){
              displayProcessingDiv();
              var id = $(this).attr('href');
              $("#currentorder").load(id);
@@ -50,38 +58,22 @@ $(".col4 a").click(function () {
              setTimeout(function(){ $('#save_config').fadeOut('slow'); }, 1000);
         }
         return false;
+	});
+
+
+    $("#submitbutton").click(function () {
+        displayProcessingDiv();
+        var QueryString = $("#iform").serialize();
+        $.post("forms/system_form_submit.php", QueryString, function(output) {
+            $("#save_config").html(output);
+            if(output.match(/SUBMITSUCCESS/))
+                setTimeout(function(){ $('#save_config').dialog('close'); }, 1000);
+        });
+    return false;
+    });
 });
-
-// pre-submit callback
-function showRequest(formData, jqForm, options) {
-    displayProcessingDiv();
-    return true;
-}
-
-// post-submit callback
-function showResponse(responseText, statusText)  {
-    if(responseText.match(/SUBMITSUCCESS/)) {
-        setTimeout(function(){ $('#save_config').fadeOut('slow'); }, 1000);
-    }
-}
-
-        // wait for the DOM to be loaded
-    $(document).ready(function() {
-            $('div fieldset div').addClass('ui-widget ui-widget-content ui-corner-content');
-            var options = {
-                        target:        '#save_config',  // target element(s) to be updated with server response
-                        beforeSubmit:  showRequest,  // pre-submit callback
-                        success:       showResponse  // post-submit callback
-            };
-
-           // bind form using 'ajaxForm'
-           $('#iform').ajaxForm(options);
-    });
-    
-	$(function() {
-        $("#firewalloptionstabs").tabs();
-    });
 </script>
+
 <div class="demo">
 <div id="wrapper">
 <div class="form-container ui-tabs ui-widget ui-widget-content ui-corner-content">

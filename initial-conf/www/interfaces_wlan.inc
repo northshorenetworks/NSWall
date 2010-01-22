@@ -110,137 +110,60 @@ function wireless_config_post() {
 function wireless_config_print() {
 	global $optcfg, $pconfig, $wlchannels;
 ?>
-                <tr> 
-                  <td colspan="2" valign="top" height="16"></td>
-				</tr>
-                <tr> 
-                  <td colspan="2" valign="top" class="listtopic">Wireless configuration</td>
-		</tr>
-                <tr> 
-                  <td valign="top" class="vncellreq">SSID</td>
-                  <td class="vtable"><?=$mandfldhtml;?><input name="ssid" type="text" class="formfld" id="ssid" size="20" value="<?=htmlspecialchars($pconfig['ssid']);?>">
-                  </td>
-                </tr>
-                <tr> 
-                  <td valign="top" class="vncellreq">Channel</td>
-                  <td class="vtable"><select name="channel" class="formfld" id="channel">
+                <div>
+                    <label for="ssid">SSID</label>
+                    <input name="ssid" type="text" class="formfld" id="ssid" size="20" value="<?=htmlspecialchars($pconfig['ssid']);?>">
+                </div>
+                <div>
+                    <label for="channel">Channel</label>
+                    <select name="channel" class="formfld" id="channel">
                       <?php
-					  foreach ($wlchannels as $channel): ?>
-                      <option <?php if ($channel == $pconfig['channel']) echo "selected";?> value="<?=$channel;?>">
-                      <?=$channel;?>
-                      </option>
-                      <?php endforeach; ?>
-                    </select> <br>
-                    Note: Not all channels may be supported by your card</td>
-                </tr>
-
-		<tr>
-                  <td width="22%" valign="top" class="vncell">Encryption</td>
-                  <td width="78%" class="vtable">
-                    <select name="encmode" class="formfld" id="encmode" onChange="switchwifiencrypt(document.iform.encmode.value)
-">
-                        <?php $modes = array('open' => 'Open System', 'wep' => 'WEP', 'wpa' => 'WPA');
+	                  foreach ($wlchannels as $channel): ?>
+                              <option <?php if ($channel == $pconfig['channel']) echo "selected";?> value="<?=$channel;?>">
+                                  <?=$channel;?>
+                              </option>
+                          <?php endforeach; ?>
+                    </select>
+                </div>
+                <div>
+                    <label for="encmode">Encryption</label>
+                    <select name="encmode" class="formfld" id="encmode">
+                      <?php $modes = array('open' => 'Open System', 'wep' => 'WEP', 'wpa' => 'WPA');
                                 foreach ($modes as $mode => $modename): ?>
                                         <option value="<?=$mode;?>" <?php if ($mode == $pconfig['encmode']) echo "selected"; ?>>
                                         <?=htmlspecialchars($modename);?>
                                         </option>
                         <?php endforeach; ?>
                     </select>
-                </td>
-                </tr>
-		<tr id='open' style="display:none;">
-		</tr>	
-                <tr id='wep' style="display:none;"> 
-                  <td valign="top" class="vncell">WEP</td>
-                  <td class="vtable">
-                    <table border="0" cellspacing="0" cellpadding="0">
-                      <tr> 
-                        <td>&nbsp;</td>
-                        <td>&nbsp;</td>
-                        <td>&nbsp;TX key&nbsp;</td>
-                      </tr>
-                      <tr> 
-                        <td>Key 1:&nbsp;&nbsp;</td>
-                        <td> <input name="key1" type="text" class="formfld" id="key1" size="30" value="<?=htmlspecialchars($pconfig['key1']);?>"></td>
-                        <td align="center"> <input name="txkey" type="radio" value="1" <?php if ($pconfig['txkey'] == 1) echo "checked";?>> 
-                        </td>
-                      </tr>
-                      <tr> 
-                        <td>Key 2:&nbsp;&nbsp;</td>
-                        <td> <input name="key2" type="text" class="formfld" id="key2" size="30" value="<?=htmlspecialchars($pconfig['key2']);?>"></td>
-                        <td align="center"> <input name="txkey" type="radio" value="2" <?php if ($pconfig['txkey'] == 2) echo "checked";?>></td>
-                      </tr>
-                      <tr> 
-                        <td>Key 3:&nbsp;&nbsp;</td>
-                        <td> <input name="key3" type="text" class="formfld" id="key3" size="30" value="<?=htmlspecialchars($pconfig['key3']);?>"></td>
-                        <td align="center"> <input name="txkey" type="radio" value="3" <?php if ($pconfig['txkey'] == 3) echo "checked";?>></td>
-                      </tr>
-                      <tr> 
-                        <td>Key 4:&nbsp;&nbsp;</td>
-                        <td> <input name="key4" type="text" class="formfld" id="key4" size="30" value="<?=htmlspecialchars($pconfig['key4']);?>"></td>
-                        <td align="center"> <input name="txkey" type="radio" value="4" <?php if ($pconfig['txkey'] == 4) echo "checked";?>></td>
-                      </tr>
-                    </table>
-                    <br>
-                    40 (64) bit keys may be entered as 5 ASCII characters or 10 
-                    hex digits preceded by '0x'.<br>
-                    104 (128) bit keys may be entered as 13 ASCII characters or 
-                    26 hex digits preceded by '0x'.</td>
-                </tr>
-		<tr id='wpa' style="display:none;">
-                  <td valign="top" class="vncell">WPA</td>
-                  <td class="vtable"> <input name="wpa_enable" type="checkbox" id="wpa_enable" value="yes" <?php if ($pconfig['wpa_enable']) echo "checked"; ?>>
-                    <strong>Enable WPA</strong>
-                    <table border="0" cellspacing="0" cellpadding="0">
-                    <tr>
-                        <td>&nbsp;</td>
-                        <td>&nbsp;</td>
-                        <td>&nbsp;</td>
-                    </tr>
-                    <tr> 
-                        <td>WPA Mode:&nbsp;&nbsp;</td>
-                        <td class="vtable"><select name="wpamode" class="formfld" id="mode">
-                      <?php 
-			$opts = array();
-                        $opts[] = "Auto";		
-			$opts[] = "WPA-1";
-			$opts[] = "WPA-2";
-			foreach ($opts as $opt): ?>
-                             <option <?php if ($opt == $pconfig['wpamode']) echo "selected";?>> 
-                      <?=htmlspecialchars($opt);?>
-                      </option>
-                      <?php endforeach; ?>
-                    </select></td>
-                        <td>&nbsp;</td>
-                        <td>&nbsp;</td>
-                        <td>&nbsp;</td>  
-                    </tr>  
-                    <tr> 
-                        <td>WPA Ciphers:&nbsp;&nbsp;</td>
-                        <td class="vtable"><select name="wpacipher" class="formfld" id="mode">
-                      <?php 
-			$opts = array();
-                        $opts[] = "Auto";		
-			$opts[] = "TKIP";
-			$opts[] = "CCMP";
-			foreach ($opts as $opt): ?>
-                             <option <?php if ($opt == $pconfig['wpacipher']) echo "selected";?>> 
-                      <?=htmlspecialchars($opt);?>
-                      </option>
-                      <?php endforeach; ?>
-                    </select></td>
-                        <td>&nbsp;</td>
-                        <td>&nbsp;</td>
-                        <td>&nbsp;</td>  
-                    </tr>  
-                    <tr>
-                        <td>Pre-Shared Key:&nbsp;&nbsp;</td>
-                        <td><input name="wpapsk" type="password" class="formfld" id="wpapsk" size="30" value="<?=htmlspecialchars($pconfig['wpapsk']);?>"></td>
-                        </td>
-                      </tr>
-                    </table>
-                  </td>
-                </tr>
-                <tr id='none' style="display:none;">
-                </tr>
+                </div>
+                <div id="wpadiv">
+                  <label for="wpamode">WPA Mode</label>
+                      <select name="wpamode" class="formfld" id="mode">
+                          <?php 
+			      $opts = array();
+                              $opts[] = "Auto";		
+			      $opts[] = "WPA-1";
+			      $opts[] = "WPA-2";
+			      foreach ($opts as $opt): ?>
+                                  <option <?php if ($opt == $pconfig['wpamode']) echo "selected";?>> 
+                                      <?=htmlspecialchars($opt);?>
+                                  </option>
+                              <?php endforeach; ?>
+                    </select><br><br>
+                    <label for="wpacipher">WPA Cipher</label>
+                        <select name="wpacipher" class="formfld" id="mode">
+                            <?php 
+			        $opts = array();
+                                $opts[] = "Auto";		
+			        $opts[] = "TKIP";
+			        $opts[] = "CCMP";
+			        foreach ($opts as $opt): ?>
+                                    <option <?php if ($opt == $pconfig['wpacipher']) echo "selected";?>> 
+                                        <?=htmlspecialchars($opt);?>
+                                    </option>
+                                <?php endforeach; ?>
+                        </select><br><br>
+                    <label for="wpacipher">Preshared Key</label>
+                        <input name="wpapsk" type="password" class="formfld" id="wpapsk" size="30" value="<?=htmlspecialchars($pconfig['wpapsk']);?>">
+                </div>
 <?php } ?>

@@ -33,6 +33,7 @@ $pgtitle = array("Status", "Interfaces");
 require("guiconfig.inc");
 
 $wancfg = &$config['interfaces']['wan'];
+include("ns-begin.inc");
 
 if ($_POST) {
 	if ($_POST['submit'] == "Disconnect" || $_POST['submit'] == "Release") {

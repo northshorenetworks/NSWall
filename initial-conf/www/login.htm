@@ -12,15 +12,27 @@
 <script type="text/javascript" src="js/ui.core.js"></script>
 <script type="text/javascript" src="js/ui.dialog.js"></script>
 <script type="text/javascript" src="js/jquery.form.js"></script>
-
-
 <script language="javascript">
 
      $(document).ready(function() {
-		$("#login_nswall").dialog({ width: 800, height: 600, hide: 'scale', show: 'scale', resizable: false, draggable: false, closeOnEscape: false, modal: true });
-        $('div fieldset div').addClass('ui-widget ui-widget-content ui-corner-content');
+      $('div fieldset div').addClass('ui-widget ui-widget-content ui-corner-content');
+		$("#login_nswall").dialog({ 
+                    width: 400, 
+                    height: 300, 
+                    hide: 'scale', 
+                    show: 'scale', 
+                    resizable: false, 
+                    draggable: false, 
+                    closeOnEscape: false, 
+                    modal: true,
+                    open: function(event, ui) {
+                        $(".ui-dialog-titlebar-close").hide();
+                        $(".ui-dialog-titlebar").css('display','block');
+                    }
+                });
+
         // When a user clicks on the submit button, post the form.
-          $(".buttonrow").click(function () {
+          $("#submitbutton").click(function () {
                var QueryString = $("#login").serialize();
                $.post("do-login.php", QueryString, function(output) {
                     $("#login_nswall").html(output);
@@ -49,10 +61,10 @@
                              <label for="password">Password</label>
                              <input type="password" size="10" name="password">
             </div>
-            <div class="buttonrow">
-                             <input type="submit" value="Login" class="button" />
-            </div>
  </fieldset>
+ <div class="buttonrow">
+     <input type="submit" id="submitbutton" value="Login" class="button" />
+ </div>
 
 </form>
 

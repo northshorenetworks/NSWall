@@ -44,7 +44,6 @@ if (file_exists("{$g['etc_path']}/platform")) {
 
 /* determine hwplatform */
 	exec('/sbin/sysctl machdep.cpufeature', $cpufeature);
-	exec('/sbin/sysctl hw.vendor', $hwvendor);
 
     if ($cpufeature[0] == 'machdep.cpufeature=125938685') {
         $fh = fopen('/etc/hwplatform', 'w+');
@@ -54,13 +53,13 @@ if (file_exists("{$g['etc_path']}/platform")) {
         $fh = fopen('/etc/hwplatform', 'w+');
         fwrite($fh, 'JETWAY');
         fclose($fh);		
-	} elseif ($hwvendor[0] == 'hw.vendor=VMware, Inc.') {
+	} elseif ($cpufeature[0] == 'machdep.cpufeature=8956221') {
 		$fh = fopen('/etc/hwplatform', 'w+');
-		fwrite($fh, 'VMWARE');
+		fwrite($fh, 'ALIX');
 		fclose($fh);
-	} else {
-        $fh = fopen('/etc/hwplatform', 'w+');
-        fwrite($fh, 'ALIX');
+    } else { 
+		$fh = fopen('/etc/hwplatform', 'w+');
+        fwrite($fh, 'VMWARE');
         fclose($fh);
     }
 

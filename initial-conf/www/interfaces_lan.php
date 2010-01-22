@@ -3,6 +3,7 @@
 
 $pgtitle = array("Interfaces", "LAN");
 require("guiconfig.inc");
+include("ns-begin.inc");
 
 $lancfg = &$config['interfaces']['lan'];
 
@@ -40,14 +41,17 @@ $(document).ready(function() {
      });
 
      // When a user clicks on the submit button, post the form.
-     $(".buttonrow").click(function () {
-	  displayProcessingDiv();
+     $("#submitbutton").click(function () {
+      $("#save_config").html('<center>Saving Configuration File<br><br><img src="images/ajax-loader.gif" height="25" width="25" name="spinner">');
+      $(".ui-dialog-titlebar").css('display','block');
+      $('#save_config').dialog('open'); 
 	  var Options = $.map($('#MEMBERS option'), function(e) { return $(e).val(); } );
 	  var str = Options.join(' ');
 	  var QueryString = $("#iform").serialize()+'&memberslist='+str;
-	  $.post("forms/firewall_form_submit.php", QueryString, function(output) {
-               $("#save_config").html(output);	  
-               setTimeout(function(){ $('#save_config').fadeOut('slow'); }, 1000);            
+	  $.post("forms/interfaces_form_submit.php", QueryString, function(output) {
+            $("#save_config").html(output);	  
+	  		if(output.match(/SUBMITSUCCESS/))
+			    setTimeout(function(){ $('#save_config').dialog('close'); }, 1000);
 	  });
 	  return false;
      });
@@ -79,14 +83,12 @@ $(document).ready(function() {
                              <label for="members">Alias IP's</label>
                              <select name="MEMBERS" style="width: 160px; height: 100px" id="MEMBERS" multiple>
         <?php for ($i = 0; $i<sizeof($pconfig['aliaslist']); $i++): ?>
-                <option value="<?=$pconfig['aliaslist']["member$i"];?>">
-                <?=$pconfig['aliaslist']["member$i"];?>
+                <option value="<?=$pconfig['aliaslist']["alias$i"];?>">
+                <?=$pconfig['aliaslist']["alias$i"];?>
                 </option>
                 <?php endfor; ?>
         </select>
                 <input type=button id='remove' value='Remove Selected'><br><br>
-                </div>
-                <div id='srchostdiv' style="display:block;">
                  <label for="srchost">Address</label>
                   <input name="srchost" type="text" class="formfld" id="srchost" size="16" value="<?=htmlspecialchars($pconfig['address']);?>">
                 <input type=button id='hostaddbutton' value='Add'>
@@ -113,7 +115,7 @@ $(document).ready(function() {
 	</fieldset>
 	
 	<div class="buttonrow">
-		<input type="submit" value="Save" class="button" />
+		<input type="submit" id="submitbutton" value="Save" class="button" />
 	</div>
 
 	</form>

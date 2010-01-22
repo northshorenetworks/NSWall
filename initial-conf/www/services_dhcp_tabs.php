@@ -3,7 +3,7 @@
 
 $pgtitle = array("Services", "DHCP Server");
 require("guiconfig.inc");
-	
+include("ns-begin.inc");	
 $iflist = array("lan" => "LAN");
 
 for ($i = 1; isset($config['interfaces']['opt' . $i]); $i++) {

@@ -41,12 +41,11 @@ $ifsaveneworder = '#' . $if . 'saveneworder';
     <?= $ifsortable; ?> li span.col5 { position:relative; float:left; width:60%; }
 </style>
 
-
 <script type="text/javascript">
 
 // Hide the Save Changes Button
 $(document).ready(function() {
-        hidediv("<?=$if . 'saveneworder';?>");
+        //hidediv("<?=$if . 'saveneworder';?>");
 });
 
 // Make the list of rules for this interface sortable
@@ -55,7 +54,7 @@ $("<?= $ifsortable; ?>").sortable({
    containment: 'parent',
    items: 'li:not(.ui-state-disabled)',
    update: function(event, ui) {
-        showdiv("<?=$if . 'saveneworder';?>");
+        //showdiv("<?=$if . 'saveneworder';?>");
    }
 });
 

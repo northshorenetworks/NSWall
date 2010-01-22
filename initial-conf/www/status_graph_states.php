@@ -3,11 +3,13 @@
 
 $pgtitle = array("Status", "PF States graph");
 require("guiconfig.inc");
+include("ns-begin.inc");
 $currule = $config['filter']['rule']['0']['name'];
 if ($_GET['rulename'])
         $currule = $_GET['rulename'];
 
 ?>
+
 <script type="text/javascript">
 
 $("select").change( function() {

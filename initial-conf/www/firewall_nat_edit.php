@@ -3,7 +3,7 @@
  
 $pgtitle = array("Firewall", "NAT", "Edit Dynamic NAT");
 require("guiconfig.inc");
-
+include("ns-begin.inc");
 if (!is_array($config['nat']['advancedoutbound']['rule']))
     $config['nat']['advancedoutbound']['rule'] = array();
 
@@ -52,32 +52,21 @@ if (isset($id) && $a_out[$id]) {
 
 <script type="text/javascript">
 
-// pre-submit callback 
-function showRequest(formData, jqForm, options) { 
-    displayProcessingDiv(); 
-    return true; 
-}
-
-// post-submit callback 
-function showResponse(responseText, statusText)  {
-    if(responseText.match(/SUBMITSUCCESS/)) {  
-           setTimeout(function(){ $('#save_config').fadeOut('slow'); }, 2000);
-    }
-} 
-
-        // wait for the DOM to be loaded
-    $(document).ready(function() {
-            $('div fieldset div').addClass('ui-widget ui-widget-content ui-corner-content');
-            var options = {
-                        target:        '#save_config',  // target element(s) to be updated with server response
-                        beforeSubmit:  showRequest,  // pre-submit callback 
-                        success:       showResponse  // post-submit callback
-            };
-
-           // bind form using 'ajaxForm'
-           $('#iform').ajaxForm(options);
+// wait for the DOM to be loaded
+$(document).ready(function() {
+    $('div fieldset div').addClass('ui-widget ui-widget-content ui-corner-content');
+    $("#submitbutton").click(function () {
+        displayProcessingDiv();
+        var QueryString = $("#iform").serialize();
+        $.post("forms/firewall_form_submit.php", QueryString, function(output) {
+            $("#save_config").html(output);
+            if(output.match(/SUBMITSUCCESS/))
+                setTimeout(function(){ $('#save_config').dialog('close'); }, 1000);
+        });
+    return false;
     });
-</script> 
+});
+</script>
 
 <div id="wrapper">
         <div class="form-container ui-tabs ui-widget ui-corner-all">
@@ -123,7 +112,7 @@ function showResponse(responseText, statusText)  {
 	</fieldset>
 	
 	<div class="buttonrow">
-		<input type="submit" value="Save" class="button" />
+		<input type="submit" id="submitbutton" value="Save" class="button" />
 	</div>
 
 	</form>

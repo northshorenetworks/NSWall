@@ -3,6 +3,7 @@
 
 $pgtitle = array("Status", "Traffic graph");
 require("guiconfig.inc");
+include("ns-begin.inc");
 
 $curif = "wan";
 if ($_GET['if'])

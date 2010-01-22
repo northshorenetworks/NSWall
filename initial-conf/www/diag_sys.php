@@ -1,9 +1,8 @@
 #!/bin/php
 <?php 
-
 $pgtitle = array("Diagnostics", "System");
 require("guiconfig.inc");
-
+include("ns-begin.inc");
 ?>
 
 <script type="text/javascript">

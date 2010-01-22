@@ -1289,8 +1289,8 @@ EOD;
 				if (isset($rule['options']['maxsrcconns'])) {
                                         $optionsline .= "max-src-conn {$rule['options']['maxsrcconns']}, ";
                                 }	
-				if (isset($rule['options']['maxsrcconnrate'])) {
-					$optionsline .= "max-src-conn-rate {$rule['options']['maxsrcconnrate']}, ";
+				if (isset($rule['options']['maxsrcconrateconns']) && isset($rule['options']['maxsrcconrateseconds'])) {
+					$optionsline .= "max-src-conn-rate {$rule['options']['maxsrcconrateconns']}/{$rule['options']['maxsrcconrateseconds']}, ";
 				}
 			 	if (isset($rule['options']['overload'])) {
                                         $optionsline .= 'overload <abusive_hosts> ';

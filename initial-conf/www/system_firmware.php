@@ -32,7 +32,7 @@
 $d_isfwfile = 1;
 $pgtitle = array("System", "Firmware");
 require("guiconfig.inc"); 
-
+include("ns-begin.inc");
 /* checks with m0n0.ch to see if a newer firmware version is available;
    returns any HTML message it gets from the server */
 function check_firmware_version() {
@@ -79,7 +79,6 @@ if (!isset($config['system']['disablefirmwarecheck']))
 
 // pre-submit callback 
 function showRequest(formData, jqForm, options) { 
-    $("#upload_firmware").html('');
     $('#upload_firmware').dialog('open'); 
     return true; 
 }

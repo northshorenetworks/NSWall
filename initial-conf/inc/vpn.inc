@@ -313,7 +313,7 @@ EOD;
        		if(isset($config['pptp']['client']['connectonboot'])) {
 			vpn_pptp_client_connect();
 		}			 
-	        echo "done";
+	        echo "done\n";
 	}
 
 	return 0;

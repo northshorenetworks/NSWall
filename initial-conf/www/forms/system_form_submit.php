@@ -37,7 +37,15 @@ if ($_POST) {
 			if ($retval == 0) {
 				sleep(2);
 				echo '<!-- SUBMITSUCCESS --><center>Configuration saved successfully</center>';
-                        }
+			} else {
+					print_input_errors($input_errors);
+                                        echo '<script type="text/javascript">
+                                        $("#okbtn").click(function () {	
+                                            $("#save_config").dialog("close");
+                                        });
+                                        </script>';
+					echo '<INPUT TYPE="button" value="OK" id="okbtn"></center>';
+			}
 			return $retval;
 		case "system_general":
 			unset($input_errors);
@@ -130,11 +138,14 @@ if ($_POST) {
                          	       echo '<!-- SUBMITSUCCESS --><center>Configuration saved successfully</center>';
                         	}
 			} else {
-				sleep(2);
-                                        echo '<center>Errors were found<br>Configuration not saved<br>';
 					print_input_errors($input_errors);
-					echo '<INPUT TYPE="button" value="OK" onClick="hidediv(\'save_config\')"></center>';
-			}
+                                        echo '<script type="text/javascript">
+                                        $("#okbtn").click(function () {	
+                                            $("#save_config").dialog("close");
+                                        });
+                                        </script>';
+					echo '<INPUT TYPE="button" value="OK" id="okbtn"></center>';
+			}	
 			return $retval;
 		case "system_routes":
         		unset($input_errors);	
@@ -157,7 +168,15 @@ if ($_POST) {
 			if ($retval == 0) {
                                 sleep(2);
                                 echo '<!-- SUBMITSUCCESS --><center>Configuration saved successfully</center>';
-                        }
+			} else {
+					print_input_errors($input_errors);
+                                        echo '<script type="text/javascript">
+                                        $("#okbtn").click(function () {	
+                                            $("#save_config").dialog("close");
+                                        });
+                                        </script>';
+					echo '<INPUT TYPE="button" value="OK" id="okbtn"></center>';
+			}
 			return $retval;
 		case "system_networking":
 			unset($input_errors);
@@ -190,10 +209,13 @@ if ($_POST) {
                    	sleep(2);
             	    echo '<!-- SUBMITSUCCESS --><center>Configuration saved successfully</center>';
 			} else {
-				sleep(2);
-                    echo '<center>Errors were found<br>Configuration not saved<br>';
 					print_input_errors($input_errors);
-					echo '<INPUT TYPE="button" value="OK" onClick="hidediv(\'save_config\')"></center>';
+                                        echo '<script type="text/javascript">
+                                        $("#okbtn").click(function () {	
+                                            $("#save_config").dialog("close");
+                                        });
+                                        </script>';
+					echo '<INPUT TYPE="button" value="OK" id="okbtn"></center>';
 			}
 			return $retval;
 		case "system_users":
@@ -266,7 +288,15 @@ if ($_POST) {
 			if ($retval == 0) {
                                 sleep(2);
                                 echo '<!-- SUBMITSUCCESS --><center>Configuration saved successfully</center>';
-                        }
+			} else {
+					print_input_errors($input_errors);
+                                        echo '<script type="text/javascript">
+                                        $("#okbtn").click(function () {	
+                                            $("#save_config").dialog("close");
+                                        });
+                                        </script>';
+					echo '<INPUT TYPE="button" value="OK" id="okbtn"></center>';
+			}
 			return $retval;
 		case "system_groups":
 			unset($input_errors);
@@ -315,7 +345,15 @@ if ($_POST) {
 			if ($retval == 0) {
                                 sleep(2);
                                 echo '<!-- SUBMITSUCCESS --><center>Configuration saved successfully</center>';
-                        }
+			} else {
+					print_input_errors($input_errors);
+                                        echo '<script type="text/javascript">
+                                        $("#okbtn").click(function () {	
+                                            $("#save_config").dialog("close");
+                                        });
+                                        </script>';
+					echo '<INPUT TYPE="button" value="OK" id="okbtn"></center>';
+			}
 			return 0; 
 			case "system_reboot":
                     $reboot = $_POST['reboot'];

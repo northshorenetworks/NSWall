@@ -3,7 +3,7 @@
 	$Id: interfaces.inc,v 1.49 2009/03/03 09:24:45 jrecords Exp $
 	part of m0n0wall (http://m0n0.ch/wall)
 	
-	Copyright (C) 2003-2006 Manuel Kasper <mk@neon1.net>.
+	Copyright (C) 2003-2006 Manuel Kasper <mk@neon1.net>
 	All rights reserved.
 	
 	Redistribution and use in source and binary forms, with or without
@@ -34,7 +34,7 @@ require_once("functions.inc");
 function interfaces_loopback_configure() {
 	global $config, $g;
 
-	mwexec("/sbin/ifconfig lo0 127.0.0.1");
+	mwexec("/sbin/ifconfig lo0 127.0.0.1 -inet6");
 	
 	return 0;
 }
@@ -193,7 +193,7 @@ function interfaces_lan_configure() {
 	$lancfg['if'] = $g['hwplatformconfig'][INTERFACES][LAN];
 
 	/* wireless configuration? */
-	if (is_array($lancfg['wireless']))
+	if (preg_match($g['wireless_regex'], $lancfg['if']))	
 		interfaces_wireless_configure($lancfg['if'], $lancfg['wireless']);
 	
 	/* MAC spoofing? */
@@ -211,7 +211,7 @@ function interfaces_lan_configure() {
 		mwexec($cmd);
 	}
 	
-	$addflags = "";
+	$addflags = ' -inet6 description "LAN"';
 	if (strpos($lancfg['if'], "fxp") !== false)
 		$addflags .= " link0";
 	
@@ -224,6 +224,18 @@ function interfaces_lan_configure() {
         	mwexec("/sbin/ifconfig " . $lanif . " alias " . escapeshellarg($lancfg['aliaslist'][$alias]) . " netmask 255.255.255.255");
        	}
 
+	/* Check for any old aliases or ip's that are on the interface and delete them if not configured */
+        foreach (get_current_ip_addresses($lanif) as $ip) {
+            if ($ip == $lancfg['ipaddr']) {
+                continue;
+            } elseif (in_array($ip, $lancfg['aliaslist'])) {
+                continue;
+            } else {
+                mwexec("/usr/bin/logger -p local0.info -t webui removing address: $ip from $lanif");
+                mwexec("/sbin/ifconfig " . $lanif . " delete " . $ip);
+            }
+        }
+		
 	if (!$g['booting']) {
 		
 		/* make new hosts file */
@@ -257,8 +269,12 @@ function interfaces_lan_configure() {
 
 function interfaces_optional_configure() {
 	global $config, $g;
-	
-	for ($i = 1; isset($config['interfaces']['opt' . $i]); $i++) {
+
+        system_determine_hwplatform();
+
+        $ifcount = sizeof($g['hwplatformconfig'][INTERFACES]) - 2;
+ 
+	for ($i = 1; $i<=$ifcount; $i++) {
 		interfaces_optional_configure_if($i);
 	}
 	
@@ -286,18 +302,22 @@ function interfaces_optional_configure_if($opti) {
 	global $config, $g;
 	global $bridgeconfig;
 	
-	$optcfg = $config['interfaces']['opt' . $opti];
-	
-	if ($g['booting']) {
-		$optdescr = "";
-		if ($optcfg['descr'])
-			$optdescr = " ({$optcfg['descr']})";
-		echo "Configuring OPT{$opti}{$optdescr} interface... ";
-	}
+    system_determine_hwplatform();
+
+    $optcfg = $config['interfaces']['opt' . $opti];
+    $optcfg['if'] = $g['hwplatformconfig'][INTERFACES]['OPT' . $opti]['IF'];
 	
 	if (isset($optcfg['enable'])) {
+
+            if ($g['booting']) {
+		$optdescr = "";
+		if ($optcfg['descr'])
+			$optdescr = "{$optcfg['descr']}";
+		echo "Configuring {$optdescr} interface... ";
+	    }
+
 		/* wireless configuration? */
-		if (is_array($optcfg['wireless']))
+		if (preg_match($g['wireless_regex'], $optcfg['if']))
 			interfaces_wireless_configure($optcfg['if'], $optcfg['wireless']);
 		
 		/* MAC spoofing? */
@@ -315,12 +335,12 @@ function interfaces_optional_configure_if($opti) {
 			mwexec($cmd);
 		}
 	
-		$addflags = "";
+		$addflags = " -inet6 description " . escapeshellarg($optcfg['descr']);
 		$optif = $optcfg['if'];
 	
 		if ($optcfg['wireless']['ifmode'] == 'lanbridge' || $optcfg['wireless']['ifmode'] == 'dmzbridge') {
 			if ($optcfg['wireless']['ifmode'] == 'lanbridge') {
-				mwexec("/sbin/ifconfig ral0 up");	
+				mwexec("/sbin/ifconfig ral0 up" . $addflags);	
 				mwexec("/sbin/ifconfig bridge0 create up");
 				mwexec("/sbin/brconfig bridge0 add " . $optif . " add " . $config['interfaces']['lan']['if']);
 			}
@@ -338,19 +358,34 @@ function interfaces_optional_configure_if($opti) {
 		escapeshellarg($optcfg['ipaddr'] . "/" . $optcfg['subnet']) . $addflags);
 		
 		/* if aliases are defined bring them up */
-       		for($i=0;$i<sizeof($optcfg['aliaslist']); $i++ ) {     
-               	        $alias = "alias" . "$i";
-               	        mwexec("/sbin/ifconfig " . $optif . " alias " . 
-                        escapeshellarg($optcfg['aliaslist'][$alias]) . " netmask 255.255.255.255");
-       		}
-	}
-	else {
+       	for($i=0;$i<sizeof($optcfg['aliaslist']); $i++ ) {     
+        	$alias = "alias" . "$i";
+        	mwexec("/sbin/ifconfig " . $optif . " alias " . 
+        	escapeshellarg($optcfg['aliaslist'][$alias]) . " netmask 255.255.255.255");
+       	}	
+		
+	/* Check for any old aliases or ip's that are on the interface and delete them if not configured */
+        foreach (get_current_ip_addresses($optif) as $ip) {
+            if ($ip == $optcfg['ipaddr']) {
+                continue;
+            } elseif (in_array($ip, $optcfg['aliaslist'])) {
+                    continue;
+            } else {
+                mwexec("/usr/bin/logger -p local0.info -t webui removing address: $ip from $optif");
+                mwexec("/sbin/ifconfig " . $optif . " delete " . $ip);
+            }
+
+        }
+
+        if ($g['booting'])
+        echo "done\n";
+        
+	} else {
 		mwexec("/sbin/ifconfig " . escapeshellarg($optcfg['if']) . 
 			" delete down");
 	}
 
-	if ($g['booting'])
-		echo "done\n";
+        
 	
 	return 0;
 }
@@ -385,7 +420,7 @@ function interfaces_wireless_configure($if, $wlcfg) {
 	
         $ifcargs .= "media OFDM54 mediaopt hostap ";
 
-	if (isset($wlcfg['wep']['enable']) && is_array($wlcfg['wep']['key'])) {
+	 if ($wlcfg['encmode'] == 'wep') {	
 		$wepargs = "nwkey ";
 		
 		$i = 1;
@@ -401,7 +436,7 @@ function interfaces_wireless_configure($if, $wlcfg) {
 		$ifcargs .= "-nwkey ";
 	}
 
-	if (isset($wlcfg['wpa']['enable'])) {
+	if ($wlcfg['encmode'] == 'wpa') {
                 $wpaargs = "wpa ";
 		$wpassid = escapeshellarg($wlcfg['ssid']);
                 
@@ -436,10 +471,10 @@ function interfaces_wireless_configure($if, $wlcfg) {
 		$ifcargs .= $wpaargs;
         
 	} else {
-                $ifcargs .= "-wpa ";
+                $ifcargs .= "-wpa -wpapsk ";
         }
 	
-	$ifcargs .= "up";
+	$ifcargs .= "-inet6 up";
 
 	mwexec("/sbin/ifconfig " . $ifcargs);
 	
@@ -478,7 +513,7 @@ function interfaces_wan_configure() {
 	mwexec("/sbin/ifconfig " . escapeshellarg($wancfg['if']) . " down");
 		
 	/* wireless configuration? */
-	if (is_array($wancfg['wireless']))
+	if (preg_match($g['wireless_regex'], $wancfg['if']))
 		interfaces_wireless_configure($wancfg['if'], $wancfg['wireless']);
 	
 	if ($wancfg['spoofmac'])
@@ -495,7 +530,8 @@ function interfaces_wan_configure() {
 		mwexec($cmd);
 	}
 	
-	$addflags = "";
+        $addflags = ' -inet6 description "WAN"';
+
 	if (strpos($wancfg['if'], "fxp") !== false)
 		$addflags .= " link0";
 
@@ -520,7 +556,8 @@ function interfaces_wan_configure() {
 			
 		default:
                  	
-			$wanif = escapeshellarg($wancfg['if']);
+			$wanif = $wancfg['if'];
+                        
 			
 			if (isset($wancfg['ispointtopoint']) && $wancfg['pointtopoint']) {
 				mwexec("/sbin/ifconfig " . escapeshellarg($wancfg['if']) . " " . 
@@ -535,6 +572,22 @@ function interfaces_wan_configure() {
                 		$alias = "alias" . "$i";
 				mwexec("/sbin/ifconfig " . $wanif . " alias " . escapeshellarg($wancfg['aliaslist'][$alias]) . " netmask 255.255.255.255");
 			}
+	
+			/* Check for any old aliases or ip's that are on the interface and delete them if not configured */
+        foreach (get_current_ip_addresses($wanif) as $ip) {
+            if ($ip == $wancfg['ipaddr']) {
+                continue;
+            } elseif (is_array($wancfg['aliaslist'])) {
+                if (in_array($ip, $wancfg['aliaslist'])) {
+                    continue;
+                }
+            } else {
+                mwexec("/usr/bin/logger -p local0.info -t webui removing address: $ip from $wanif");
+                mwexec("/sbin/ifconfig " . $wanif . " delete " . $ip);
+            }
+        }
+	
+
 			/* install default route */
 			mwexec("/sbin/route delete default");
 			mwexec("/sbin/route add default " . escapeshellarg($wancfg['gateway']));
@@ -615,11 +668,15 @@ EOD;
         	$wanif = escapeshellarg($wancfg['if']);
         }
 
-	mwexec("/sbin/ifconfig " . $wanif);
-	
+
+	$addflags = ' -inet6 description "WAN"';  
+        mwexec("/sbin/ifconfig " . $wanif); 
+
 	/* fire up dhclient - don't wait for the lease (-n) */
 	mwexec("/sbin/dhclient -qc {$g['varetc_path']}/dhclient.conf " . $wanif);
 system("/usr/bin/pgrep -o dhclient > {$g['varrun_path']}/dhclient.pid");
+
+	mwexec("/sbin/ifconfig " . $wanif . $addflags);
 	
 	return 0;
 }
@@ -959,8 +1016,8 @@ function get_current_wan_address() {
 		/* get interface info with netstat */
 		exec("/usr/bin/netstat -nI " . escapeshellarg($wanif) . " -f inet", $ifinfo);
 		
-		if (isset($ifinfo[3])) {
-			$aif = preg_split("/\s+/", $ifinfo[3]);
+		if (isset($ifinfo[2])) {
+			$aif = preg_split("/\s+/", $ifinfo[2]);
 			$curwanip = chop($aif[3]);
 			
 			if ($curwanip && is_ipaddr($curwanip) && ($curwanip != "0.0.0.0"))
@@ -1008,6 +1065,19 @@ function get_current_ip_address($iface) {
                 /* static WAN IP address */
                 return $ifcfg['ipaddr'];
         }
+}
+
+function get_current_ip_addresses($iface) {
+        global $config, $g;
+
+        exec("/usr/bin/netstat -nI " . escapeshellarg($iface) . " -f inet", $ifinfo);
+
+        for ($i=2; isset($ifinfo[$i]); $i++) {
+            $aif = preg_split("/\s+/", $ifinfo[$i]);
+            $ips[] = chop($aif[3]);
+        }
+        /* Return array of ips on the interface*/
+        return  $ips;
 }
 
 function get_interface_mac($interface) {

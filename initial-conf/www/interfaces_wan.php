@@ -3,6 +3,8 @@
 
 $pgtitle = array("Interfaces", "WAN");
 require("guiconfig.inc");
+include("ns-begin.inc");
+$wancfg = &$config['interfaces']['wan'];
 
 if ($wancfg['ipaddr'] == "dhcp") {
         $pconfig['type'] = "DHCP";
@@ -38,27 +40,38 @@ if (isset($optcfg['wireless'])) {
 ?> 
 
 <script type="text/javascript">
-// when a user changes the type of connection, change the related div to sytle = display: block and hide all others
-$(function(){
-     $("#type").change(function() {
-          var val = $(this).val();
-          switch(val){
-        case 'static':
-            $("#staticdiv").show();
-            $("#dhcpdiv").hide();
-            break;
-        case 'dhcp':
-            $("#dhcpdiv").show();
-            $("#staticdiv").hide();
-            break;
-        }
-     });
-});
 
 // wait for the DOM to be loaded
 $(document).ready(function() {
      $('div fieldset div').addClass('ui-widget ui-widget-content ui-corner-content');
      $('div fieldset div div').addClass('ui-widget ui-widget-content ui-corner-content');
+
+     var wantype = $("#type");
+     switch(wantype.val()){
+        case 'Static':
+            $("#dhcpdiv").hide();
+            $("#staticdiv").show();
+            break;
+        case 'DHCP':
+            $("#staticdiv").hide();
+            $("#dhcpdiv").show();
+            break;
+     }
+     
+     // when a user changes the type of connection, change the related div to style = display: block and hide all others
+     $("#type").change(function() {
+          var val = $(this).val();
+          switch(val){
+        case 'Static':
+            $("#dhcpdiv").hide();
+            $("#staticdiv").show();
+            break;
+        case 'DHCP':
+            $("#staticdiv").hide();
+            $("#dhcpdiv").show();
+            break;
+        }
+     });
 
      // When a user clicks on the host add button, validate and add the host.
      $("#hostaddbutton").click(function () {
@@ -74,14 +87,17 @@ $(document).ready(function() {
      });
 
      // When a user clicks on the submit button, post the form.
-     $(".buttonrow").click(function () {
-	  displayProcessingDiv();
+     $("#submitbutton").click(function () {
+	  $("#save_config").html('<center>Saving Configuration File<br><br><img src="images/ajax-loader.gif" height="25" width="25" name="spinner">');
+      $(".ui-dialog-titlebar").css('display','block');
+      $('#save_config').dialog('open'); 
 	  var Options = $.map($('#MEMBERS option'), function(e) { return $(e).val(); } );
 	  var str = Options.join(' ');
 	  var QueryString = $("#iform").serialize()+'&memberslist='+str;
-	  $.post("forms/firewall_form_submit.php", QueryString, function(output) {
-               $("#save_config").html(output);	  
-               setTimeout(function(){ $('#save_config').fadeOut('slow'); }, 1000);            
+	  $.post("forms/interfaces_form_submit.php", QueryString, function(output) {
+            $("#save_config").html(output);	  
+	  		if(output.match(/SUBMITSUCCESS/))
+			    setTimeout(function(){ $('#save_config').dialog('close'); }, 1000);
 	  });
 	  return false;
      });
@@ -93,15 +109,15 @@ $(document).ready(function() {
         <div class="form-container ui-tabs ui-widget ui-corner-all">
 
 	<form action="forms/interfaces_form_submit.php" method="post" name="iform" id="iform">
-        <input name="formname" type="hidden" value="interface_lan">
+        <input name="formname" type="hidden" value="interface_wan">
 	<input name="id" type="hidden" value="<?=$id;?>">
 	<fieldset>
 		<legend><?=join(": ", $pgtitle);?></legend>
                          <div>
                              <label for="type">Connection Type</label>
                              <select name="type" class="formfld" id="type">
-                                 <option value="dhcp" selected>DHCP</option>
-                                 <option value="static" >Static IP</option>
+                                 <option value="DHCP" selected>DHCP</option>
+                                 <option value="Static" >Static IP</option>
                              </select>
                         </div>
                         <div id='staticdiv'>
@@ -117,22 +133,24 @@ $(document).ready(function() {
                       <?php endfor; ?>
                     </select>
 			</div>
-                        <div>
+			<div>
+                             <label for="gateway">Gateway</label>
+                             <input name="gateway" type="text" class="formfld" id="gateway" size="20" value="<?=htmlspecialchars($pconfig['gateway']);?>">
+			</div>
+			<div>
                              <label for="members">Alias IP's</label>
                              <select name="MEMBERS" style="width: 160px; height: 100px" id="MEMBERS" multiple>
         <?php for ($i = 0; $i<sizeof($pconfig['aliaslist']); $i++): ?>
-                <option value="<?=$pconfig['aliaslist']["member$i"];?>">
-                <?=$pconfig['aliaslist']["member$i"];?>
+                <option value="<?=$pconfig['aliaslist']["alias$i"];?>">
+                <?=$pconfig['aliaslist']["alias$i"];?>
                 </option>
                 <?php endfor; ?>
         </select>
                 <input type=button id='remove' value='Remove Selected'><br><br>
-                </div>
-                <div id='srchostdiv' style="display:block;">
                  <label for="srchost">Address</label>
                   <input name="srchost" type="text" class="formfld" id="srchost" size="16" value="<?=htmlspecialchars($pconfig['address']);?>">
                 <input type=button id='hostaddbutton' value='Add'>
-                </div>
+                </div>	
 		</div>
                 <div style='display: none;' id='dhcpdiv'>
                 <div>
@@ -167,7 +185,7 @@ $(document).ready(function() {
 	</fieldset>
 	
 	<div class="buttonrow">
-		<input type="submit" value="Save" class="button" />
+		<input type="submit" id="submitbutton" value="Save" class="button" />
 	</div>
 
 	</form>

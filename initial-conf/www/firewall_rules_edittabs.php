@@ -3,6 +3,7 @@
 
 $pgtitle = array("Firewall", "Options", "Edit");
 require("guiconfig.inc");
+include("ns-begin.inc");
 
 $specialsrcdst = explode(" ", "any wanip lan pptp");
  
@@ -72,132 +73,6 @@ return false;
 if (isset($_GET['dup']))
 unset($id);
  
-if ($_POST) {
- 
-unset($input_errors);
-$pconfig = $_POST;
- 
-/* input validation */
-$reqdfields = explode(" ", "type interface srclist dstlist");
-$reqdfieldsn = explode(",", "Type,Interface,Source,Destination");
- 
-do_input_validation($_POST, $reqdfields, $reqdfieldsn, &$input_errors);
- 
-$filterent = array();
-$filterent['name'] = $_POST['name'];
-$filterent['descr'] = $_POST['descr'];
-  $filterent['type'] = $_POST['type'];
-$filterent['interface'] = $_POST['interface'];
-if ($_POST['rdrlist']) {
-$filterent['rdrlist'] = $_POST['rdrlist'];
-}
-$srclist = array_reverse(explode(',', $_POST['srclist']));
-for($i=0;$i<sizeof($srclist); $i++) {
-$member = 'src'."$i";
-$source = preg_replace("/ /", "", $srclist[$i]);
-$filterent['srclist'][$member] = $source;
-}
-$dstlist = array_reverse(explode(',', $_POST['dstlist']));
-                for($i=0;$i<sizeof($dstlist); $i++) {
-                        $member = 'dst'."$i";
-                        $dest = preg_replace("/ /", "", $dstlist[$i]);
-                        $filterent['dstlist'][$member] = $dest;
-                }
-if ($_POST['tcpports']) {
-                 $tcplist = array_reverse(explode(',', $_POST['tcpports']));
-for($i=0;$i<sizeof($tcplist); $i++) {
-                         $member = 'tcp'."$i";
-                         $tcp = preg_replace("/ /", "", $tcplist[$i]);
-                         $filterent['tcplist'][$member] = $tcp;
-                 }
-}
-if ($_POST['udpports']) {
-                        $udplist = array_reverse(explode(',', $_POST['udpports']));
-for($i=0;$i<sizeof($udplist); $i++) {
-                                $member = 'udp'."$i";
-                                $udp = preg_replace("/ /", "", $udplist[$i]);
-                                $filterent['udplist'][$member] = $udp;
-                        }
-                }
-                if ($_POST['ipprotos']) {
-                        $ipprotolist = array_reverse(explode(',', $_POST['ipprotos']));
-for($i=0;$i<sizeof($ipprotolist); $i++) {
-                                $member = 'ip'."$i";
-                                $ip = preg_replace("/ /", "", $ipprotolist[$i]);
-                                $filterent['ipprotolist'][$member] = $ip;
-                        }
-                }
-$filterent['disabled'] = $_POST['disabled'] ? true : false;
-if ($_POST['portforward']) {
-$filterent['portforward'] = $_POST['portforward'] ? true : false;
-$filterent['dstrelay'] = $_POST['dstrelay'];
-}
-$filterent['log'] = $_POST['log'] ? true : false;
-/* options stuff */
-                if ($_POST['altqbucket']) {
-                        $filterent['options']['altqbucket'] = $_POST['altqbucket'];
-                }
-                if ($_POST['altqlowdelay']) {
-                        $filterent['options']['altqlowdelay'] = $_POST['altqlowdelay'] ? true : false;
-                }
-                if ($_POST['state']) {
-                        $filterent['options']['state'] = $_POST['state'];
-                }
-                if ($_POST['maxstates']) {
-                        $filterent['options']['maxstates'] = $_POST['maxstates'];
-                }
-                if ($_POST['srctrack']) {
-                        $filterent['options']['srctrack'] = $_POST['srctrack'];
-                }
-                if ($_POST['maxsrcnodes']) {
-                        $filterent['options']['maxsrcnodes'] = $_POST['maxsrcnodes'];
-                }
-                if ($_POST['maxsrcstates']) {
-                        $filterent['options']['maxsrcstates'] = $_POST['maxsrcstates'];
-                }
-                if ($_POST['maxsrcconns']) {
-                        $filterent['options']['maxsrcconns'] = $_POST['maxsrcconns'];
-                }
-                if ($_POST['maxsrcconnrate']) {
-                        $filterent['options']['maxsrcconnrate'] = $_POST['maxsrcconnrate'];
-                }
-                if ($_POST['overload']) {
-                        $filterent['options']['overload'] = $_POST['overload'] ? true : false;
-                }
-                if ($_POST['flush']) {
-                        $filterent['options']['flush'] = $_POST['flush'] ? true : false;
-                }
-                if (isset($id) && $a_filter[$id])
-                        $a_filter[$id] = $filterent;
-                else {
-                        if (is_numeric($after))
-                                array_splice($a_filter, $after+1, 0, array($filterent));
-                        else
-                                $a_filter[] = $filterent;
-                }
- 
-$xmlconfig = dump_xml_config($config, $g['xml_rootobj']);
- 
-        if (filter_parse_config($config)) {
-                $input_errors[] = "Could not parse the generated config file";
-                $input_errors[] = "See log file for details";
-                $input_errors[] = "XML Config file not modified";
-        }
- 
-if (!$input_errors) {
-write_config();
- 
-if (isset($rulesetid)) {
-                 header("Location: firewall_rules.php?if=" . $_POST['interface'] . "&rulesetid=$rulesetid");
- 
-} else {
-                 touch($d_filterconfdirty_path);
-                 header("Location: firewall_rules.php?if=" . $_POST['interface']);
-}
-Exit;
-}
-}
- 
 if (isset($id) && $a_filter[$id]) {
         $pconfig['name'] = $a_filter[$id]['name'];
         $pconfig['descr'] = $a_filter[$id]['descr'];
@@ -220,7 +95,8 @@ if (isset($id) && $a_filter[$id]) {
         $pconfig['maxsrcnodes'] = $a_filter[$id]['options']['maxsrcnodes'];
         $pconfig['maxsrcstates'] = $a_filter[$id]['options']['maxsrcstates'];
         $pconfig['maxsrcconns'] = $a_filter[$id]['options']['maxsrcconns'];
-        $pconfig['maxsrcconnrate'] = $a_filter[$id]['options']['maxsrcconnrate'];
+        $pconfig['maxsrcconrateconns'] = $a_filter[$id]['options']['maxsrcconrateconns'];
+        $pconfig['maxsrcconrateseconds'] = $a_filter[$id]['options']['maxsrcconrateseconds'];
         $pconfig['overload'] = isset($a_filter[$id]['options']['overload']);
         $pconfig['flush'] = isset($a_filter[$id]['options']['flush']);
 } else {
@@ -298,48 +174,152 @@ $(document).ready(function() {
      // When a user clicks on the src host add button, validate and add the host.
      $("#srchostaddbutton").click(function () {
           var ip = $("#srchost");
-	  $('#SRCADDR').append("<option value='" + ip.val() + "'>"+ip.val() + '</option>');
-          ip.val("");
-          return false;
-     });
+		  if(verifyIP(ip.val()) == 0) {
+                        var firstitem = $("#SRCADDR option:first").text();
+                        if(firstitem == "any") {
+                            $("#SRCADDR option:first").remove();
+                        } 
+		  	$('#SRCADDR').append("<option value='" + ip.val() + "'>"+ip.val() + '</option>');
+          	        ip.val("");
+          	         return false;
+     	          }
+	 });
 
      // When a user clicks on the src net add button, validate and add the host.
      $("#srcnetaddbutton").click(function () {
           var ip = $("#srcnet");
           var netmask = $("#srcmask");
-	  $('#SRCADDR').append("<option value='" + ip.val() + "/" + netmask.val() + "'>"+ip.val() + "/" + netmask.val() + '</option>');
-          ip.val("");
-          return false;
+	  	  if(verifyIP(ip) == 0) {
+		  	$('#SRCADDR').append("<option value='" + ip.val() + "/" + netmask.val() + "'>"+ip.val() + "/" + netmask.val() + '</option>');
+          	ip.val("");
+          	return false;
+		  }	
      });
      
       // When a user clicks on the dst host add button, validate and add the host.
      $("#dsthostaddbutton").click(function () {
           var ip = $("#dsthost");
-	  $('#DSTADDR').append("<option value='" + ip.val() + "'>"+ip.val() + '</option>');
-          ip.val("");
-          return false;
+		  if(verifyIP(ip) == 0) {
+	  		$('#DSTADDR').append("<option value='" + ip.val() + "'>"+ip.val() + '</option>');
+          	ip.val("");
+          	return false;
+		  }	
      });
 
      // When a user clicks on the dst net add button, validate and add the host.
      $("#dstnetaddbutton").click(function () {
           var ip = $("#dstnet");
           var netmask = $("#dstmask");
-	  $('#DSTADDR').append("<option value='" + ip.val() + "/" + netmask.val() + "'>"+ip.val() + "/" + netmask.val() + '</option>');
-          ip.val("");
-          return false;
+	  	  if(verifyIP(ip) == 0) {	
+			$('#DSTADDR').append("<option value='" + ip.val() + "/" + netmask.val() + "'>"+ip.val() + "/" + netmask.val() + '</option>');
+          	ip.val("");
+          	return false;
+		  }
      });
 
 
      // When a user highlights an item and clicks remove, remove it
           $('#srcremove').click(function() {  
-          return !$('#SRCADDR option:selected').remove();  
-     });
+              $('#SRCADDR option:selected').remove();  
+              var firstitem = $("#SRCADDR option:first").text();
+              if(firstitem == "") {
+                  $('#SRCADDR').append('<option value="any">any</option>');
+              }
+              return false;
+          });
           $('#dstremove').click(function() {  
-          return !$('#DSTADDR option:selected').remove();  
-     });
+              $('#DSTADDR option:selected').remove();  
+              var firstitem = $("#DSTADDR option:first").text();
+              if(firstitem == "") {
+                  $('#DSTADDR').append('<option value="any">any</option>');
+              }
+              return false;
+          });
+          $('#protoremove').click(function() {  
+              $('#PROTOLIST option:selected').remove();  
+              return false;
+          });
+
+     // When a user clicks on the proto add button, validate and add the proto.
+     $("#protoaddbutton").click(function () {
+          var fromport = $("#fromport");
+          var toport = $("#toport");
+          var proto = $("#proto");
+          if(toport.val() == "") {
+             if(validateRange(fromport.val(),0,65536) == 0) {
+                 if (isNaN(fromport.val()) == false) { 
+       	             $('#PROTOLIST').append('<option value="'+proto.val()+'/'+fromport.val()+'">'+proto.val()+'/'+fromport.val()+'</option>');
+                     fromport.val("");
+                 } else {
+                     alert('from port value must be a number');
+                     return false;
+                 }
+             }
+          } else {
+              if (isNaN(fromport.val()) == false && isNaN(toport.val()) == false) {
+                  if (fromport.val() > toport.val()) {
+                      alert('from port value must be less than to port value');
+                      return false;
+                  } else {
+                      $('#PROTOLIST').append('<option value="'+proto.val()+'/'+fromport.val()+':'+toport.val()+'">'+proto.val()+'/'+fromport.val()+':'+toport.val()+'</option>');
+                      fromport.val("");
+                      toport.val("");
+                      return false;
+                  }
+              } else {
+                     alert('from port & to port value must be a number');
+                     return false;
+                 }
+          }
+	 });
 
      // When a user clicks on the submit button, post the form.
-     $(".buttonrow").click(function () {
+     $("#submitbutton, #submitbutton2, #submitbutton3").click(function () {
+         // Validate all fields
+         var maxstates = $("#maxstates");
+         if (maxstates.val() != "") {
+             if (isNaN(maxstates.val()) == false) {
+                 if(validateRange(maxstates.val(),0,1000) != 0) {
+                     return false;
+                 }
+             } else {
+                 alert('Max States value must be a number');
+                 return false;
+             }
+         }
+         var maxsrcnodes = $("#maxsrcnodes");
+         if (maxsrcnodes.val() != "") {
+             if (isNaN(maxsrcnodes.val()) == false) {
+                 if(validateRange(maxsrcnodes.val(),0,1000) != 0) {
+                     return false;
+                 }
+             } else {
+                 alert('Max Source Nodes value must be a number');
+                 return false;
+             }
+         }
+         var maxsrcstates = $("#maxsrcstates");
+         if (maxsrcstates.val() != "") {
+             if (isNaN(maxsrcstates.val()) == false) {
+                 if(validateRange(maxsrcstates.val(),0,1000) != 0) {
+                     return false;
+                 }
+             } else {
+                 alert('Max Source States value must be a number');
+                 return false;
+             }
+         }
+         var maxsrcconns = $("#maxsrcconns");
+         if (maxsrcconns.val() != "") {
+             if (isNaN(maxsrcconns.val()) == false) {
+                 if(validateRange(maxsrcconns.val(),0,1000) != 0) {
+                     return false;
+                 }
+             } else {
+                 alert('Max Source Connections value must be a number');
+                 return false;
+             }
+         }
 	 $("#save_config").html('<center>Saving Configuration File<br><br><img src="images/ajax-loader.gif" height="25" width="25" name="spinner">');
      $(".ui-dialog-titlebar").css('display','block'); 
 	 $('#save_config').dialog('open');
@@ -357,7 +337,7 @@ $(document).ready(function() {
           $.post("forms/firewall_form_submit.php", QueryString, function(output) {
                $("#save_config").html(output);
                if(output.match(/SUBMITSUCCESS/))
-                   setTimeout(function(){ $('#save_config').dialog('close'); }, 2000);
+                   setTimeout(function(){ $('#save_config').dialog('close'); }, 1000);
           });
 	  return false;
      });
@@ -425,10 +405,7 @@ $(document).ready(function() {
                              <label for="SRCADDR">Source Addresses</label>
                               <select name="SRCADDR" style="width: 300px; height: 100px" id="SRCADDR" multiple>
 <?php for ($i = 0; $i<sizeof($pconfig['srclist']); $i++): ?>
-<option value="<?=$pconfig['srclist']["src$i"];?>">
-<?php $display = preg_replace('/user:|:user/', '', $pconfig['srclist']["src$i"]);?>
-<?=$display;?>
-</option>
+<option value="<?=$pconfig['srclist']["src$i"];?>"><?php $display = preg_replace('/user:|:user/', '', $pconfig['srclist']["src$i"]);?><?=$display;?></option>
 <?php endfor; ?>
 </select>
 <input type=button id='srcremove' value='Remove Selected'><br><br>
@@ -548,11 +525,11 @@ $defaults = split(' ', $defaults);
 <strong>Internal</strong>
 <?=$mandfldhtml;?><input name="snatint" type="text" class="formfld" id="snatint" size="16" value="<?=htmlspecialchars($pconfig['address']);?>">
 <input type=button value='Add'>
-</div>          
-        <div class="buttonrow">
-		<input type="submit" value="Save" class="button" />
-	</div>  
+</div>           
 	</fieldset>
+        <div class="buttonrow">
+		<input type="submit" id="submitbutton" value="Save" class="button" />
+	</div> 
 	</div>
         <div id="tabProtocol">
              <fieldset> 
@@ -571,7 +548,7 @@ $defaults = split(' ', $defaults);
                 udp/<?=$pconfig['udplist']["udp$i"];?>
                 </option>
                 <?php endfor; ?>
-        <input type=button onClick="removeOptions(PROTOLIST)"; value='Remove Selected'><br><br>
+        <input type=button id="protoremove" value='Remove Selected'><br><br>
                     </div>
                     <div>
                     <label for="proto">Add Protocol</label>
@@ -583,7 +560,7 @@ $defaults = split(' ', $defaults);
                    <input name="fromport" type="text" class="formfld" id="fromport" size="5" value="">
                    <strong> To </strong>
                     <input name="toport" type="text" class="formfld" id="toport" size="5" value="">
-                    <input type=button onClick="addOption('PROTOLIST',document.iform.proto.value + '/' + document.iform.fromport.value + ':' + document.iform.toport.value,document.iform.proto.value + '/' + document.iform.fromport.value + ':' + document.iform.toport.value)"; value='Add'>
+                    <input type=button id="protoaddbutton" value='Add'>
                 </div>
                 <div id='srctablediv' style="display:none;">
                  <label for="srctable">Alias</label>
@@ -609,7 +586,7 @@ $defaults = split(' ', $defaults);
                 </div>  
 	</fieldset>
         <div class="buttonrow">
-		<input type="submit" value="Save" class="button" />
+		<input type="submit" id="submitbutton2" value="Save" class="button" />
 	</div>
 
 	</div>
@@ -649,6 +626,9 @@ $defaults = split(' ', $defaults);
                 <div>
                   <label for="maxstates">Max States</label>
                   <input name="maxstates" type="text" class="formfld" id="maxstates" size="5" value="<?=htmlspecialchars($pconfig['maxstates']);?>">
+                  <p class="note">Limits the number of concurrent states the rule may create.  When
+           this limit is reached, further packets that would create state will
+           not match this rule until existing states time out.</p>
                 </div>
                 <div>
                   <label for="srctrack">Source Tracking</label>
@@ -663,25 +643,27 @@ $defaults = split(' ', $defaults);
                 <div>
                   <label for="maxsrcnodes">Max Src Nodes</label>
                   <input name="maxsrcnodes" type="text" class="formfld" id="maxsrcnodes" size="5" value="<?=htmlspecialchars($pconfig['maxsrcnodes']);?>">
+                  <p class="note">Limits the maximum number of source addresses which can simultaneously have state table entries.</p>
                 </div>
                 <div>
                   <label for="maxsrcstates">Max Src States</label>
                   <input name="maxsrcstates" type="text" class="formfld" id="maxsrcstates" size="5" value="<?=htmlspecialchars($pconfig['maxsrcstates']);?>">
+                  <p class="note">Limits the maximum number of simultaneous state entries that a single source address can create with this rule.</p>
                 </div>
                 <div>
                   <label for="maxsrcconns">Max Src Conns</label>
                   <input name="maxsrcconns" type="text" class="formfld" id="maxsrcconns" size="5" value="<?=htmlspecialchars($pconfig['maxsrcconns']);?>">
+                  <p class="note">Limits the maximum number of simultaneous TCP connections which have completed the 3-way handshake that a single host can make.</p>
                 </div>
                 <div>
-                  <label for="maxsrcconrate">Max Src Conn Rate</label>
-                  <input name="maxsrcconrate" type="text" class="formfld" id="maxsrcconrate" size="5" value="<?=htmlspecialchars($pconfig['maxsrcconrate']);?>">
+                  <label for="maxsrcconrateconns">Max Src Conn Rate</label>
+                  <input name="maxsrcconrateconns" type="text" class="formfld" id="maxsrcconrateconns" size="5" value="<?=htmlspecialchars($pconfig['maxsrcconrateconns']);?>"> connections, every  
+                  <input name="maxsrcconrateseconds" type="text" class="formfld" id="maxsrcconrateseconds" size="5" value="<?=htmlspecialchars($pconfig['maxsrcconrateseconds']);?>"> seconds
+                  <p class="note">Limit the rate of new connections over a time interval.  The connection rate is an approximation calculated as a moving average.</p>
                 </div>
-                <div>
-		        <input type="submit" value="Save" class="button" />
-	        </div>
                 </fieldset>
                 <div class="buttonrow">
-		<input type="submit" value="Save" class="button" />
+		<input type="submit" id="submitbutton3" value="Save" class="button" />
 	</div>
        
         </div>

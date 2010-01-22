@@ -51,7 +51,7 @@ $g = array(
     "debug" => false,
     "latest_config" => "1.6",
     "nopccard_platforms" => array("wrap", "net48xx"),
-    "wireless_regex" => "/^(ral|ath|an)/"
+    "wireless_regex" => "/^(ral|ath)/"
 );
 
 ?>

@@ -64,6 +64,7 @@ COPY ${CURDIR}/initial-conf/www/graph_rule.php			usr/www/graph_rule.php
 COPY ${CURDIR}/initial-conf/www/graph_states.php		usr/www/graph_states.php
 COPY ${CURDIR}/initial-conf/www/index.php			usr/www/index.php
 COPY ${CURDIR}/initial-conf/www/interfaces_assign.php		usr/www/interfaces_assign.php
+COPY ${CURDIR}/initial-conf/www/forms/interfaces_form_submit.php    usr/www/forms/interfaces_form_submit.php
 COPY ${CURDIR}/initial-conf/www/interfaces_lan.php		usr/www/interfaces_lan.php
 COPY ${CURDIR}/initial-conf/www/interfaces_opt.php		usr/www/interfaces_opt.php
 COPY ${CURDIR}/initial-conf/www/interfaces_trunk.php		usr/www/interfaces_trunk.php
@@ -71,6 +72,7 @@ COPY ${CURDIR}/initial-conf/www/interfaces_trunk_edit.php	usr/www/interfaces_tru
 COPY ${CURDIR}/initial-conf/www/interfaces_vlan.php		usr/www/interfaces_vlan.php
 COPY ${CURDIR}/initial-conf/www/interfaces_vlan_edit.php	usr/www/interfaces_vlan_edit.php
 COPY ${CURDIR}/initial-conf/www/interfaces_wan.php		usr/www/interfaces_wan.php
+COPY ${CURDIR}/initial-conf/www/interfaces_wlan.inc     usr/www/interfaces_wlan.inc
 COPY ${CURDIR}/initial-conf/www/license.php			usr/www/license.php
 COPY ${CURDIR}/initial-conf/www/pingtest.php                    usr/www/pingtest.php
 COPY ${CURDIR}/initial-conf/www/reboot.php			usr/www/reboot.php
@@ -122,8 +124,9 @@ COPY ${CURDIR}/initial-conf/www/vpn_pptp_client.php		usr/www/vpn_pptp_client.php
 COPY ${CURDIR}/initial-conf/www/vpn_pptp_server.php		usr/www/vpn_pptp_server.php
 COPY ${CURDIR}/initial-conf/www/vpn_pptp_users.php		usr/www/vpn_pptp_users.php
 COPY ${CURDIR}/initial-conf/www/vpn_pptp_users_edit.php		usr/www/vpn_pptp_users_edit.php
-COPY ${CURDIR}/initial-conf/www/wizard_initial.php		usr/www/wizard_initial.php
-COPY ${CURDIR}/initial-conf/www/fbegin.inc.f5-theme                      usr/www/fbegin.inc
+COPY ${CURDIR}/initial-conf/www/wizard_initial.php				usr/www/wizard_initial.php
+COPY ${CURDIR}/initial-conf/www/fbegin.inc		                usr/www/fbegin.inc
+COPY ${CURDIR}/initial-conf/www/ns-begin.inc		            usr/www/ns-begin.inc
 COPY ${CURDIR}/initial-conf/www/guiconfig.inc                   usr/www/guiconfig.inc
 COPY ${CURDIR}/initial-conf/www/interfaces_wlan.inc             usr/www/interfaces_wlan.inc
 COPY ${CURDIR}/initial-conf/www/auth.inc  		        usr/www/auth.inc
@@ -133,9 +136,7 @@ COPY ${CURDIR}/initial-conf/www/stats.php                       usr/www/stats.ph
 COPY ${CURDIR}/initial-conf/www/status_system.php               usr/www/status_system.php
 COPY ${CURDIR}/initial-conf/www/statuspps.cgi                   usr/www/statuspps.cgi
 COPY ${CURDIR}/initial-conf/www/statusstates.cgi                usr/www/statusstates.cgi
-COPY ${CURDIR}/initial-conf/www/wizard_initial.htm              usr/www/wizard_initial.htm
-COPY ${CURDIR}/initial-conf/www/gui.css.f5-theme		                usr/www/gui.css
-COPY ${CURDIR}/initial-conf/www/jqModal.css 	                usr/www/jqModal.css
+COPY ${CURDIR}/initial-conf/www/gui.css			                usr/www/gui.css
 
 # copy over js files
 
@@ -158,10 +159,9 @@ COPY ${CURDIR}/initial-conf/www/js/shBrushJScript.js            usr/www/js/shBru
 COPY ${CURDIR}/initial-conf/www/js/shBrushXml.js	            usr/www/js/shBrushXml.js
 COPY ${CURDIR}/initial-conf/www/js/contentload.js               usr/www/js/contentload.js
 
-
-
+# copy over sourceguardian loaders
+SPECIAL cp -R -p ${CURDIR}/initial-conf/www/phpext              usr/www/
 
 SPECIAL cp -R -p ${CURDIR}/initial-conf/www/images              usr/www/
-SPECIAL cp -R -p ${CURDIR}/initial-conf/www/newui               usr/www/
 SPECIAL cp -R -p ${CURDIR}/initial-conf/www/style               usr/www/style/
 SPECIAL cp -R -p ${CURDIR}/initial-conf/www/images              usr/www/style/

@@ -4,30 +4,48 @@
 		<interfaces>
 			<wan>ne0</wan>
 			<lan>ne1</lan>
-			<dmz>ne2</dmz>
+			<opt1>
+				<if>ne2</if>
+				<descr>DMZ</descr>
+			</opt1>
 		</interfaces>	
 	</qemu>
 	<vmware>
         <interfaces>
             <wan>vic0</wan>
             <lan>vic1</lan>
-            <dmz>vic2</dmz>
-        </interfaces>
+       		<opt1>
+                <if>vic2</if>
+                <descr>DMZ</descr>
+            </opt1> 
+		</interfaces>
     </vmware>
 	<alix>
 		<interfaces>
             <wan>vr0</wan>
             <lan>vr1</lan>
-            <dmz>vr2</dmz>
-            <wireless>ral0</wireless>
-        </interfaces>	
+            <opt1>
+                <if>vr2</if>
+                <descr>DMZ</descr>
+            </opt1>
+        	<opt2>
+                <if>ral0</if>
+                <descr>Wireless</descr>
+            </opt2>
+		</interfaces>	
 	</alix>	
 	<jetway>	
         <interfaces>
             <wan>re0</wan>
             <lan>re1</lan>
-            <dmz>re2</dmz>
-            <dmz2>re3</dmz2>
-        </interfaces>
+        	<opt1>
+                <if>re2</if>
+                <descr>DMZ</descr>
+            </opt1>
+			<opt2>
+                <if>re3</if>
+                <descr>DMZ2</descr>
+            </opt2>
+		</interfaces>
     </jetway>
 </nswall>

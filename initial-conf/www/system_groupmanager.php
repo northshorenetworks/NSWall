@@ -154,31 +154,22 @@ if($_GET['act']=="new" || $_GET['act']=="edit"){
 
 <script type="text/javascript">
 
-// pre-submit callback 
-function showRequest(formData, jqForm, options) { 
-    displayProcessingDiv(); 
-    return true; 
-}
-
-// post-submit callback 
-function showResponse(responseText, statusText)  {
-    if(responseText.match(/SUBMITSUCCESS/)) {  
-           setTimeout(function(){ $('#save_config').fadeOut('slow'); }, 2000);
-    }
-} 
-
-        // wait for the DOM to be loaded
-    $(document).ready(function() {
-            var options = {
-                        target:        '#save_config',  // target element(s) to be updated with server response
-                        beforeSubmit:  showRequest,  // pre-submit callback 
-                        success:       showResponse  // post-submit callback
-            };
-
-           // bind form using 'ajaxForm'
-           $('#iform').ajaxForm(options);
+// wait for the DOM to be loaded
+$(document).ready(function() {
+    $('div fieldset div').addClass('ui-widget ui-widget-content ui-corner-content');
+    $("#submitbutton").click(function () {
+        displayProcessingDiv();
+        var QueryString = $("#iform").serialize();
+        $.post("forms/system_form_submit.php", QueryString, function(output) {
+            $("#save_config").html(output);
+            if(output.match(/SUBMITSUCCESS/))
+                setTimeout(function(){ $('#save_config').dialog('close'); }, 1000);
+        });
+    return false;
     });
+});
 </script>
+
 <form action="form_submit.php" method="post" name="iform" id="iform">
            <input name="formname" type="hidden" value="system_groups">
 	<table width="100%" border="0" cellpadding="6" cellspacing="0">

@@ -3,6 +3,7 @@
 $pgtitle = array("Firewall", "Aliases", "Edit Alias");
  
 require("guiconfig.inc");
+include("ns-begin.inc");
 
 if (!is_array($config['aliases']['alias']))
     $config['aliases']['alias'] = array();
@@ -83,7 +84,7 @@ $(document).ready(function() {
      });
 
      // When a user clicks on the submit button, post the form.
-     $(".buttonrow").click(function () {
+     $("#submitbutton").click(function () {
 	  displayProcessingDiv();
 	  var Options = $.map($('#MEMBERS option'), function(e) { return $(e).val(); } );
 	  var str = Options.join(' ');
@@ -177,7 +178,7 @@ $(document).ready(function() {
 	</fieldset>
 	
 	<div class="buttonrow">
-		<input type="submit" value="Save" class="button" />
+		<input type="submit" id="submitbutton" value="Save" class="button" />
 	</div>
 
 	</form>

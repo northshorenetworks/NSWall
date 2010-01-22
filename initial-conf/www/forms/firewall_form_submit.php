@@ -38,7 +38,7 @@ if ($_POST) {
  
 			/* input validation */
 			$reqdfields = explode(" ", "type interface srclist dstlist");
-			$reqdfieldsn = explode(",", "Type,Interface,Source,Destination");
+			$reqdfieldsn = explode(",", "Type,Interface,Srclist,Dstlist");
  
 			do_input_validation($_POST, $reqdfields, $reqdfieldsn, &$input_errors);
  
@@ -111,9 +111,11 @@ if ($_POST) {
             	$filterent['options']['maxsrcstates'] = $_POST['maxsrcstates'];
             if ($_POST['maxsrcconns'])
             	$filterent['options']['maxsrcconns'] = $_POST['maxsrcconns'];
-            if ($_POST['maxsrcconnrate'])
-            	$filterent['options']['maxsrcconnrate'] = $_POST['maxsrcconnrate'];
-            if ($_POST['overload'])
+            if ($_POST['maxsrcconrateconns'])
+            	$filterent['options']['maxsrcconrateconns'] = $_POST['maxsrcconrateconns'];
+            if ($_POST['maxsrcconrateseconds'])
+				$filterent['options']['maxsrcconrateseconds'] = $_POST['maxsrcconrateseconds'];
+			if ($_POST['overload'])
             	$filterent['options']['overload'] = $_POST['overload'] ? true : false;
             if ($_POST['flush'])
             	$filterent['options']['flush'] = $_POST['flush'] ? true : false;
@@ -128,23 +130,26 @@ if ($_POST) {
  
 			$xmlconfig = dump_xml_config($config, $g['xml_rootobj']);
  
-        	/* if (filter_parse_config($config)) {
+        	if (filter_parse_config($config)) {
                 $input_errors[] = "Could not parse the generated config file";
                 $input_errors[] = "See log file for details";
                 $input_errors[] = "XML Config file not modified";
-        	}*/
+        	}
  
             if (!$input_errors) {
                 write_config();
                 sleep(2);
                 echo '<!-- SUBMITSUCCESS --><center>Configuration saved successfully</center>';
-            } else {
-                sleep(2);
-                echo '<center>Errors were found<br>Configuration not saved<br>';
-                print_r($input_errors);
-                echo '<INPUT TYPE="button" value="OK" onClick="hidediv(\'save_config\')"></center>';
-            }
-            return $retval;
+           	} else {
+					print_input_errors($input_errors);
+                                        echo '<script type="text/javascript">
+                                        $("#okbtn").click(function () {	
+                                            $("#save_config").dialog("close");
+                                        });
+                                        </script>';
+					echo '<INPUT TYPE="button" value="OK" id="okbtn"></center>';
+			} 
+			return $retval;
 		case "firewall_altq":
 			unset($input_errors);
         	$config['altq']['enable'] = $_POST['enable'] ? true : false;
@@ -160,12 +165,15 @@ if ($_POST) {
                 sleep(2);
                 echo '<!-- SUBMITSUCCESS --><center>Configuration saved successfully</center>';
             } else {
-                sleep(2);
-                echo '<center>Errors were found<br>Configuration not saved<br>';
-                print_r($input_errors);
-                echo '<INPUT TYPE="button" value="OK" onClick="hidediv(\'save_config\')"></center>';
-            }
-            return $retval;
+					print_input_errors($input_errors);
+                                        echo '<script type="text/javascript">
+                                        $("#okbtn").click(function () {	
+                                            $("#save_config").dialog("close");
+                                        });
+                                        </script>';
+					echo '<INPUT TYPE="button" value="OK" id="okbtn"></center>';
+			}
+			return $retval;
 		case "firewall_rule_delete":
 			if (!is_array($config['filter']['rule']))
 				$config['filter']['rule'] = array();
@@ -196,12 +204,15 @@ if ($_POST) {
                 sleep(2);
                 echo '<!-- SUBMITSUCCESS --><center>Configuration saved successfully</center>';
             } else {
-                sleep(2);
-                echo '<center>Errors were found<br>Configuration not saved<br>';
-                print_r($input_errors);
-                echo '<INPUT TYPE="button" value="OK" onClick="hidediv(\'save_config\')"></center>';
-            }
-            return $retval;
+					print_input_errors($input_errors);
+                                        echo '<script type="text/javascript">
+                                        $("#okbtn").click(function () {	
+                                            $("#save_config").dialog("close");
+                                        });
+                                        </script>';
+					echo '<INPUT TYPE="button" value="OK" id="okbtn"></center>';
+			}
+			return $retval;
 		case "firewall_options":
 			unset($input_errors);
 			$a_filter = &$config['filter']['options'];	
@@ -296,12 +307,15 @@ if ($_POST) {
                 	sleep(2);
                 	echo '<!-- SUBMITSUCCESS --><center>Configuration saved successfully</center>';
             	} else {
-                	sleep(2);
-                	echo '<center>Errors were found<br>Configuration not saved<br>';
-                	print_r($input_errors);
-                	echo '<INPUT TYPE="button" value="OK" onClick="hidediv(\'save_config\')"></center>';
-            	}
-            	return $retval;
+					print_input_errors($input_errors);
+                                        echo '<script type="text/javascript">
+                                        $("#okbtn").click(function () {	
+                                            $("#save_config").dialog("close");
+                                        });
+                                        </script>';
+					echo '<INPUT TYPE="button" value="OK" id="okbtn"></center>';
+			}
+				return $retval;
 		case "firewall_alias":
 		 	if (!is_array($config['aliases']['alias']))
     			$config['aliases']['alias'] = array();
@@ -355,12 +369,15 @@ if ($_POST) {
                     sleep(2);
                     echo '<!-- SUBMITSUCCESS --><center>Configuration saved successfully</center>';
                 } else {
-                    sleep(2);
-                    echo '<center>Errors were found<br>Configuration not saved<br>';
-                    print_r($input_errors);
-                    echo '<INPUT TYPE="button" value="OK" onClick="hidediv(\'save_config\')"></center>';
-                }
-                return $retval;
+					print_input_errors($input_errors);
+                                        echo '<script type="text/javascript">
+                                        $("#okbtn").click(function () {	
+                                            $("#save_config").dialog("close");
+                                        });
+                                        </script>';
+					echo '<INPUT TYPE="button" value="OK" id="okbtn"></center>';
+			}
+				return $retval;
 		case "firewall_nat":
 				if (!is_array($config['nat']['advancedoutbound']['rule']))
     				$config['nat']['advancedoutbound']['rule'] = array();
@@ -471,61 +488,15 @@ if ($_POST) {
                     sleep(2);
                     echo '<!-- SUBMITSUCCESS --><center>Configuration saved successfully</center>';
                 } else {
-                    sleep(2);
-                    echo '<center>Errors were found<br>Configuration not saved<br>';
-                    print_r($input_errors);
-                    echo '<INPUT TYPE="button" value="OK" onClick="hidediv(\'save_config\')"></center>';
-                }
-                return $retval;
-		case "system_groups":
-			unset($input_errors);
-
-		        /* input validation */
- 		        $reqdfields = explode(" ", "groupname");
-   		        $reqdfieldsn = explode(",", "Group Name");
-
-     		        do_input_validation($_POST, $reqdfields, $reqdfieldsn, &$input_errors);
-
- 	                if (preg_match("/[^a-zA-Z0-9\.\-_ ]/", $_POST['groupname']))
-                       		$input_errors[] = "The group name contains invalid characters.";
-
- 		        if (!$input_errors && !(isset($id) && $a_group[$id])) {
-                		/* make sure there are no dupes */
-               		 	foreach ($a_group as $group) {
-                        		if ($group['name'] == $_POST['groupname']) {
-                                		$input_errors[] = "Another entry with the same group name already exists.";
-                                		break;
-                	        	}
-                		}
-        		}
-
-  		        if (!$input_errors) {
-
- 	                	if (isset($id) && $a_group[$id])
-                        		$group = $a_group[$id];
-
- 		               	$group['name'] = $_POST['groupname'];
-                		$group['description'] = $_POST['description'];
-                		unset($group['pages']);
-                		foreach ($pages as $fname => $title) {
-                        		$identifier = str_replace('.php','',$fname);
-                        		if ($_POST[$identifier] == 'yes')
-                                		$group['pages'][] = $fname;
-                        	}
- 	              	}
-
- 	               if (isset($id) && $a_group[$id])
-        	                $a_group[$id] = $group;
-                	else
-                        	$a_group[] = $group;
-
- 	               write_config();
-        	       push_config('accounts');
-			if ($retval == 0) {
-                                sleep(2);
-                                echo '<!-- SUBMITSUCCESS --><center>Configuration saved successfully</center>';
-                        }
-			return 0; 
+					print_input_errors($input_errors);
+                                        echo '<script type="text/javascript">
+                                        $("#okbtn").click(function () {	
+                                            $("#save_config").dialog("close");
+                                        });
+                                        </script>';
+					echo '<INPUT TYPE="button" value="OK" id="okbtn"></center>';
+				}
+				return $retval;
 			default;
  echo '<center>Unknown form submited!<br><INPUT TYPE="button" value="OK" name="OK" onClick="hidediv(\'save_config\')"></center>';
 			return 0;
