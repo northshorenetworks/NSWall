@@ -167,9 +167,35 @@ $(function(){
      });
 }); 
 
+// When a user changes the interface to something other than WAN, hide the SNAT destination option
+$(function(){
+     $("#interface").change(function() {
+          var val = $(this).val();
+          switch(val){
+		case 'wan':
+			$("#dsttype option[value=dstsnatdiv]").show();
+                        break;
+		default:
+			$("#dsttype option[value=dstsnatdiv]").hide();
+			break;
+          }
+     });
+}); 
+
 // wait for the DOM to be loaded
 $(document).ready(function() {
 	 $('div fieldset div').addClass('ui-widget ui-widget-content ui-corner-content');
+
+     // When a user changes the interface to something other than WAN, hide the SNAT destination option
+     var interface = $("#interface").val();
+     switch(interface){
+          case 'wan':
+		$("#dsttype option[value=dstsnatdiv]").show();
+                break;
+	  default:
+		$("#dsttype option[value=dstsnatdiv]").hide();
+		break;
+     } 
 
      // When a user clicks on the src host add button, validate and add the host.
      $("#srchostaddbutton").click(function () {
@@ -190,16 +216,35 @@ $(document).ready(function() {
           var ip = $("#srcnet");
           var netmask = $("#srcmask");
 	  	  if(verifyIP(ip) == 0) {
+                        var firstitem = $("#SRCADDR option:first").text();
+                        if(firstitem == "any") {
+                            $("#SRCADDR option:first").remove();
+                        } 
 		  	$('#SRCADDR').append("<option value='" + ip.val() + "/" + netmask.val() + "'>"+ip.val() + "/" + netmask.val() + '</option>');
           	ip.val("");
           	return false;
 		  }	
+     });
+
+     // When a user clicks on the src alias add button, add the selected value.
+     $("#srcaliasaddbutton").click(function () {
+          var alias = $("#srcalias");
+          var firstitem = $("#SRCADDR option:first").text();
+                        if(firstitem == "any") {
+                            $("#SRCADDR option:first").remove();
+                        } 
+	  $('#SRCADDR').append("<option value='" + alias.val() + "'>" + alias.val() + '</option>');
+          return false;	
      });
      
       // When a user clicks on the dst host add button, validate and add the host.
      $("#dsthostaddbutton").click(function () {
           var ip = $("#dsthost");
 		  if(verifyIP(ip) == 0) {
+                        var firstitem = $("#DSTADDR option:first").text();
+                        if(firstitem == "any") {
+                            $("#DSTADDR option:first").remove();
+                        } 
 	  		$('#DSTADDR').append("<option value='" + ip.val() + "'>"+ip.val() + '</option>');
           	ip.val("");
           	return false;
@@ -210,11 +255,52 @@ $(document).ready(function() {
      $("#dstnetaddbutton").click(function () {
           var ip = $("#dstnet");
           var netmask = $("#dstmask");
-	  	  if(verifyIP(ip) == 0) {	
+	  	  if(verifyIP(ip) == 0) {
+                        var firstitem = $("#DSTADDR option:first").text();
+                        if(firstitem == "any") {
+                            $("#DSTADDR option:first").remove();
+                        } 	
 			$('#DSTADDR').append("<option value='" + ip.val() + "/" + netmask.val() + "'>"+ip.val() + "/" + netmask.val() + '</option>');
           	ip.val("");
           	return false;
 		  }
+     });
+
+       // When a user clicks on the dst alias add button, add the selected value.
+     $("#dstaliasaddbutton").click(function () {
+          var alias = $("#dstalias");
+          var firstitem = $("#DSTADDR option:first").text();
+          if(firstitem == "any") {
+              $("#DSTADDR option:first").remove();
+          } 
+	  $('#DSTADDR').append("<option value='" + alias.val() + "'>" + alias.val() + '</option>');
+          return false;	
+     });
+
+     // When a user clicks on the dst snat add button, validate and add the entry.
+     $("#dstsnataddbutton").click(function () {
+          var extip = $("#snatext");
+          var intip = $("#snatint");
+          if (extip.val() == 'WAN_IF') {
+              if(verifyIP(intip.val()) == 0) {
+                  var firstitem = $("#DSTADDR option:first").text();
+                  if(firstitem == "any") {
+                      $("#DSTADDR option:first").remove();
+                  } 	
+	          $('#DSTADDR').append("<option value='" + extip.val() + ":" + intip.val() + "'>"+extip.val() + "->" + intip.val() + '</option>');
+                  intip.val("");
+                  return false;
+              }
+          } else if (verifyIP(extip.val()) == 0 && verifyIP(intip.val()) == 0) {
+              var firstitem = $("#DSTADDR option:first").text();
+              if(firstitem == "any") {
+                  $("#DSTADDR option:first").remove();
+              } 	
+	      $('#DSTADDR').append("<option value='" + extip.val() + ":" + intip.val() + "'>"+extip.val() + "->" + intip.val() + '</option>');
+              extip.val("");
+              intip.val("");
+              return false;
+	  }
      });
 
 
@@ -377,7 +463,7 @@ $(document).ready(function() {
 			</div>
                         <div>
                              <label for="interface">Interface</label>
-                              <select name="interface" class="formfld">
+                              <select name="interface" id="interface" class="formfld">
 <?php $interfaces = array('wan' => 'WAN', 'lan' => 'LAN', 'pptp' => 'PPTP');
                                           for ($i = 1; isset($config['interfaces']['opt' . $i]); $i++) {
                                                 $interfaces['opt' . $i] = $config['interfaces']['opt' . $i]['descr'];
@@ -451,7 +537,7 @@ $(document).ready(function() {
 </option>
 <?php endforeach; ?>
 </select>
-<input type=button onClick="addOption('SRCADDR',document.iform.srcalias.value + '/32','alias' + ':' + document.iform.srcalias.value + '/32')"; value='Add'>
+<input type=button id='srcaliasaddbutton' value='Add'>
 </div>
 <div id='srcuserdiv' style="display:none;">
 <label for="srcuser">User</label>
@@ -469,9 +555,7 @@ $(document).ready(function() {
                              <label for="DSTADDR">Destination Addresses</label>
                                <select name="DSTADDR" style="width: 300px; height: 100px" id="DSTADDR" multiple>
 <?php for ($i = 0; $i<sizeof($pconfig['dstlist']); $i++): ?>
-<option value="<?=$pconfig['dstlist']["dst$i"];?>">
-<?=$pconfig['dstlist']["dst$i"];?>
-</option>
+<option value="<?=$pconfig['dstlist']["dst$i"];?>"><?=preg_replace('/:/', '->', $pconfig['dstlist']["dst$i"]);?></option>
 <?php endfor; ?>
 </select>
 <input type=button id='dstremove' value='Remove Selected'><br><br>
@@ -516,16 +600,28 @@ $defaults = split(' ', $defaults);
 </option>
 <?php endforeach; ?>
 </select>
-<input type=button value='Add'>
+<input type=button id='dstaliasaddbutton' value='Add'>
 </div>
+
+<?php if ($config['interfaces']['wan']['ipaddr'] == 'dhcp'): ?>
 <div id='dstsnatdiv' style="display:none;">
 <label for="snat">SNAT</label>
 <strong>External</strong>
-<?=$mandfldhtml;?><input name="snatext" type="text" class="formfld" id="snatext" size="16" value="<?=htmlspecialchars($pconfig['address']);?>">
+<input name="snatint" disabled class="formfld" id="snatext" size="16" value="WAN_IF">
 <strong>Internal</strong>
-<?=$mandfldhtml;?><input name="snatint" type="text" class="formfld" id="snatint" size="16" value="<?=htmlspecialchars($pconfig['address']);?>">
-<input type=button value='Add'>
-</div>           
+<?=$mandfldhtml;?><input name="snatint" type="text" class="formfld" id="snatint" size="16" value="">
+<input type=button id='dstsnataddbutton' value='Add'>
+</div>    
+<?php else: ?>
+<div id='dstsnatdiv' style="display:none;">
+<label for="snat">SNAT</label>
+<strong>External</strong>
+<?=$mandfldhtml;?><input name="snatext" class="formfld" id="snatint" size="16" value="">
+<strong>Internal</strong>
+<?=$mandfldhtml;?><input name="snatint" type="text" class="formfld" id="snatint" size="16" value="">
+<input type=button id='dstsnataddbutton' value='Add'>    
+<?php endif; ?>
+
 	</fieldset>
         <div class="buttonrow">
 		<input type="submit" id="submitbutton" value="Save" class="button" />

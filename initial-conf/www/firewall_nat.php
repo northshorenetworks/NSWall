@@ -1,81 +1,97 @@
 #!/bin/php
-<?php 
-$pgtitle = array("Firewall", "NAT", "Dynamic");
+<?php
+
 require("guiconfig.inc");
-include("ns-begin.inc"); 
-if (!is_array($config['nat']['advancedoutbound']['rule']))
-    $config['nat']['advancedoutbound']['rule'] = array();
-    
-$a_dnat = &$config['nat']['advancedoutbound']['rule'];
-nat_out_rules_sort();
+
+    if (!is_array($config['filter']['rule']))
+        $config['filter']['rule'] = array();
+
+    filter_rules_sort();
+    $a_filter = &$config['filter']['rule'];
+
+    $if = $_GET['if'];
+
+    if ($_POST['if'])
+        $if = $_POST['if'];
+
+    $iflist = array("wan" => "WAN","lan" => "LAN");
+
+    if ($config['pptpd']['mode'] == "server")
+        $iflist['pptp'] = "PPTP VPN";
+
+    for ($i = 1; isset($config['interfaces']['opt' . $i]); $i++) {
+        if ($config['interfaces']['opt' . $i]['wireless']['ifmode'] != 'lanbridge' && $config['interfaces']['wireless']['ifmode'] != 'dmzbridge')
+            $iflist['opt' . $i] = $config['interfaces']['opt' . $i]['descr'];
+    }
+
+if (!$if || !isset($iflist[$if]))
+    $if = "wan";
+
+$ifsortable = '#' . $if . 'sortable';
+$ifsaveneworder = '#' . $if . 'saveneworder';
 ?>
 
 <style type="text/css">
-    #natsortable { list-style-type: none; margin: auto auto 1em; padding: 0; width: 95%; }
-    #natsortable li { margin: 0px 3px 3px 3px; padding: 0.1em; margin-left: 0; padding-left: 1.5em; font-size: 1.4em;
-height: 18px; border-style:solid;
-border-color:#CCCCCC; font-size:0.8em; }
-    #natsortable li span.col1 { position:relative; float:left; width:2.5%; }
-    #natsortable li span.col2 { position:relative; float:left; width:15%; }
-    #natsortable li span.col3 { position:relative; float:left; width:2.5%; }
-    #natsortable li span.col4 { position:relative; float:left; width:2.5%; }
-    #natsortable li span.col5 { position:relative; float:left; width:60%; }
+    <?= $ifsortable; ?> { list-style-type: none; margin: auto auto 1em; padding: 0; width: 95%; }
+    <?= $ifsortable; ?> li { padding: 0.1em; margin-left: 0; padding-left: 1.5em; font-size: 1.4em; height: 18px; border:1px solid #E4E4E4;  font-size:1em; }
+    <?= $ifsortable; ?> li span.col1 { position:relative; float:left; width:2.5%; }
+    <?= $ifsortable; ?> li span.col2 { position:relative; float:left; width:15%; }
+    <?= $ifsortable; ?> li span.col3 { position:relative; float:left; width:2.5%; }
+    <?= $ifsortable; ?> li span.col4 { position:relative; float:left; width:2.5%; }
+    <?= $ifsortable; ?> li span.col5 { position:relative; float:left; width:60%; }
 </style>
 
 <script type="text/javascript">
 
-// wait for the DOM to be loaded
+// Hide the Save Changes Button
 $(document).ready(function() {
-    $('div fieldset div').addClass('ui-widget ui-widget-content ui-corner-content');
+        //hidediv("<?=$if . 'saveneworder';?>");
+});
 
-	// Make the list of rules for this interface sortable
-	$("natsortable").sortable({
-   		axis: 'y',
-   		containment: 'parent',
-   		items: 'li:not(.ui-state-disabled)'
-	});
+// Make the list of rules for this interface sortable
+$("<?= $ifsortable; ?>").sortable({
+   axis: 'y',
+   containment: 'parent',
+   items: 'li:not(.ui-state-disabled)',
+   update: function(event, ui) {
+        //showdiv("<?=$if . 'saveneworder';?>");
+   }
+});
 
-	// When a user clicks on the rule edit button, load firewall_rules_edittabs.php?id=$id
-	$(".col3 a, #newdnat a").click(function () {
-    	var toLoad = $(this).attr('href');
+// When a user clicks the save new order button submit the order to the backend processing
+$("<?= $ifsaveneworder; ?>").click(function () {
+    displayProcessingDiv();
+    var order = $("<?= $ifsortable; ?>").sortable("serialize");
+    $("#currentorder").load("processing_sortable.php?"+order+"&sortif=<?=$if?>");
+        $("<?= $ifsortable; ?>").sortable('refresh');
+        hidediv("<?=$if . 'saveneworder';?>");
+        setTimeout(function(){ $('#save_config').fadeOut('slow'); }, 1000);
+    });
+
+// When a user clicks on the rule edit button, load firewall_rules_edittabs.php?id=$id
+$(".col3 a, #newrule a").click(function () {
+    var toLoad = $(this).attr('href');
         clearInterval(refreshId);
         $('#content').load(toLoad);
         return false;
-	});
+});
 
-	// When a user clicks on the rule delete button, load firewall_rules_edittabs.php?id=$id
-	$(".col4 a").click(function () {
-        if (confirm('Are you sure you want to delete this rule?')){
+// When a user clicks on the rule delete button, load firewall_rules_edittabs.php?id=$id
+$(".col4 a").click(function () {
+        if (confirm('Are you sure you want to delete this rule?')){  
              displayProcessingDiv();
              var id = $(this).attr('href');
              $("#currentorder").load(id);
-             $("#natsortable").sortable('refresh');
+             $("<?= $ifsortable; ?>").sortable('refresh');
              setTimeout(function(){ $('#save_config').fadeOut('slow'); }, 1000);
         }
         return false;
-	});
-	
-	$(function() {
-        $("#firewalloptionstabs").tabs();
-    });	
-
 });
+
 </script>
+
 <div class="demo">
-<div id="wrapper">
-<div class="form-container ui-tabs ui-widget ui-widget-content ui-corner-content">
- 
-<div id="firewalloptionstabs">
-    <ul>
-        <li><a href="#tabDnat">Dynamic</a></li>
-        <li><a href="#tabBinat">1 To 1</a></li>
-    </ul>
-         <form action="forms/firewall_form_submit.php" onSubmit="return prepareSubmit()" method="post" name="iform" id="iform">
-	     <input name="formname" type="hidden" value="firewall_options">
-             <div id="tabDnat">
-             <fieldset>
-	     <legend><?=join(": ", $pgtitle);?></legend>
-             <ul id="natsortable">
+<ul id="<?=$if . 'sortable';?>">
 <li id="element_<?=$i;?>" class="connectedSortable ui-state-disabled">
 <span class="col1">Id</span>
 <span class="col2">Rule Name</span>
@@ -83,33 +99,27 @@ $(document).ready(function() {
 <span class="col4">&nbsp</span>
 <span class="col5">Description</span>
 </li>
-<?php $nrules = 0; for ($i = 0; isset($a_dnat[$i]); $i++):
-$filterent = $a_dnat[$i]; ?>
-<li id="listItem_<?=$i;?>" class="ui-corner-all">
-<span class="col1"><?=$i;?></span>
-<span class="col2"><?php if (isset($filterent['source']['network'])) echo strtoupper($filterent['source']['network']); else echo "*";?><?=$textse;?></span>
+<?php $nrules = 0; for ($i = 0; isset($a_filter[$i]); $i++):
+$filterent = $a_filter[$i];
+if ($filterent['interface'] != $if)
+continue; ?>
+<li id="listItem_<?=$i;?>">
+<span class="col1"><span class="ui-icon ui-icon-triangle-2-n-s"></span></span>
+<span class="col2"><?php if (isset($filterent['name'])) echo strtoupper($filterent['name']); else echo "*"; ?><?=$textse;?></span>
 <span class="col3">
-<a href="firewall_nat_edit.php?id=<?=$i;?>">
-<img src="images/e.gif" title="edit rule" width="17" height="17" border="0">
+<a href="firewall_rules_edittabs.php?id=<?=$i;?>">
+<span title="edit this rule" class="ui-icon ui-icon-circle-zoomin"></span>
 </a>
 </span>
 <span class="col4">
-<a href="forms/firewall_form_submit.php?id=<?=$i;?>&action=delete&type=dnat">
-<img src="images/x.gif" title="delete NAT" width="17" height="17" border="0">
+<a href="forms/firewall_form_submit.php?id=<?=$i;?>&action=delete&type=rules">
+<span title="delete this rule" class="ui-icon ui-icon-circle-close"></span>
 </a>
 </span>
 <span class="col5"><?php if (isset($filterent['descr'])) echo $filterent['descr'];?></span>
 </li>
 <?php $nrules++; endfor; ?>
 </ul>
+<div id="newrule"><center><a href="firewall_rules_edittabs.php?if=<?=$if;?>"><span title="add a new rule" class="ui-icon ui-icon-circle-plus"></span></a></center></div>
+<div id="<?=$if . 'saveneworder';?>"><center>SAVE NEW ORDER LINK</center></div>
 </div>
-<div id="newdnat"><center><a href="firewall_nat_edit.php"><img src="images/plus.gif" title="add new nat" width="17" height="17" border="0"></a></center></div>
-	     </fieldset>
-        <div id="tabBinat">
-        </div>
-</form>
-</div>
-</div>
-</div>
-</div>
-<div id="currentorder"></div>

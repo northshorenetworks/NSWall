@@ -1,8 +1,7 @@
 <?php
 /*
 $Id: fbegin.inc,v 1.16 2009/04/20 06:52:10 jrecords Exp $
-part of m0n0wall (http://m0n0.ch/wall)
- 
+part of m0n0wall (http://m0n0.ch/wall) 
 Copyright (C) 2003-2006 Manuel Kasper <mk@neon1.net>.
 All rights reserved.
  
@@ -87,9 +86,9 @@ $menu['System']['Networking'] = array('system_networking.php');
  
 $menu['Firewall']['ALTQ'] =array('firewall_altq.php');
 //$menu['Firewall']['Abusive Sites'] = array('firewall_abusive_sites.php');
-$menu['Firewall']['Aliases'] = array('firewall_aliases.php');
+$menu['Firewall']['Aliases'] = array('firewall_aliases_tabs.php');
 $menu['Firewall']['Global Options'] = array('firewall_options_edit.php');
-$menu['Firewall']['NAT'] = array('firewall_nat.php');
+$menu['Firewall']['NAT'] = array('firewall_nat_tabs.php');
 $menu['Firewall']['Rules'] = array('firewall_rules_tabs.php');
 
 if ($g['module'] == 'FIREWALL') { 
@@ -147,6 +146,40 @@ $menu['Diagnostics']['Utilities'] = array('diag_util.php');
 
 <body link="#0000CC" vlink="#0000CC" alink="#0000CC">
 <div id="webui">
+
+<div id="support" title="NSWall Support"></div>
+<div id="support_login" title="NSWall Support">
+<body>
+
+<div id="login_nswall" title="NSWall Login">
+<div id="wrapper">
+<div class="form-container ui-tabs ui-widget ui-corner-all">
+<form id="supportlogin" method="post" name="login">
+ <fieldset>
+        <legend>Support : Login</legend>
+            <div>
+                             <label for="username">Username</label>
+                             <input type="text" size="10" name="username">
+            </div>
+            <div>
+                             <label for="password">Password</label>
+                             <input type="password" size="10" name="password">
+            </div>
+ </fieldset>
+ <div class="buttonrow">
+     <center><input type="submit" id="support_login_button" value="Login" class="button" /></center>
+ </div>
+
+</form>
+
+</div>
+</div>
+</div>
+
+</body>
+</html>
+    </center>
+</div>
 
 <div id="save_config" title="Saving Configuration"></div>
 
@@ -311,6 +344,38 @@ $(document).ready(function() {
       }  
       //Initialize all of our dialogs
 	$.ui.dialog.defaults.bgiframe = true;
+
+        // Support Login dialog, displayed whenever a config change is written
+        $("#support_login").dialog({ 
+            autoOpen: false, 
+            width: 400, 
+            height: 250, 
+            hide: 'scale', 
+            show: 'scale', 
+            resizable: false, 
+            draggable: false, 
+            closeOnEscape: false, 
+            open: function(event, ui) { 
+                $(".ui-dialog-titlebar-close").hide(); 
+                $(".ui-dialog-titlebar").css('display','block'); 
+            } 
+        });
+
+        // Support dialog, displayed whenever a config change is written
+        $("#support").dialog({ 
+            autoOpen: false, 
+            width: 400, 
+            height: 250, 
+            hide: 'scale', 
+            show: 'scale', 
+            resizable: false, 
+            draggable: false, 
+            closeOnEscape: false, 
+            open: function(event, ui) { 
+                $(".ui-dialog-titlebar-close").hide(); 
+                $(".ui-dialog-titlebar").css('display','block'); 
+            } 
+        });
 
 	// Save Configuration dialog, displayed whenever a config change is written
         $("#save_config").dialog({ 

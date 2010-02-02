@@ -138,6 +138,9 @@ if ($_POST) {
  
             if (!$input_errors) {
                 write_config();
+				config_lock();
+                $retval = filter_configure();
+                config_unlock();
                 sleep(2);
                 echo '<!-- SUBMITSUCCESS --><center>Configuration saved successfully</center>';
            	} else {

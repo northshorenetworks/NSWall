@@ -218,6 +218,128 @@ if ($_POST) {
 					echo '<INPUT TYPE="button" value="OK" id="okbtn"></center>';
 			}
 			return $retval;
+		case "system_submit_support_ticket":
+                        /* Gather debug Data */
+$debug_data = array();
+$no_debug_data = array();
+
+/* Execute a command */
+ 
+function doCmdT($title, $command, $isstr) {
+global $debug_data;
+
+if ($command == "dumpconfigxml") {
+    $fd = @fopen("/conf/config.xml", "r");
+    if ($fd) {
+        while (!feof($fd)) {
+            $line = fgets($fd);
+            /* remove password tag contents */
+            $line = preg_replace("/<password>.*?<\\/password>/", "<password>xxxxx</password>", $line);
+            $line = preg_replace("/<pre-shared-key>.*?<\\/pre-shared-key>/", "<pre-shared-key>xxxxx</pre-shared-key>", $line);
+            $line = str_replace("\t", " ", $line);
+            $output .= htmlspecialchars($line,ENT_NOQUOTES);
+        }
+    }
+    fclose($fd);
+} else {
+    exec ($command . " 2>&1", $execOutput, $execStatus);
+    for ($i = 0; isset($execOutput[$i]); $i++) {
+        if ($i > 0) {
+            $output .= "\n";
+        }
+        $output .= htmlspecialchars($execOutput[$i],ENT_NOQUOTES);
+    }
+}
+$debug_data["$title"] = base64_encode($output);
+}
+ 
+/* Execute a command, giving it a title which is the same as the command. */
+function doCmd($command) {
+    doCmdT($command,$command);
+}
+ 
+/* Define a command, with a title, to be executed later. */
+function defCmdT($title, $command) {
+    global $commands;
+    $title = htmlspecialchars($title,ENT_NOQUOTES);
+    $commands[] = array($title, $command, false);
+}
+ 
+/* Define a command, with a title which is the same as the command,
+* to be executed later.
+*/
+function defCmd($command) {
+    defCmdT($command,$command);
+}
+ 
+/* Execute all of the commands which were defined by a call to defCmd. */
+function execCmds() {
+    global $commands;
+    for ($i = 0; isset($commands[$i]); $i++ ) {
+        doCmdT($commands[$i][0], $commands[$i][1], $commands[$i][2]);
+    }
+}
+
+/* Set up all of the commands we want to execute. */
+defCmdT("ifconfig","/sbin/ifconfig -a");
+defCmdT("routes","netstat -nr -f inet");
+defCmdT("pfctlall", "/sbin/pfctl -vvs all");
+defCmdT("resolvconf","cat /etc/resolv.conf");
+defCmdT("processes","ps xauww");
+defCmdT("df","/bin/df");
+defCmdT("logbuffer","/usr/sbin/syslogc all");
+defCmdT("confdir", "ls /conf");
+defCmdT("varrundir", "ls /var/run");
+defCmdT("configxml","dumpconfigxml");
+ 
+execCmds();
+
+/* Gather php generated output */
+$pfrules = filter_tables_generate();
+$pfrules .= filter_aliasrules_generate();
+$pfrules .= filter_options_generate();
+$pfrules .= filter_normalization_generate();
+$pfrules .= altq_conf_generate();
+$pfrules .= filter_nat_rules_generate();
+$pfrules .= filter_rdrrules_generate();
+$pfrules .= filter_rules_generate();
+$debug_data['pfconf'] = base64_encode($pfrules);
+$debug_data['version'] = base64_encode(file_get_contents('/etc/version'));
+$debug_data['platform'] = base64_encode($g['fullplatform']);
+$no_debug_data['version'] = base64_encode(file_get_contents('/etc/version'));
+$no_debug_data['platform'] = base64_encode($g['fullplatform']);
+
+if(isset($_POST['debuginfo'])) {
+    $postdata = $debug_data;
+} else {
+    $postdata = $no_debug_data;
+}
+                    /* add id and notes to formdata */
+                        $postdata['caseid']     = $_POST['caseid'];
+                        $postdata['notes']      = base64_encode($_POST['notes']);
+
+                        $authdata['username'] = $_POST['username'];
+                        $authdata['password'] = $_POST['password'];
+                        
+                        $url    = 'http://www.northshoresoftware.com/authenticate_user.php';
+			$retval = http_request( '', '', $url, $authdata, 'POST' );
+        	
+                        if (preg_match('/\d{8}/',$retval)) {
+                            $postdata['customerid'] = $retval;
+			    $url    = 'http://www.northshoresoftware.com/submit_support_ticket.php';
+			    $retval = http_request( '', '', $url, $postdata, 'POST' );
+                            echo "$retval";
+			    echo '<script type="text/javascript">
+                                      $("#okbtn").click(function () {
+                                          $("#support").dialog("close");
+                                      });
+                                  </script>';
+                            echo '<center><INPUT TYPE="button" value="OK" id="okbtn"></center>';
+                       } else {
+                            echo $retval;
+                       }
+                       return $retval;
+			
 		case "system_users":
 
 			if (isset($_POST['id']))
