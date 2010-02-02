@@ -246,6 +246,8 @@ if (isset($config['filter']['rule'])) {
               }
                  /* destination address */
               if($rule['dstlist']['dst0'] != 'any') {
+                 
+                     
                  if (isset($rule['dstlist'])) {
                         unset($rdrset);
                         $line .= "\ntable <" . $rule['name'] . "_dst> { ";
@@ -253,26 +255,28 @@ if (isset($config['filter']['rule'])) {
                         for($i=0;$i<sizeof($dstlist); $i++) {
                                 $dst = "dst" . "$i";
                                 if (preg_match('/^\d+.\d+.\d+.\d+:/', $dstlist[$dst])) {
-                                $dstlist[$dst] = preg_replace('/^\d+.\d+.\d+.\d+:/','', $dstlist[$dst]);
-                                $rdrset = true;
-}
+                                    $dstlist[$dst] = preg_replace('/^\d+.\d+.\d+.\d+:/','', $dstlist[$dst]);
+                                    $rdrset = true;
+                                } elseif (preg_match('/^WAN_IF:/', $dstlist[$dst])) {
+                                    $dstlist[$dst] = preg_replace('/^WAN_IF:/','', $dstlist[$dst]);
+                                    $rdrdhcp = true;
+                                }
                                 $line .= "$dstlist[$dst], ";
                         }
 			$line = preg_replace("/\, $/", "", $line);
                         $line .= " } persist";
-			if ($rdrset) {
+			if ($rdrset && !$rdrdhcp) {
                                 $line .= "\ntable <" . $rule['name'] . "_dst_ext> { ";
-                        $dstlist = $rule['dstlist'];
-                        for($i=0;$i<sizeof($dstlist); $i++) {
-                                $dst = "dst" . "$i";
-                                if (preg_match('/^\d+.\d+.\d+.\d+:/', $dstlist[$dst])) {
-                                $dstlist[$dst] = preg_replace('/:\d+.\d+.\d+.\d+$/','', $dstlist[$dst]);
-                                $line .= "$dstlist[$dst], ";
-}
-                    
-                        }
- 			$line = preg_replace("/\, $/", "", $line);
-			$line .= " } persist";
+                                $dstlist = $rule['dstlist'];
+                                for($i=0;$i<sizeof($dstlist); $i++) {
+                                    $dst = "dst" . "$i";
+                                    if (preg_match('/^\d+.\d+.\d+.\d+:/', $dstlist[$dst])) {
+                                        $dstlist[$dst] = preg_replace('/:\d+.\d+.\d+.\d+$/','', $dstlist[$dst]);
+                                        $line .= "$dstlist[$dst], ";
+                                    }
+                                }
+ 			        $line = preg_replace("/\, $/", "", $line);
+			        $line .= " } persist";
                        	}
                     }
                 }
@@ -601,47 +605,23 @@ return $ipfrules;
 function filter_system_aliases_generate() {
 	global $config, $g;
 
-        $lancfg = $config['interfaces']['lan'];
+    $lancfg = $config['interfaces']['lan'];
         
-	$optcfg = array();
-
-        for ($i = 1; isset($config['interfaces']['opt' . $i]); $i++) {
-                $oc = $config['interfaces']['opt' . $i];
-
-                if (isset($oc['enable']) && $oc['if']) {
-                        $oic = array();
-                        $oic['if'] = $oc['if'];
-
-                        if ($oc['bridge']) {
-                                if (!strstr($oc['bridge'], "opt") ||
-                                         isset($config['interfaces'][$oc['bridge']]['enable'])) {
-                                        if (is_ipaddr($config['interfaces'][$oc['bridge']]['ipaddr'])) {
-                                                $oic['ip'] = $config['interfaces'][$oc['bridge']]['ipaddr'];
-                                                $oic['sn'] = $config['interfaces'][$oc['bridge']]['subnet'];
-                                                $oic['sa'] = gen_subnet($oic['ip'], $oic['sn']);
-                                        	$oic['descr'] = $config['interfaces'][$oc['bridge']]['descr'];
-					}
-                                }
-                                $oic['bridge'] = 1;
-                                $oic['bridge_if'] = $oc['bridge'];
-                        } else {
-                		$oic['descr'] = $oc['descr'];
-		                $oic['ip'] = $oc['ipaddr'];
-                                $oic['sn'] = $oc['subnet'];
-                                $oic['sa'] = gen_subnet($oic['ip'], $oic['sn']);
-                        }
-
-                        $optcfg['opt' . $i] = $oic;
-                }
-        }
 	$sysalias_rules = 'RFC_1918 = "{ 192.168.0.0/16, 172.16.0.0/12, 10.0.0.0/8 }"' . "\n";
-        $lansn = gen_subnet($lancfg['ipaddr'],$lancfg['subnet']);
+    $lansn = gen_subnet($lancfg['ipaddr'],$lancfg['subnet']);
  	$sysalias_rules .= 'LAN_IP = "' . $lancfg['ipaddr'] . "\"\n";
-        $sysalias_rules .= 'LAN_Network = "' . $lansn .  '/' . $lancfg['subnet'] . "\"\n";
+    $sysalias_rules .= 'LAN_Network = "' . $lansn .  '/' . $lancfg['subnet'] . "\"\n";
 
-	for ($i = 1; isset($optcfg['opt' . $i]); $i++) {
-        	$sysalias_rules .= $optcfg['opt' . $i]['descr'] . '_IP = "' . $optcfg['opt' . $i]['ip'] . "\"\n";
-	        $sysalias_rules .= $optcfg['opt' . $i]['descr'] . '_Network = "' . $optcfg['opt' . $i]['ip'] . "/" . $optcfg['opt' . $i]['sn'] . '"' . "\n";
+		
+	for ($i = 1; isset($config['interfaces']['opt' . $i]); $i++) {
+		$oc = $config['interfaces']['opt' . $i];
+		if (isset($oc['enable'])) {
+        	if($oc['wireless']['ifmode'] == 'lanbridge' || $oc['wireless']['ifmode'] == 'dmzbridge') {
+				continue;
+			}
+			$sysalias_rules .= $oc['descr'] . '_IP = "' . $oc['ipaddr'] . "\"\n";
+	        $sysalias_rules .= $oc['descr'] . '_Network = "' . $oc['ipaddr'] . "/" . $oc['sn'] . '"' . "\n";
+		}
 	}
 	return $sysalias_rules;
 }
@@ -1432,6 +1412,10 @@ function filter_rdrrules_generate() {
 				array_push($rdrlist, $dstlist);
 				$rdrexists = 1;
 			}
+                        if(preg_match('/^WAN_IF:/', $dstlist)) {
+				array_push($rdrlist, $dstlist);
+				$rdrexists = 1;
+			}
 		}
 		/* hijack ftp connections and send them to the proxy */
 		if($rule['tcplist']) {
@@ -1472,6 +1456,10 @@ function filter_rdrrules_generate() {
 					$internal = preg_replace('/^\d+.\d+.\d+.\d+:/',"", $rdr);
 				}
 			}
+                        elseif (preg_match('/^WAN_IF:/', $rdr)) {
+				$external = 'WAN_IF';
+				$internal = preg_replace('/^WAN_IF:/','', $rdr);
+                        }  
 			elseif (preg_match('/^ftp:/', $rdr)) {
 				$external = preg_replace('/^ftp"/','', $rdr);
 				$internal = '127.0.0.1 port 8021';
@@ -1543,7 +1531,11 @@ function filter_rdrrules_generate() {
                         	        $line .=  "from <" . $rule['name'] . "_src> "; 
                                 }
 				 /* dest address */
-				$line .= "to <" . $rule['name'] . "_dst_ext> ";
+                                if($external == 'WAN_IF') {
+                                    $line .= "to (" . $wanif . ") ";
+                                } else {
+				    $line .= "to <" . $rule['name'] . "_dst_ext> ";
+                                }
 				/*protocol ports stuff*/
 				if ($proto == "tcp" || $proto == "udp") {
 					$portlist = $rule[$proto . "list"];
