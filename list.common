@@ -20,6 +20,7 @@ COPY ${CURDIR}/initial-conf/www/diag_tcpdump.php		usr/www/diag_tcpdump.php
 COPY ${CURDIR}/initial-conf/www/diag_traceroute.php		usr/www/diag_traceroute.php
 COPY ${CURDIR}/initial-conf/www/dump_logs.php			usr/www/dump_logs.php
 COPY ${CURDIR}/initial-conf/www/firewall_aliases.php		usr/www/firewall_aliases.php
+COPY ${CURDIR}/initial-conf/www/firewall_aliases_tabs.php       usr/www/firewall_aliases_tabs.php
 COPY ${CURDIR}/initial-conf/www/firewall_abusive_sites.php	usr/www/firewall_abusive_sites.php
 COPY ${CURDIR}/initial-conf/www/firewall_aliases_edit.php	usr/www/firewall_aliases_edit.php
 COPY ${CURDIR}/initial-conf/www/firewall_altq.php		usr/www/firewall_altq.php
@@ -29,10 +30,11 @@ COPY ${CURDIR}/initial-conf/www/firewall_carp_sync_hosts_edit.php	usr/www/firewa
 COPY ${CURDIR}/initial-conf/www/firewall_carp_vid.php		usr/www/firewall_carp_vid.php
 COPY ${CURDIR}/initial-conf/www/firewall_carp_vid_edit.php	usr/www/firewall_carp_vid_edit.php
 COPY ${CURDIR}/initial-conf/www/firewall_clustering.php		usr/www/firewall_clustering.php
-COPY ${CURDIR}/initial-conf/www/firewall_nat.php		usr/www/firewall_nat.php
+COPY ${CURDIR}/initial-conf/www/firewall_nat_tabs.php    	usr/www/firewall_nat_tabs.php
+COPY ${CURDIR}/initial-conf/www/firewall_nat_dynamic.php	usr/www/firewall_nat_dynamic.php
 COPY ${CURDIR}/initial-conf/www/firewall_nat_1to1.php		usr/www/firewall_nat_1to1.php
 COPY ${CURDIR}/initial-conf/www/firewall_nat_1to1_edit.php		usr/www/firewall_nat_1to1_edit.php
-COPY ${CURDIR}/initial-conf/www/firewall_nat_edit.php		usr/www/firewall_nat_edit.php
+COPY ${CURDIR}/initial-conf/www/firewall_nat_dynamic_edit.php		usr/www/firewall_nat_dynamic_edit.php
 COPY ${CURDIR}/initial-conf/www/firewall_options_edit.php	usr/www/firewall_options_edit.php
 COPY ${CURDIR}/initial-conf/www/firewall_pfsync.php		usr/www/firewall_pfsync.php
 COPY ${CURDIR}/initial-conf/www/firewall_protocols.php		usr/www/firewall_protocols.php

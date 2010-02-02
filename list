@@ -137,7 +137,7 @@ SPECIAL sh ${CURDIR}/tools/runlist.sh ${CURDIR}/list.debug
 #SPECIAL sh ${CURDIR}/tools/runlist.sh ${CURDIR}/list.firewall
 # Copy files specifc to MGMTSVR module
 #SPECIAL sh ${CURDIR}/tools/runlist.sh ${CURDIR}/list.mgmtsvr
-SPECIAL ${BINDIR}/SG/bin/sourceguardian --conj -r --phpversion 4.4 -z 9 -b- @${CURDIR}/sgproject
+#SPECIAL ${BINDIR}/SG/bin/sourceguardian --conj -r --phpversion 4.4 -z 9 -b- @${CURDIR}/sgproject
 
 # Miscellaneous extra tools
 COPY	${CURDIR}/tools/rw.sh			bin/rw
