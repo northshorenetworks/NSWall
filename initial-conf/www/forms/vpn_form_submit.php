@@ -19,7 +19,6 @@ if ($_POST) {
 		if ($_POST['submit'] == "Connect")
                 	return vpn_pptp_client_connect();
                 
-		if ($_POST['submit'] == "Save") {
 		unset($input_errors);
 
 			/* input validation */
@@ -53,13 +52,161 @@ if ($_POST) {
                                 	sleep(2);
                                 	echo '<!-- SUBMITSUCCESS --><center>Configuration saved successfully</center>';
                         	}
-                       		 return $retval;
 			}
-		}
-		default;
- echo '<center>Unknown form submited!<br><INPUT TYPE="button" value="OK" name="OK" onClick="hidediv(\'save_config\')"></center>';
+			return 0;
+		case "vpn_ipsec_gateway":
+			if ($_POST) {
+	            if (is_numeric($_POST['id']))
+    	            $id = $_POST['id'];
+
+				if (!is_array($config['ipsec']['gateway']))
+                                        $config['ipsec']['gateway'] = array();
+
+                                $a_ipsec = &$config['ipsec']['gateway'];
+				unset($input_errors);
+				$pconfig = $_POST;
+
+				if ($_POST['p1authentication_method'] == "pre_shared_key") {
+					$reqdfields = explode(" ", "ipsecroutelist remotegw p1pskey p2ealgos p2halgos name");
+					$reqdfieldsn = explode(",", "Address Policies,Remote gateway,Pre-Shared Key,P2 Encryption Algorithms,P2 Hash Algorithms, Name");
+				}
+				else {
+					$reqdfields = explode(" ", "remotegw p2ealgos p2halgos");
+					$reqdfieldsn = explode(",", "Remote gateway,P2 Encryption Algorithms,P2 Hash Algorithms");
+					if ($_POST['p1peercert']!="" && (!strstr($_POST['p1peercert'], "BEGIN CERTIFICATE") || !strstr($_POST['p1peercert'], "END CERTIFICATE")))
+						$input_errors[] = "This peer certificate does not appear to be valid.";
+				}
+ 
+				do_input_validation($_POST, $reqdfields, $reqdfieldsn, &$input_errors);
+ 
+				if (($_POST['localnetmask'] && !is_numeric($_POST['localnetmask']))) {
+					$input_errors[] = "A valid local network bit count must be specified.";
+				}
+				if (($_POST['p1lifetime'] && !is_numeric($_POST['p1lifetime']))) {
+					$input_errors[] = "The P1 lifetime must be an integer.";
+				}
+				if (($_POST['p2lifetime'] && !is_numeric($_POST['p2lifetime']))) {
+					$input_errors[] = "The P2 lifetime must be an integer.";
+				}
+				if ($_POST['remotebits'] && (!is_numeric($_POST['remotebits']) || ($_POST['remotebits'] < 0) || ($_POST['remotebits'] > 32))) {
+					$input_errors[] = "The remote network bits are invalid.";
+				}
+				if (($_POST['remotegw'] && !is_ipaddr($_POST['remotegw']))) {
+					$input_errors[] = "A valid remote gateway address must be specified.";
+				}
+				if ((($_POST['p1myidentt'] == "address") && !is_ipaddr($_POST['p1myident']))) {
+					$input_errors[] = "A valid IP address for 'My identifier' must be specified.";
+				}
+				if ((($_POST['p1myidentt'] == "fqdn") && !is_domain($_POST['p1myident']))) {
+					$input_errors[] = "A valid domain name for 'My identifier' must be specified.";
+				}
+				if ($_POST['p1myidentt'] == "user_fqdn") {
+					$ufqdn = explode("@",$_POST['p1myident']);
+					if (!is_domain($ufqdn[1]))
+						$input_errors[] = "A valid User FQDN in the form of user@my.domain.com for 'My identifier' must be specified.";
+				}
+ 
+				if ($_POST['p1myidentt'] == "myaddress")
+					$_POST['p1myident'] = "";		
+
+				if (!$input_errors) {
+				    $ipsecent['name'] = $_POST['name'];
+					$ipsecent['disabled'] = $_POST['disabled'] ? true : false;
+					$ipsecent['interface'] = $pconfig['interface'];
+					$srclist = array_reverse(explode(' ', $_POST['srclist']));
+		            for($i=0;$i<sizeof($srclist); $i++) {
+        		        $member = 'src'."$i";
+               			$source = preg_replace("/ /", "", $srclist[$i]);
+                		$ipsecent['srclist'][$member] = $source;
+            		}
+            		$dstlist = array_reverse(explode(' ', $_POST['dstlist']));
+            		for($i=0;$i<sizeof($dstlist); $i++) {
+                		$member = 'dst'."$i";
+                		$dest = preg_replace("/ /", "", $dstlist[$i]);
+                		$ipsecent['dstlist'][$member] = $dest;
+            		}
+					$ipsecent['remote-gateway'] = $_POST['remotegw'];
+					$ipsecent['p1']['mode'] = $_POST['p1mode'];
+ 
+					$ipsecent['p1']['myident'] = array();
+					switch ($_POST['p1myidentt']) {
+						case 'myaddress':
+							$ipsecent['p1']['myident']['myaddress'] = true;
+							break;
+						case 'address':
+							$ipsecent['p1']['myident']['address'] = $_POST['p1myident'];
+							break;
+						case 'fqdn':
+							$ipsecent['p1']['myident']['fqdn'] = $_POST['p1myident'];
+							break;
+						case 'user_fqdn':
+							$ipsecent['p1']['myident']['ufqdn'] = $_POST['p1myident'];
+							break;
+					}
+ 
+					$ipsecent['p1']['myident']['myaddress'] = $_POST['myaddress'];
+					$ipsecent['p1']['encryption-algorithm'] = $_POST['p1ealgo'];
+					$ipsecent['p1']['hash-algorithm'] = $_POST['p1halgo'];
+					$ipsecent['p1']['dhgroup'] = $_POST['p1dhgroup'];
+					$ipsecent['p1']['lifetime'] = $_POST['p1lifetime'];
+					$ipsecent['p1']['pre-shared-key'] = base64_encode($_POST['p1pskey']);
+					$ipsecent['p1']['cert'] = base64_encode($_POST['p1cert']);
+					$ipsecent['p1']['peercert'] = base64_encode($_POST['p1peercert']);
+					$ipsecent['p1']['authentication_method'] = $_POST['p1authentication_method'];
+					$ipsecent['p2']['protocol'] = $_POST['p2proto'];
+					$ipsecent['p2']['encryption-algorithm'] = $_POST['p2ealgos'];
+					$ipsecent['p2']['hash-algorithm'] = $_POST['p2halgos'];
+					$ipsecent['p2']['pfsgroup'] = $_POST['p2pfsgroup'];
+					$ipsecent['p2']['lifetime'] = $_POST['p2lifetime'];
+					$ipsecent['descr'] = $_POST['descr'];
+ 
+					if (isset($id) && $a_ipsec[$id])
+						$a_ipsec[$id] = $ipsecent;
+					else
+						$a_ipsec[] = $ipsecent;
+ 					write_config();
+                                        config_lock();
+                                        $retval = vpn_ipsec_configure();
+                                        config_unlock();
+
+				        if ($retval == 0) {
+	       	                sleep(2);
+    	   	                echo '<!-- SUBMITSUCCESS --><center>Configuration saved successfully</center>';
+                        }
+                }
+                        else {
+                                        print_input_errors($input_errors);
+                                        echo '<script type="text/javascript">
+                                                $("#okbtn").click(function () {
+                                                        $("#save_config").dialog("close");
+                                                });
+                                        </script>';
+                                        echo '<center><INPUT TYPE="button" value="OK" id="okbtn"></center>';
+                                }
+
+              		}
+                        return 0;                
+		        default;
+                                echo '<center>Unknown form submited!<br><INPUT TYPE="button" value="OK" name="OK" onClick="$(\'#save_config\').dialog(\'close\')"></center>';
 			return 0;
 	}
 }
-?>
+if ($_GET) {
+     $id = $_GET['id'];
+     $action = $_GET['action'];
+     $type = $_GET['type'];
 
+     if ($type == 'ipsec_gateway') {
+          if (!is_array($config['ipsec']['gateway']))
+               $config['ipsec']['gateway'] = array();
+
+          vpn_ipsec_gateway_sort();
+		  $a_gateway = &$config['ipsec']['gateway'];
+          if ($action == 'delete') {
+               unset($a_gateway[$id]);
+               write_config();
+          }
+     }
+}
+
+?>

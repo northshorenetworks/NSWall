@@ -95,6 +95,8 @@ if ($_POST) {
 			$filterent['log'] = $_POST['log'] ? true : false;
 			
 			/* options stuff */
+			if ($_POST['multiwan'])
+				$filterent['options']['multiwan'] = $_POST['multiwan'];
             if ($_POST['altqbucket'])
             	$filterent['options']['altqbucket'] = $_POST['altqbucket'];
             if ($_POST['altqlowdelay'])
@@ -391,10 +393,11 @@ if ($_POST) {
 				if (isset($_POST['id']))
     				$id = $_POST['id'];	
 
-			    if ($_POST['destination_type'] == "any") {
-     			   $_POST['destination'] = "any";
+			    /* if ($_POST['destination_type'] == "any") { */
+     			    $_POST['destination_type'] = "any";
+				   $_POST['destination'] = "any";
     			   $_POST['destination_subnet'] = 24;
-    			}
+    			/* } */
     
     			unset($input_errors);
     			$pconfig = $_POST;
@@ -500,6 +503,69 @@ if ($_POST) {
 					echo '<INPUT TYPE="button" value="OK" id="okbtn"></center>';
 				}
 				return $retval;
+			case "firewall_nat_1to1":
+				if (!is_array($config['nat']['onetoone'])) {
+					$config['nat']['onetoone'] = array();
+				}
+				nat_1to1_rules_sort();
+				$a_1to1 = &$config['nat']['onetoone'];
+ 
+				if (isset($_POST['id']))
+					$id = $_POST['id'];	
+				unset($input_errors);
+				$pconfig = $_POST;
+ 
+				/* input validation */
+				$reqdfields = explode(" ", "interface external internal");
+				$reqdfieldsn = explode(",", "Interface,External,Internal");
+ 
+				do_input_validation($_POST, $reqdfields, $reqdfieldsn, &$input_errors);
+ 
+				if (($_POST['external'] && !is_ipaddr($_POST['external']))) {
+					$input_errors[] = "A valid external ip must be specified.";
+				}
+				if (($_POST['internal'] && !is_ipaddr($_POST['internal']))) {
+					$input_errors[] = "A valid internal ip must be specified.";
+				}
+ 
+ 
+				if (is_ipaddr($config['interfaces']['wan']['ipaddr'])) {
+					if (check_subnets_overlap($_POST['external'], $_POST['subnet'],
+						$config['interfaces']['wan']['ipaddr'], 32))
+					$input_errors[] = "The WAN IP address may not be used in a 1:1 rule.";
+				}
+ 
+				if (!$input_errors) {
+					$natent = array();
+					$natent['external'] = $_POST['external'];
+					$natent['internal'] = $_POST['internal'];
+					$natent['descr'] = $_POST['descr'];
+					$natent['interface'] = $_POST['interface'];
+ 
+					if (isset($id) && $a_1to1[$id])
+						$a_1to1[$id] = $natent;
+				else
+					$a_1to1[] = $natent;
+					write_config();
+                    config_lock();
+                    $retval = filter_configure();
+                    config_unlock();
+                    push_config('pfnats');
+                }
+                if ($retval == 0 && !$input_errors) {
+                    sleep(2);
+                    echo '<!-- SUBMITSUCCESS --><center>Configuration saved successfully</center>';
+                } else {
+                    print_input_errors($input_errors);
+                                        echo '<script type="text/javascript">
+                                        $("#okbtn").click(function () {
+                                            $("#save_config").dialog("close");
+                                        });
+                                        </script>';
+                    echo '<INPUT TYPE="button" value="OK" id="okbtn"></center>';
+                }
+				return $retval;
+
 			default;
  echo '<center>Unknown form submited!<br><INPUT TYPE="button" value="OK" name="OK" onClick="hidediv(\'save_config\')"></center>';
 			return 0;
@@ -540,6 +606,17 @@ if ($_GET) {
           nat_out_rules_sort(); 
 		  if ($action == 'delete') {
                unset($a_dnat[$id]);
+               write_config();
+          }
+     }
+	 if ($type == '1to1nat') {
+          if (!is_array($config['nat']['onetoone'])) {
+			   $config['nat']['onetoone'] = array();
+		  }
+		  $a_1to1 = &$config['nat']['onetoone'];
+		  nat_1to1_rules_sort();
+		  if ($action == 'delete') {
+               unset($a_1to1[$id]);
                write_config();
           }
      }

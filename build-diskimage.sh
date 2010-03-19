@@ -107,11 +107,11 @@ ${SUDO} cp ${DESTDIR}/usr/mdec/boot ${MOUNTPOINT}/boot
 ${SUDO} cp ${KERNELFILE} ${MOUNTPOINT}/bsd
 ${SUDO} mkdir ${MOUNTPOINT}/etc
 
-if [ ! $1 = "VMWARE" ]; then
-${SUDO} chmod 777 /mnt/etc/ 
-${SUDO} echo "stty com0 9600" >> ${MOUNTPOINT}/etc/boot.conf
-${SUDO} echo "set tty com0" >> ${MOUNTPOINT}/etc/boot.conf
-fi
+#if [ ! $1 = "VMWARE" ]; then
+#${SUDO} chmod 777 /mnt/etc/ 
+#${SUDO} echo "stty com0 9600" >> ${MOUNTPOINT}/etc/boot.conf
+#${SUDO} echo "set tty com0" >> ${MOUNTPOINT}/etc/boot.conf
+#fi
 echo ""
 echo "Installing boot blocks..."
 ${SUDO} /usr/mdec/installboot ${MOUNTPOINT}/boot ${DESTDIR}/usr/mdec/biosboot ${DEVICE}
@@ -135,7 +135,9 @@ echo ""
 echo "Copying default config from platform to conf partition..."
 # Here is where you add your own packages and configuration to the flash...
 ${SUDO} touch ${MOUNTPOINT}/set_wizard_initial
+${SUDO} touch ${MOUNTPOINT}/unregistered
 ${SUDO} cp ${BASE}/initial-conf/config.xml ${MOUNTPOINT}/config.xml
+${SUDO} cp ${BASE}/initial-conf/license.lic ${MOUNTPOINT}/license.lic
 #${SUDO} mkdir ${MOUNTPOINT}/ssh
 
 echo ""

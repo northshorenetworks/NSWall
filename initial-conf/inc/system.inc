@@ -94,27 +94,8 @@ function system_check_filesystems() {
                 echo "done\n";
 }
 
-function system_symon_start() {
-        global $config, $g;
-        if (isset($config['system']['general']['symon']['enabled'] )) {
-		if ($g['booting'])
-                	echo "Starting Symon service... ";
-        	else
-                	mwexec("/usr/bin/pkill symon");
-                
-		/* generate symon config */
-		system_symonconf_generate();
-		
-		/* load symon config */
-		mwexec("/usr/libexec/symon");
-
-		echo "done\n";
-        }
-}
-
 function system_cron_start() {
         global $config, $g;
-        if($config['system']['configserver']) {
 		if ($g['booting'])
 	       		echo "Starting cron service... ";
                	mwexec("/usr/sbin/cron");
@@ -122,7 +103,6 @@ function system_cron_start() {
 		
 		if ($g['booting'])
 			echo "done\n";
-	}
 }
 
 function system_cron_reload() {
@@ -136,49 +116,24 @@ function system_ftpproxy_start() {
 	mwexec("/usr/sbin/ftp-proxy -q bulk -T FTPROXY -D 7 -v");
 }
 
-function system_symonconf_generate() {
-        global $config, $g;
-	$wanip = get_current_wan_address();
-	$syscfg = $config['system']['general'];
-
-	$fd = fopen("{$g['varetc_path']}/symon.conf", "w");
-                if (!$fd) {
-                        printf("Error: cannot open symon.conf in system_symonconf_generate().\n");
-                        return 1;
-                }
-
-        $symonconf = "monitor { cpu(0), mem, pf, mbuf,\nio(wd0), df(rd0a), df(wd0d),\nproc(relayd), proc(symon), proc(symux),\n";
-	foreach ($config['interfaces'] as $interface) {
-		$ifstring .= 'if(' . $interface['if'] . '), ';
-	}
-	$symonconf .= "$ifstring debug } stream from $wanip to {$syscfg['symon']['muxip']} 2100\n";
-
-	fwrite($fd, $symonconf);
-        fclose($fd);
-
-	return $symonconf;
-}
-
 function system_cronconf_generate() {
         global $config, $g;
-
-	if($config['system']['configserver']) {
-      		$fd = fopen("{$g['varetc_path']}/nswallcron", "w");
+        $fd = fopen("{$g['varetc_path']}/nswallcron", "w");
                 	if (!$fd) {
-                        	printf("Error: cannot open symon.conf in system_cronconf_generate().\n");
+                        	printf("Error: cannot open nswall in system_cronconf_generate().\n");
                         	return 1;
                 	}
+					$crontab = "*/1 * * * * /usr/sbin/splunkstats\n";
 		if($config['system']['configserver']['checkint']) {
 			$confcheck = $config['system']['configserver']['checkint'];
 		} else {
 			$confcheck = '60';
 		}
-	        $crontab = "*/$confcheck * * * * php -q /etc/rc.queryconfigserver\n";
+	        $crontab .= "*/$confcheck * * * * php -q /etc/rc.queryconfigserver\n";
 		fwrite($fd, $crontab);
         	fclose($fd);
 
 	        return $cronconf;
-	}
 }
 
 function system_resolvconf_generate($dynupdate = false) {
@@ -417,46 +372,52 @@ function system_routing_enable() {
 
 function system_syslogd_start() {
 	global $config, $g;
-	
+ 
 	$syslogcfg = $config['syslog'];
-
-	if ($g['booting']) 
+ 
+	if ($g['booting'])
 		echo "Starting Syslog service... ";
 	else
 		killbypid("{$g['varrun_path']}/syslog.pid");
-			
+ 
 	//if (isset($syslogcfg['enable'])) {
-
-		/* write syslog.conf */
-		$fd = fopen("{$g['varetc_path']}/syslog.conf", "w");
-		if (!$fd) {
-			printf("Error: cannot open syslog.conf in system_syslogd_start().\n");
-			return 1;
-		}
-		
-		$syslogconf = <<<EOD
+ 
+	/* write syslog.conf */
+	$fd = fopen("{$g['varetc_path']}/syslog.conf", "w");
+	if (!$fd) {
+		printf("Error: cannot open syslog.conf in system_syslogd_start().\n");
+		return 1;
+	}
+ 
+$syslogconf = <<<EOD
 !!/usr/sbin/cron
-cron.info				/dev/null
+cron.info 		/dev/null
 !*
 
-*.*					:96:all	
+EOD;
+if (isset($syslogcfg['remoteserver'])) {
+$syslogconf .= <<<EOD
+*.* 			@{$syslogcfg['remoteserver']}
 
 EOD;
-		if (isset($syslogcfg['remoteserver'])) {
-			$syslogconf .= <<<EOD
-*.*					@{$syslogcfg['remoteserver']}
-
+}
+$syslogconf .= <<<EOD
+!!splunkstats
+*.*			/dev/null
+!*
+*.* 			:96:all
+ 
 EOD;
-		}
-		fwrite($fd, $syslogconf);
-		fclose($fd);
-		
-		$retval = mwexec("/usr/sbin/syslogd -s {$g['varrun_path']}/syslogd.sock -f {$g['varetc_path']}/syslog.conf");
 
-	if ($g['booting'])
-		echo "done\n";
-		
-	return $retval;
+fwrite($fd, $syslogconf);
+fclose($fd);
+ 
+$retval = mwexec("/usr/sbin/syslogd -s {$g['varrun_path']}/syslogd.sock -f {$g['varetc_path']}/syslog.conf");
+ 
+if ($g['booting'])
+echo "done\n";
+ 
+return $retval;
 }
 
 function system_pccard_start() {

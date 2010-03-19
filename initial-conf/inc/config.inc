@@ -656,7 +656,7 @@ function reset_factory_defaults() {
 	/* clear out /conf */
 	$dh = opendir($g['conf_path']); 
 	while ($filename = readdir($dh)) {
-		if (($filename != ".") && ($filename != "..") && ($filename != "ssh")) { 
+		if (($filename != ".") && ($filename != "..") && ($filename != "ssh") && ($filename != "serialno") && ($filename != "license.lic") && ($filename != "unregistered")) { 
 			unlink($g['conf_path'] . "/" . $filename); 
 		} 
 	}

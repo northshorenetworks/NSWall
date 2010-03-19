@@ -20,9 +20,6 @@ $pconfig['webguiport'] = $config['system']['general']['webgui']['port'];
 $pconfig['timezone'] = $config['system']['general']['timezone'];
 $pconfig['timeupdateinterval'] = $config['system']['general']['time-update-interval'];
 $pconfig['timeservers'] = $config['system']['general']['timeservers'];
-$pconfig['sshdenabled'] = isset($config['system']['general']['sshd']['enabled']);
-$pconfig['symonenabled'] = isset($config['system']['general']['symon']['enabled']);
-$pconfig['muxip'] = $config['system']['general']['symon']['muxip'];
 
 if (!isset($pconfig['timeupdateinterval']))
 	$pconfig['timeupdateinterval'] = 300;
@@ -101,7 +98,7 @@ $(document).ready(function() {
                              <label for="webguiport">WebGUI Port</label>
             				 <input id="webguiport" type="text" name="webguiport" value="<?=htmlspecialchars($pconfig['webguiport']);?>" />
 			</div> 
-						 <div>
+<!--						 <div>
                              <label for="cert">WebGUI Cert</label>
                              <select name="cert" class="formfld" id="cert">
                                   <?php foreach($config['system']['certmgr']['cert'] as $i): ?>
@@ -112,7 +109,8 @@ $(document).ready(function() {
                                   <?php endforeach; ?>
                              </select>
 			</div>
-                        <div>
+-->
+			<div>
                              <label for="timezone">Timezone</label>
                              <select name="timezone" id="timezone">
                              <?php foreach ($timezonelist as $value): ?>
@@ -122,17 +120,6 @@ $(document).ready(function() {
                                   </option>
                                   <?php endforeach; ?>
                              </select>
-			</div>
-                        <div>
-                             <label for="sshenabled">Enable SSH Server</label>
-                             <input id="sshenabled" type="checkbox" name="sshenabled" value="<?php if ($pconfig['sshdenabled']) echo "checked"; ?>" />
-			     <p class="note">We will never sell or disclose your email address to anyone.</p>
-			</div>
-                        <div>
-                             <label for="symuxenabled">Enable symux logging</label>
-                             <input id="symuxenabled" type="checkbox" name="symuxenabled" value="<?php if ($pconfig['symonenabled']) echo "checked"; ?>" />&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Symux Server:
-                             <input id="symuxserver" type="text" name="symuxserver" value="<?=htmlspecialchars($pconfig['muxip']);?>" size="20" />
-			     <p class="note">We will never sell or disclose your email address to anyone. </p>
 			</div>
 	</fieldset>
 	

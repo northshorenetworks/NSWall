@@ -30,24 +30,28 @@ $(document).ready(function() {
 	<fieldset>
 		<legend><?=join(": ", $pgtitle);?></legend>
 			<div>
-                             <label for="name">Name</label>
-                             <?php echo $config['system']['hostname'] . "." . $config['system']['general']['domain'];?>
+                <label for="hostname">Host Name</label>
+                <?php echo $config['system']['hostname'] . "." . $config['system']['general']['domain'];?>
 			</div>
-                        <div>
-                             <label for="version">Version</label>
-                             <?php readfile("/etc/version"); ?> built on <?php readfile("/etc/version.buildtime"); ?>
+			<div>
+           		<label for="serial_no">Serial Number</label>
+                <?php echo sg_get_const("SERIAL")?>
+            </div>
+            <div>
+                <label for="version">Version</label>
+                <?php readfile("/etc/version"); ?> built on <?php readfile("/etc/version.buildtime"); ?>
 			</div>
-                        <div>
-                             <label for="platform">Platform</label>
-                             <?=htmlspecialchars($g['fullplatform']);?>
+            <div>
+                <label for="platform">Platform</label>
+			    <?php readfile("/etc/hwplatform"); ?>
 			</div>
-                        <div>
-                             <label for="cpuusage">CPU Usage</label>
-                             <a href="status_graph_cpu.php">view graph</a>
+            <div>
+                <label for="cpuusage">CPU Usage</label>
+                <a href="status_graph_cpu.php">view graph</a>
 			</div>
-                        <div>
-                             <label for="cpuusage">System Notes</label>
-                             <textarea name="notes" cols="75" rows="7" id="notes" class="notes"><?=htmlspecialchars(base64_decode($config['system']['notes']));?></textarea>
+            <div>
+                <label for="cpuusage">System Notes</label>
+                <textarea name="notes" cols="75" rows="7" id="notes" class="notes"><?=htmlspecialchars(base64_decode($config['system']['notes']));?></textarea>
 			</div>                     
 	</fieldset>
 	

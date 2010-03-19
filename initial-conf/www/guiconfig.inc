@@ -84,7 +84,7 @@ $altqbuckets = array("highest", "high", "medium", "low");
 
 $srctracktypes = array("none", "rule", "global");
 
-$statetypes = array("none", "keep state", "modulate state", "synproxy state");
+$statetypes = array("keep state", "modulate state", "synproxy state", "none");
 
 $specialnets = array("wanip" => "WAN address", "lan" => "LAN net", "pptp" => "PPTP clients");
 
@@ -275,6 +275,26 @@ function filter_rulesets_sort() {
         }
 
         usort($config['grouppolicies']['ruleset'], "rulesetcmp");
+}
+
+/* sort by interface only, retain the original order of rules that apply to
+   the same interface */
+function vpn_ipsec_gateway_sort() {
+    global $g, $config;
+
+    /* mark each rule with the sequence number (to retain the order while sorting) */
+    for ($i = 0; isset($config['ipsec']['gateway'][$i]); $i++)
+        $config['ipsec']['gateway'][$i]['seq'] = $i;
+
+    function ipsecgatewaycmp($a, $b) {
+    	return -strcmp($a['name'], $b['name']);
+    }
+
+    usort($config['ipsec']['gateway'], "ipsecgatewaycmp");
+
+    /* strip the sequence numbers again */
+    for ($i = 0; isset($config['ipsec']['gateway'][$i]); $i++)
+        unset($config['ipsec']['gateway'][$i]['seq']);
 }
 
 

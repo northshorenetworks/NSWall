@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <nswall>
-	<version>1.6</version>
+	<version>1.0</version>
 	<lastchange>1244590588</lastchange>
 	<system>
 		<username>admin</username>
@@ -12,14 +12,12 @@
 	</system>
 	<interfaces>
 		<lan>
-			<if>vr1</if>
 			<ipaddr>192.168.254.1</ipaddr>
 			<subnet>24</subnet>
 			<media/>
 			<mediaopt/>
 		</lan>
 		<wan>
-			<if>vr0</if>
 			<mtu/>
 			<ipaddr>dhcp</ipaddr>
 			<subnet/>
@@ -28,17 +26,6 @@
 			<media/>
 			<mediaopt/>
 		</wan>
-		<opt1>
-			<descr>DMZ</descr>
-			<if>vr2</if>
-			<type/>
-		</opt1>
-		<opt2>
-                        <descr>Wireless</descr>
-                        <if>ral0</if>
-			<wireless></wireless>
-                        <type/>
-                </opt2>
 	</interfaces>
 	<pptp>
 		<client>
@@ -145,14 +132,5 @@
 				<srctrack>none</srctrack>
 			</options>
 		</rule>
-		<options>
-			<timeouts/>
-			<scrub>
-				<fraghandle>reassemble</fraghandle>
-			</scrub>
-			<logging>
-				<default/>
-			</logging>
-		</options>
 	</filter>
 </nswall>

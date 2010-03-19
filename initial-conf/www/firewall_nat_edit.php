@@ -119,7 +119,5 @@ $(document).ready(function() {
 	
 	</div><!-- /form-container -->
 	
-	<p id="copyright">Created by <a href="http://nidahas.com/">Prabhath Sirisena</a>. This stuff is in public domain.</p>
-	
 </div><!-- /wrapper -->
 

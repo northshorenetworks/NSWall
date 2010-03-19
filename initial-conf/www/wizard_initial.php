@@ -290,6 +290,8 @@ sort($timezonelist);
               var LANQueryString = 'ipaddr='+lanip+'&subnet='+lansubnet+'&formname=interface_lan';
               var WIFIQueryString = 'enable='+wifienable+'&ifmode='+wifiifmode+'&ipaddr='+wifiipaddr+'&subnet='+wifisubnet+'&ssid='+ssid+'&channel='+channel+'&encmode='+encmode+'&wpacipher=Auto&wpamode=Auto&wpapsk='+wpapsk+'&formname=interface_opt&descr=WIFI&index=2';        
 
+			  <?php if (isset($wireless_index)): ?>
+		
               $.post("forms/system_form_submit.php", SystemQueryString, function(output) {
                   $("#save_config").html(output); 
                   setTimeout(function(){$("#save_config").html('<center>Applying WAN Configuration<br><br><img src="images/ajax-loader.gif" height="25" width="25" name="spinner">'); }, 1000);
@@ -304,14 +306,38 @@ sort($timezonelist);
                               setTimeout(function(){$("#save_config").html('<center>Initial Setup Wizard Completed<br><br><img src="images/ajax-loader.gif" height="25" width="25" name="spinner">'); }, 1000);
                               setTimeout(function(){ 
                                   $("#save_config").dialog("close");
-                                  window.location = "/#index";
+                                  window.location = "..#index";
                               }, 2500);
                           });
                       });
                   });
               });
-              
+
+			  <?php else:?>
+             
+			  $.post("forms/system_form_submit.php", SystemQueryString, function(output) {
+                  $("#save_config").html(output); 
+                  setTimeout(function(){$("#save_config").html('<center>Applying WAN Configuration<br><br><img src="images/ajax-loader.gif" height="25" width="25" name="spinner">'); }, 1000);
+                  $.post("forms/interfaces_form_submit.php", WANQueryString, function(output) {
+                      $("#save_config").html(output);
+                      setTimeout(function(){$("#save_config").html('<center>Applying WIFI Configuration<br><br><img src="images/ajax-loader.gif" height="25" width="25" name="spinner">'); }, 1000);
+                          $("#save_config").html(output);
+                        setTimeout(function(){$("#save_config").html('<center>Applying LAN Configuration<br><br><img src="images/ajax-loader.gif" height="25" width="25" name="spinner">'); }, 1000);
+                          $.post("forms/interfaces_form_submit.php", LANQueryString, function(output) {
+                              $("#save_config").html(output);
+                              setTimeout(function(){$("#save_config").html('<center>Initial Setup Wizard Completed<br><br><img src="images/ajax-loader.gif" height="25" width="25" name="spinner">'); }, 1000);
+                              setTimeout(function(){ 
+                                  $("#save_config").dialog("close");
+                                  window.location = "..#index";
+                              }, 2500);
+                        });
+                  });
+              }); 
+
+			  <?php endif; ?>
+
               return false;
+			  $("#register").show();
           });
      });
 </script>

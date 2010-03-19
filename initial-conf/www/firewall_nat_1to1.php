@@ -1,139 +1,104 @@
 #!/bin/php
-<?php 
-/*
-	$Id: firewall_nat_1to1.php,v 1.1.1.1 2008/08/01 07:56:19 root Exp $
-	part of m0n0wall (http://m0n0.ch/wall)
-	
-	Copyright (C) 2003-2006 Manuel Kasper <mk@neon1.net>.
-	All rights reserved.
-	
-	Redistribution and use in source and binary forms, with or without
-	modification, are permitted provided that the following conditions are met:
-	
-	1. Redistributions of source code must retain the above copyright notice,
-	   this list of conditions and the following disclaimer.
-	
-	2. Redistributions in binary form must reproduce the above copyright
-	   notice, this list of conditions and the following disclaimer in the
-	   documentation and/or other materials provided with the distribution.
-	
-	THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
-	INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
-	AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
-	AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
-	OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
-	SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-	INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
-	CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-	ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-	POSSIBILITY OF SUCH DAMAGE.
-*/
-
+<?php
 $pgtitle = array("Firewall", "NAT", "1:1");
 require("guiconfig.inc");
-
+ 
 if (!is_array($config['nat']['onetoone'])) {
-	$config['nat']['onetoone'] = array();
+$config['nat']['onetoone'] = array();
 }
 $a_1to1 = &$config['nat']['onetoone'];
 nat_1to1_rules_sort();
-
-if ($_POST) {
-
-	$pconfig = $_POST;
-
-	if ($_POST['apply']) {
-		$retval = 0;
-		if (!file_exists($d_sysrebootreqd_path)) {
-			config_lock();
-			$retval |= filter_configure();
-			$retval |= services_proxyarp_configure();
-			config_unlock();
-		}
-		$savemsg = get_std_save_message($retval);
-		
-		if ($retval == 0) {
-			if (file_exists($d_natconfdirty_path))
-				unlink($d_natconfdirty_path);
-			if (file_exists($d_filterconfdirty_path))
-				unlink($d_filterconfdirty_path);
-			if (file_exists($d_proxyarpdirty_path))
-				unlink($d_proxyarpdirty_path);
-		}
-	}
-}
-
-if ($_GET['act'] == "del") {
-	if ($a_1to1[$_GET['id']]) {
-		unset($a_1to1[$_GET['id']]);
-		write_config();
-		touch($d_natconfdirty_path);
-		header("Location: firewall_nat_1to1.php");
-		exit;
-	}
-}
 ?>
-<script type="text/javascript" src="js/contentload.js"></script>
-<p class="pgtitle"><?=join(": ", $pgtitle);?></p>
-<form action="firewall_nat_1to1.php" method="post">
-<?php if ($savemsg) print_info_box($savemsg); ?>
-<?php if (file_exists($d_natconfdirty_path)): ?><p>
-<?php print_info_box_np("The NAT configuration has been changed.<br>You must apply the changes in order for them to take effect.");?><br>
-<input name="apply" type="submit" class="formbtn" id="apply" value="Apply changes"></p>
-<?php endif; ?>
-<table width="100%" border="0" cellpadding="0" cellspacing="0">
-<tr><td class="tabnavtbl">
-  <ul id="tabnav">
-<?php
-   	$tabs = array('Dynamic' => 'firewall_nat.php',
-           		  '1:1' => 'firewall_nat_1to1.php');
-	dynamic_tab_menu($tabs);
-?>    
-  </ul>
-  </td></tr>
-  <tr> 
-    <td class="tabcont">
-              <table width="100%" border="0" cellpadding="0" cellspacing="0">
-                <tr> 
-				  <td width="10%" class="listhdrr">Interface</td>
-                  <td width="20%" class="listhdrr">External IP</td>
-                  <td width="20%" class="listhdrr">Internal IP</td>
-                  <td width="40%" class="listhdr">Description</td>
-                  <td width="10%" class="list"></td>
-				</tr>
-			  <?php $i = 0; foreach ($a_1to1 as $natent): ?>
-                <tr> 
-				  <td class="listlr">
-                  <?php
-					if (!$natent['interface'] || ($natent['interface'] == "wan"))
-						echo "WAN";
-					else
-						echo htmlspecialchars($config['interfaces'][$natent['interface']]['descr']);
-				  ?>
-                  </td>
-                  <td class="listr"> 
-                    <?php echo $natent['external'];
-					if ($natent['subnet']) echo "/" . $natent['subnet']; ?>
-                  </td>
-                  <td class="listr"> 
-                    <?php echo $natent['internal'];
-					if ($natent['subnet']) echo "/" . $natent['subnet']; ?>
-                  </td>
-                  <td class="listbg"> 
-                    <?=htmlspecialchars($natent['descr']);?>&nbsp;
-                  </td>
-                  <td class="list" nowrap> <a href="firewall_nat_1to1_edit.php?id=<?=$i;?>"><img src="images/e.gif" title="edit mapping" width="17" height="17" border="0"></a>
-                     &nbsp;<a href="firewall_nat_1to1.php?act=del&id=<?=$i;?>" onclick="return confirm('Do you really want to delete this mapping?')"><img src="images/x.gif" title="delete mapping" width="17" height="17" border="0"></a></td>
-				</tr>
-			  <?php $i++; endforeach; ?>
-                <tr> 
-                  <td class="list" colspan="4"></td>
-                  <td class="list"> <a href="firewall_nat_1to1_edit.php"><img src="images/plus.gif" title="add mapping" width="17" height="17" border="0"></a></td>
-				</tr>
-              </table><br>
-			  	<span class="vexpl"><span class="red"><strong>Note:<br>
-                </strong></span>Depending on the way your WAN connection is setup, you may also need <a href="services_proxyarp.php">proxy ARP</a>.</span>
-</td>
-</tr>
-</table>
-</form>
+
+<style type="text/css">
+    #binatsortable { list-style-type: none; margin: auto auto 1em; padding: 0; width: 95%; }
+    #binatsortable li { padding: 0.1em; margin-left: 0; padding-left: 1em; font-size: 1.4em; height: 18px; border:1px solid #E4E4E4;  font-size:1em; }
+    #binatsortable li span.col1 { position:relative; float:left; width:4.5%; }
+    #binatsortable li span.col2 { position:relative; float:left; width:5.5%; }
+    #binatsortable li span.col3 { position:relative; float:left; width:5.5%; }
+    #binatsortable li span.col4 { position:relative; float:left; width:5.5%; }
+    #binatsortable li span.col5 { position:relative; float:left; width:10.5%; }
+	#binatsortable li span.col6 { position:relative; float:left; width:10.5%; }
+	#binatsortable li span.col7 { position:relative; float:left; width:55%; }
+</style>
+
+<script type="text/javascript">
+
+// Hide the Save Changes Button
+$(document).ready(function() {
+        //hidediv("<?=$if . 'saveneworder';?>");
+});
+
+// Make the list of rules for this interface sortable
+$("#binatsortable").sortable({
+   axis: 'y',
+   containment: 'parent',
+   items: 'li:not(.ui-state-disabled)',
+   update: function(event, ui) {
+        //showdiv("<?=$if . 'saveneworder';?>");
+   }
+});
+
+// When a user clicks the save new order button submit the order to the backend processing
+$("#saveneworder").click(function () {
+    displayProcessingDiv();
+    var order = $("#binatsortable").sortable("serialize");
+});
+
+// When a user clicks on the rule edit button, load firewall_nat_dynamic_edit.php?id=$id
+$(".col2 a, #newrule a").click(function () {
+    var toLoad = $(this).attr('href');
+        clearInterval(refreshId);
+        $('#content').load(toLoad);
+        return false;
+});
+
+// When a user clicks on the rule delete button, load firewall_dynamic_nat_edit.php?id=$id
+$(".col3 a").click(function () {
+        if (confirm('Are you sure you want to delete this rule?')){  
+             displayProcessingDiv();
+             var id = $(this).attr('href');
+             $("#currentorder").load(id);
+             $("#binatsortable").sortable('refresh');
+             setTimeout(function(){ $('#save_config').fadeOut('slow'); }, 1000);
+        }
+        return false;
+});
+
+</script>
+
+<div class="demo">
+<ul id="binatsortable">
+<li id="element_<?=$i;?>" class="connectedSortable ui-state-disabled">
+<span class="col1">Order</span> 
+<span class="col2">Edit</span>
+<span class="col3">Delete</span>
+<span class="col4">Interface</span>
+<span class="col5">Internal</span>
+<span class="col6">External</span>
+<span class="col7">Description</span>
+</li>
+<?php $nrules = 0; for ($i = 0; isset($a_1to1[$i]); $i++):
+$filterent = $a_1to1[$i]; ?>
+<li id="listItem_<?=$i;?>">
+<span class="col1"><span class="ui-icon ui-icon-triangle-2-n-s"></span></span>
+<span class="col2">
+<a href="firewall_nat_1to1_edit.php?id=<?=$i;?>">
+<span title="edit this nat rule" class="ui-icon ui-icon-circle-zoomin"></span>
+</a>
+</span>
+<span class="col3">
+<a href="forms/firewall_form_submit.php?id=<?=$i;?>&action=delete&type=1to1nat">
+<span title="delete this nat rule" class="ui-icon ui-icon-circle-close"></span>
+</a>
+</span>
+<span class="col4"><?php if (isset($filterent['interface'])) echo $filterent['interface'];?></span>
+<span class="col5"><?php if (isset($filterent['internal'])) echo strtoupper($filterent['internal']); else echo "*"; ?><?=$textse;?></span>
+<span class="col6"><?php if (isset($filterent['external'])) echo strtoupper($filterent['external']); else echo "*"; ?><?=$textse;?></span>
+<span class="col7"><?php if (isset($filterent['descr'])) echo $filterent['descr'];?></span>
+</li>
+<?php $nrules++; endfor; ?>
+</ul>
+<div id="newrule"><center><a href="firewall_nat_1to1_edit.php"><span title="add a new nat rule" class="ui-icon ui-icon-circle-plus"></span></a></center></div>
+<div id="<?=$if . 'saveneworder';?>"><center>SAVE NEW ORDER LINK</center></div>
+</div>

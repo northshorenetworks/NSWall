@@ -63,11 +63,8 @@ function get_interface_info($ifdescr) {
 	$ifinfo = array();
 	
 	/* find out interface name */
-	$ifinfo['hwif'] = $config['interfaces'][$ifdescr]['if'];
-	if ($ifdescr == "wan")
-		$ifinfo['if'] = get_real_wan_interface();
-	else
-		$ifinfo['if'] = $ifinfo['hwif'];
+	$ifinfo['hwif'] = get_interface_name_by_descr($ifdescr);
+	$ifinfo['if'] = $ifinfo['hwif'];
 	
 	 /* run netstat to determine link info */
         unset($linkinfo);

@@ -19,7 +19,6 @@ include("ns-begin.inc");
 		<li><a href="diag_ping.php">Ping</a></li>  
        	<li><a href="diag_traceroute.php">Traceroute</a></li>  
        	<li><a href="diag_tcpdump.php">Tcp Dump</a></li>
-		<li><a href="support.php">Support</a></li>  
        	<li><a href="diag_backup.php">Backup/Restore</a></li>
 		<li><a href="diag_defaults.php">Factory Default</a></li>
 		<li><a href="reboot.php">Reboot</a></li>

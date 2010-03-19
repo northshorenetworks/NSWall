@@ -1,7 +1,7 @@
 #!/bin/php
 <?php 
 
-$pgtitle = array("Firewall", "NAT", "Dynamic");
+$pgtitle = array("Firewall", "NAT");
 require("guiconfig.inc");
 include("ns-begin.inc");
 

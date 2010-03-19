@@ -1,4 +1,4 @@
-#!//bin/php -f
+#!/bin/php -f
 <?php
 /*
 	$Id: rc.initial.defaults,v 1.1.1.1 2008/08/01 07:56:18 root Exp $
@@ -52,10 +52,9 @@ EOD;
 		
 		echo <<<EOD
 
-The firewall is rebooting now.
+The firewall is reloading the configuration now!
 
 EOD;
-	
-		system_reboot_sync();
+		mwexec("/etc/rc.bootup");
 	}
 ?>

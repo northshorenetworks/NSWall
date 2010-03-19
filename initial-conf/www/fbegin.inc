@@ -77,14 +77,14 @@ break;
 }
  
 $menu['System']['General setup'] = array('system_general.php');
-$menu['System']['Static routes'] = array('system_routes.php');
+$menu['System']['Static routes'] = array('system_routes_tabs.php');
+$menu['System']['License'] = array('system_license.php');
 $menu['System']['Firmware'] = array('system_firmware.php');
 $menu['System']['Advanced'] = array('system_advanced.php');
 $menu['System']['Networking'] = array('system_networking.php');
 //$menu['System']['Manage Certificates'] = array('system_cacert_tabs.php');
 //$menu['System']['User manager'] = array('system_accounts_tabs.php');
  
-$menu['Firewall']['ALTQ'] =array('firewall_altq.php');
 //$menu['Firewall']['Abusive Sites'] = array('firewall_abusive_sites.php');
 $menu['Firewall']['Aliases'] = array('firewall_aliases_tabs.php');
 $menu['Firewall']['Global Options'] = array('firewall_options_edit.php');
@@ -100,13 +100,12 @@ if ($g['module'] == 'FIREWALL') {
 // $menu['Services']['Relayd'] = array('firewall_relayd_relays.php');
  
 if ($g['module'] == 'FIREWALL') {
-	//$menu['VPN']['IPsec'] = array('vpn_ipsec.php');
+	$menu['VPN']['IPSec'] = array('vpn_ipsec_tabs.php');
 	$menu['VPN']['PPTP Client'] = array('vpn_pptp_client.php');
 	//$menu['VPN']['PPTP Server'] = array('vpn_pptp_server.php');
 }
 
 $menu['Status']['System'] = array('status_system.php');
-$menu['Status']['Interfaces'] = array('status_interfaces.php');
 $menu['Status']['Traffic graph'] = array('status_graph.php');
 $menu['Status']['CPU graph'] = array('status_graph_cpu.php');
 $menu['Status']['PF Traffic graph'] = array('status_graph_rule.php');
@@ -118,6 +117,9 @@ $menu['Diagnostics']['System'] = array ('diag_sys.php');
 $menu['Diagnostics']['Logs'] = array ('diag_logs.php');
 $menu['Diagnostics']['VPN'] = array('diag_vpn.php');
 $menu['Diagnostics']['Utilities'] = array('diag_util.php');
+
+$menu['Support']['Submit Case'] = array ('support_case.php');
+
 ?>
  
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
@@ -143,11 +145,14 @@ $menu['Diagnostics']['Utilities'] = array('diag_util.php');
 <script type="text/javascript" src="js/ui.droppable.js"></script>
 <script type="text/javascript" src="js/ui.progressbar.js"></script>
 <script type="text/javascript" src="js/ui.sortable.js"></script>
+<script type="text/javascript" src="js/swfobject.js"></script>
+<script type="text/javascript" src="js/jquery.uploadify.v2.1.0.min.js"></script>
+
 
 <body link="#0000CC" vlink="#0000CC" alink="#0000CC">
 <div id="webui">
 
-<div id="support" title="NSWall Support"></div>
+<div id="support_diag" title="NSWall Support"></div>
 <div id="support_login" title="NSWall Support">
 <body>
 
@@ -223,6 +228,7 @@ $menu['Diagnostics']['Utilities'] = array('diag_util.php');
 
 <div class="ui-widget-header" id="banner">
 <div id="logo"><a onclick="return loadContent(path_startPage ? path_startPage : $('#mainpanel div.module ul a:first').attr('href'));" href="http://www.northshoresoftware.com"><img alt="NSS Logo" title="Click to return to the start page" class="png" width="50" height="50" src="/images/logo.jpg"/></a></div>
+<div id="alert"></div>
 </div>
 
 <div class="ui-widget-header ui-corner-bottom left" style="list-style: none;" id="panels">
@@ -303,10 +309,22 @@ echo '<div id="diagpanel" class="ui-widget-header panel"><img src="/images/diagn
 dynamic_menu($menu['Diagnostics'], '');
 echo '</span></div>';
 
+echo '<div id="supportpanel" class="ui-widget-header panel"><img src="/images/support.png" id="support_img" border="0"></a><strong>Support</strong><br>
+<span id="support" style="display: none">';
+dynamic_menu($menu['Support'], '');
+echo '</span></div>';
+
 ?>
 </div>
 <script language="javascript">
 <!--
+
+// Check if the box has been registered, if it hasn't dislay an alert
+<?php if (file_exists("/conf/unregistered")): ?>
+$("#alert").html('This device has not been registerd, please register it by clicking <a href="support_registration.php">here</a>');
+$("#alert").show();
+<?php endif; ?>
+
 var refreshId = "";
 
 function updateUptimeLoad () {
@@ -321,6 +339,15 @@ $('#panels li a').click(function(){
 	 $("#content").load(toLoad);
 	 return false;  
 });  
+
+$('#alert a').click(function(){
+     $('#load_content').dialog('open');
+     var toLoad = $(this).attr('href');
+     window.location.hash = $(this).attr('href').substr(0,$(this).attr('href').length-4);
+     clearInterval(refreshId);
+     $("#content").load(toLoad);
+     return false;
+});
 
 $(document).ready(function() {         
       // Check for hash value in URL  
@@ -362,7 +389,7 @@ $(document).ready(function() {
         });
 
         // Support dialog, displayed whenever a config change is written
-        $("#support").dialog({ 
+        $("#support_diag").dialog({ 
             autoOpen: false, 
             width: 400, 
             height: 250, 
@@ -461,6 +488,10 @@ $(document).ready(function() {
          $("#diagpanel").click(function () {
              showhide('diagnostics','diagnostics_img');
          });  
+         $("#supportpanel").click(function () {
+             showhide('support','support_img');
+         });
+
 });
 
 function showhide(tspan, tri) {

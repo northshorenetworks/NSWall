@@ -37,7 +37,7 @@ if (isset($_GET['dup'])) {
          $after = $_GET['dup'];
 }
  
-        $a_filter = &$config['grouppolicies']['ruleset'][$rulesetid]['rule'];
+$a_filter = &$config['grouppolicies']['ruleset'][$rulesetid]['rule'];
  
 } else {
 if (!is_array($config['filter']['rule']))
@@ -87,7 +87,8 @@ if (isset($id) && $a_filter[$id]) {
         $pconfig['udplist'] = $a_filter[$id]['udplist'];
         $pconfig['disabled'] = isset($a_filter[$id]['disabled']);
         $pconfig['log'] = isset($a_filter[$id]['log']);
-        $pconfig['altqbucket'] = $a_filter[$id]['options']['altqbucket'];
+		$pconfig['multiwan'] = $a_filter[$id]['options']['multiwan'];
+		$pconfig['altqbucket'] = $a_filter[$id]['options']['altqbucket'];
         $pconfig['altqlowdelay'] = isset($a_filter[$id]['options']['altqlowdelay']);
         $pconfig['state'] = $a_filter[$id]['options']['state'];
         $pconfig['maxstates'] = $a_filter[$id]['options']['maxstates'];
@@ -412,8 +413,8 @@ $(document).ready(function() {
 	 var Sources = $.map($('#SRCADDR option'), function(e) { return $(e).val(); } );
      var Destinations = $.map($('#DSTADDR option'), function(e) { return $(e).val(); } );
 	 var TcpPorts = $.map($('#PROTOLIST option'), function(e) { if ($(e).val().match(/^tcp/)) { return $(e).val().replace(/tcp\//g, ''); } } );
-     var UdpPorts = $.map($('#PROTOLIST option'), function(e) { if ($(e).val().match(/^udp/)) { return $(e).val().replace(/tcp\//g, ''); } } );
-     var IpProtos = $.map($('#PROTOLIST option'), function(e) { if ($(e).val().match(/^ip/)) { return $(e).val().replace(/tcp\//g, ''); } } );
+     var UdpPorts = $.map($('#PROTOLIST option'), function(e) { if ($(e).val().match(/^udp/)) { return $(e).val().replace(/udp\//g, ''); } } );
+     var IpProtos = $.map($('#PROTOLIST option'), function(e) { if ($(e).val().match(/^ip/)) { return $(e).val().replace(/ip\//g, ''); } } );
      var tcp = TcpPorts.join(' ');
      var udp = UdpPorts.join(' ');
      var ip = IpProtos.join(' ');
@@ -634,17 +635,22 @@ $defaults = split(' ', $defaults);
                 <label for="PROTOLIST">Protocol List</label>
                 <select name="PROTOLIST" style="width: 150px; height: 100px" id="PROTOLIST" multiple>
                 <?php for ($i = 0; $i<sizeof($pconfig['tcplist']); $i++): ?>
-                <option value="tcp/<?=$pconfig['tcplist']["tcp$i"];?>">
-                tcp/<?=$pconfig['tcplist']["tcp$i"];?>
-                </option>
+        	        <option value="tcp/<?=$pconfig['tcplist']["tcp$i"];?>">
+            	  		tcp/<?=$pconfig['tcplist']["tcp$i"];?>
+                	</option>
                 <?php endfor; ?>
-        </select>
-        <?php for ($i = 0; $i<sizeof($pconfig['udplist']); $i++): ?>
-                <option value="udp/<?=$pconfig['udplist']["udp$i"];?>">
-                udp/<?=$pconfig['udplist']["udp$i"];?>
-                </option>
-                <?php endfor; ?>
-        <input type=button id="protoremove" value='Remove Selected'><br><br>
+        		<?php for ($i = 0; $i<sizeof($pconfig['udplist']); $i++): ?>
+                	<option value="udp/<?=$pconfig['udplist']["udp$i"];?>">
+                		udp/<?=$pconfig['udplist']["udp$i"];?>
+                	</option>
+        		<?php endfor; ?>
+				<?php for ($i = 0; $i<sizeof($pconfig['ipprotolist']); $i++): ?>
+                	<option value="ip/<?=$pconfig['ipprotolist']["ip$i"];?>">
+                		ip/<?=$pconfig['ipprotolist']["ip$i"];?>
+                	</option>
+        		<?php endfor; ?>	
+				</select>
+		<input type=button id="protoremove" value='Remove Selected'><br><br>
                     </div>
                     <div>
                     <label for="proto">Add Protocol</label>
@@ -694,7 +700,22 @@ $defaults = split(' ', $defaults);
                   <input name="log" type="checkbox" id="log" value="yes" <?php if ($pconfig['log']) echo "checked"; ?>>
                   <p class="note">Log packets that are handled by this rule</p>
                 </div>
-                <div>
+				<?php if (isset($config['system']['advanced']['multiwansupport']) && sg_get_const("ENTERPRISE_ROUTING") == 'ENABLED'): ?>
+				<?php $wanifs = filter_generate_multiwan_interfaces(); ?>
+				<div>
+                      <label for="multiwan">Multiwan</label>
+                      <select name="multiwan" class="formfld" id="multiwan">
+					  <option value="roundrobin" <?php if ('roundrobin' == $pconfig['multiwan']) echo "selected"; ?>>Roundrobin (default)</option>
+                      <?php foreach ($wanifs as $multiwanif): ?>
+                      <option value="<?=get_interface_descr($multiwanif);?>" <?php if (strtoupper(get_interface_descr($multiwanif)) == strtoupper($pconfig['multiwan'])) echo "selected"; ?>>
+                      <?=htmlspecialchars(strtoupper(get_interface_descr($multiwanif)));?>
+                      </option>
+                      <?php endforeach; ?>
+                      </select>
+                      <p class="note">Assign packets handled by this rule to a specific WAN connection<p class="note"></p>
+                </div>
+				<?php endif; ?> 
+				<div>
                       <label for="altqbucket">ALTQ</label>
                       <select name="altqbucket" class="formfld" id="altqbucket">
                       <?php foreach ($altqbuckets as $bucket): ?>

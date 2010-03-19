@@ -12,10 +12,10 @@
 	</qemu>
 	<vmware>
         <interfaces>
-            <wan>vic0</wan>
-            <lan>vic1</lan>
+            <wan>em0</wan>
+            <lan>em1</lan>
        		<opt1>
-                <if>vic2</if>
+                <if>em2</if>
                 <descr>DMZ</descr>
             </opt1> 
 		</interfaces>

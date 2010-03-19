@@ -3,6 +3,24 @@
 
 $stat = $_GET['stat'];
 
+function xml_highlight($s)
+{       
+    $s = htmlspecialchars($s);
+    $s = preg_replace("#&lt;([/]*?)(.*)([\s]*?)&gt;#sU",
+        "<font color=\"#0000FF\">&lt;\\1\\2\\3&gt;</font>",$s);
+    $s = preg_replace("#&lt;([\?])(.*)([\?])&gt;#sU",
+        "<font color=\"#800000\">&lt;\\1\\2\\3&gt;</font>",$s);
+    $s = preg_replace("#&lt;([^\s\?/=])(.*)([\[\s/]|&gt;)#iU",
+        "&lt;<font color=\"#808000\">\\1\\2</font>\\3",$s);
+    $s = preg_replace("#&lt;([/])([^\s]*?)([\s\]]*?)&gt;#iU",
+        "&lt;\\1<font color=\"#808000\">\\2</font>\\3&gt;",$s);
+    $s = preg_replace("#([^\s]*?)\=(&quot;|')(.*)(&quot;|')#isU",
+        "<font color=\"#800080\">\\1</font>=<font color=\"#FF00FF\">\\2\\3\\4</font>",$s);
+    $s = preg_replace("#&lt;(.*)(\[)(.*)(\])&gt;#isU",
+        "&lt;\\1<font color=\"#800080\">\\2\\3\\4</font>&gt;",$s);
+    return $s;
+}
+
 function dump_pfconf() {
     global $g, $config;
     printf("<pre>");
@@ -25,6 +43,22 @@ function dump_pfoptions() {
     printf("$pfrules");
 }
 
+function dump_ipsec_flows() {
+    global $g, $config;
+    printf("<pre>");
+    $pfrules .= `/sbin/ipsecctl -s flow`;
+    printf("$pfrules");
+	printf("</pre>");
+}
+
+function dump_ipsec_sas() {
+    global $g, $config;
+    printf("<pre>");
+    $pfrules .= `/sbin/ipsecctl -s sa`;
+    printf("$pfrules");
+    printf("</pre>");
+}
+
 function dump_ipsecconf() {
     global $g, $config;
     printf("<pre>");
@@ -34,6 +68,8 @@ function dump_ipsecconf() {
     printf("$pfconf");
     printf("</pre>");
 }
+
+
 
 function dump_isakmpdconf() {
     global $g, $config;
@@ -75,11 +111,10 @@ function dump_routes() {
 
 function dump_xmlconf() {
         global $g, $config;
-        printf("<pre>\n");
         $xml = `cat /conf/config.xml`;
-	    $xml = htmlentities($xml);
+		$xml = xml_highlight($xml);
+        printf("<pre>");
     	echo $xml;
-        printf("</pre>\n");
 }
 
 function dump_dmesg() {
@@ -104,7 +139,8 @@ function get_cgi_stat($stat, $tabname) {
 
 
 <script type="text/javascript">
-       
+$('#livediag').show(); 
+
 function updateLivediag() {
 	$.get('stats.cgi?$stat' + "&random=" + Math.random(), function(response){
 	if("$stat" == "logs"){
@@ -191,6 +227,18 @@ switch ($stat) {
 	case 'isakmpdconf_content':
         dump_isakmpdconf();
         break;
+	case 'ipsec_flows':
+        get_php_stat('ipsecflows_content', 'vpn');
+        break;
+    case 'ipsec_sas':
+        get_php_stat('ipsecsas_content', 'vpn');
+        break;
+    case 'ipsecflows_content':
+        dump_ipsec_flows();
+        break;
+    case 'ipsecsas_content':
+        dump_ipsec_sas();
+        break;	
 	case 'logs':
         get_cgi_stat('logs', 'log');
         break;

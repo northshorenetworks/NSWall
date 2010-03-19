@@ -122,6 +122,13 @@ function is_ipaddroranyalias($ipaddr) {
 		return is_ipaddr($ipaddr);
 }
 
+/* convert a netmask (ex: 255.255.255.240) to a cidr mask (ex: /28) */
+function mask2cidr($mask){
+  $long = ip2long($mask);
+  $base = ip2long('255.255.255.255');
+  return 32-log(($long ^ $base)+1,2);
+}
+
 /* returns true if $subnet is a valid subnet in CIDR format */
 function is_subnet($subnet) {
 	if (!is_string($subnet))
@@ -268,8 +275,44 @@ function get_interface_name($ifdescr) {
         global $g;
         /* find out interface name */
         $if = $g['hwplatformconfig'][INTERFACES][strtoupper($ifdescr)];
+        if(is_array($if))
+           $if = $if['IF'];
         return $if;
 }
+
+function get_interface_descr($if) {
+        global $g;
+        /* find out interface descr */
+        if ($if == $g['hwplatformconfig'][INTERFACES][WAN]) {
+			return 'wan';
+        } elseif ($if == $g['hwplatformconfig'][INTERFACES][LAN]) {
+			return 'lan';
+		} else {
+			$ifcount = sizeof($g['hwplatformconfig'][INTERFACES]) - 2;
+    		for ($i = 1; $i<=$ifcount; $i++) {
+    			if ($if == $g['hwplatformconfig'][INTERFACES]['OPT' . $i]['IF'])
+					return $g['hwplatformconfig'][INTERFACES]['OPT' . $i]['DESCR'];
+			}
+		}
+}
+
+function get_interface_name_by_descr($descr) {
+        global $g;
+        /* find out interface descr */
+        if (strtolower($descr) == 'wan') {
+            return $g['hwplatformconfig'][INTERFACES][WAN];
+        } elseif (strtolower($descr) == 'lan') {
+            return $g['hwplatformconfig'][INTERFACES][LAN];
+        } else {
+            $ifcount = sizeof($g['hwplatformconfig'][INTERFACES]) - 2;
+            for ($i = 1; $i<=$ifcount; $i++) {
+                if ($descr == $g['hwplatformconfig'][INTERFACES]['OPT' . $i]['DESCR'])
+                    return $g['hwplatformconfig'][INTERFACES]['OPT' . $i]['IF'];
+            }
+        }
+}
+
+
 
 /* wrapper for exec() */
 function mwexec($command) {

@@ -102,23 +102,6 @@ viasio*	at isa? port 0x2e flags 0x0000	# VIA VT1211 LPC Super I/O
 viasio*	at isa? port 0x4e flags 0x0000
 aps0	at isa? port 0x1600		# ThinkPad Active Protection System
 
-adc*	at iic?				# Analog Devices AD7416/AD7417/7418
-admtemp* at iic?			# Analog Devices ADM1021
-admlc*	at iic?				# Analog Devices ADM1024
-admcts*	at iic?				# Analog Devices ADM1026
-admtm*	at iic?				# Analog Devices ADM1025
-admtmp*	at iic?				# Analog Devices ADM1030
-admtt*	at iic?				# Analog Devices ADM1031
-adt*	at iic?				# Analog Devices ADT7460
-lm*	at iic?				# LM78/79 and clones
-lmenv*	at iic?				# National Semiconductor LM87
-lmtemp*	at iic?				# NS LM75/LM77 temperature sensor
-maxds*	at iic?				# Maxim DS1631/1624/1721
-maxtmp*	at iic?				# Maxim MAX6642/MAX6690
-asbtm*	at iic?				# Asus ASB100
-wbenv*	at iic?				# Winbond W83L784R/W83L785R/W83L785TS-L
-glenv*	at iic?				# Genesys Logic GL518SM
-
 #isagpio0 at isa? port 0x78		# ISA I/O mapped as GPIO
 #isagpio1 at isa? port 0x80
 
@@ -134,15 +117,9 @@ isapnp0	at isa?
 pcppi0		at isa?
 
 com0	at isa? port 0x3f8 irq 4	# standard PC serial ports
-com1	at isa? port 0x2f8 irq 3
-com2	at isa? port 0x3e8 irq 5
 ast0	at isa? port 0x1a0 irq 5	# AST 4-port serial card
 com*	at ast?
 com*	at isapnp?
-
-lpt0	at isa? port 0x378 irq 7	# standard PC parallel ports
-lpt1	at isa? port 0x278
-lpt2	at isa? port 0x3bc
 
 # IDE controllers
 pciide* at pci? flags 0x0000
@@ -160,7 +137,7 @@ vr*	at pci?				# VIA Rhine ethernet
 ne* at pci?             # RealTek 81[23]9 ethernet (for qemu tests)
 re* at pci?				# Realtek driver for Gbe nics
 vic*    at pci?         # VMWARE VMNET Ethernet
-
+em* at pci?             # Intel Pro/1000 ethernet
 # Wireless network cards
 ral*	at pci?				# Ralink RT2500/RT2501/RT2600
 
@@ -170,12 +147,20 @@ ukphy*	at mii?				# "unknown" PHYs
 # crypto support
 glxsb*	at pci?			# AMD Geode LX series processor security block
 
-# I2O
-iop*	at pci?			# I2O processor
-ioprbs*	at iop?			# I2O arrays
-scsibus* at ioprbs?
-iopsp*	at iop?			# I2O SCSI pass-through
-scsibus* at iopsp?
+option  WSDISPLAY_COMPAT_USL        # VT handling
+option  WSDISPLAY_COMPAT_RAWKBD     # provide raw scancodes; needed for X11
+option  WSDISPLAY_DEFAULTSCREENS=6  # initial number of text consoles
+option  WSDISPLAY_COMPAT_PCVT       # emulate some ioctls; needed for X11
+
+pckbc0      at isa?     # PC keyboard controller
+pckbd*      at pckbc?   # PC keyboard
+vga0        at isa?
+option      PCIAGP
+vga*        at pci?
+pcdisplay0  at isa?     # CGA, MDA, EGA, HGA
+wsdisplay*  at vga?
+wsdisplay*  at pcdisplay?
+wskbd*      at pckbd? mux 1
 
 # GPIO ``pin bus'' drivers
 #gpioiic* at gpio? offset 0 mask 0x3	# I2C bus bit-banging

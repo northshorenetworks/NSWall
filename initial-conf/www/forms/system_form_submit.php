@@ -18,7 +18,7 @@ if ($_POST) {
 			if (!$input_errors) {
 				$config['system']['disableconsolemenu'] = $_POST['disableconsolemenu'] ? true : false;
 				$config['system']['disablefirmwarecheck'] = $_POST['disablefirmwarecheck'] ? true : false;
-				$config['system']['webgui']['expanddiags'] = $_POST['expanddiags'] ? true : false;
+				$config['system']['advanced']['multiwansupport'] = $_POST['multiwansupport'] ? true : false;
 				$config['system']['webgui']['noantilockout'] = $_POST['noantilockout'] ? true : false;
 				$config['filter']['bypassstaticroutes'] = $_POST['bypassstaticroutes'] ? true : false;
 				write_config();
@@ -148,9 +148,71 @@ if ($_POST) {
 			}	
 			return $retval;
 		case "system_routes":
-        		unset($input_errors);	
-			if ($_POST['apply']) {
-                		$retval = 0;
+			if ($_POST) {
+
+						if (!is_array($config['staticroutes']['route']))
+							$config['staticroutes']['route'] = array();
+ 
+						staticroutes_sort();
+						$a_routes = &$config['staticroutes']['route'];	
+
+						if (isset($_POST['id']))
+							$id = $_POST['id'];
+ 
+						if (isset($id) && $a_routes[$id]) {
+							list($pconfig['network'],$pconfig['network_subnet']) =
+								explode('/', $a_routes[$id]['network']);
+							$pconfig['gateway'] = $a_routes[$id]['gateway'];
+							$pconfig['descr'] = $a_routes[$id]['descr'];
+						}	
+
+                		unset($input_errors);
+						$pconfig = $_POST;
+ 
+						/* input validation */
+						$reqdfields = explode(" ", "network network_subnet gateway");
+						$reqdfieldsn = explode(",", "Destination network,Destination network bit count,Gateway");
+ 
+						do_input_validation($_POST, $reqdfields, $reqdfieldsn, &$input_errors);
+ 
+						if (($_POST['network'] && !is_ipaddr($_POST['network']))) {
+							$input_errors[] = "A valid destination network must be specified.";
+						}
+						if (($_POST['network_subnet'] && !is_numeric($_POST['network_subnet']))) {
+							$input_errors[] = "A valid destination network bit count must be specified.";
+						}
+						if (($_POST['gateway'] && !is_ipaddr($_POST['gateway']))) {
+							$input_errors[] = "A valid gateway IP address must be specified.";
+						}
+ 
+						/* check for overlaps */
+						$osn = gen_subnet($_POST['network'], $_POST['network_subnet']) . "/" . $_POST['network_subnet'];
+						foreach ($a_routes as $route) {
+							if (isset($id) && ($a_routes[$id]) && ($a_routes[$id] === $route))
+								continue;
+ 
+							if ($route['network'] == $osn) {
+								$input_errors[] = "A route to this destination network already exists.";
+								break;
+							}
+						}
+ 
+						if (!$input_errors) {
+							$route = array();
+							$route['network'] = $osn;
+							$route['gateway'] = $_POST['gateway'];
+							$route['descr'] = $_POST['descr'];
+ 
+							if (isset($id) && $a_routes[$id])
+								$a_routes[$id] = $route;
+							else
+								$a_routes[] = $route;
+ 
+							write_config();
+ 
+						}
+						
+						$retval = 0;
                 		if (!file_exists($d_sysrebootreqd_path)) {
                         		$retval = system_routing_configure();
                         		$retval |= filter_configure();
@@ -176,6 +238,29 @@ if ($_POST) {
                                         });
                                         </script>';
 					echo '<INPUT TYPE="button" value="OK" id="okbtn"></center>';
+			}
+			return $retval;
+		case "system_syslog":
+			 unset($input_errors);
+ 
+			/* input validation */
+			if ($_POST['enable'] && !is_ipaddr($_POST['remoteserver'])) {
+				$input_errors[] = "A valid IP address must be specified.";
+			}
+ 
+			if (!$input_errors) {
+				$config['syslog']['remoteserver'] = $_POST['remoteserver'];
+				$config['syslog']['enable'] = $_POST['syslogenabled'] ? true : false;
+ 
+				write_config();
+ 
+				$retval = 0;
+				if (!file_exists($d_sysrebootreqd_path)) {
+						config_lock();
+						$retval = system_syslogd_start();
+						config_unlock();
+				}
+				$savemsg = get_std_save_message($retval);
 			}
 			return $retval;
 		case "system_networking":
@@ -218,7 +303,52 @@ if ($_POST) {
 					echo '<INPUT TYPE="button" value="OK" id="okbtn"></center>';
 			}
 			return $retval;
-		case "system_submit_support_ticket":
+		case "system_register_device":
+                      
+                    /* add id and notes to formdata */
+						$postdata['serialno'] = sg_get_const("SERIAL");
+                        $postdata['model']    = file_get_contents("/etc/hwplatform");  
+						$authdata['username'] = $_POST['username'];
+                        $authdata['password'] = $_POST['password'];
+                        
+                        $url    = 'http://www.northshoresoftware.com/authenticate_user.php';
+			    $retval = http_request( '', '', $url, $authdata, 'POST' );
+        	
+                        if (preg_match('/\d{8}/',$retval)) {
+                            $postdata['customerid'] = $retval;
+			    $url    = 'http://www.northshoresoftware.com/register_new_appliance.php';
+			    $retval = decode_array(http_request( '', '', $url, $postdata, 'POST' ));
+               	 
+				if (preg_match('/This is not a text file./', $retval['license'])) {
+				    conf_mount_rw();
+					/* write the newly recived license file */
+				    $f = fopen('/conf/license.lic','w');
+				    fwrite($f,$retval['license']);
+			 	    fclose($f);
+					/* write a new serialno file */
+					$f = fopen('/conf/serialno','w');
+                    fwrite($f,$retval['serialno']);
+                    fclose($f);
+					/* get ride of the unregistered file */
+					unlink('/conf/unregistered');
+				    conf_mount_ro();
+
+					echo '<center>New License file was applied<br><br>';
+					echo "for appliance with serial number: " . $retval['serialno'] . '</center>';
+			    } else {
+					echo $retval['message'];
+				}
+				echo '<script type="text/javascript">
+                                      $("#okbtn").click(function () {
+                                          $("#support_diag").dialog("close");
+                                      });
+                                  </script>';
+                            echo '<center><INPUT TYPE="button" value="OK" id="okbtn"></center>';
+                       } else {
+                            echo $retval;
+                       }
+                       return $retval;
+                case "system_submit_support_ticket":
                         /* Gather debug Data */
 $debug_data = array();
 $no_debug_data = array();
@@ -317,7 +447,11 @@ if(isset($_POST['debuginfo'])) {
                     /* add id and notes to formdata */
                         $postdata['caseid']     = $_POST['caseid'];
                         $postdata['notes']      = base64_encode($_POST['notes']);
-
+                        $postdata['classify1']  = $_POST['classify1'];
+						$postdata['classify2']  = $_POST['classify2'];
+						$postdata['classify3']  = $_POST['classify3'];
+						$postdata['classify4']  = $_POST['classify4'];
+						$postdata['serialno']   = sg_get_const("SERIAL");
                         $authdata['username'] = $_POST['username'];
                         $authdata['password'] = $_POST['password'];
                         
@@ -331,7 +465,7 @@ if(isset($_POST['debuginfo'])) {
                             echo "$retval";
 			    echo '<script type="text/javascript">
                                       $("#okbtn").click(function () {
-                                          $("#support").dialog("close");
+                                          $("#support_diag").dialog("close");
                                       });
                                   </script>';
                             echo '<center><INPUT TYPE="button" value="OK" id="okbtn"></center>';
@@ -495,6 +629,34 @@ if(isset($_POST['debuginfo'])) {
 				sleep(2);
                 echo '<!-- SUBMITSUCCESS --><center>Configuration saved successfully</center>';
 			return 0;	
+			case "system_license":
+
+                        if (!preg_match('/^\d{10}\.lic$/', $_FILES['ulfile']['name']))
+                           $input_errors[] = "The license file must me named in the format xxxxxxxxxx.lic";
+			                        
+ 			if (!$input_errors) {
+                                if (is_uploaded_file($_FILES['ulfile']['tmp_name'])) { 
+         			  /* move the file so PHP won't delete it */
+                                   conf_mount_rw();
+                                   rename($_FILES['ulfile']['tmp_name'], "/conf/license.lic");
+                                   conf_mount_ro();
+			        }	
+
+                                sleep(2);
+                                echo '<!-- SUBMITSUCCESS --><center>License file saved successfully</center>';
+				echo '<script type="text/javascript">
+                                         setTimeout(function(){ $("#upload_firmware").dialog("close"); }, 2000);
+                                      </script>';                                                                                            
+			} else {
+                           echo "<center>License Upload Failed<br>" . print_input_errors($input_errors);
+                           echo '<center><br><INPUT TYPE="button" id="button" value="OK" name="OK"></center>';
+                           echo '<script type="text/javascript">
+				$("#button").click(function () {
+               			   setTimeout(function(){ $("#upload_firmware").dialog("close"); }, 200);
+      				});
+				</script>';
+                        }
+                        return 0;
 			default;
  				echo '<center>Unknown form submited!<br><INPUT TYPE="button" value="OK" name="OK"></center>';
 				 // When a user clicks on the submit button, post the form.
@@ -505,6 +667,7 @@ if(isset($_POST['debuginfo'])) {
 				</script>';
 			return 0;
 	}
+	
 }
 if ($_GET) {
      $id = $_GET['id'];
@@ -518,7 +681,8 @@ if ($_GET) {
 	 staticroutes_sort();  
 	 $a_routes = &$config['staticroutes']['route'];  
 		  if ($action == 'delete') {
-               unset($a_routes[$id]);
+			   mwexec("/sbin/route delete -inet {$a_routes[$id]['network']}");
+			   unset($a_routes[$id]);
                write_config();
           }
      }

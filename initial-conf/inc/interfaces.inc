@@ -353,30 +353,37 @@ function interfaces_optional_configure_if($opti) {
                         	echo "done\n";
 			return 0;
 		}
+		if ($optcfg['ipaddr'] == 'dhcp') {
+			 mwexec("/sbin/ifconfig " . $optif . " " . $addflags);
+			 killbypid("{$g['varrun_path']}/" . $optif . "_dhclient.pid"); 
+			 mwexec("/sbin/dhclient -bq " . $optif);
+			 system("/usr/bin/pgrep -U _dhcp -f \"dhclient: $optif\" > {$g['varrun_path']}/" . "_dhclient.pid");
+		} else {	
+			mwexec("/sbin/ifconfig " . $optif . " " . 
+			escapeshellarg($optcfg['ipaddr'] . "/" . $optcfg['subnet']) . $addflags);
 
-		mwexec("/sbin/ifconfig " . $optif . " " . 
-		escapeshellarg($optcfg['ipaddr'] . "/" . $optcfg['subnet']) . $addflags);
-		
-		/* if aliases are defined bring them up */
-       	for($i=0;$i<sizeof($optcfg['aliaslist']); $i++ ) {     
-        	$alias = "alias" . "$i";
-        	mwexec("/sbin/ifconfig " . $optif . " alias " . 
-        	escapeshellarg($optcfg['aliaslist'][$alias]) . " netmask 255.255.255.255");
-       	}	
-		
-	/* Check for any old aliases or ip's that are on the interface and delete them if not configured */
-        foreach (get_current_ip_addresses($optif) as $ip) {
-            if ($ip == $optcfg['ipaddr']) {
-                continue;
-            } elseif (in_array($ip, $optcfg['aliaslist'])) {
-                    continue;
-            } else {
-                mwexec("/usr/bin/logger -p local0.info -t webui removing address: $ip from $optif");
-                mwexec("/sbin/ifconfig " . $optif . " delete " . $ip);
-            }
+			/* if aliases are defined bring them up */
+       		for($i=0;$i<sizeof($optcfg['aliaslist']); $i++ ) {     
+        		$alias = "alias" . "$i";
+        		mwexec("/sbin/ifconfig " . $optif . " alias " . 
+        		escapeshellarg($optcfg['aliaslist'][$alias]) . " netmask 255.255.255.255");
+       		}	
+			
+			/* Check for any old aliases or ip's that are on the interface and delete them if not configured */
+        	if (is_array(get_current_ip_addresses($optif))) {
+				foreach (get_current_ip_addresses($optif) as $ip) {
+            		if ($ip == $optcfg['ipaddr']) {
+                		continue;
+            		} elseif (in_array($ip, $optcfg['aliaslist'])) {
+                		    continue;
+            		} else {
+                		mwexec("/usr/bin/logger -p local0.info -t webui removing address: $ip from $optif");
+               	 		mwexec("/sbin/ifconfig " . $optif . " delete " . $ip);
+            		}
 
-        }
-
+        		}
+			}
+		}
         if ($g['booting'])
         echo "done\n";
         
@@ -673,9 +680,9 @@ EOD;
         mwexec("/sbin/ifconfig " . $wanif); 
 
 	/* fire up dhclient - don't wait for the lease (-n) */
-	mwexec("/sbin/dhclient -qc {$g['varetc_path']}/dhclient.conf " . $wanif);
-system("/usr/bin/pgrep -o dhclient > {$g['varrun_path']}/dhclient.pid");
-
+	mwexec("/sbin/dhclient -bqc {$g['varetc_path']}/dhclient.conf " . $wanif);
+	system("/usr/bin/pgrep -U _dhcp -f \"dhclient: $wanif\" > {$g['varrun_path']}/dhclient.pid");
+	system("/usr/bin/pgrep -o dhclient > {$g['varrun_path']}/dhclient.pid");
 	mwexec("/sbin/ifconfig " . $wanif . $addflags);
 	
 	return 0;
@@ -1080,7 +1087,7 @@ function get_current_ip_addresses($iface) {
         return  $ips;
 }
 
-function get_interface_mac($interface) {
+function fet_interface_mac($interface) {
         /* build interface list with netstat */
         exec("/usr/bin/netstat -I $interface -n -f inet", $linkinfo);
         array_shift($linkinfo);
@@ -1089,11 +1096,35 @@ function get_interface_mac($interface) {
         return $mac;
 }
 
+  #$pfglobals .= 'set loginterface '.$g['hwplatformconfig'][INTERFACES][LAN]."\n";
+    $pfglobals .= 'set loginterface '.$g['hwplatformconfig'][INTERFACES][WAN]."\n";;
+
+    /* $ifcount = sizeof($g['hwplatformconfig'][INTERFACES]) - 2;
+
+    for ($i = 1; $i<=$ifcount; $i++) {
+         $pfglobals .= 'set loginterface '.$g['hwplatformconfig'][INTERFACES]['OPT' . $i]['IF']."\n";
+    }
+    */
+
+
 function get_interface_gw($interface) {
         global $config, $g;
-	foreach($config['interfaces'] as $if) {
-		if($if['if'] == $interface) {
-			$gw = $if['gateway'];
+    if($g['hwplatformconfig'][INTERFACES][WAN] == $interface) 
+       if ($config['interfaces']['wan']['ipaddr'] == 'dhcp') {
+	  		if (file_exists("/tmp/$interface.gw"))
+				return chop(file_get_contents("/tmp/$interface.gw")); 
+	   } else {
+	   		return $config['interfaces']['wan']['gateway'];
+       }
+	$ifcount = sizeof($g['hwplatformconfig'][INTERFACES]) - 2;
+ 	for ($i = 1; $i<=$ifcount; $i++) {	
+		if($g['hwplatformconfig'][INTERFACES]['OPT' . $i]['IF'] == $interface) {
+			if ($config['interfaces']['opt' . $i]['ipaddr'] == 'dhcp') {
+				if (file_exists("/tmp/$interface.gw"))
+					return chop(file_get_contents("/tmp/$interface.gw"));
+			} else {
+				$gw = $config['interfaces']['opt' . $i]['gateway'];
+			}
 			break;
 		}
 	}

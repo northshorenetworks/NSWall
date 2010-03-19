@@ -51,22 +51,6 @@ $(document).ready(function() {
 			  <input name="id" type="hidden" value="<?=$id;?>">
 	<fieldset>
 		<legend><?=join(": ", $pgtitle);?></legend>
-			<div>
-                             <label for="interface">Interface</label>
-                             <select name="interface" class="formfld">
-                        <?php
-                        $interfaces = array('wan' => 'WAN', 'pptp' => 'PPTP');
-                        for ($i = 1; isset($config['interfaces']['opt' . $i]); $i++) {
-                            $interfaces['opt' . $i] = $config['interfaces']['opt' . $i]['descr'];
-                        }
-                        foreach ($interfaces as $iface => $ifacename): ?>
-                        <option value="<?=$iface;?>" <?php if ($iface == $pconfig['interface']) echo "selected"; ?>>
-                        <?=htmlspecialchars($ifacename);?>
-                        </option>
-                        <?php endforeach; ?>
-                    </select>
-			     <p class="note">Choose which interface this rule applies to.  Hint: in most cases, you'll want to use WAN here..</p>
-			</div>
                         <div>
                              <label for="descr">Description</label>
                              <input id="descr" type="text" size="50" name="descr" value="<?=htmlspecialchars($pconfig['descr']);?>" />
@@ -99,7 +83,5 @@ $(document).ready(function() {
 	</form>
 	
 	</div><!-- /form-container -->
-	
-	<p id="copyright">Created by <a href="http://nidahas.com/">Prabhath Sirisena</a>. This stuff is in public domain.</p>
 	
 </div><!-- /wrapper -->

@@ -92,6 +92,8 @@ if ($_POST) {
     unset($wancfg['mtu']);
     unset($wancfg['spoofmac']);
     unset($wancfg['media']);
+	unset($wancfg['altqenable']);
+	unset($wancfg['bandwidth']);
 	unset($config['pppoe']['username']);
     unset($config['pppoe']['password']);
     unset($config['pppoe']['provider']);
@@ -138,7 +140,9 @@ if ($_POST) {
      
     $wancfg['spoofmac'] = $_POST['spoofmac'];
     $wancfg['mtu'] = $_POST['mtu'];
-  
+    $wancfg['bandwidth'] = $_POST['bandwidth'];
+	$wancfg['altqenable'] = $_POST['altqenable'] ? true : false;
+
     write_config();
     
     $retval = 0;
@@ -217,7 +221,12 @@ config_unlock();
 
 if ($retval == 0) {
                     sleep(2);
-                    echo '<!-- SUBMITSUCCESS --><center>Configuration saved successfully</center>';
+					if (file_exists('/conf/set_wizard_initial')) {
+          				conf_mount_rw();
+						unlink('/conf/set_wizard_initial');
+						conf_mount_ro();
+					}
+		  			echo '<!-- SUBMITSUCCESS --><center>Configuration saved successfully</center>';
 } else {
 					print_input_errors($input_errors);
                                         echo '<script type="text/javascript">
@@ -250,8 +259,18 @@ if ($retval == 0) {
 		if (!$input_errors) {
 			$optcfg['enable'] = $_POST['enable'] ? true : false;
 		    $optcfg['descr'] = $_POST['descr']; 
-			$optcfg['ipaddr'] = $_POST['ipaddr'];
-			$optcfg['subnet'] = $_POST['subnet'];
+			unset($optcfg['iftype']);
+			$optcfg['iftype'] = $_POST['iftype'];
+			unset($optcfg['wantype']);
+            $optcfg['wantype'] = $_POST['wantype'];	
+			if ($_POST['wantype'] == "DHCP") { 
+				$optcfg['ipaddr'] = "dhcp";
+			} else { 
+				$optcfg['ipaddr'] = $_POST['ipaddr'];
+				$optcfg['subnet'] = $_POST['subnet'];
+			}
+			unset($optcfg['gateway']);
+			$optcfg['gateway'] = $_POST['gateway'];
 			unset($optcfg['aliaslist']);
 			if ($_POST['memberslist'] != '') {
           $aliaslist = explode(' ', $_POST['memberslist']);
@@ -261,6 +280,8 @@ if ($retval == 0) {
               $optcfg['aliaslist'][$alias] = $prop;
           }
       }
+	  		 $optcfg['bandwidth'] = $_POST['bandwidth'];
+			 $optcfg['altqenable'] = $_POST['altqenable'] ? true : false;
 		 	/* Wireless interface? */
 			if (isset($optcfg['wireless'])) {
 				unset($optcfg['wireless']);

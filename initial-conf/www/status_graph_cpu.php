@@ -31,6 +31,7 @@
 
 $pgtitle = array("Status", "CPU load");
 require("guiconfig.inc");
+include("ns-begin.inc");
 ?>
 <p class="pgtitle"><?=join(": ", $pgtitle);?></p>
 <div align="center">

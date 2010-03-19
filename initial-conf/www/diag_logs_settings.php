@@ -1,192 +1,61 @@
 #!/bin/php
 <?php 
-/*
-	$Id: diag_logs_settings.php,v 1.2 2009/04/20 06:52:09 jrecords Exp $
-	part of m0n0wall (http://m0n0.ch/wall)
-	
-	Copyright (C) 2003-2006 Manuel Kasper <mk@neon1.net>.
-	All rights reserved.
-	
-	Redistribution and use in source and binary forms, with or without
-	modification, are permitted provided that the following conditions are met:
-	
-	1. Redistributions of source code must retain the above copyright notice,
-	   this list of conditions and the following disclaimer.
-	
-	2. Redistributions in binary form must reproduce the above copyright
-	   notice, this list of conditions and the following disclaimer in the
-	   documentation and/or other materials provided with the distribution.
-	
-	THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
-	INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
-	AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
-	AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
-	OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
-	SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-	INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
-	CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-	ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-	POSSIBILITY OF SUCH DAMAGE.
-*/
 
-$pgtitle = array("Diagnostics", "Logs");
+$pgtitle = array("Dignostics", "Remote Syslog");
 require("guiconfig.inc");
+include("ns-begin.inc");
 
-$pconfig['reverse'] = isset($config['syslog']['reverse']);
-$pconfig['nentries'] = $config['syslog']['nentries'];
 $pconfig['remoteserver'] = $config['syslog']['remoteserver'];
-$pconfig['filter'] = isset($config['syslog']['filter']);
-$pconfig['dhcp'] = isset($config['syslog']['dhcp']);
-$pconfig['portalauth'] = isset($config['syslog']['portalauth']);
-$pconfig['vpn'] = isset($config['syslog']['vpn']);
-$pconfig['system'] = isset($config['syslog']['system']);
 $pconfig['enable'] = isset($config['syslog']['enable']);
-$pconfig['logdefaultblock'] = !isset($config['syslog']['nologdefaultblock']);
-$pconfig['rawfilter'] = isset($config['syslog']['rawfilter']);
-$pconfig['resolve'] = isset($config['syslog']['resolve']);
-
-if (!$pconfig['nentries'])
-	$pconfig['nentries'] = 50;
-
-if ($_POST) {
-
-	unset($input_errors);
-	$pconfig = $_POST;
-
-	/* input validation */
-	if ($_POST['enable'] && !is_ipaddr($_POST['remoteserver'])) {
-		$input_errors[] = "A valid IP address must be specified.";
-	}
-	if (($_POST['nentries'] < 5) || ($_POST['nentries'] > 1000)) {
-		$input_errors[] = "Number of log entries to show must be between 5 and 1000.";
-	}
-
-	if (!$input_errors) {
-		$config['syslog']['reverse'] = $_POST['reverse'] ? true : false;
-		$config['syslog']['nentries'] = (int)$_POST['nentries'];
-		$config['syslog']['remoteserver'] = $_POST['remoteserver'];
-		$config['syslog']['filter'] = $_POST['filter'] ? true : false;
-		$config['syslog']['dhcp'] = $_POST['dhcp'] ? true : false;
-		$config['syslog']['portalauth'] = $_POST['portalauth'] ? true : false;
-		$config['syslog']['vpn'] = $_POST['vpn'] ? true : false;
-		$config['syslog']['system'] = $_POST['system'] ? true : false;
-		$config['syslog']['enable'] = $_POST['enable'] ? true : false;
-		$oldnologdefaultblock = isset($config['syslog']['nologdefaultblock']);
-		$config['syslog']['nologdefaultblock'] = $_POST['logdefaultblock'] ? false : true;
-		$config['syslog']['rawfilter'] = $_POST['rawfilter'] ? true : false;
-		$config['syslog']['resolve'] = $_POST['resolve'] ? true : false;
-		
-		write_config();
-		
-		$retval = 0;
-		if (!file_exists($d_sysrebootreqd_path)) {
-			config_lock();
-			$retval = system_syslogd_start();
-			if ($oldnologdefaultblock !== isset($config['syslog']['nologdefaultblock']))
-				$retval |= filter_configure();
-			config_unlock();
-		}
-		$savemsg = get_std_save_message($retval);	
-	}
-}
 
 ?>
-<script language="JavaScript">
-<!--
-function enable_change(enable_over) {
-	if (document.iform.enable.checked || enable_over) {
-		document.iform.remoteserver.disabled = 0;
-		document.iform.filter.disabled = 0;
-		document.iform.dhcp.disabled = 0;
-		document.iform.portalauth.disabled = 0;
-		document.iform.vpn.disabled = 0;
-		document.iform.system.disabled = 0;
-	} else {
-		document.iform.remoteserver.disabled = 1;
-		document.iform.filter.disabled = 1;
-		document.iform.dhcp.disabled = 1;
-		document.iform.portalauth.disabled = 1;
-		document.iform.vpn.disabled = 1;
-		document.iform.system.disabled = 1;
-	}
-}
-// -->
+<script type="text/javascript">
+// wait for the DOM to be loaded
+$(document).ready(function() {
+	$('#livediag').hide();
+	$('div fieldset div').addClass('ui-widget ui-widget-content ui-corner-content');
+    $("#submitbutton").click(function () {
+        displayProcessingDiv();
+        var QueryString = $("#iform").serialize();
+        $.post("forms/system_form_submit.php", QueryString, function(output) {
+            $("#save_config").html(output);
+            if(output.match(/SUBMITSUCCESS/))
+                setTimeout(function(){ $('#save_config').dialog('close'); }, 1000);
+        });
+    return false;
+    });
+});
 </script>
-<script type="text/javascript" src="js/contentload.js"></script>
-<p class="pgtitle"><?=join(": ", $pgtitle);?></p>
-<form action="diag_logs_settings.php" method="post" name="iform" id="iform">
+
 <?php if ($input_errors) print_input_errors($input_errors); ?>
 <?php if ($savemsg) print_info_box($savemsg); ?>
-<table width="100%" border="0" cellpadding="0" cellspacing="0">
-  <tr><td class="tabnavtbl">
-  <ul id="tabnav">
-<?php 
-   	$tabs = array('System' => 'diag_logs.php',
-           		  'Settings' => 'diag_logs_settings.php');
-	dynamic_tab_menu($tabs);
-?> 
-  </ul>
-  </td></tr>
-  <tr> 
-    <td class="tabcont">
-	  <table width="100%" border="0" cellpadding="6" cellspacing="0">
-                      <tr> 
-                        <td width="22%" valign="top" class="vtable">&nbsp;</td>
-                        <td width="78%" class="vtable"> <input name="reverse" type="checkbox" id="reverse" value="yes" <?php if ($pconfig['reverse']) echo "checked"; ?>>
-                          <strong>Show log entries in reverse order (newest entries 
-                          on top)</strong></td>
-                      </tr>
-                      <tr> 
-                        <td width="22%" valign="top" class="vtable">&nbsp;</td>
-                        <td width="78%" class="vtable">Number of log entries to 
-                          show: 
-                          <input name="nentries" id="nentries" type="text" class="formfld" size="4" value="<?=htmlspecialchars($pconfig['nentries']);?>"></td>
-                      </tr>
-                      <tr> 
-                        <td valign="top" class="vtable">&nbsp;</td>
-                        <td class="vtable"> <input name="rawfilter" type="checkbox" id="rawfilter" value="yes" <?php if ($pconfig['rawfilter']) echo "checked"; ?>>
-                          <strong>Show raw filter logs</strong><br>
-                          Hint: If this is checked, filter logs are shown as generated by the packet filter, without any formatting. This will reveal more detailed information. </td>
-                      </tr>
-                      <tr> 
-                        <td valign="top" class="vtable">&nbsp;</td>
-                        <td class="vtable"> <input name="resolve" type="checkbox" id="resolve" value="yes" <?php if ($pconfig['resolve']) echo "checked"; ?>>
-                          <strong>Resolve IP addresses to hostnames</strong><br>
-                          Hint: If this is checked, IP addresses in firewall logs are resolved to real hostnames where possible.<br>
-                          Warning: This can cause a huge delay in loading the firewall log page!</td>
-                      </tr>
-                      <tr> 
-                        <td width="22%" valign="top" class="vtable">&nbsp;</td>
-                        <td width="78%" class="vtable"> <input name="enable" type="checkbox" id="enable" value="yes" <?php if ($pconfig['enable']) echo "checked"; ?> onClick="enable_change(false)">
-                          <strong>Enable syslog'ing to remote syslog server</strong></td>
-                      </tr>
-                      <tr> 
-                        <td width="22%" valign="top" class="vncell">Remote syslog 
-                          server</td>
-                        <td width="78%" class="vtable"> <input name="remoteserver" id="remoteserver" type="text" class="formfld" size="20" value="<?=htmlspecialchars($pconfig['remoteserver']);?>"> 
-                          <br>
-                          IP address of remote syslog server<br> <br>
-                      </tr>
-                      <tr> 
-                        <td width="22%" valign="top">&nbsp;</td>
-                        <td width="78%"> <input name="Submit" type="submit" class="formbtn" value="Save" onclick="enable_change(true)"> 
-                        </td>
-                      </tr>
-                      <tr> 
-                        <td width="22%" valign="top">&nbsp;</td>
-                        <td width="78%"><strong><span class="red">Note:</span></strong><br>
-                          syslog sends UDP datagrams to port 514 on the specified 
-                          remote syslog server. Be sure to set syslogd on the 
-                          remote server to accept syslog messages from NSWall. 
-                        </td>
-                      </tr>
-                    </table>
-    </td>
-  </tr>
-</table>
-</form>
-<script language="JavaScript">
-<!--
-enable_change(false);
-//-->
-</script>
+
+<div id="wrapper">
+        <div class="form-container ui-tabs ui-widget ui-corner-all">
+
+	<form action="forms/system_form_submit.php" method="post" name="iform" id="iform">
+        <input name="formname" type="hidden" value="system_syslog">
+
+	<fieldset>
+		<legend><?=join(": ", $pgtitle);?></legend>
+            <div>
+               <label for="syslogenabled">Enable Remote Syslog</label>
+               <input id="syslogenabled" type="checkbox" name="syslogenabled" value="<?php if ($pconfig['syslogenabled']) echo "checked"; ?>" />
+			   <p class="note">Enable sending syslog messages to remote server.</p>
+			</div>
+            <div>
+               <label for="remoteserver">Syslog Server</label>
+               <input id="remoteserver" type="text" name="remoteserver" value="<?=htmlspecialchars($pconfig['remoteserver']);?>" size="20" />
+            </div>
+	</fieldset>
+	
+	<div class="buttonrow">
+		<input type="submit" id="submitbutton" value="Save" class="button" />
+	</div>
+
+	</form>
+	
+	</div><!-- /form-container -->
+	
+</div><!-- /wrapper -->
+

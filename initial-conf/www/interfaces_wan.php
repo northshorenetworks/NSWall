@@ -20,6 +20,8 @@ $pconfig['blockpriv'] = isset($wancfg['blockpriv']);
 $pconfig['spoofmac'] = $wancfg['spoofmac'];
 $pconfig['mtu'] = $wancfg['mtu'];
 $pconfig['aliaslist'] = $wancfg['aliaslist'];
+$pconfig['altqenable'] = isset($wancfg['altqenable']);
+$pconfig['bandwidth'] = $wancfg['bandwidth'];
 
 /* Find next free carp interface */
 for($i=0;$i<100; $i++) {
@@ -45,7 +47,7 @@ if (isset($optcfg['wireless'])) {
 $(document).ready(function() {
      $('div fieldset div').addClass('ui-widget ui-widget-content ui-corner-content');
      $('div fieldset div div').addClass('ui-widget ui-widget-content ui-corner-content');
-
+     
      var wantype = $("#type");
      switch(wantype.val()){
         case 'Static':
@@ -57,7 +59,7 @@ $(document).ready(function() {
             $("#dhcpdiv").show();
             break;
      }
-     
+
      // when a user changes the type of connection, change the related div to style = display: block and hide all others
      $("#type").change(function() {
           var val = $(this).val();
@@ -116,8 +118,8 @@ $(document).ready(function() {
                          <div>
                              <label for="type">Connection Type</label>
                              <select name="type" class="formfld" id="type">
-                                 <option value="DHCP" selected>DHCP</option>
                                  <option value="Static" >Static IP</option>
+                                 <option value="DHCP" <?php if ('DHCP' == $pconfig['type']) echo "selected"; ?>>DHCP</option>
                              </select>
                         </div>
                         <div id='staticdiv'>
@@ -181,7 +183,16 @@ $(document).ready(function() {
                     an MTU of 1492 bytes for PPPoE and 1500 bytes for all other
                     connection types will be assumed.</p>
                 </div>   
+   			    <div>
+                    <label for="altqenable">Enable ALTQ</label>
+                    <input id="altqenable" type="checkbox" name="altqenable" value="Yes" <?php if ($pconfig['altqenable']) echo "checked"; ?> />
                 </div>
+                <div>
+                    <label for="bandwidth">Uplink Speed</label>
+                    <input id="bandwidth" type="text" name="bandwidth" value="<?=htmlspecialchars($pconfig['bandwidth']);?>" />
+                    <p class="note">Uplink speed of interface in Kilobits/s.</p>
+                </div>
+				</div>
 	</fieldset>
 	
 	<div class="buttonrow">

@@ -75,14 +75,15 @@ function filter_print_pfconf() {
 
 function filter_generate_multiwan_interfaces() {
 	global $config, $g;
-     	if (isset($config['system']['multiwan'])) {
+		system_determine_hwplatform();
+     	if (isset($config['system']['advanced']['multiwansupport']) && sg_get_const("ENTERPRISE_ROUTING") == 'ENABLED') {
 		$wanifs = array(); 
         	array_push($wanifs, get_real_wan_interface());
         	for ($i = 1; isset($config['interfaces']['opt' . $i]); $i++) {
                 	$oc = $config['interfaces']['opt' . $i];
-                	if (isset($oc['enable']) && $oc['if']) {
-                        	if($oc['type'] == 'WAN') {
-                                	array_push($wanifs, $oc['if']);
+                	if (isset($oc['enable'])) {
+                        	if($oc['iftype'] == 'wan') {
+                                	array_push($wanifs, $g['hwplatformconfig'][INTERFACES]['OPT' . $i]['IF']);
                         	}
                 	}
         	}
@@ -145,8 +146,10 @@ function filter_configure() {
 }
 
 function filter_parse_config($config) {
-        global $config;
-        
+        global $config, $g;
+ 	
+	system_determine_hwplatform();      
+ 
         /* generate pf rules */
         $pfrules = filter_tables_generate();
 	$pfrules .= filter_aliasrules_generate();
@@ -181,7 +184,10 @@ function filter_parse_config($config) {
         $return_value = proc_close($process);
 
         if($return_value) {      
-                $errors = preg_split("/stdin:/", $out);
+                $fh = fopen("/tmp/pf.conf.raw", 'w') or die("can't open file");
+                fwrite($fh, $pfrules);
+                fclose($fh); 
+		$errors = preg_split("/stdin:/", $out);
                 foreach($errors as $error) {
                         mwexec("/usr/bin/logger -p local0.info -t configparse $error");
                 }
@@ -435,7 +441,7 @@ function filter_nat_rules_generate() {
                                 elseif ($obent['interface'] == "pptp")
                                         $natif = 'tun0';
                                 else
-                                        $natif = $config['interfaces'][$obent['interface']]['if'];
+                                        $natif = get_interface_name($obent['interface']);
 
                                 $natrules .= filter_nat_rules_generate_if($natif, $src, $dst,
                                         $obent['target'], !isset($obent['noportmap']));
@@ -500,35 +506,57 @@ EOD;
 }
 
 function altq_conf_generate() {
-        global $config, $g;
-	if (isset($config['altq']['enable'])) {
-        	$wancfg = $config['interfaces']['wan'];
-        	$lancfg = $config['interfaces']['lan'];
-        	$bandwidth = $config['altq']['bandwidth'] . "Kb";
-       	 	$lanif = $lancfg['if'];
-        	$wanif = get_real_wan_interface();
-        	$altqconf = "#####################\n";
-		$altqconf .= "### ALTQ settings ###\n";
-		$altqconf .= "#####################\n";
-		$altqconf .= "altq on $wanif priq bandwidth $bandwidth queue { ackout, highest, high, medium, low }\n"; 
-        	$altqconf .= "queue ackout	 priority 4\n";
-		$altqconf .= "queue highest	 priority 3\n";
-        	$altqconf .= "queue high 	 priority 2\n";
-        	$altqconf .= "queue medium 	 priq(default)\n";
-        	$altqconf .= "queue low	 priority 0\n";
-
-        	return $altqconf;
+	global $config, $g;
+    $usingaltq = 0;
+    $altqconf = "#####################\n";
+	$altqconf .= "### ALTQ settings ###\n";
+	$altqconf .= "#####################\n";
+	foreach ($config['interfaces'] as $if) {
+		if (isset($if['altqenable'])) {
+            $usingaltq = 1;
+			if (isset($if['descr'])) {
+				$ifname = get_interface_name_by_descr($if['descr']); 
+			} else {
+				$ifname = get_interface_name_by_descr('wan');
+			}
+			$bandwidth = $if['bandwidth'] . "Kb";
+			$altqconf .= "altq on $ifname priq bandwidth $bandwidth queue { ackout, highest, high, medium, low }\n"; 
+		}
 	}
+	if ($usingaltq == 1) {
+		$altqconf .= "queue ackout   priority 4\n";
+    	$altqconf .= "queue highest  priority 3\n";
+    	$altqconf .= "queue high     priority 2\n";
+    	$altqconf .= "queue medium   priq(default)\n";
+    	$altqconf .= "queue low      priority 0\n";
+    } 
+	return $altqconf;
 }
 
 function filter_options_generate() {
-        global $config;
+        global $config, $g;
 	$pfglobals = "#########################\n";
 	$pfglobals .= "### Global PF Options ###\n";
 	$pfglobals .= "#########################\n";
 	$pfglobals .= "set skip on lo0\n";
-	$pfglobals .= "set loginterface " . $config['interfaces']['wan']['if'] . "\n";
-        if (isset($config['filter']['options']['timeouts']['tcpfirst']))
+    if (file_exists("{$g['etc_path']}/hwplatform")) {
+        $g['hwplatform'] = chop(file_get_contents("{$g['etc_path']}/hwplatform"));
+        $pla = explode("_", $g['hwplatform']);
+        $g['hwplatform'] = $pla[0];
+    }
+    $hwplatformconfig = parse_nonconfig_xml("{$g['etc_path']}/hwplatformconfig.xml");
+   
+	#$pfglobals .= 'set loginterface '.$g['hwplatformconfig'][INTERFACES][LAN]."\n";
+	$pfglobals .= 'set loginterface '.$g['hwplatformconfig'][INTERFACES][WAN]."\n";; 
+	
+	/* $ifcount = sizeof($g['hwplatformconfig'][INTERFACES]) - 2;
+
+    for ($i = 1; $i<=$ifcount; $i++) {
+    	 $pfglobals .= 'set loginterface '.$g['hwplatformconfig'][INTERFACES]['OPT' . $i]['IF']."\n";
+	}
+	*/
+
+    if (isset($config['filter']['options']['timeouts']['tcpfirst']))
         	$pfglobals .= "set timeout tcp.first " . $config['filter']['options']['timeouts']['tcpfirst'] . "\n";       
  	if (isset($config['filter']['options']['timeouts']['tcpopening']))
                 $pfglobals .= "set timeout tcp.opening " . $config['filter']['options']['timeouts']['tcpopening'] . "\n";    
@@ -618,9 +646,30 @@ function filter_system_aliases_generate() {
 		if (isset($oc['enable'])) {
         	if($oc['wireless']['ifmode'] == 'lanbridge' || $oc['wireless']['ifmode'] == 'dmzbridge') {
 				continue;
+			} 
+			if ($oc['ipaddr'] == 'dhcp') {
+				$interface = get_interface_name_by_descr($oc['descr']);
+				if (file_exists("/tmp/$interface.ip"))
+					$ip = chop(file_get_contents("/tmp/$interface.ip"));
+				if (file_exists("/tmp/$interface.subnet"))
+					$sn = mask2cidr(chop(file_get_contents("/tmp/$interface.subnet")));
+				if (file_exists("/tmp/$interface.gw"))
+					$gw = chop(file_get_contents("/tmp/$interface.gw"));
+
+				if (file_exists("/tmp/$interface.ip"))
+				$sysalias_rules .= $oc['descr'] . '_IP = "' . $ip . "\"\n";
+				if (file_exists("/tmp/$interface.ip") && file_exists("/tmp/$interface.subnet"))
+				$sysalias_rules .= $oc['descr'] . '_Network = "' . gen_subnet($ip,$sn) . '/' . $sn . '"' . "\n";
+				if (file_exists("/tmp/$interface.gw")) {
+					if ($oc['iftype'] == 'wan' && $oc['wantype'] == 'DHCP')
+						$sysalias_rules .= $oc['descr'] . '_Gateway = "' . $gw . "\"\n";
+				}
+			} else {
+				$sysalias_rules .= $oc['descr'] . '_IP = "' . $oc['ipaddr'] . "\"\n";
+	        	$sysalias_rules .= $oc['descr'] . '_Network = "' . gen_subnet($oc['ipaddr'],$oc['subnet']) . '"' . "\n";
+				if ($oc['iftype'] == 'wan' && $oc['wantype'] == 'Static')
+					$sysalias_rules .= $oc['descr'] . '_Gateway = "' . $oc['gateway'] . "\"\n";
 			}
-			$sysalias_rules .= $oc['descr'] . '_IP = "' . $oc['ipaddr'] . "\"\n";
-	        $sysalias_rules .= $oc['descr'] . '_Network = "' . $oc['ipaddr'] . "/" . $oc['sn'] . '"' . "\n";
 		}
 	}
 	return $sysalias_rules;
@@ -702,9 +751,9 @@ function filter_rules_generate() {
 	for ($i = 1; isset($config['interfaces']['opt' . $i]); $i++) {
 		$oc = $config['interfaces']['opt' . $i];
 		
-		if (isset($oc['enable']) && $oc['if']) {
+		if (isset($oc['enable'])) {
 			$oic = array();
-			$oic['if'] = $oc['if'];
+			$oic['if'] = $g['hwplatformconfig'][INTERFACES]['OPT' . $i]['IF'];
 			
 			if ($oc['bridge']) {
 				if (!strstr($oc['bridge'], "opt") || 
@@ -748,6 +797,26 @@ anchor "default" {
 	pass out all
 
 EOD;
+
+	/* If multiwan is enabled do this */
+    if (isset($config['system']['advanced']['multiwansupport']) && sg_get_const("ENTERPRISE_ROUTING") == 'ENABLED') {
+        $wanifs = filter_generate_multiwan_interfaces();
+        foreach($wanifs as $if) {
+            $otherwanifs = array();
+            foreach($wanifs as $otherwan) {
+                if($otherwan != $if) {
+                    array_push($otherwanifs, $otherwan);
+                }
+            }
+            foreach($otherwanifs as $otherif) {
+                $gw = get_interface_gw($otherif);
+                if (is_ipaddr($gw))  
+					$ipfrules .= "\tpass out on $if route-to ($otherif $gw) from $otherif to any\n";
+            }
+        }
+    }
+
+
 	if($config['interfaces']['opt2']['wireless']['ifmode'] == 'lanbridge' || $config['interfaces']['opt2']['wireless']['ifmode'] == 'dmzbridge') {
  	$ipfrules .= <<<EOD
 
@@ -805,9 +874,25 @@ EOD;
 			}
 		}
 }
-	foreach ($optcfg as $oc) {
-		if($config['interfaces']['opt2']['wireless']['ifmode'] != 'lanbridge' && $config['interfaces']['opt2']['wirelless']['ifmode'] != 'dmzbridge')
-	               	$ipfrules .= "block in $log quick on $wanif from {$oc['sa']}/{$oc['sn']} to any\n";
+	for ($i = 1; isset($config['interfaces']['opt' . $i]); $i++) {
+		$oc = $config['interfaces']['opt' . $i];
+		if($oc['wireless']['ifmode'] != 'lanbridge' && $oc['wirelless']['ifmode'] != 'dmzbridge') {
+	   		if($oc['ipaddr'] == 'dhcp') {
+				$interface = get_interface_name_by_descr($oc['descr']);
+                if (file_exists("/tmp/$interface.ip"))
+					$ip = chop(file_get_contents("/tmp/$interface.ip"));
+                if (file_exists("/tmp/$interface.subnet"))
+					$sn = mask2cidr(chop(file_get_contents("/tmp/$interface.subnet")));
+				if (file_exists("/tmp/$interface.ip") && file_exists("/tmp/$interface.subnet")) {
+					$subnet = gen_subnet($ip,$sn);
+					$ipfrules .= "\tblock in $log quick on $wanif from $subnet/$sn to any\n";
+				}		
+			} else {
+				$sn = $oc['subnet'];
+				$subnet = gen_subnet($oc['ipaddr'],$sn);
+				$ipfrules .= "\tblock in $log quick on $wanif from $subnet/$sn to any\n";
+			}
+		}
 	}
 	
 	/* allow PPTP traffic if PPTP client is enabled on WAN */
@@ -866,37 +951,19 @@ $ipfrules .= "\nanchor \"Block RFC1918\" {\n\tblock in $log quick on $wanif from
 	}
 	
 	/* IPsec enabled? */
-	if (isset($config['ipsec']['enable']) && is_array($config['ipsec']['tunnel']) || isset($config['ipsec']['mobileclients']['enable']) && is_array($config['ipsec']['tunnel'])) {
-		foreach( $config['ipsec']['tunnel'] as $tunnel ) {
-			$ifname = $tunnel['interface'];
+	if (is_array($config['ipsec']['gateway'])) {
+		foreach( $config['ipsec']['gateway'] as $gateway ) {
+			$ifname = $gateway['interface'];
 			if($ifname == 'wan') 
 				$localip = get_current_wan_address();
 			$ifname = get_interface_name($ifname);
-			$remoteip = $tunnel['remote-gateway'];
-			$tunnelmode = $tunnel['p2']['protocol'];
-			$tunnelroutes = $tunnel['addresspolicies'];
-			$ipfrules .= filter_rules_ipsec_generate($ifname, $localip, $remoteip, $tunnelmode, $tunnelroutes);
+			$remoteip = $gateway['remote-gateway'];
+			$tunnelmode = $gateway['p2']['protocol'];
+			$tunnelroutes = $gateway['addresspolicies'];
+			$ipfrules .= filter_rules_ipsec_generate($ifname, $localip, $remoteip, $tunnelmode);
 		}
 	}
 	
-	/* If multiwan is enabled do this */
-	if (isset($config['system']['multiwan'])) {
-		$wanifs = filter_generate_multiwan_interfaces();
-        	foreach($wanifs as $if) {
-			$ipfrules .= "pass out on $if all\n";
-			$otherwanifs = array();
-			foreach($wanifs as $otherwan) {
-				if($otherwan != $if) {
-					array_push($otherwanifs, $otherwan); 
-				}
-			}
-			foreach($otherwanifs as $otherif) {
-				$gw = get_interface_gw($otherif);
-				$ipfrules .= "pass out on $if route-to ($otherif $gw) from $otherif to any\n";
-			}
-		}
-	}
-
         /* Webgui antilockout code */
 	if (!isset($config['system']['general']['webgui']['noantilockout'])) {
 		$webuiport = $config['system']['general']['webgui']['port'];
@@ -911,6 +978,7 @@ $ipfrules .= "\nanchor \"Block RFC1918\" {\n\tblock in $log quick on $wanif from
 
 		$webuiport .= $sshdport;
 	$ipfrules .= <<<EOD
+
 	
 	###########################
 	### WebGUI anti-lockout ###
@@ -1137,19 +1205,29 @@ EOD;
 			if (!$ispptp) {
 				$line .= "on $interface ";
 			}
-
-			$line .= "inet ";
 	
 			### Load Balancing code goes here. 	
-			if (isset($config['system']['multiwan'])) {
-				$line .= "route-to \\\n\t{ ";
-				foreach($wanifs as $if) {
-					$gw = get_interface_gw($if);
-					$line .= "($if $gw), ";
+			if (isset($config['system']['advanced']['multiwansupport']) && sg_get_const("ENTERPRISE_ROUTING") == 'ENABLED') {
+				if(!in_array($interface, $wanifs)) {
+					$line .= "route-to \\\n\t{ ";
+					if (!isset($rule['options']['multiwan']) || $rule['options']['multiwan'] == 'roundrobin') {
+						foreach($wanifs as $if) {
+							$gw = get_interface_gw($if);
+							if (is_ipaddr($gw))
+								$line .= "($if $gw), ";
+						}
+					} else {
+						$if = get_interface_name_by_descr($rule['options']['multiwan']);
+						$gw = get_interface_gw($if);
+						if (is_ipaddr($gw))
+							$line .= "($if $gw) ";
+					}
+					$line = preg_replace("/\, $/", "", $line);
+					$line .= " } round-robin \\\n\t";	
 				}
-				$line = preg_replace("/\, $/", "", $line);
-				$line .= " } round-robin \\\n\t";	
-			}
+			}		
+			$line .= "inet ";
+			
 			if($proto != 'none') {
 				$line .= "proto $proto \\\n\t";
 			}	
@@ -1376,7 +1454,6 @@ function filter_rdrrules_generate() {
 
 	/* if we have a rule with dst port 20/21 setup the ftpproxy anchor */
         $ipfrules .= 'rdr-anchor "ftp-proxy/*"' . "\n";
-	$ipfrules .= 'rdr-anchor "relayd/*"' . "\n";
 	$i = 0;
 	if (isset($config['filter']['rule']))
 		foreach ($config['filter']['rule'] as $rule) {
@@ -1569,38 +1646,29 @@ function filter_rules_spoofcheck_generate($ifname, $if, $sa, $sn, $log) {
 	return $ipfrules;
 }
 
-function filter_rules_ipsec_generate($ifname, $localip, $remoteip, $tunnelmode, $tunnelroutes) {
-	$ipfrules .= <<<EOD
-
-#######################################
-##### Gateway rules for $remoteip #####
-#######################################
-pass in quick on {$ifname} proto udp from {$remoteip} to {$localip} port {500, 4500}
+function filter_rules_ipsec_generate($ifname, $localip, $remoteip, $tunnelmode) {
+	/* put a comment of the name for the rdr rule(s) */
+        $ipfrules .= "\n";
+        $ipfrules .= "\t" . filter_pad_comments("Gateway rules for $remoteip") . "\n";
+        $ipfrules .= "\t" . "### " .  "Gateway rules for $remoteip" . " ###\n";
+        $ipfrules .= "\t" . filter_pad_comments("Gateway rules for $remoteip") . "\n";
+        $ipfrules .= <<<EOD
+\tpass in quick on {$ifname} proto udp from {$remoteip} to {$localip} port {500, 4500}
 EOD;
 if($tunnelmode == 'esp') {
 $ipfrules .= <<<EOD
-\npass in quick on {$ifname} proto esp from {$localip} to {$remoteip}
+\n\tpass in quick on {$ifname} proto esp from {$localip} to {$remoteip}
 EOD;
 }
 if($tunnelmode == 'ah') {
 $ipfrules .= <<<EOD
-\npass in quick on {$ifname} proto ah from {$localip} to {$remoteip}
+\n\tpass in quick on {$ifname} proto ah from {$localip} to {$remoteip}
 EOD;
 }
 $ipfrules .= <<<EOD
-\npass in quick on enc0 proto ipencap from {$localip} to {$remoteip} \
-        keep state (if-bound)
+\n\tpass in quick on enc0 proto ipencap from {$localip} to {$remoteip} \
+\t\tkeep state (if-bound)
 EOD;
-foreach($tunnelroutes as $route) { 
-	preg_match('/(\d+.\d+.\d+.\d+)--(\d+.\d+.\d+.\d+)/', $route, $ips);
-$local = $ips[1];
-$remote = $ips[2];
-$ipfrules .= <<<EOD
-\npass in quick on enc0 from $local to $remote \
-	keep state (if-bound)
-
-EOD;
-}
 	return $ipfrules;
 }
 

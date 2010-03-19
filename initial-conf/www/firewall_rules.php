@@ -33,12 +33,12 @@ $ifsaveneworder = '#' . $if . 'saveneworder';
 
 <style type="text/css">
     <?= $ifsortable; ?> { list-style-type: none; margin: auto auto 1em; padding: 0; width: 95%; }
-    <?= $ifsortable; ?> li { padding: 0.1em; margin-left: 0; padding-left: 1.5em; font-size: 1.4em; height: 18px; border:1px solid #E4E4E4;  font-size:1em; }
-    <?= $ifsortable; ?> li span.col1 { position:relative; float:left; width:2.5%; }
-    <?= $ifsortable; ?> li span.col2 { position:relative; float:left; width:15%; }
-    <?= $ifsortable; ?> li span.col3 { position:relative; float:left; width:2.5%; }
-    <?= $ifsortable; ?> li span.col4 { position:relative; float:left; width:2.5%; }
-    <?= $ifsortable; ?> li span.col5 { position:relative; float:left; width:60%; }
+    <?= $ifsortable; ?> li { padding: 0.1em; margin-left: 0; padding-left: 1; font-size: 1.4em; height: 18px; border:1px solid #E4E4E4;  font-size:1em; }
+    <?= $ifsortable; ?> li span.col1 { position:relative; float:left; width:5em; }
+    <?= $ifsortable; ?> li span.col2 { position:relative; float:left; width:5em; }
+    <?= $ifsortable; ?> li span.col3 { position:relative; float:left; width:5em; }
+    <?= $ifsortable; ?> li span.col4 { position:relative; float:left; width:10em; }
+    <?= $ifsortable; ?> li span.col5 { position:relative; float:left; width:30em; }
 </style>
 
 <script type="text/javascript">
@@ -69,7 +69,7 @@ $("<?= $ifsaveneworder; ?>").click(function () {
     });
 
 // When a user clicks on the rule edit button, load firewall_rules_edittabs.php?id=$id
-$(".col3 a, #newrule a").click(function () {
+$(".col2 a, #newrule a").click(function () {
     var toLoad = $(this).attr('href');
         clearInterval(refreshId);
         $('#content').load(toLoad);
@@ -77,7 +77,7 @@ $(".col3 a, #newrule a").click(function () {
 });
 
 // When a user clicks on the rule delete button, load firewall_rules_edittabs.php?id=$id
-$(".col4 a").click(function () {
+$(".col3 a").click(function () {
         if (confirm('Are you sure you want to delete this rule?')){  
              displayProcessingDiv();
              var id = $(this).attr('href');
@@ -93,10 +93,10 @@ $(".col4 a").click(function () {
 <div class="demo">
 <ul id="<?=$if . 'sortable';?>">
 <li id="element_<?=$i;?>" class="connectedSortable ui-state-disabled">
-<span class="col1">Id</span>
-<span class="col2">Rule Name</span>
-<span class="col3">Action</span>
-<span class="col4">&nbsp</span>
+<span class="col1">Order</span>
+<span class="col2">Edit</span>
+<span class="col3">Delete</span>
+<span class="col4">Name</span>
 <span class="col5">Description</span>
 </li>
 <?php $nrules = 0; for ($i = 0; isset($a_filter[$i]); $i++):
@@ -105,17 +105,17 @@ if ($filterent['interface'] != $if)
 continue; ?>
 <li id="listItem_<?=$i;?>">
 <span class="col1"><span class="ui-icon ui-icon-triangle-2-n-s"></span></span>
-<span class="col2"><?php if (isset($filterent['name'])) echo strtoupper($filterent['name']); else echo "*"; ?><?=$textse;?></span>
-<span class="col3">
+<span class="col2">
 <a href="firewall_rules_edittabs.php?id=<?=$i;?>">
 <span title="edit this rule" class="ui-icon ui-icon-circle-zoomin"></span>
 </a>
 </span>
-<span class="col4">
+<span class="col3">
 <a href="forms/firewall_form_submit.php?id=<?=$i;?>&action=delete&type=rules">
 <span title="delete this rule" class="ui-icon ui-icon-circle-close"></span>
 </a>
 </span>
+<span class="col4"><?php if (isset($filterent['name'])) echo strtoupper($filterent['name']); else echo "*"; ?><?=$textse;?></span>
 <span class="col5"><?php if (isset($filterent['descr'])) echo $filterent['descr'];?></span>
 </li>
 <?php $nrules++; endfor; ?>

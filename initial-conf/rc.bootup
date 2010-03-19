@@ -25,7 +25,7 @@ POSSIBILITY OF SUCH DAMAGE.
 */
  
 require_once("globals.inc");
-        require_once("util.inc");
+require_once("util.inc");
  
 mwexec("/sbin/mount /dev/rd0a /");
  
@@ -49,7 +49,7 @@ mwexec("/etc/rc.firmware enable");
 system_check_filesystems();
  
 /* convert configuration, if necessary */
-convert_config();
+/* convert_config(); */
  
 /* execute the rc.early scripts of extensions */
 system_do_extensions(1);
@@ -137,10 +137,7 @@ relay_relayd_configure(); */
 system_syslogd_start();
  
 /* enable sshd */
-        system_sshd_start();
- 
-/* enable symon */
-system_symon_start();
+system_sshd_start();
  
 /* start web server */
 system_webgui_start();
