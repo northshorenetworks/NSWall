@@ -1,0 +1,21 @@
+278d277
+< 	int immediate_daemon = 0;
+284c283
+< 	while ((ch = getopt(argc, argv, "bc:dl:qu")) != -1)
+---
+> 	while ((ch = getopt(argc, argv, "c:dl:qu")) != -1)
+286,289c285
+< 		case 'b':
+< 			immediate_daemon = 1;
+< 			break;
+<                 case 'c':
+---
+> 		case 'c':
+424,426d419
+< 	if (immediate_daemon)
+< 		go_daemon();
+< 
+444c437
+< 	fprintf(stderr, "usage: %s [-bdqu] [-c file] [-l file] interface\n",
+---
+> 	fprintf(stderr, "usage: %s [-dqu] [-c file] [-l file] interface\n",
