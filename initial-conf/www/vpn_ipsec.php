@@ -42,11 +42,26 @@ $("#saveneworder").click(function () {
 });
 
 // When a user clicks on the rule edit button, load firewall_nat_dynamic_edit.php?id=$id
-$(".col1 a, #newrule a").click(function () {
+$("#newrule a").click(function () {
     var toLoad = $(this).attr('href');
         clearInterval(refreshId);
-        $('#content').load(toLoad);
-        return false;
+        if ( <?php echo sizeof($a_gateway)?> < <?php echo sg_get_const("IPSEC_GATEWAYS")?> ) {
+            $('#content').load(toLoad);
+            return false;
+        }
+        else {
+            alert('The maximum number of licensed IPSec Gateways has been reached');
+            return false;
+        }
+});
+
+
+// When a user clicks on the rule edit button, load firewall_nat_dynamic_edit.php?id=$id
+$(".col1 a").click(function () {
+    var toLoad = $(this).attr('href');
+        clearInterval(refreshId);
+       	$('#content').load(toLoad);
+       	return false;
 });
 
 // When a user clicks on the rule delete button, load firewall_dynamic_nat_edit.php?id=$id

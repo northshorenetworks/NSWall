@@ -952,18 +952,22 @@ $ipfrules .= "\nanchor \"Block RFC1918\" {\n\tblock in $log quick on $wanif from
 	
 	/* IPsec enabled? */
 	if (is_array($config['ipsec']['gateway'])) {
-		foreach( $config['ipsec']['gateway'] as $gateway ) {
-			$ifname = $gateway['interface'];
-			if($ifname == 'wan') 
-				$localip = get_current_wan_address();
-			$ifname = get_interface_name($ifname);
-			$remoteip = $gateway['remote-gateway'];
-			$tunnelmode = $gateway['p2']['protocol'];
-			$tunnelroutes = $gateway['addresspolicies'];
-			$ipfrules .= filter_rules_ipsec_generate($ifname, $localip, $remoteip, $tunnelmode);
+			  /* put a comment of the name for the rdr rule(s) */
+		$ipfrules .= "\n";
+   	    $ipfrules .= "\t" . filter_pad_comments("Allow IPSec") . "\n";
+    	$ipfrules .= "\t" . "### " .  "Allow IPSec" . " ###\n";
+       	$ipfrules .= "\t" . filter_pad_comments("Allow IPSec") . "\n";
+       	$ipfrules .= <<<EOD
+\tpass in quick proto udp from any to any port {500, 4500}
+\tpass in quick proto esp
+\tpass in quick proto ah
+\tpass in quick on enc0 proto ipencap keep state (if-bound)
+EOD;
+		foreach($config['ipsec']['gateway'] as $gateway) {
+			$ipfrules .= filter_rules_ipsec_generate($gateway['srclist'], $gateway['dstlist']);
 		}
-	}
-	
+
+}
         /* Webgui antilockout code */
 	if (!isset($config['system']['general']['webgui']['noantilockout'])) {
 		$webuiport = $config['system']['general']['webgui']['port'];
@@ -1646,29 +1650,12 @@ function filter_rules_spoofcheck_generate($ifname, $if, $sa, $sn, $log) {
 	return $ipfrules;
 }
 
-function filter_rules_ipsec_generate($ifname, $localip, $remoteip, $tunnelmode) {
-	/* put a comment of the name for the rdr rule(s) */
-        $ipfrules .= "\n";
-        $ipfrules .= "\t" . filter_pad_comments("Gateway rules for $remoteip") . "\n";
-        $ipfrules .= "\t" . "### " .  "Gateway rules for $remoteip" . " ###\n";
-        $ipfrules .= "\t" . filter_pad_comments("Gateway rules for $remoteip") . "\n";
-        $ipfrules .= <<<EOD
-\tpass in quick on {$ifname} proto udp from {$remoteip} to {$localip} port {500, 4500}
-EOD;
-if($tunnelmode == 'esp') {
-$ipfrules .= <<<EOD
-\n\tpass in quick on {$ifname} proto esp from {$localip} to {$remoteip}
-EOD;
-}
-if($tunnelmode == 'ah') {
-$ipfrules .= <<<EOD
-\n\tpass in quick on {$ifname} proto ah from {$localip} to {$remoteip}
-EOD;
-}
-$ipfrules .= <<<EOD
-\n\tpass in quick on enc0 proto ipencap from {$localip} to {$remoteip} \
-\t\tkeep state (if-bound)
-EOD;
+function filter_rules_ipsec_generate($srclist, $dstlist) {
+	for($i=0;$i<sizeof($srclist); $i++) {
+		$src = "src" . "$i";
+		$dst = "dst" . "$i";
+		$ipfrules .= "\n\tpass in on enc0 from $srclist[$src] to $dstlist[$dst] keep state (if-bound)";
+	}
 	return $ipfrules;
 }
 

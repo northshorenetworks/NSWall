@@ -1,10 +1,10 @@
 #!/bin/php
-<?php 
+<?php
 
 $pgtitle = array("VPN", "IPSec", "Gateway", "Edit");
 require("guiconfig.inc");
 include("ns-begin.inc");
-
+ 
 $specialsrcdst = explode(" ", "any wanip lan pptp");
  
 if (!is_array($config['ipsec']['gateway']))
@@ -17,7 +17,7 @@ $id = $_GET['id'];
 if (is_numeric($_POST['id']))
 $id = $_POST['id'];
  
-
+ 
 function is_specialnet($net) {
 global $specialsrcdst;
  
@@ -30,7 +30,7 @@ return false;
 if (isset($id) && $a_gateway[$id]) {
 	$pconfig['disabled'] = isset($a_gateway[$id]['disabled']);
 	//$pconfig['auto'] = isset($a_gateway[$id]['auto']); 
-
+ 
 	if (!isset($a_gateway[$id]['local-subnet']))
 		$pconfig['localnet'] = "lan";
 	else
@@ -57,7 +57,7 @@ if (isset($id) && $a_gateway[$id]) {
 		$pconfig['p1myidentt'] = 'user_fqdn';
 		$pconfig['p1myident'] = $a_gateway[$id]['p1']['myident']['ufqdn'];
 	}
-
+ 
 	$pconfig['p1myident'] = $a_gateway[$id]['p1']['myident']['myaddress'];
 	$pconfig['p1ealgo'] = $a_gateway[$id]['p1']['encryption-algorithm'];
 	$pconfig['p1halgo'] = $a_gateway[$id]['p1']['hash-algorithm'];
@@ -90,9 +90,9 @@ if (isset($id) && $a_gateway[$id]) {
 	$pconfig['p2pfsgroup'] = "0";
 	$pconfig['remotebits'] = 32;
 }
-
+ 
 ?>
-
+ 
 <script type="text/javascript">
 // when a user changes the type of memeber, change the related div to sytle = display: block and hide all others
 $(function(){
@@ -175,67 +175,51 @@ $(function(){
 
 // wait for the DOM to be loaded
 $(document).ready(function() {
-	$('div fieldset div').addClass('ui-widget ui-widget-content ui-corner-content');
-	
-	   // When a user clicks on the src host add button, validate and add the host.
-     $("#srchostaddbutton").click(function () {
-          var ip = $("#srchost");
-		  if(verifyIP(ip.val()) == 0) {
-		  	$('#SRCADDR').append("<option value='" + ip.val() + "'>"+ip.val() + '</option>');
-          	        ip.val("");
-          	         return false;
-     	          }
-	 });
+	 $('div fieldset div').addClass('ui-widget ui-widget-content ui-corner-content');
 
-     // When a user clicks on the src net add button, validate and add the host.
-     $("#srcnetaddbutton").click(function () {
-          var ip = $("#srcnet");
-          var netmask = $("#srcmask");
-	  	  if(verifyIP(ip.val()) == 0) {
-		  	$('#SRCADDR').append("<option value='" + ip.val() + "/" + netmask.val() + "'>"+ip.val() + "/" + netmask.val() + '</option>');
-          	ip.val("");
-          	return false;
-		  }	
-     });
-
-      // When a user clicks on the dst host add button, validate and add the host.
-     $("#dsthostaddbutton").click(function () {
-          var ip = $("#dsthost");
-		  if(verifyIP(ip.val()) == 0) { 
-	  		$('#DSTADDR').append("<option value='" + ip.val() + "'>"+ip.val() + '</option>');
-          	ip.val("");
-          	return false;
-		  }	
-     });
-
-     // When a user clicks on the dst net add button, validate and add the host.
-     $("#dstnetaddbutton").click(function () {
-          var ip = $("#dstnet");
-          var netmask = $("#dstmask");
-	  	  if(verifyIP(ip.val()) == 0) {	
-			$('#DSTADDR').append("<option value='" + ip.val() + "/" + netmask.val() + "'>"+ip.val() + "/" + netmask.val() + '</option>');
-          	ip.val("");
-          	return false;
-		  }
-     });
-
-     // When a user highlights an item and clicks remove, remove it
-          $('#srcremove').click(function() {  
-              $('#SRCADDR option:selected').remove();  
-              var firstitem = $("#SRCADDR option:first").text();
-              if(firstitem == "") {
-                  $('#SRCADDR').append('<option value="any">any</option>');
-              }
+          // Add routing policies to select boxes when user clicks the add button
+          $('#addbutton').click(function() {
+              var srctype     = $('#srctype').val();
+              var dsttype     = $('#dsttype').val();
+              var srcvalfield = $('#' + $('#srctype').val().substr(0,$('#srctype').val().length-3)).val();
+              var dstvalfield = $('#' + $('#dsttype').val().substr(0,$('#dsttype').val().length-3)).val();
+              var srcmask   = $('#srcmask').val();
+              var dstmask   = $('#dstmask').val();
+              if(verifyIP(srcvalfield) == 0 && verifyIP(dstvalfield) == 0) {
+                  if(srctype == 'srchostdiv') {
+                      $('#SRCADDR').append("<option value='" + srcvalfield + "'>"+srcvalfield + '</option>');
+                  } else {
+                      $('#SRCADDR').append("<option value='" + srcvalfield + '/' + srcmask + "'>"+srcvalfield + '/' + srcmask + '</option>');
+                  }
+                  if(dsttype == 'dsthostdiv') {
+                      $('#DSTADDR').append("<option value='" + dstvalfield + "'>"+dstvalfield + '</option>');
+                  } else {
+                      $('#DSTADDR').append("<option value='" + dstvalfield + '/' + dstmask + "'>"+dstvalfield + '/' + dstmask + '</option>');
+                  }
+                  $('#' + $('#dsttype').val().substr(0,$('#dsttype').val().length-3)).val("");
+                  $('#' + $('#srctype').val().substr(0,$('#srctype').val().length-3)).val("");
+              } 
+          });  
+       
+          // When a user highlights an item and clicks remove, remove it
+          $('#removebutton').click(function() {
+              $('#SRCADDR option:selected').remove();
+              $('#DSTADDR option:selected').remove();
               return false;
           });
-          $('#dstremove').click(function() {  
-              $('#DSTADDR option:selected').remove();  
-              var firstitem = $("#DSTADDR option:first").text();
-              if(firstitem == "") {
-                  $('#DSTADDR').append('<option value="any">any</option>');
-              }
-              return false;
+
+          // When a user highlights the src/dst of a routing policy, highlight the corresponding src/dst value
+          $('#DSTADDR').change(function() {
+              $('#DSTADDR option:selected, ').each(function() {
+                  $("#SRCADDR option").eq($('#DSTADDR option').index($(this))).attr("selected", "selected");
+              });
           });
+          $('#SRCADDR').change(function() {
+              $('#SRCADDR option:selected, ').each(function() {
+                  $("#DSTADDR option").eq($('#SRCADDR option').index($(this))).attr("selected", "selected");
+              });
+          });
+
 });
 
     $(function() {
@@ -410,27 +394,29 @@ $(document).ready(function() {
                 		<input name="p2lifetime" type="text" class="formfld" id="p2lifetime" size="20" value="<?=$pconfig['p2lifetime'];?>">seconds
                 		<p class="note">Set the lifetime of Phase 2 Negotiation timeout in seconds</p>
         	</div>
-	        <div>
-                             <label for="SRCADDR">Source Addresses</label>
+				<div>
+                             <label for="SRCADDR">Routing Policy</label>
                               <select name="SRCADDR" style="width: 150px; height: 100px" id="SRCADDR" multiple>
 <?php for ($i = 0; $i<sizeof($pconfig['srclist']); $i++): ?>
 <option value="<?=$pconfig['srclist']["src$i"];?>"><?php $display = preg_replace('/user:|:user/', '', $pconfig['srclist']["src$i"]);?><?=$display;?></option>
 <?php endfor; ?>
 </select>
-<input type=button id='srcremove' value='Remove Selected'><br><br>
-<label for="srctype">Type</label>
+<select name="DSTADDR" style="width: 150px; height: 100px" id="DSTADDR" multiple>
+<?php for ($i = 0; $i<sizeof($pconfig['dstlist']); $i++): ?>
+<option value="<?=$pconfig['dstlist']["dst$i"];?>"><?=preg_replace('/:/', '->', $pconfig['dstlist']["dst$i"]);?></option>
+<?php endfor; ?>
+</select>
+<input type=button id='removebutton' value='Remove Selected'><br><br>
+<div>
+<label for="srctype">Source</label>
 <select name="srctype" class="formfld" id="srctype">
 <option value="srchostdiv" selected>Host</option>
 <option value="srcnetdiv" >Network</option>
 </select>
-<br>        
-<span id='srchostdiv' style="display:block;">
-<label for="srchost">Address</label>
+<span id='srchostdiv' style="display:inline;">
 <?=$mandfldhtml;?><input name="srchost" type="text" class="formfld" id="srchost" size="16" value="<?=htmlspecialchars($pconfig['address']);?>">
-<input type=button id='srchostaddbutton' value='Add'>
 </span>
 <span id='srcnetdiv' style="display:none;">
-<label for="srcnet">Network Address</label>
 <?=$mandfldhtml;?><input name="srcnet" type="text" class="formfld" id="srcnet" size="16" value="<?=htmlspecialchars($pconfig['address']);?>">
 <strong>/</strong>
 <select name="srcmask" class="formfld" id="srcmask">
@@ -440,30 +426,34 @@ $(document).ready(function() {
 </option>
 <?php endfor; ?>
 </select>
-<input type=button id='srcnetaddbutton' value='Add'>
+</span>
+<span id='srcaliasdiv' style="display:none;">
+<select name="srcalias" class="formfld" id="srcalias">
+<?php
+                       $defaults = filter_system_aliases_names_generate();
+                       $defaults = split(' ', $defaults);
+                       foreach( $defaults as $i): ?>
+<option value="<?='$' . $i;?>"><?=$i;?>
+</option>
+<?php endforeach; ?>
+<?php foreach($config['aliases']['alias'] as $i): ?>
+<option value="<?='$' . $i['name'];?>" <?php if ($i == $pconfig['address_subnet']) echo "selected"; ?>>
+<?=$i['name'];?>
+</option>
+<?php endforeach; ?>
+</select>
 </span>
 </div>
-        <div>
-                              <label for="DSTADDR">Destination Addresses</label>
-                              <select name="DSTADDR" style="width: 150px; height: 100px" id="DSTADDR" multiple>
-<?php for ($i = 0; $i<sizeof($pconfig['dstlist']); $i++): ?>
-<option value="<?=$pconfig['dstlist']["dst$i"];?>"><?php $display = preg_replace('/user:|:user/', '', $pconfig['dstlist']["dst$i"]);?><?=$display;?></option>
-<?php endfor; ?>
-</select>
-<input type=button id='dstremove' value='Remove Selected'><br><br>
-<label for="dsttype">Type</label>
+<div>
+<label for="dsttype">Destination</label>
 <select name="dsttype" class="formfld" id="dsttype">
 <option value="dsthostdiv" selected>Host</option>
 <option value="dstnetdiv" >Network</option>
 </select>
-<br>        
-<span id='dsthostdiv' style="display:block;">
-<label for="dsthost">Address</label>
+<span id='dsthostdiv' style="display:inline;">
 <?=$mandfldhtml;?><input name="dsthost" type="text" class="formfld" id="dsthost" size="16" value="<?=htmlspecialchars($pconfig['address']);?>">
-<input type=button id='dsthostaddbutton' value='Add'>
 </span>
 <span id='dstnetdiv' style="display:none;">
-<label for="dstnet">Network Address</label>
 <?=$mandfldhtml;?><input name="dstnet" type="text" class="formfld" id="dstnet" size="16" value="<?=htmlspecialchars($pconfig['address']);?>">
 <strong>/</strong>
 <select name="dstmask" class="formfld" id="dstmask">
@@ -473,8 +463,24 @@ $(document).ready(function() {
 </option>
 <?php endfor; ?>
 </select>
-<input type=button id='dstnetaddbutton' value='Add'>
 </span>
+<span id='dstaliasdiv' style="display:none;">
+<select name="dstalias" class="formfld" id="dstalias">
+<?php
+                       $defaults = filter_system_aliases_names_generate();
+                       $defaults = split(' ', $defaults);
+                       foreach( $defaults as $i): ?>
+<option value="<?='$' . $i;?>"><?=$i;?>
+</option>
+<?php endforeach; ?>
+<?php foreach($config['aliases']['alias'] as $i): ?>
+<option value="<?='$' . $i['name'];?>" <?php if ($i == $pconfig['address_subnet']) echo "selected"; ?>>
+<?=$i['name'];?>
+</option>
+<?php endforeach; ?>
+</select>
+</span>
+<input type=button id='addbutton' value='Add'>
 </div>
 </fieldset>
         <div class="buttonrow">
