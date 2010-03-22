@@ -70,9 +70,9 @@ $(".col2 a").click(function () {
              displayProcessingDiv();
              var id = $(this).attr('href');
              $("#currentorder").load(id);
-             $("#ipsecsortable").sortable('refresh');
-             setTimeout(function(){ $('#save_config').fadeOut('slow'); }, 1000);
-        }
+             setTimeout(function(){ $('#save_config').dialog('close'); }, 1000);
+             setTimeout(function(){ $('#content').load('vpn_ipsec_tabs.php'); }, 1250);
+		}
         return false;
 });
 

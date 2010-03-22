@@ -153,7 +153,8 @@ $(function(){
              $("#save_config").html(output);
                  if(output.match(/SUBMITSUCCESS/))
                      setTimeout(function(){ $('#save_config').dialog('close'); }, 1000);
-              });
+					 setTimeout(function(){ $('#content').load('vpn_ipsec_tabs.php'); }, 1250);
+				});
               return false;
          });
 }); 
