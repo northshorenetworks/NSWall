@@ -54,25 +54,25 @@ if ($_POST) {
                         	}
 			}
 			return 0;
-		case "vpn_ipsec_gateway":
+		case "vpn_ipsec_gw":
 			if ($_POST) {
 	            if (is_numeric($_POST['id']))
     	            $id = $_POST['id'];
 
-				if (!is_array($config['ipsec']['gateway']))
-                                        $config['ipsec']['gateway'] = array();
+				if (!is_array($config['ipsec']['gw']))
+                                        $config['ipsec']['gw'] = array();
 
-                                $a_ipsec = &$config['ipsec']['gateway'];
+                                $a_ipsec = &$config['ipsec']['gw'];
 				unset($input_errors);
 				$pconfig = $_POST;
 
 				if ($_POST['p1authentication_method'] == "pre_shared_key") {
 					$reqdfields = explode(" ", "ipsecroutelist remotegw p1pskey p2ealgos p2halgos name");
-					$reqdfieldsn = explode(",", "Address Policies,Remote gateway,Pre-Shared Key,P2 Encryption Algorithms,P2 Hash Algorithms, Name");
+					$reqdfieldsn = explode(",", "Address Policies,Remote gw,Pre-Shared Key,P2 Encryption Algorithms,P2 Hash Algorithms, Name");
 				}
 				else {
 					$reqdfields = explode(" ", "remotegw p2ealgos p2halgos");
-					$reqdfieldsn = explode(",", "Remote gateway,P2 Encryption Algorithms,P2 Hash Algorithms");
+					$reqdfieldsn = explode(",", "Remote gw,P2 Encryption Algorithms,P2 Hash Algorithms");
 					if ($_POST['p1peercert']!="" && (!strstr($_POST['p1peercert'], "BEGIN CERTIFICATE") || !strstr($_POST['p1peercert'], "END CERTIFICATE")))
 						$input_errors[] = "This peer certificate does not appear to be valid.";
 				}
@@ -92,7 +92,7 @@ if ($_POST) {
 					$input_errors[] = "The remote network bits are invalid.";
 				}
 				if (($_POST['remotegw'] && !is_ipaddr($_POST['remotegw']))) {
-					$input_errors[] = "A valid remote gateway address must be specified.";
+					$input_errors[] = "A valid remote gw address must be specified.";
 				}
 				if ((($_POST['p1myidentt'] == "address") && !is_ipaddr($_POST['p1myident']))) {
 					$input_errors[] = "A valid IP address for 'My identifier' must be specified.";
@@ -125,7 +125,7 @@ if ($_POST) {
                 		$dest = preg_replace("/ /", "", $dstlist[$i]);
                 		$ipsecent['dstlist'][$member] = $dest;
             		}
-					$ipsecent['remote-gateway'] = $_POST['remotegw'];
+					$ipsecent['remote-gw'] = $_POST['remotegw'];
 					$ipsecent['p1']['mode'] = $_POST['p1mode'];
  
 					$ipsecent['p1']['myident'] = array();
@@ -164,30 +164,39 @@ if ($_POST) {
 						$a_ipsec[$id] = $ipsecent;
 					else
 						$a_ipsec[] = $ipsecent;
- 					write_config();
-                                        config_lock();
-                                        $retval = vpn_ipsec_configure();
-                                        config_unlock();
 
-				        if ($retval == 0) {
-	       	                sleep(2);
-    	   	                echo '<!-- SUBMITSUCCESS --><center>Configuration saved successfully</center>';
-                        }
-                }
-                        else {
-                                        print_input_errors($input_errors);
-                                        echo '<script type="text/javascript">
-                                                $("#okbtn").click(function () {
-                                                        $("#save_config").dialog("close");
-                                                });
-                                        </script>';
-                                        echo '<center><INPUT TYPE="button" value="OK" id="okbtn"></center>';
-                                }
+		        	$xmlconfig = dump_xml_config($config, $g['xml_rootobj']);
 
-              		}
-                        return 0;                
-		        default;
-                                echo '<center>Unknown form submited!<br><INPUT TYPE="button" value="OK" name="OK" onClick="$(\'#save_config\').dialog(\'close\')"></center>';
+                    if (vpn_ipsec_parse_config($config)) {
+                        $input_errors[] = "Could not parse the generated config file";
+                        $input_errors[] = "See log file for details";
+                        $input_errors[] = "XML Config file not modified";
+                    }
+
+                    $retval = 0;
+                    if (!$input_errors) {
+                        write_config();
+                        config_lock();
+                        $retval = vpn_ipsec_configure();
+                        config_unlock();
+                    }
+				}
+                    if ($retval == 0) {
+                        sleep(2);
+                        echo '<!-- SUBMITSUCCESS --><center>Configuration saved successfully</center>';
+                    } else {
+                        print_input_errors($input_errors);
+                        echo '<script type="text/javascript">
+                        $("#okbtn").click(function () {
+                            $("#save_config").dialog("close");
+                        });
+                        </script>';
+                        echo '<INPUT TYPE="button" value="OK" id="okbtn"></center>';
+                    }
+			}
+			return $retval;
+			default;
+                  echo '<center>Unknown form submited!<br><INPUT TYPE="button" value="OK" name="OK" onClick="$(\'#save_config\').dialog(\'close\')"></center>';
 			return 0;
 	}
 }
@@ -196,14 +205,14 @@ if ($_GET) {
      $action = $_GET['action'];
      $type = $_GET['type'];
 
-     if ($type == 'ipsec_gateway') {
-          if (!is_array($config['ipsec']['gateway']))
-               $config['ipsec']['gateway'] = array();
+     if ($type == 'ipsec_gw') {
+          if (!is_array($config['ipsec']['gw']))
+               $config['ipsec']['gw'] = array();
 
           vpn_ipsec_gateway_sort();
-		  $a_gateway = &$config['ipsec']['gateway'];
+		  $a_gw = &$config['ipsec']['gw'];
           if ($action == 'delete') {
-               unset($a_gateway[$id]);
+               unset($a_gw[$id]);
                write_config();
           }
      }

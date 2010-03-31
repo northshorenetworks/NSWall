@@ -46,7 +46,7 @@ function dump_pfoptions() {
 function dump_ipsec_flows() {
     global $g, $config;
     printf("<pre>");
-    $pfrules .= `/sbin/ipsecctl -s flow`;
+    $pfrules .= `/sbin/ipsecctl -vvs flow`;
     printf("$pfrules");
 	printf("</pre>");
 }
@@ -54,7 +54,7 @@ function dump_ipsec_flows() {
 function dump_ipsec_sas() {
     global $g, $config;
     printf("<pre>");
-    $pfrules .= `/sbin/ipsecctl -s sa`;
+    $pfrules .= `/sbin/ipsecctl -vvs sa`;
     printf("$pfrules");
     printf("</pre>");
 }
@@ -105,7 +105,7 @@ function dump_interfaces() {
 function dump_routes() {
         global $g, $config;
         printf("<pre>");
-        $routes = `/sbin/route -n show -inet`;
+        $routes = `/sbin/route -n show`;
     	echo $routes;
 }
 

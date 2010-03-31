@@ -951,7 +951,7 @@ $ipfrules .= "\nanchor \"Block RFC1918\" {\n\tblock in $log quick on $wanif from
 	}
 	
 	/* IPsec enabled? */
-	if (is_array($config['ipsec']['gateway'])) {
+	if (is_array($config['ipsec']['gw'])) {
 			  /* put a comment of the name for the rdr rule(s) */
 		$ipfrules .= "\n";
    	    $ipfrules .= "\t" . filter_pad_comments("Allow IPSec") . "\n";
@@ -963,7 +963,7 @@ $ipfrules .= "\nanchor \"Block RFC1918\" {\n\tblock in $log quick on $wanif from
 \tpass in quick proto ah
 \tpass in quick on enc0 proto ipencap keep state (if-bound)
 EOD;
-		foreach($config['ipsec']['gateway'] as $gateway) {
+		foreach($config['ipsec']['gw'] as $gateway) {
 			$ipfrules .= filter_rules_ipsec_generate($gateway['srclist'], $gateway['dstlist']);
 		}
 
@@ -1654,7 +1654,7 @@ function filter_rules_ipsec_generate($srclist, $dstlist) {
 	for($i=0;$i<sizeof($srclist); $i++) {
 		$src = "src" . "$i";
 		$dst = "dst" . "$i";
-		$ipfrules .= "\n\tpass in on enc0 from $srclist[$src] to $dstlist[$dst] keep state (if-bound)";
+		$ipfrules .= "\n\tpass in on enc0 from $dstlist[$dst] to $srclist[$src] keep state (if-bound)";
 	}
 	return $ipfrules;
 }

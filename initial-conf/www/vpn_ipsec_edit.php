@@ -7,11 +7,11 @@ include("ns-begin.inc");
  
 $specialsrcdst = explode(" ", "any wanip lan pptp");
  
-if (!is_array($config['ipsec']['gateway']))
-$config['ipsec']['gateway'] = array();
+if (!is_array($config['ipsec']['gw']))
+$config['ipsec']['gw'] = array();
  
 vpn_ipsec_gateway_sort();
-$a_gateway = &$config['ipsec']['gateway'];
+$a_gw = &$config['ipsec']['gw'];
  
 $id = $_GET['id'];
 if (is_numeric($_POST['id']))
@@ -27,52 +27,52 @@ else
 return false;
 }
  
-if (isset($id) && $a_gateway[$id]) {
-	$pconfig['disabled'] = isset($a_gateway[$id]['disabled']);
-	//$pconfig['auto'] = isset($a_gateway[$id]['auto']); 
+if (isset($id) && $a_gw[$id]) {
+	$pconfig['disabled'] = isset($a_gw[$id]['disabled']);
+	//$pconfig['auto'] = isset($a_gw[$id]['auto']); 
  
-	if (!isset($a_gateway[$id]['local-subnet']))
+	if (!isset($a_gw[$id]['local-subnet']))
 		$pconfig['localnet'] = "lan";
 	else
-		address_to_pconfig($a_gateway[$id]['local-subnet'], $pconfig['localnet'], $pconfig['localnetmask']);
+		address_to_pconfig($a_gw[$id]['local-subnet'], $pconfig['localnet'], $pconfig['localnetmask']);
  
-	if ($a_gateway[$id]['interface'])
-		$pconfig['interface'] = $a_gateway[$id]['interface'];
+	if ($a_gw[$id]['interface'])
+		$pconfig['interface'] = $a_gw[$id]['interface'];
 	else
 		$pconfig['interface'] = "wan";
  
-	$pconfig['remotegw'] = $a_gateway[$id]['remote-gateway'];
-	$pconfig['srclist'] = $a_gateway[$id]['srclist'];
-    $pconfig['dstlist'] = $a_gateway[$id]['dstlist'];
+	$pconfig['remotegw'] = $a_gw[$id]['remote-gw'];
+	$pconfig['srclist'] = $a_gw[$id]['srclist'];
+    $pconfig['dstlist'] = $a_gw[$id]['dstlist'];
  
-	if (isset($a_gateway[$id]['p1']['myident']['myaddress']))
+	if (isset($a_gw[$id]['p1']['myident']['myaddress']))
 		$pconfig['p1myidentt'] = 'myaddress';
-	else if (isset($a_gateway[$id]['p1']['myident']['address'])) {
+	else if (isset($a_gw[$id]['p1']['myident']['address'])) {
 		$pconfig['p1myidentt'] = 'address';
-		$pconfig['p1myident'] = $a_gateway[$id]['p1']['myident']['address'];
-	} else if (isset($a_gateway[$id]['p1']['myident']['fqdn'])) {
+		$pconfig['p1myident'] = $a_gw[$id]['p1']['myident']['address'];
+	} else if (isset($a_gw[$id]['p1']['myident']['fqdn'])) {
 		$pconfig['p1myidentt'] = 'fqdn';
-		$pconfig['p1myident'] = $a_gateway[$id]['p1']['myident']['fqdn'];
-	} else if (isset($a_gateway[$id]['p1']['myident']['ufqdn'])) {
+		$pconfig['p1myident'] = $a_gw[$id]['p1']['myident']['fqdn'];
+	} else if (isset($a_gw[$id]['p1']['myident']['ufqdn'])) {
 		$pconfig['p1myidentt'] = 'user_fqdn';
-		$pconfig['p1myident'] = $a_gateway[$id]['p1']['myident']['ufqdn'];
+		$pconfig['p1myident'] = $a_gw[$id]['p1']['myident']['ufqdn'];
 	}
  
-	$pconfig['p1myident'] = $a_gateway[$id]['p1']['myident']['myaddress'];
-	$pconfig['p1ealgo'] = $a_gateway[$id]['p1']['encryption-algorithm'];
-	$pconfig['p1halgo'] = $a_gateway[$id]['p1']['hash-algorithm'];
-	$pconfig['p1dhgroup'] = $a_gateway[$id]['p1']['dhgroup'];
-	$pconfig['p1lifetime'] = $a_gateway[$id]['p1']['lifetime'];
-	$pconfig['p1authentication_method'] = $a_gateway[$id]['p1']['authentication_method'];
-	$pconfig['p1pskey'] = base64_decode($a_gateway[$id]['p1']['pre-shared-key']);
-	$pconfig['p2proto'] = $a_gateway[$id]['p2']['protocol'];
-	$pconfig['p2ealgos'] = $a_gateway[$id]['p2']['encryption-algorithm'];
-	$pconfig['p2halgos'] = $a_gateway[$id]['p2']['hash-algorithm'];
-	$pconfig['p2pfsgroup'] = $a_gateway[$id]['p2']['pfsgroup'];
-	$pconfig['p2lifetime'] = $a_gateway[$id]['p2']['lifetime'];
-	$pconfig['descr'] = $a_gateway[$id]['descr'];
-	$pconfig['name'] = $a_gateway[$id]['name'];
-	$pconfig['addresspolicies'] = $a_gateway[$id]['addresspolicies'];
+	$pconfig['p1myident'] = $a_gw[$id]['p1']['myident']['myaddress'];
+	$pconfig['p1ealgo'] = $a_gw[$id]['p1']['encryption-algorithm'];
+	$pconfig['p1halgo'] = $a_gw[$id]['p1']['hash-algorithm'];
+	$pconfig['p1dhgroup'] = $a_gw[$id]['p1']['dhgroup'];
+	$pconfig['p1lifetime'] = $a_gw[$id]['p1']['lifetime'];
+	$pconfig['p1authentication_method'] = $a_gw[$id]['p1']['authentication_method'];
+	$pconfig['p1pskey'] = base64_decode($a_gw[$id]['p1']['pre-shared-key']);
+	$pconfig['p2proto'] = $a_gw[$id]['p2']['protocol'];
+	$pconfig['p2ealgos'] = $a_gw[$id]['p2']['encryption-algorithm'];
+	$pconfig['p2halgos'] = $a_gw[$id]['p2']['hash-algorithm'];
+	$pconfig['p2pfsgroup'] = $a_gw[$id]['p2']['pfsgroup'];
+	$pconfig['p2lifetime'] = $a_gw[$id]['p2']['lifetime'];
+	$pconfig['descr'] = $a_gw[$id]['descr'];
+	$pconfig['name'] = $a_gw[$id]['name'];
+	$pconfig['addresspolicies'] = $a_gw[$id]['addresspolicies'];
  
 } else {
 	/* defaults */
@@ -238,7 +238,7 @@ $(document).ready(function() {
         <li><a href="#tabPhase2">Phase 2</a></li>
     </ul>
              <form action="forms/vpn_form_submit.php" method="post" name="iform" id="iform">
-	     <input name="formname" type="hidden" value="vpn_ipsec_gateway">
+	     <input name="formname" type="hidden" value="vpn_ipsec_gw">
              <input name="id" type="hidden" value="<?=$id;?>">
              <div id="tabGateway">
 	        <fieldset>
@@ -270,7 +270,7 @@ $(document).ready(function() {
 			<div>
 				<label for="remotegw">Remote Gateway</label>
 				<input name="remotegw" type="text" class="formfld" id="remotegw" size="16" value="<?=htmlspecialchars($pconfig['remotegw']);?>">
-				<p class="note">Enter the public IP address of the remote gateway.</p>
+				<p class="note">Enter the public IP address of the remote gw.</p>
 			</div>	
 		</fieldset>
         <div class="buttonrow">

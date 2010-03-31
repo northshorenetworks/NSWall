@@ -83,14 +83,32 @@ function vpn_ipsec_configure() {
 	$ipseccfg = $config['ipsec'];       
  
 	if ($g['booting']) {
-        	if (!isset($ipseccfg['enable']))
-			return 0;
-	
  	        echo "Configuring IPSEC VPN... ";
         }
-        /* Start isakmpd if it isn't already running */
+   
+	    $hostkey = '/conf/isakmpd/local.key';
+       	$pubkey  = '/conf/isakmpd/local.pub'; 
+		if ( file_exists( $hostkey ) && file_exists( $pubkey )) {
+                    exec("cp -p $hostkey /etc/isakmpd/private");
+					exec("cp -p $pubkey /etc/isakmpd");
+        } else {
+            conf_mount_rw();
+            echo "openssl: generating new isakmpd RSA key... ";
+            mwexec("mkdir -p /conf/isakmpd 2>/dev/null");
+            exec("/usr/sbin/openssl genrsa -out $hostkey 2048 > /dev/null 2>&1");
+			exec("cp -p $hostkey /etc/isakmpd/private");
+            exec("/bin/chmod 400 /etc/isakmpd/private/local.key");
+			exec("/usr/sbin/openssl rsa -out /conf/isakmpd/local.pub -in /etc/isakmpd/private/local.key -pubout > /dev/null 2>&1");
+            exec("cp -p $pubkey /etc/isakmpd/");
+			conf_mount_ro();
+		}
+
+	/* Bring up enc0 interface */
+	mwexec("/sbin/ifconfig enc0 up");
+	
+	/* Start isakmpd if it isn't already running */
 	if(!file_exists("{$g['varrun_path']}/isakmpd.pid"))	
-		mwexec('/sbin/isakmpd -K');
+		mwexec('/sbin/isakmpd -vvK4 > /dev/null 2>&1');
 
 	/* generate ipsec.conf */
         $ipsecconf = vpn_generate_ipsec_conf();
@@ -108,7 +126,7 @@ function vpn_ipsec_configure() {
                if ($g['booting'])
                 echo "done\n";
 	
-	filter_configure();
+		filter_configure();
 
         return 0;
 }
@@ -158,19 +176,19 @@ function vpn_generate_ipsec_conf($ipchg = false) {
 	$ipseccfg = $config['ipsec'];
 
 	
-			$gatewaynumber = 0;
-			if (is_array($ipseccfg['gateway']) && count($ipseccfg['gateway']))
-				foreach ($ipseccfg['gateway'] as $gateway) {
+			$gwnumber = 0;
+			if (is_array($ipseccfg['gw']) && count($ipseccfg['gw']))
+				foreach ($ipseccfg['gw'] as $gw) {
 				
-					++$gatewaynumber;
+					++$gwnumber;
 			
-					if (isset($gateway['disabled']))
+					if (isset($gw['disabled']))
 						continue;
                                         
                                         /* source address */
-                                        if (isset($gateway['srclist'])) {
+                                        if (isset($gw['srclist'])) {
                                                 $srcs = "{ ";
-                                                $srclist = $gateway['srclist'];
+                                                $srclist = $gw['srclist'];
                                                 for($i=0;$i<sizeof($srclist); $i++) {
                                                        $src = "src" . "$i";
                                                        $srcs .= "$srclist[$src], ";
@@ -179,9 +197,9 @@ function vpn_generate_ipsec_conf($ipchg = false) {
                                                 $srcs .= " }";
                                         }
                                         /* destination address */
-                                        if (isset($gateway['dstlist'])) {
+                                        if (isset($gw['dstlist'])) {
                                                 $dsts = "{ ";
-                                                $dstlist = $gateway['dstlist'];
+                                                $dstlist = $gw['dstlist'];
                                                 for($i=0;$i<sizeof($dstlist); $i++) {
                                                        $dst = "dst" . "$i";
                                                        $dsts .= "$dstlist[$dst], ";
@@ -190,27 +208,27 @@ function vpn_generate_ipsec_conf($ipchg = false) {
                                                 $dsts .= " }";
                                         }
 
-					$ipsecconf .= '### Gateway ' . $gateway['remote-gateway'] . ' ###' . "\n";
-					$ipsecconf .= "ike esp from " . $gateway['p1']['myident']['myaddress'] . " to " . $gateway['remote-gateway'] . "\n";	
-					$ipsecconf .= 'ike ' . $gateway['p2']['protocol'] . ' from ' . $srcs . " to " . $dsts;
-					$ipsecconf .= ' peer ' . $gateway['remote-gateway'] . " \\\n"; 
+					$ipsecconf .= "### Gateway " . $gw['remote-gw'] . ' ###' . "\n";
+					#$ipsecconf .= "ike esp from " . $gw['p1']['myident']['myaddress'] . " to " . $gw['remote-gw'] . "\n";	
+					$ipsecconf .= 'ike ' . $gw['p2']['protocol'] . ' from ' . $srcs . " to " . $dsts;
+					$ipsecconf .= ' peer ' . $gw['remote-gw'] . " \\\n"; 
 					/* Phase 1 settings*/
-					$ipsecconf .= $gateway['p1']['mode'];
-					$ipsecconf .= ' auth ' . $gateway['p1']['hash-algorithm'];
-					$ipsecconf .= ' enc ' . $gateway['p1']['encryption-algorithm'];
-			 		$ipsecconf .= ' group ' . convert_dhgroup($gateway['p1']['dhgroup']);
-					$ipsecconf .= ' life ' . $gateway['p1']['lifetime'];
+					$ipsecconf .= $gw['p1']['mode'];
+					$ipsecconf .= ' auth ' . $gw['p1']['hash-algorithm'];
+					$ipsecconf .= ' enc ' . $gw['p1']['encryption-algorithm'];
+			 		$ipsecconf .= ' group ' . convert_dhgroup($gw['p1']['dhgroup']);
+					$ipsecconf .= ' life ' . $gw['p1']['lifetime'];
 					$ipsecconf .= " \\\n";
 					/* Phase 2 settings*/
-					$ipsecconf .= 'quick auth ' . $gateway['p2']['hash-algorithm'];
-					$ipsecconf .= ' enc ' . $gateway['p2']['encryption-algorithm'];
-					$ipsecconf .= ' group ' . convert_dhgroup($gateway['p2']['pfsgroup']);
-					$ipsecconf .= ' life ' . $gateway['p2']['lifetime'];
-					if (isset($gateway['p1']['authentication_method'])) {
-					        $ipsecconf .= " \\\npsk " . '"' . base64_decode($gateway['p1']['pre-shared-key']) . '"';
+					$ipsecconf .= 'quick auth ' . $gw['p2']['hash-algorithm'];
+					$ipsecconf .= ' enc ' . $gw['p2']['encryption-algorithm'];
+					$ipsecconf .= ' group ' . convert_dhgroup($gw['p2']['pfsgroup']);
+					$ipsecconf .= ' life ' . $gw['p2']['lifetime'];
+					if (isset($gw['p1']['authentication_method'])) {
+					        $ipsecconf .= " \\\npsk " . '"' . base64_decode($gw['p1']['pre-shared-key']) . '"';
 					}
-					$ipsecconf .= "\n\n";	
-				}
+					$ipsecconf .= "\n\n";
+			}
 	return $ipsecconf;
 }
 
@@ -287,7 +305,7 @@ EOD;
                 return 1;
        }
 
-       $dgw = get_current_default_gateway();
+       $dgw = get_current_default_gw();
        $ppplinkup = <<<EOD
 vpn:
   add {$pptpcfg['server']} {$dgw} 
@@ -466,19 +484,19 @@ function vpn_localnet_determine($adr, &$sa, &$sn) {
 	}
 }
 
-function vpn_endpoint_determine($gateway, $curwanip) {
+function vpn_endpoint_determine($gw, $curwanip) {
 	
 	global $g, $config;
 	
-	if ((!$gateway['interface']) || ($gateway['interface'] == "wan")) {
+	if ((!$gw['interface']) || ($gw['interface'] == "wan")) {
 		if ($curwanip)
 			return $curwanip;
 		else
 			return null;
-	} else if ($gateway['interface'] == "lan") {
+	} else if ($gw['interface'] == "lan") {
 		return $config['interfaces']['lan']['ipaddr'];
 	} else {
-		$oc = $config['interfaces'][$gateway['interface']];
+		$oc = $config['interfaces'][$gw['interface']];
 		
 		if (isset($oc['enable']) && $oc['if']) {
 			return $oc['ipaddr'];

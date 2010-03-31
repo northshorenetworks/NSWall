@@ -283,18 +283,18 @@ function vpn_ipsec_gateway_sort() {
     global $g, $config;
 
     /* mark each rule with the sequence number (to retain the order while sorting) */
-    for ($i = 0; isset($config['ipsec']['gateway'][$i]); $i++)
-        $config['ipsec']['gateway'][$i]['seq'] = $i;
+    for ($i = 0; isset($config['ipsec']['gw'][$i]); $i++)
+        $config['ipsec']['gw'][$i]['seq'] = $i;
 
     function ipsecgatewaycmp($a, $b) {
     	return -strcmp($a['name'], $b['name']);
     }
 
-    usort($config['ipsec']['gateway'], "ipsecgatewaycmp");
+    usort($config['ipsec']['gw'], "ipsecgatewaycmp");
 
     /* strip the sequence numbers again */
-    for ($i = 0; isset($config['ipsec']['gateway'][$i]); $i++)
-        unset($config['ipsec']['gateway'][$i]['seq']);
+    for ($i = 0; isset($config['ipsec']['gw'][$i]); $i++)
+        unset($config['ipsec']['gw'][$i]['seq']);
 }
 
 

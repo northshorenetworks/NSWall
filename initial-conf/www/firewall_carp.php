@@ -1,103 +1,73 @@
 #!/bin/php
-<?php 
-/*
-	$Id: firewall_carp.php,v 1.1 2009/03/25 19:33:26 jrecords Exp $
-	part of m0n0wall (http://m0n0.ch/wall)
-	
-	Copyright (C) 2003-2006 Manuel Kasper <mk@neon1.net>.
-	All rights reserved.
-	
-	Redistribution and use in source and binary forms, with or without
-	modification, are permitted provided that the following conditions are met:
-	
-	1. Redistributions of source code must retain the above copyright notice,
-	   this list of conditions and the following disclaimer.
-	
-	2. Redistributions in binary form must reproduce the above copyright
-	   notice, this list of conditions and the following disclaimer in the
-	   documentation and/or other materials provided with the distribution.
-	
-	THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
-	INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
-	AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
-	AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
-	OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
-	SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-	INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
-	CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-	ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-	POSSIBILITY OF SUCH DAMAGE.
-*/
+<?php
 
 $pgtitle = array("Firewall", "CARP", "Global Settings");
 require("guiconfig.inc");
+include("ns-begin.inc"); 
 
 $pconfig['carpenable'] = isset($config['carp']['carpenable']);
 $pconfig['preemptenable'] = isset($config['carp']['preemptenable']);
 $pconfig['logenable'] = isset($config['carp']['logenable']);
 $pconfig['arpbalance'] = isset($config['carp']['arpbalance']);
-
+ 
 $a_carp = &$config['carp'];
 
-if ($_POST) {
+?> 
 
-	$pconfig = $_POST;
-	if (!$input_errors) {
-                $config['carp']['carpenable'] = $_POST['carpenable'] ? true : false;
-                $config['carp']['preemptenable'] = $_POST['preemptenable'] ? true : false;
-                $config['carp']['logenable'] = $_POST['logenable'] ? true : false;
-                $config['carp']['arpbalance'] = $_POST['arpbalance'] ? true : false;
-	}
-	write_config();
+<script type="text/javascript">
+
+// wait for the DOM to be loaded
+$(document).ready(function() {
+    $('div fieldset div').addClass('ui-widget ui-widget-content ui-corner-content');
+    $("#submitbutton").click(function () {
+        displayProcessingDiv();
+        var QueryString = $("#iform").serialize();
+        $.post("forms/system_form_submit.php", QueryString, function(output) {
+            $("#save_config").html(output);
+            if(output.match(/SUBMITSUCCESS/))
+                setTimeout(function(){ $('#save_config').dialog('close'); }, 1000);
+        });
+    return false;
+    });
+});
+</script>
+
+<div id="wrapper">
+        <div class="form-container ui-tabs ui-widget ui-corner-all">
+
+	<form action="forms/system_form_submit.php" method="post" name="iform" id="iform">
+        <input name="formname" type="hidden" value="system_advanced">
+
+	<fieldset>
+		<legend><?=join(": ", $pgtitle);?></legend>
+			<div>
+                 <label for="carpenable">Enable CARP</label>
+                 <input id="carpenable" type="checkbox" name="carpenable" value="Yes" <?php if ($pconfig['carpenable']) echo "checked"; ?> />
+			     <p class="note">Accept incoming CARP packets</p>
+			</div>
+            <div>
+                 <label for=="preemptenable">Enable Preemption</label>
+                 <input id="preemptenable" type="checkbox" name="preemptenable" value="Yes" <?php if ($pconfig['preemptenable']) echo "checked"; ?> />
+			     <p class="note">Allow hosts within a redundancy group that have a better advbase and advskew to preempt the master. In addition, this option also enables failing over all interfaces in the event that one interface goes down. If one physical CARP-enabled interface goes down, CARP will change advskew to 240 on all other CARP-enabled interfaces, in essence, failing itself over.</p>
+			</div>
+			<div>
+                 <label for=="logenable">CARP Logging</label>
+                 <input id="logenable" type="checkbox" name="logenable" value="Yes" <?php if ($pconfig['logenable']) echo "checked"; ?> />
+                 <p class="note">Log Bad CARP packets</p>
+            </div>
+			<div>
+                 <label for="arpbalance">ARP Balance</label>
+                 <input id="arpbalance" type="checkbox" name="arpbalance" value="Yes" <?php if ($pconfig['arpbalance']) echo "checked"; ?> />
+			     <p class="note">Load balance traffic across multiple redundancy group hosts.</p>
+			</div> 
+	</fieldset>
 	
-	$retval = 0;
-	$savemsg = get_std_save_message($retval);
-}
+	<div class="buttonrow">
+		<input type="submit" id="submitbutton" value="Save" class="button" />
+	</div>
 
-?>
-<?php if ($savemsg) print_info_box($savemsg); ?>
-<form action="firewall_carp.php" method="post">
-<table width="100%" border="0" cellpadding="0" cellspacing="0">
-<tr><td class="tabnavtbl">
-  <ul id="tabnav">
-  </ul>
-  </td>
-  </tr>
-  </table>
-	<table width="100%" border="0" cellpadding="6" cellspacing="0">
-                <tr> 
-                 <tr>
-                  <td width="22%" valign="top" class="vncell">Enable CARP</td>
-                  <td width="78%" class="vtable">
-                  <input name="carpenable" type="checkbox" value="carpenable" <?php if ($pconfig['carpenable']) echo "checked"; ?>>
-		  Accept incoming CARP packets<br>
-                </td>
-                </tr>
-	        <tr>
-                  <td width="22%" valign="top" class="vncell">Enable Preemption</td>
-                  <td width="78%" class="vtable">
-                  <input name="preemptenable" type="checkbox" value="preemptenable" <?php if ($pconfig['preemptenable']) echo "checked"; ?>>
-                  Allow hosts within a redundancy group that have a better advbase and advskew to preempt the master. In addition, this option also enables failing over all interfaces in the event that one interface goes down. If one physical CARP-enabled interface goes down, CARP will change advskew to 240 on all other CARP-enabled interfaces, in essence, failing itself over.<br>
-		</td>
-		</tr>
-		<tr>
-                  <td width="22%" valign="top" class="vncell">Logging</td>
-                  <td width="78%" class="vtable">
-                  <input name="logenable" type="checkbox" value="logenable" <?php if ($pconfig['logenable']) echo "checked"; ?>>
-	  	  Log bad CARP packets.<br> 
-		</td>
-                </tr>
-		 <tr>
-                  <td width="22%" valign="top" class="vncell">ARP Balance</td>
-                  <td width="78%" class="vtable">
-                  <input name="arpbalance" type="checkbox" value="arpbalance" <?php if ($pconfig['arpbalance']) echo "checked"; ?>>
-                  Load balance traffic across multiple redundancy group hosts.<br> 
-		</td>
-                </tr>
-		<tr> 
-                  <td width="22%" valign="top">&nbsp;</td>
-                  <td width="78%"> <input name="Submit" type="submit" class="formbtn" value="Save"> 
-                  </td>
-                </tr>
-</table>
-</form>
+	</form>
+	
+	</div><!-- /form-container -->
+	
+</div><!-- /wrapper -->
