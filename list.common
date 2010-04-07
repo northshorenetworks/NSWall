@@ -50,7 +50,9 @@ COPY ${CURDIR}/initial-conf/www/firewall_pfsync.php				usr/www/firewall_pfsync.p
 #COPY ${CURDIR}/initial-conf/www/firewall_relayd_relays.php		usr/www/firewall_relayd_relays.php
 #COPY ${CURDIR}/initial-conf/www/firewall_relayd_relays_edit.php	usr/www/firewall_relayd_relays_edit.php
 #COPY ${CURDIR}/initial-conf/www/firewall_relays_edit.php		usr/www/firewall_relays_edit.php
+COPY ${CURDIR}/initial-conf/www/forms/diagnostics_form_submit.php  usr/www/forms/diagnostics_form_submit.php
 COPY ${CURDIR}/initial-conf/www/forms/firewall_form_submit.php  usr/www/forms/firewall_form_submit.php
+COPY ${CURDIR}/initial-conf/www/forms/services_form_submit.php  usr/www/forms/services_form_submit.php
 COPY ${CURDIR}/initial-conf/www/forms/system_form_submit.php    usr/www/forms/system_form_submit.php
 COPY ${CURDIR}/initial-conf/www/forms/system_firmware_form_submit.php    usr/www/forms/system_firmware_form_submit.php
 COPY ${CURDIR}/initial-conf/www/forms/vpn_form_submit.php       usr/www/forms/vpn_form_submit.php

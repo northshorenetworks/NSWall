@@ -5,6 +5,41 @@ $pgtitle = array("Firewall", "CARP", "Edit Virtual Host");
 require("guiconfig.inc");
 include("ns-begin.inc");
 
+if (!is_array($config['carp']['virtualhost']))
+        $config['carp']['virtualhost'] = array();
+ 
+ 
+virtualhosts_sort();
+$a_virtualhost = &$config['carp']['virtualhost'];
+ 
+$id = $_GET['id'];
+if (isset($_POST['id']))
+        $id = $_POST['id'];
+ 
+if (isset($_POST['after']))
+        $after = $_POST['after'];
+ 
+if (isset($_GET['dup'])) {
+        $id = $_GET['dup'];
+        $after = $_GET['dup'];
+}
+ 
+if (isset($id) && $a_virtualhost[$id]) {
+        $pconfig['name'] = $a_virtualhost[$id]['name'];
+        $pconfig['descr'] = $a_virtualhost[$id]['descr'];
+        $pconfig['ip'] = $a_virtualhost[$id]['ip'];
+        $pconfig['subnet'] = $a_virtualhost[$id]['subnet'];
+        $pconfig['interface'] = $a_virtualhost[$id]['interface'];
+        $pconfig['password'] = $a_virtualhost[$id]['password'];
+	$pconfig['carpmode'] = $a_virtualhost[$id]['carpmode'];
+	$pconfig['carphostmode'] = $a_virtualhost[$id]['carphostmode'];
+	$pconfig['activemember'] = $a_virtualhost[$id]['activemember'];
+	$pconfig['activenodes'] = $a_virtualhost[$id]['activenodes'];
+}
+ 
+if (isset($_GET['dup']))
+        unset($id);
+
 ?>
 
 <script type="text/javascript">
@@ -15,7 +50,7 @@ $(document).ready(function() {
     $("#submitbutton").click(function () {
         displayProcessingDiv();
         var QueryString = $("#iform").serialize();
-        $.post("forms/system_form_submit.php", QueryString, function(output) {
+        $.post("forms/interfaces_form_submit.php", QueryString, function(output) {
             $("#save_config").html(output);
             if(output.match(/SUBMITSUCCESS/))
                 setTimeout(function(){ $('#save_config').dialog('close'); }, 1000);
@@ -31,9 +66,9 @@ $(document).ready(function() {
 <div id="wrapper">
         <div class="form-container ui-tabs ui-widget ui-corner-all">
 
-	<form action="forms/system_form_submit.php" method="post" name="iform" id="iform">
-        <input name="formname" type="hidden" value="system_general">
-
+	<form action="forms/interfaces_form_submit.php" method="post" name="iform" id="iform">
+        <input name="formname" type="hidden" value="interface_carp_vid">
+		<input name="id" type="hidden" value="<?=$id;?>">
 	<fieldset>
 		<legend><?=join(": ", $pgtitle);?></legend>
 			<div>
@@ -75,23 +110,35 @@ $(document).ready(function() {
 			</div>
                         <div>
                              <label for="password">Password</label>
-                             <input id="password" type="password" name="password" value="" />
+                             <input id="password" type="password" name="password" value="<?=htmlspecialchars($pconfig['ip']);?>" />
                              <p class="note">Authentication password to use when talking to other CARP-enabled hosts in this redundancy group. This must be the same on all members of the group.</p>
 			</div>
 			<div>
                              <label for="carpmode">CARP Mode</label>
-                             <input name="carpmode" type="radio" value="activestandby" <?php if ($pconfig['carpmode'] == "activestandby") echo "checked"; ?>>
-                             Active/Standby &nbsp;&nbsp;&nbsp; <input type="radio" name="activeactive" value="activeactive" <?php if ($pconfig['carpmode'] == "activeactive") echo "checked"; ?>>Active/Active
-            </div>
-            <div>
+                             <select name="carpmode" class="formfld">
+                      		 <?php $carpmodes = array('activestandby' => 'Active/Standby', 'activeactive' => 'Active/Active');
+                                 foreach ($carpmodes as $mode => $modename): ?>
+                      				<option value="<?=$mode;?>" <?php if ($mode == $pconfig['carpmode']) echo "selected"; ?>>
+                      					<?=htmlspecialchars($modename);?>
+                      				</option>
+                      			<?php endforeach; ?>
+                    		</select> 
+                        </div>
+                        <div>
                              <label for="carphostmode">CARP Host Mode</label>
-							 <input name="carphostmode" type="radio" value="active" <?php if ($pconfig['carphostmode'] == "active") echo "checked"; ?>>
-                  			 Active &nbsp;&nbsp;&nbsp; <input type="radio" name="standby" value="standby" <?php if ($pconfig['carphostmode'] == "standby") echo "checked"; ?>>Standby
-			</div> 
+                             <select name="carphostmode" class="formfld">
+                      		 <?php $hostmodes = array('active' => 'Active', 'standby' => 'Standby');
+                                 foreach ($hostmodes as $mode => $modename): ?>
+                      				<option value="<?=$mode;?>" <?php if ($mode == $pconfig['carphostmode']) echo "selected"; ?>>
+                      					<?=htmlspecialchars($modename);?>
+                      				</option>
+                      			<?php endforeach; ?>
+                    		</select> 
+                        </div>
 			<div>
                              <label for="activemember">Cluster Member</label>
-            				 <input name="activemember" type="text" class="formfld" id="activemember" size="4" value="<?=htmlspecialchars($pconfig['activemember']);?>"> of 
-                			 <input name="activenodes" type="text" class="formfld" id="activenodes" size="4" value="<?=htmlspecialchars($pconfig['activenodes']);?>"> Nodes
+            				 <input name="activemember" type="text" class="formfld" id="activemember" size="2" value="<?=htmlspecialchars($pconfig['activemember']);?>"> of 
+                			 <input name="activenodes" type="text" class="formfld" id="activenodes" size="2" value="<?=htmlspecialchars($pconfig['activenodes']);?>"> Nodes
 			</div>
 	</fieldset>
 	

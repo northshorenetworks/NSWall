@@ -181,7 +181,10 @@ function vpn_generate_ipsec_conf($ipchg = false) {
 				foreach ($ipseccfg['gw'] as $gw) {
 				
 					++$gwnumber;
-			
+
+					if (sg_get_const("IPSEC_GATEWAYS") < $gwnumber)
+						break;
+
 					if (isset($gw['disabled']))
 						continue;
                                         

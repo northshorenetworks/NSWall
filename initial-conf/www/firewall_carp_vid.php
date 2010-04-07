@@ -3,11 +3,12 @@
 $pgtitle = array("Firewall", "Aliases");      
 require("guiconfig.inc");      
 include("ns-begin.inc");       
-if (!is_array($config['aliases']['alias'])) {      
-    $config['aliases']['alias'] = array();      
-}      
-$a_alias = &$config['aliases']['alias'];      
-aliases_sort();   
+if (!is_array($config['carp']['virtualhost'])) {
+	$config['carp']['virtualhost'] = array();
+}
+$a_virtualhost = &$config['carp']['virtualhost'];
+virtualhosts_sort();
+ 
 ?>
 
 <style type="text/css">
@@ -72,17 +73,17 @@ $(".col2 a").click(function () {
 <span class="col3">Name</span>
 <span class="col4">Description</span>
 </li>
-<?php $nrules = 0; for ($i = 0; isset($a_alias[$i]); $i++):
-$aliasent = $a_alias[$i]; ?>
+<?php $nrules = 0; for ($i = 0; isset($a_virtualhost[$i]); $i++):
+$aliasent = $a_virtualhost[$i]; ?>
 <li id="listItem_<?=$i;?>">
-<n class="col1">
-<a href="firewall_aliases_edit.php?id=<?=$i;?>">
+<span class="col1">
+<a href="firewall_carp_vid_edit.php?id=<?=$i;?>">
 <span title="edit this rule" class="ui-icon ui-icon-circle-zoomin"></span>
 </a>
-</span>/span>
+</span>
 <span class="col2">
-<a href="forms/firewall_form_submit.php?id=<?=$i;?>&action=delete&type=alias">
-<span title="delete this rule" class="ui-icon ui-icon-circle-close"></span>
+<a href="forms/interfaces_form_submit.php?id=<?=$i;?>&action=delete&type=vid">
+<span title="delete this Virtual IP" class="ui-icon ui-icon-circle-close"></span>
 </a>
 </span>
 <span class="col3"><?php if (isset($aliasent['name'])) echo strtoupper($aliasent['name']); else echo "*"; ?><?=$textse;?></span>

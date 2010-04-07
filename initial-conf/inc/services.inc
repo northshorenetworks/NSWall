@@ -178,8 +178,8 @@ EOD;
 	 		$synchoststring .= "-Y {$synchost['ip']} ";
 		}			
 		$synchoststring = preg_replace('/ $/', '', $synchoststring);	
-		mwexec("/usr/sbin/dhcpd -y {$config['interfaces'][$config['pfsync']['interface']]['if']} " .
-			"$synchoststring -c {$g['varetc_path']}/dhcpd.conf " . 
+		mwexec("/usr/sbin/dhcpd -y " . get_interface_name_by_descr($config['pfsync']['interface']) .
+			" $synchoststring -c {$g['varetc_path']}/dhcpd.conf " . 
 			join(" ", $dhcpdifs));
 	} else {
 		mwexec("/usr/sbin/dhcpd -c {$g['varetc_path']}/dhcpd.conf " .
@@ -278,6 +278,7 @@ function services_dyndns_reset() {
 	if (file_exists("{$g['conf_path']}/ez-ipupdate.cache")) {
 		conf_mount_rw();
 		unlink("{$g['conf_path']}/ez-ipupdate.cache");
+		touch("{$g['conf_path']}/ez-ipupdate.cache");
 		conf_mount_ro();
 	}
 	
@@ -353,7 +354,7 @@ EOD;
 		}
 		
 		/* run ez-ipupdate */
-		mwexec("/usr/local/bin/ez-ipupdate -c {$g['varetc_path']}/ez-ipupdate.conf");
+		mwexec("ez-ipupdate -c {$g['varetc_path']}/ez-ipupdate.conf");
 		
 		if ($g['booting'])
 			echo "done\n";
@@ -385,8 +386,8 @@ function services_dnsmasq_configure() {
 			$args .= " -l {$g['vardb_path']}/dhcpd.leases" . 
 				" -s {$config['system']['general']['domain']}";
 		}
-		
-		$args = " -c 5000 --except-interface {$config['interfaces']['wan']['if']}";
+
+		$args = " -c 5000 --except-interface " . get_interface_name_by_descr('wan');
 
 		if (isset($config['dnsmasq']['domainoverrides']) && is_array($config['dnsmasq']['domainoverrides'])) {
 			foreach($config['dnsmasq']['domainoverrides'] as $override) {

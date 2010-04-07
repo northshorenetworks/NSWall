@@ -86,7 +86,7 @@ function interfaces_carp_configure() {
         global $config, $g;
 
 	/* Set the carp settings and configure the CARP interfaces. */
-        if (isset($config['carp']['carpenable']))
+    if (isset($config['carp']['carpenable']))
 	 	mwexec("/sbin/sysctl net.inet.carp.allow=1");
 	
 	if (isset($config['carp']['preemptenable']))
@@ -101,30 +101,30 @@ function interfaces_carp_configure() {
                	$i = 0;
                	foreach($config['carp']['virtualhost'] as $carpcfg) {
                		if($carpcfg['carpmode'] == 'activestandby') {
-				if($carpcfg['carphostmode'] == 'active') {
-					$vid = 1;
-					$advskew = 0;
-				} else {
-					$vid = 2;
-					$advskew = 254;
-				}
-				$carpdev = $config['interfaces'][$carpcfg['interface']]['if'];
-                       		mwexec("/sbin/ifconfig carp" . $i . " create");
-                       		$carpcmd = "carp$i" . " vhid " . $vid . " pass ";
-                       		$carpcmd .= $carpcfg['password'] . " carpdev $carpdev" . " advskew " . $advskew;
-                       		$carpcmd .= " " . $carpcfg['ip'] . "/" . $carpcfg['subnet'];
-                       		mwexec("/sbin/ifconfig $carpcmd");
-                       		$i++;
-        		} else {
-				$carpdev = $config['interfaces'][$carpcfg['interface']]['if'];
-                                mwexec("/sbin/ifconfig carp" . $i . " create");
-                                $carpcmd = "carp$i "  . $carpcfg['ip'] . "/" . $carpcfg['subnet'];
-                                $carpcmd .= " pass " . $carpcfg['password'] . " carpdev $carpdev ";
-                                $carpcmd .= interfaces_cluster_generate($carpcfg['activemember'], $carpcfg['activenodes']); 
-				mwexec("/sbin/ifconfig $carpcmd");
-                                $i++;	
-			}
-	       	}
+						if($carpcfg['carphostmode'] == 'active') {
+							$vid = 1;
+							$advskew = 0;
+						} else {
+							$vid = 2;
+							$advskew = 254;
+						}
+						$carpdev =  get_interface_name_by_descr($carpcfg['interface']);
+                       	mwexec("/sbin/ifconfig carp" . $i . " create");
+                       	$carpcmd = "carp$i" . " vhid " . $vid . " pass ";
+                       	$carpcmd .= $carpcfg['password'] . " carpdev $carpdev" . " advskew " . $advskew;
+                       	$carpcmd .= " " . $carpcfg['ip'] . "/" . $carpcfg['subnet'] . " -inet6";
+                       	mwexec("/sbin/ifconfig $carpcmd");
+                       	$i++;
+        			} elseif ($carpcfg['carpmode'] == 'activeactive') {
+                        $carpdev =  get_interface_name_by_descr($carpcfg['interface']);
+						mwexec("/sbin/ifconfig carp" . $i . " create");
+                        $carpcmd = "carp$i "  . $carpcfg['ip'] . "/" . $carpcfg['subnet'] . " -inet6";
+                        $carpcmd .= " pass " . $carpcfg['password'] . " carpdev $carpdev ";
+                        $carpcmd .= interfaces_cluster_generate($carpcfg['activemember'], $carpcfg['activenodes']); 
+						mwexec("/sbin/ifconfig $carpcmd");
+                        $i++;	
+					}
+	       		}
                	if ($g['booting'])
                        	echo "done\n";
        	}
@@ -407,8 +407,8 @@ function interfaces_pfsync_configure() {
         	}
 
 		/*bring up the pfsync interface*/
-		mwexec("/sbin/ifconfig " . $config['interfaces'][$config['pfsync']['interface']]['if'] . " up");
-		mwexec("/sbin/ifconfig pfsync0 up syncdev " . $config['interfaces'][$config['pfsync']['interface']]['if'] . " up");
+		mwexec("/sbin/ifconfig " .  get_interface_name_by_descr($config['pfsync']['interface']) . " up");
+		mwexec("/sbin/ifconfig pfsync0 up syncdev " . get_interface_name_by_descr($config['pfsync']['interface']) . " up");
 		
 		if ($g['booting'])
                 	echo "done\n";

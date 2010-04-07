@@ -91,7 +91,8 @@ $(document).ready(function() {
 	  var QueryString = $("#iform").serialize()+'&memberslist='+str;
 	  $.post("forms/firewall_form_submit.php", QueryString, function(output) {
                $("#save_config").html(output);	  
-               setTimeout(function(){ $('#save_config').fadeOut('slow'); }, 1000);            
+	  		   setTimeout(function(){ $('#save_config').dialog('close'); }, 1000);
+			   setTimeout(function(){ $('#content').load('firewall_aliases_tabs.php'); }, 1250);
 	  });
 	  return false;
      });

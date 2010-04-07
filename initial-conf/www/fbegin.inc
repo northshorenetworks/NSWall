@@ -94,8 +94,10 @@ $menu['Firewall']['Rules'] = array('firewall_rules_tabs.php');
 if ($g['module'] == 'FIREWALL') { 
 	$menu['Services']['DHCP server'] = array('services_dhcp_tabs.php');
 	$menu['Services']['DNS forwarder'] = array('services_dnsmasq.php');
+	$menu['Services']['Dynamic DNS'] = array('services_dyndns.php');
 }
-$menu['Services']['CARP'] = array('services_carp.php');
+if (sg_get_const("CARP") != 'DISABLED')
+	$menu['Services']['CARP'] = array('services_carp.php');
 //$menu['Services']['Config Server'] = array('services_config_server.php');
 // $menu['Services']['Relayd'] = array('firewall_relayd_relays.php');
  

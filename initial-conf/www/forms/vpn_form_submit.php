@@ -91,15 +91,6 @@ if ($_POST) {
 				if ($_POST['remotebits'] && (!is_numeric($_POST['remotebits']) || ($_POST['remotebits'] < 0) || ($_POST['remotebits'] > 32))) {
 					$input_errors[] = "The remote network bits are invalid.";
 				}
-				if (($_POST['remotegw'] && !is_ipaddr($_POST['remotegw']))) {
-					$input_errors[] = "A valid remote gw address must be specified.";
-				}
-				if ((($_POST['p1myidentt'] == "address") && !is_ipaddr($_POST['p1myident']))) {
-					$input_errors[] = "A valid IP address for 'My identifier' must be specified.";
-				}
-				if ((($_POST['p1myidentt'] == "fqdn") && !is_domain($_POST['p1myident']))) {
-					$input_errors[] = "A valid domain name for 'My identifier' must be specified.";
-				}
 				if ($_POST['p1myidentt'] == "user_fqdn") {
 					$ufqdn = explode("@",$_POST['p1myident']);
 					if (!is_domain($ufqdn[1]))

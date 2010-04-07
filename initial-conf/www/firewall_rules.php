@@ -65,7 +65,7 @@ $("<?= $ifsaveneworder; ?>").click(function () {
     $("#currentorder").load("processing_sortable.php?"+order+"&sortif=<?=$if?>");
         $("<?= $ifsortable; ?>").sortable('refresh');
         hidediv("<?=$if . 'saveneworder';?>");
-        setTimeout(function(){ $('#save_config').fadeOut('slow'); }, 1000);
+        setTimeout(function(){ $('#save_config').dialog('close'); }, 1000);
     });
 
 // When a user clicks on the rule edit button, load firewall_rules_edittabs.php?id=$id
@@ -83,7 +83,7 @@ $(".col3 a").click(function () {
              var id = $(this).attr('href');
              $("#currentorder").load(id);
              $("<?= $ifsortable; ?>").sortable('refresh');
-             setTimeout(function(){ $('#save_config').fadeOut('slow'); }, 1000);
+             setTimeout(function(){ $('#save_config').dialog('close'); }, 1000);
         }
         return false;
 });

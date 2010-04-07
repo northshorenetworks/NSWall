@@ -149,13 +149,6 @@ if ($g['module'] == 'FIREWALL') {
 /* start dnsmasq service */
 services_dnsmasq_configure();
  
-/* start dyndns service */
-services_dyndns_configure();
- 
-/* static IP address? -> attempt DNS update */
-if (is_ipaddr($config['interfaces']['wan']['ipaddr']))
-services_dnsupdate_process();
- 
 /* start DHCP service */
 services_dhcpd_configure();
  
@@ -171,13 +164,16 @@ services_proxyarp_configure();
  
 /* start the NTP client */
 system_ntp_configure();
- 
+
+/* start dyndns service */
+services_dyndns_configure();
+
 if ($g['module'] == 'FIREWALL') {
 /* start pptpd */
 vpn_pptp_configure();
  
 /* start pptpd */
-         vpn_pptpd_configure();
+vpn_pptpd_configure();
  
 /* start IPsec tunnels */
 vpn_ipsec_configure();

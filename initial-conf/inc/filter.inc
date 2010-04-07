@@ -220,8 +220,12 @@ function filter_flush_state_table() {
 }
 
 function filter_nat_rules_generate_if($if, $src, $dst, $target, $portmap = true) {
-        $natrule .= "nat on $if from $src $dst -> ($if)\n";
-        return $natrule;
+        if (is_ipaddr($target)) {
+			$natrule .= "nat on $if from $src $dst -> $target\n";
+		} else {
+			$natrule .= "nat on $if from $src $dst -> ($if)\n";
+        }
+		return $natrule;
 }
 
 function filter_tables_generate() {
@@ -992,21 +996,19 @@ EOD;
 EOD;
 	}
 
-/* End of Default Packet Handling */
-$ipfrules .= "\n}";
 
 /* CARP code */
         if (isset($config['carp']['carpenable'])) {
         $ipfrules .= <<<EOD
                             
-###########################
-### Allow CARP Protocol ###
-###########################
+	###########################
+	### Allow CARP Protocol ###
+	###########################
 EOD;
        		if (is_array($config['carp']['virtualhost'])) { 
 			foreach($config['carp']['virtualhost'] as $virtual) {
-				$carpdev = $config['interfaces'][$virtual['interface']]['if'];
-				$ipfrules .= "\npass in quick on $carpdev proto carp";
+				$carpdev = get_interface_name_by_descr($virtual['interface']);
+				$ipfrules .= "\n\tpass in quick on $carpdev proto carp";
 			}
 		}
 		$ipfrules .= "\n";
@@ -1016,16 +1018,15 @@ EOD;
         if (isset($config['pfsync']['pfsyncenable'])) {
         $ipfrules .= <<<EOD
 
-#############################
-### Allow Sync Protocols ###
-#############################
+	#############################
+	### Allow Sync Protocols ###
+	#############################
 EOD;
-                $syncdev = $config['interfaces'][$config['pfsync']['interface']]['if'];
-		$syncip = $config['interfaces'][$config['pfsync']['interface']]['ipaddr'];
-        $ipfrules .= "\npass in quick on $syncdev proto pfsync from any to 224.0.0.240";
-		$ipfrules .= "\npass in quick on $syncdev proto tcp from any to $syncip port www";
-		$ipfrules .= "\npass in quick on $syncdev proto udp from any to $syncip port dhcpd-sync";
-	    $ipfrules .= "\npass in quick on $syncdev proto igmp from any to 224.0.1.240\n";	
+        $syncdev = get_interface_name_by_descr($config['pfsync']['interface']);
+        $ipfrules .= "\n\tpass in quick on $syncdev proto pfsync from any to 224.0.0.240";
+		$ipfrules .= "\n\tpass in quick on $syncdev proto tcp from any to any port www";
+		$ipfrules .= "\n\tpass in quick on $syncdev proto udp from any to any port dhcpd-sync";
+	    $ipfrules .= "\n\tpass in quick on $syncdev proto igmp from any to 224.0.1.240\n";	
         }
 
 	/* PPTPd enabled? */
@@ -1060,6 +1061,9 @@ pass in quick proto udp from any to any port 5050
 
 EOD;
 	}
+
+/* End of Default Packet Handling */
+$ipfrules .= "\n}";
 
 	$i = 0;
 $ipfrules .= <<<EOD

@@ -75,25 +75,26 @@ COPY    ${CURDIR}/initial-conf/boot.conf        etc/boot.conf
 
 # Monowall specifc stuff
 
-COPY	${CURDIR}/initial-conf/id_rsa.pub		etc/id_rsa.pub
-COPY    ${CURDIR}/initial-conf/rc.banner		etc/rc.banner
-COPY    ${CURDIR}/initial-conf/rc.bootup		etc/rc.bootup
-COPY    ${CURDIR}/initial-conf/rc.cleanreboot		etc/rc.cleanreboot
-COPY    ${CURDIR}/initial-conf/rc.firmware		etc/rc.firmware
-COPY    ${CURDIR}/initial-conf/rc.initial.defaults 	etc/rc.initial.defaults
-COPY    ${CURDIR}/initial-conf/rc.initial.password	etc/rc.initial.password
-COPY    ${CURDIR}/initial-conf/rc.initial.ping		etc/rc.initial.ping
-COPY    ${CURDIR}/initial-conf/rc.initial.reboot	etc/rc.initial.reboot
-COPY    ${CURDIR}/initial-conf/rc.initial.setlanip	etc/rc.initial.setlanip
-COPY    ${CURDIR}/initial-conf/rc.initial.setports	etc/rc.initial.setports
-COPY    ${CURDIR}/initial-conf/rc.newwanip		etc/rc.newwanip
+COPY	${CURDIR}/initial-conf/id_rsa.pub				etc/id_rsa.pub
+COPY    ${CURDIR}/initial-conf/rc.banner				etc/rc.banner
+COPY    ${CURDIR}/initial-conf/rc.bootup				etc/rc.bootup
+COPY    ${CURDIR}/initial-conf/rc.cleanreboot			etc/rc.cleanreboot
+COPY    ${CURDIR}/initial-conf/rc.dyndns.storecache     etc/rc.dyndns.storecache
+COPY    ${CURDIR}/initial-conf/rc.firmware				etc/rc.firmware
+COPY    ${CURDIR}/initial-conf/rc.initial.defaults      etc/rc.initial.defaults
+COPY    ${CURDIR}/initial-conf/rc.initial.password		etc/rc.initial.password
+COPY    ${CURDIR}/initial-conf/rc.initial.ping			etc/rc.initial.ping
+COPY    ${CURDIR}/initial-conf/rc.initial.reboot		etc/rc.initial.reboot
+COPY    ${CURDIR}/initial-conf/rc.initial.setlanip		etc/rc.initial.setlanip
+COPY    ${CURDIR}/initial-conf/rc.initial.setports		etc/rc.initial.setports
+COPY    ${CURDIR}/initial-conf/rc.newwanip				etc/rc.newwanip
 COPY    ${CURDIR}/initial-conf/rc.queryconfigserver     etc/rc.queryconfigserver
 COPY    ${CURDIR}/initial-conf/rc.reboot                etc/rc.reboot
-COPY    ${CURDIR}/initial-conf/php.ini			etc/php.ini
+COPY    ${CURDIR}/initial-conf/php.ini					etc/php.ini
 COPY    ${CURDIR}/initial-conf/config.xml               conf.default/config.xml
 COPY    ${CURDIR}/initial-conf/hwplatformconfig.xml     etc/hwplatformconfig.xml
-COPY	${BINDIR}/zoneinfo.tgz				usr/share/zoneinfo.tgz
-COPY    ${DESTDIR}/usr/bin/nohup			usr/bin/nohup
+COPY	${BINDIR}/zoneinfo.tgz							usr/share/zoneinfo.tgz
+COPY    ${DESTDIR}/usr/bin/nohup						usr/bin/nohup
 
 # This is a little hack, we copy over the license file to the /conf directory so we can boot, then we mount wd0d to that
 # directory, which has the actual license file we use to lookup values, tricky/tricky
@@ -106,6 +107,7 @@ SPECIAL chmod 633 etc/php.ini
 SPECIAL echo "1.0" > 					etc/version
 SPECIAL date >						etc/version.buildtime
 SPECIAL chmod 755 usr/bin/nohup
+SPECIAL chmod +x  etc/rc.dyndns.storecache
 SPECIAL chmod +x  etc/rc.reboot
 SPECIAL chmod +x  etc/rc.firmware
 SPECIAL chmod +x  etc/rc.initial
@@ -136,7 +138,7 @@ SPECIAL sh ${CURDIR}/tools/runlist.sh ${CURDIR}/list.debug
 #SPECIAL sh ${CURDIR}/tools/runlist.sh ${CURDIR}/list.firewall
 # Copy files specifc to MGMTSVR module
 #SPECIAL sh ${CURDIR}/tools/runlist.sh ${CURDIR}/list.mgmtsvr
-SPECIAL ${BINDIR}/SG/bin/sourceguardian --conj -r --external /conf/license.lic --projkey 12345 --projid 12345 --phpversion 4.4 -z 9 -b- @${CURDIR}/sgproject
+#SPECIAL ${BINDIR}/SG/bin/sourceguardian --conj -r --external /conf/license.lic --projkey 12345 --projid 12345 --phpversion 4.4 -z 9 -b- @${CURDIR}/sgproject
 
 # Miscellaneous extra tools
 COPY	${CURDIR}/tools/rw.sh			bin/rw
@@ -154,6 +156,7 @@ COPY ${DESTDIR}/bin/echo			bin/echo
 COPY ${DESTDIR}/bin/ed				bin/ed
 COPY ${DESTDIR}/bin/expr			bin/expr
 COPY ${DESTDIR}/bin/hostname		bin/hostname
+COPY ${BINDIR}/ez-ipupdate          bin/ez-ipupdate
 COPY ${DESTDIR}/bin/kill			bin/kill
 COPY ${DESTDIR}/bin/ksh				bin/ksh
 COPY ${DESTDIR}/bin/ln				bin/ln
@@ -162,7 +165,7 @@ COPY ${DESTDIR}/bin/md5				bin/md5
 COPY ${DESTDIR}/bin/mkdir			bin/mkdir
 COPY ${DESTDIR}/bin/mv				bin/mv
 COPY ${DESTDIR}/bin/pax				bin/pax
-COPY ${BINDIR}/php				bin/php
+COPY ${BINDIR}/php					bin/php
 COPY ${DESTDIR}/bin/ps				bin/ps
 COPY ${DESTDIR}/bin/pwd				bin/pwd
 COPY ${DESTDIR}/bin/rm				bin/rm

@@ -62,7 +62,8 @@ $(document).ready(function() {
             $("#save_config").html(output);
             if(output.match(/SUBMITSUCCESS/))
                 setTimeout(function(){ $('#save_config').dialog('close'); }, 1000);
-        });
+        		setTimeout(function(){ $('#content').load('firewall_nat_tabs.php'); }, 1250);
+		});
     return false;
     });
 });
@@ -97,18 +98,23 @@ $(document).ready(function() {
                              <input id="descr" type="text" size="50" name="descr" value="<?=htmlspecialchars($pconfig['descr']);?>" />
 			     <p class="note">You may enter a description here for your reference (not parsed).</p>
 			</div>
-                        <div>
-                             <label for="source">Source</label>
-                             <input name="source" type="text" class="formfld" id="source" size="20" value="<?=htmlspecialchars($pconfig['source']);?>" /> /
-                             <select name="source_subnet" class="formfld" id="source_subnet">
-                             <?php for ($i = 32; $i >= 0; $i--): ?>
-                             <option value="<?=$i;?>" <?php if ($i == $pconfig['source_subnet']) echo "selected"; ?>>
-                             <?=$i;?>
-                             </option>
-                             <?php endfor; ?>
-                             </select>
+            <div>
+                 <label for="source">Source</label>
+                 <input name="source" type="text" class="formfld" id="source" size="20" value="<?=htmlspecialchars($pconfig['source']);?>" /> /
+                 <select name="source_subnet" class="formfld" id="source_subnet">
+                 <?php for ($i = 32; $i >= 0; $i--): ?>
+                 <option value="<?=$i;?>" <?php if ($i == $pconfig['source_subnet']) echo "selected"; ?>>
+                 <?=$i;?>
+                 </option>
+                 <?php endfor; ?>
+                 </select>
 			     <p class="note">Enter the source network for the outbound NAT mapping.</p>
 			</div>
+			 <div>
+                 <label for "target">Target</label>
+                 <input name="target" type="text" class="formfld" id="target" size="20" value="<?=htmlspecialchars($pconfig['target']);?>">
+				 <p class="note">Packets matching this rule will be mapped to the IP address given here. Leave blank to use the selected interface's IP address.</p>
+            </div>
 	</fieldset>
 	
 	<div class="buttonrow">

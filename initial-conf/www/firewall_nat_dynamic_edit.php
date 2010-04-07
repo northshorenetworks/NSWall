@@ -109,6 +109,11 @@ $(document).ready(function() {
                              </select>
 			     <p class="note">Enter the source network for the outbound NAT mapping.</p>
 			</div>
+			<div>
+                 <label for "target">Target</label>
+                 <input name="target" type="text" class="formfld" id="target" size="20" value="<?=htmlspecialchars($pconfig['target']);?>">
+                 <p class="note">Packets matching this rule will be mapped to the IP address given here. Leave blank to use the selected interface's IP address.</p>
+            </div>	
 	</fieldset>
 	
 	<div class="buttonrow">

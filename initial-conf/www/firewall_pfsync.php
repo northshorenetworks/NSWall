@@ -20,7 +20,7 @@ $(document).ready(function() {
     $("#submitbutton").click(function () {
         displayProcessingDiv();
         var QueryString = $("#iform").serialize();
-        $.post("forms/system_form_submit.php", QueryString, function(output) {
+        $.post("forms/interfaces_form_submit.php", QueryString, function(output) {
             $("#save_config").html(output);
             if(output.match(/SUBMITSUCCESS/))
                 setTimeout(function(){ $('#save_config').dialog('close'); }, 1000);
@@ -33,8 +33,8 @@ $(document).ready(function() {
 <div id="wrapper">
         <div class="form-container ui-tabs ui-widget ui-corner-all">
 
-	<form action="forms/system_form_submit.php" method="post" name="iform" id="iform">
-        <input name="formname" type="hidden" value="system_advanced">
+	<form action="forms/interfaces_form_submit.php" method="post" name="iform" id="iform">
+        <input name="formname" type="hidden" value="interface_pfsync">
 
 	<fieldset>
 		<legend><?=join(": ", $pgtitle);?></legend>
@@ -51,7 +51,7 @@ $(document).ready(function() {
                                                 $interfaces['opt' . $i] = $config['interfaces']['opt' . $i]['descr'];
                                           }
                                           foreach ($interfaces as $iface => $ifacename): ?>
-                      <option value="<?=$iface;?>" <?php if ($iface == $pconfig['interface']) echo "selected"; ?>>
+                      <option value="<?=$ifacename;?>" <?php if ($ifacename == $pconfig['interface']) echo "selected"; ?>>
                       <?=htmlspecialchars($ifacename);?>
                       </option>
                       <?php endforeach; ?>

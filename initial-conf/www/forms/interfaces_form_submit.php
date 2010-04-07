@@ -11,7 +11,121 @@ if ($_POST) {
 	$form = $_POST['formname'];
 
 	switch($form) {
-            case "interface_wan":
+		 case "interface_pfsync":
+            if (!$input_errors) {
+            	$config['pfsync']['pfsyncenable'] = $_POST['pfsyncenable'];
+				$config['pfsync']['interface'] = $_POST['interface'];	
+			}
+            $retval = 0;
+            write_config();
+            if ($retval == 0) {
+            sleep(2);
+                echo '<!-- SUBMITSUCCESS --><center>Configuration saved successfully</center>';
+            } else {
+                print_input_errors($input_errors);
+                                        echo '<script type="text/javascript">
+                                        $("#okbtn").click(function () {
+                                            $("#save_config").dialog("close");
+                                        });
+                                        </script>';
+                    echo '<INPUT TYPE="button" value="OK" id="okbtn"></center>';
+            }
+            return $retval;	
+		case "interface_carp":
+			if (!$input_errors) {
+                $config['carp']['carpenable'] = $_POST['carpenable'] ? true : false;
+                $config['carp']['preemptenable'] = $_POST['preemptenable'] ? true : false;
+                $config['carp']['logenable'] = $_POST['logenable'] ? true : false;
+                $config['carp']['arpbalance'] = $_POST['arpbalance'] ? true : false;
+			}
+			$retval = 0;
+			write_config();
+			if ($retval == 0) {
+        	sleep(2);
+        		echo '<!-- SUBMITSUCCESS --><center>Configuration saved successfully</center>';
+    		} else {
+            	print_input_errors($input_errors);
+                                        echo '<script type="text/javascript">
+                                        $("#okbtn").click(function () {
+                                            $("#save_config").dialog("close");
+                                        });
+                                        </script>';
+                    echo '<INPUT TYPE="button" value="OK" id="okbtn"></center>';
+            }
+			return $retval;
+	    case "interface_carp_vid":
+		if (!is_array($config['carp']['virtualhost']))
+        $config['carp']['virtualhost'] = array();
+ 
+		virtualhosts_sort();
+		$a_virtualhost = &$config['carp']['virtualhost'];
+ 
+		$id = $_GET['id'];
+		if (isset($_POST['id']))
+        	$id = $_POST['id'];
+ 
+		if (isset($_POST['after']))
+        	$after = $_POST['after'];
+ 
+		if (isset($_GET['dup'])) {
+        	$id = $_GET['dup'];
+        	$after = $_GET['dup'];
+		}	
+		
+		unset($input_errors);
+        unset($virtualhost['name']);
+        unset($virtualhost['descr']);
+        unset($virtualhost['ip']);
+        unset($virtualhost['subnet']);
+        unset($virtualhost['interface']);
+        unset($virtualhost['password']);
+		unset($virtualhost['carpmode']);
+		unset($virtualhost['carphostmode']);
+        unset($virtualhost['activemember']);
+		unset($virtualhost['activenodes']);
+		$pconfig = $_POST;
+ 
+        /* input validation */
+        $reqdfields = explode(" ", "name");
+        $reqdfieldsn = explode(",", "Name,");
+ 
+        do_input_validation($_POST, $reqdfields, $reqdfieldsn, &$input_errors);
+ 
+        $virtualhostent = array();
+        $virtualhostent['name'] = $_POST['name'];
+        $virtualhostent['descr'] = $_POST['descr'];
+        $virtualhostent['ip'] = $_POST['ip'];
+        $virtualhostent['subnet'] = $_POST['subnet'];
+        $virtualhostent['interface'] = $_POST['interface'];
+        $virtualhostent['password'] = $_POST['password'];
+        $virtualhostent['carpmode'] = $_POST['carpmode'];
+		$virtualhostent['carphostmode'] = $_POST['carphostmode'];
+ 		$virtualhostent['activemember'] = $_POST['activemember'];
+		$virtualhostent['activenodes'] = $_POST['activenodes'];
+ 
+		if (isset($id) && $a_virtualhost[$id])
+                $a_virtualhost[$id] = $virtualhostent;
+        else
+                $a_virtualhost[] = $virtualhostent;
+ 
+        if (!$input_errors) {
+    		$retval = 0;    
+	        write_config();
+        } 
+		if ($retval == 0) {
+        sleep(2);
+        echo '<!-- SUBMITSUCCESS --><center>Configuration saved successfully</center>';
+    	} else {
+                    print_input_errors($input_errors);
+                                        echo '<script type="text/javascript">
+                                        $("#okbtn").click(function () {
+                                            $("#save_config").dialog("close");
+                                        });
+                                        </script>';
+                    echo '<INPUT TYPE="button" value="OK" id="okbtn"></center>';
+        }
+    return $retval;
+	case "interface_wan":
 
   $wancfg = &$config['interfaces']['wan'];
   unset($input_errors);

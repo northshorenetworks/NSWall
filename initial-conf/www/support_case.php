@@ -4,6 +4,9 @@
 require("guiconfig.inc");
 include("ns-begin.inc");
 $pgtitle = array("Diagnostics", "Support");
+
+if (isset($_GET['capturefile']))
+	$capturefile = $_GET['capturefile'];
 ?>
 
 <script type="text/javascript">

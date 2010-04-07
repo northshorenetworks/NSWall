@@ -463,8 +463,6 @@ if ($_POST) {
 					}
     			}
  
-				$retval = 0;
-                if (!$input_errors) {
 					$natent = array();
                     $natent['source']['network'] = $osn;
                     $natent['descr'] = $_POST['descr'];
@@ -484,25 +482,36 @@ if ($_POST) {
                         $a_out[$id] = $natent;
                     else
                         $a_out[] = $natent;
-                    write_config();
-                    config_lock();
-                    $retval = filter_configure();
-                    config_unlock();
-                    push_config('pfnats');
-                }
-                if ($retval == 0 && !$input_errors) {
-                    sleep(2);
-                    echo '<!-- SUBMITSUCCESS --><center>Configuration saved successfully</center>';
-                } else {
-					print_input_errors($input_errors);
-                                        echo '<script type="text/javascript">
-                                        $("#okbtn").click(function () {	
-                                            $("#save_config").dialog("close");
-                                        });
-                                        </script>';
-					echo '<INPUT TYPE="button" value="OK" id="okbtn"></center>';
-				}
-				return $retval;
+				
+					$xmlconfig = dump_xml_config($config, $g['xml_rootobj']);
+
+                	if (filter_parse_config($config)) {
+                   	 	$input_errors[] = "Could not parse the generated config file";
+                    	$input_errors[] = "See log file for details";
+                    	$input_errors[] = "XML Config file not modified";
+                	}
+
+                	$retval = 0;
+                	if (!$input_errors) {
+                    	write_config();
+                    	config_lock();
+                    	$retval = filter_configure();
+                    	config_unlock();
+                    	push_config('pfoptions');
+                	}
+                	if ($retval == 0) {
+                   	 	sleep(2);
+                    	echo '<!-- SUBMITSUCCESS --><center>Configuration saved successfully</center>';
+                	} else {
+                    	print_input_errors($input_errors);
+                        echo '<script type="text/javascript">
+                        	$("#okbtn").click(function () {
+                            	$("#save_config").dialog("close");
+                            });
+                            </script>';
+                    	echo '<INPUT TYPE="button" value="OK" id="okbtn"></center>';
+            		}
+                return $retval;	
 			case "firewall_nat_1to1":
 				if (!is_array($config['nat']['onetoone'])) {
 					$config['nat']['onetoone'] = array();

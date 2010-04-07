@@ -425,7 +425,8 @@ $(document).ready(function() {
                $("#save_config").html(output);
                if(output.match(/SUBMITSUCCESS/))
                    setTimeout(function(){ $('#save_config').dialog('close'); }, 1000);
-          });
+          		   setTimeout(function(){ $('#content').load('firewall_rules_tabs.php'); }, 1250);
+		  });
 	  return false;
      });
   
