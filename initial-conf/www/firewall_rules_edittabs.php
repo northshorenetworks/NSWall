@@ -466,16 +466,19 @@ $(document).ready(function() {
                         <div>
                              <label for="interface">Interface</label>
                               <select name="interface" id="interface" class="formfld">
-<?php $interfaces = array('wan' => 'WAN', 'lan' => 'LAN', 'pptp' => 'PPTP');
-                                          for ($i = 1; isset($config['interfaces']['opt' . $i]); $i++) {
-                                                $interfaces['opt' . $i] = $config['interfaces']['opt' . $i]['descr'];
-                                          }
-                                          foreach ($interfaces as $iface => $ifacename): ?>
-<option value="<?=$iface;?>" <?php if ($iface == $pconfig['interface']) echo "selected"; ?>>
-<?=htmlspecialchars($ifacename);?>
-</option>
-<?php endforeach; ?>
-</select>
+								<?php $interfaces = array('wan' => 'WAN', 'lan' => 'LAN', 'pptp' => 'PPTP');
+                                    for ($i = 1; isset($config['interfaces']['opt' . $i]); $i++) {
+                                	    $interfaces['opt' . $i] = $config['interfaces']['opt' . $i]['descr'];
+                                    }
+                              		foreach ($config['vlans']['vlan'] as $vlan) {
+        								$interfaces['vlan' . $vlan['tag']] = "VLAN{$vlan['tag']}";
+    								}								 
+							  		foreach ($interfaces as $iface => $ifacename): ?>
+										<option value="<?=$iface;?>" <?php if ($iface == $pconfig['interface']) echo "selected"; ?>>
+											<?=htmlspecialchars($ifacename);?>
+										</option>
+									<?php endforeach; ?>
+							 </select>
 			     <p class="note">Choose on which interface packets must come in to match this rule.</p>
 			</div>
                         <div>

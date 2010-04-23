@@ -98,18 +98,19 @@ $(document).ready(function() {
                              <label for="webguiport">WebGUI Port</label>
             				 <input id="webguiport" type="text" name="webguiport" value="<?=htmlspecialchars($pconfig['webguiport']);?>" />
 			</div> 
-<!--						 <div>
+			<div>
                              <label for="cert">WebGUI Cert</label>
                              <select name="cert" class="formfld" id="cert">
                                   <?php foreach($config['system']['certmgr']['cert'] as $i): ?>
-                                  <option value="<?=$i['name'];?>" 
-                                  <?php if ($i == $pconfig['cert']) echo "selected"; ?>>
-                                  <?=$i['name'];?>
-                                  </option>
+                                  <?php if ($i['crt']): ?>
+                                      <option value="<?=$i['name'];?>"    
+                                      <?php if ($i == $pconfig['cert']) echo "selected"; ?>>
+                                      <?=$i['name'];?>
+                                      </option>
+                                  <?php endif; ?>
                                   <?php endforeach; ?>
                              </select>
 			</div>
--->
 			<div>
                              <label for="timezone">Timezone</label>
                              <select name="timezone" id="timezone">
@@ -132,3 +133,4 @@ $(document).ready(function() {
 	</div><!-- /form-container -->
 	
 </div><!-- /wrapper -->
+

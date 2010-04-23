@@ -74,7 +74,9 @@ COPY ${CURDIR}/initial-conf/www/interfaces_lan.php				usr/www/interfaces_lan.php
 COPY ${CURDIR}/initial-conf/www/interfaces_opt.php				usr/www/interfaces_opt.php
 COPY ${CURDIR}/initial-conf/www/interfaces_trunk.php			usr/www/interfaces_trunk.php
 COPY ${CURDIR}/initial-conf/www/interfaces_trunk_edit.php		usr/www/interfaces_trunk_edit.php
+ COPY ${CURDIR}/initial-conf/www/interfaces_trunks_tabs.php     usr/www/interfaces_trunks_tabs.php
 COPY ${CURDIR}/initial-conf/www/interfaces_vlan.php				usr/www/interfaces_vlan.php
+COPY ${CURDIR}/initial-conf/www/interfaces_vlan_tabs.php             usr/www/interfaces_vlan_tabs.php
 COPY ${CURDIR}/initial-conf/www/interfaces_vlan_edit.php		usr/www/interfaces_vlan_edit.php
 COPY ${CURDIR}/initial-conf/www/interfaces_wan.php				usr/www/interfaces_wan.php
 COPY ${CURDIR}/initial-conf/www/interfaces_wlan.inc     		usr/www/interfaces_wlan.inc
@@ -111,7 +113,9 @@ COPY ${CURDIR}/initial-conf/www/system_advanced.php				usr/www/system_advanced.p
 COPY ${CURDIR}/initial-conf/www/system_advanced_create_certs.php		usr/www/system_advanced_create_certs.php
 COPY ${CURDIR}/initial-conf/www/system_cacert_tabs.php      	usr/www/system_cacert_tabs.php
 COPY ${CURDIR}/initial-conf/www/system_camanager.php			usr/www/system_camanager.php
+COPY ${CURDIR}/initial-conf/www/system_camanager_edit.php       usr/www/system_camanager_edit.php
 COPY ${CURDIR}/initial-conf/www/system_certmanager.php			usr/www/system_certmanager.php
+COPY ${CURDIR}/initial-conf/www/system_certmanager_edit.php     usr/www/system_certmanager_edit.php
 COPY ${CURDIR}/initial-conf/www/system_firmware.php				usr/www/system_firmware.php
 COPY ${CURDIR}/initial-conf/www/system_groupmanager.php			usr/www/system_groupmanager.php
 COPY ${CURDIR}/initial-conf/www/system_networking.php			usr/www/system_networking.php

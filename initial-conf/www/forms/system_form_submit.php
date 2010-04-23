@@ -657,6 +657,258 @@ if(isset($_POST['debuginfo'])) {
 				</script>';
                         }
                         return 0;
+			case "system_camanager":
+                            
+                            if (!is_array($config['system']['certmgr']['ca']))
+                                $config['system']['certmgr']['ca'] = array();
+
+                            $a_ca =& $config['system']['certmgr']['ca'];
+
+			    unset($input_errors);
+			    $pconfig = $_POST;
+
+    			/* input validation */
+    			if ($pconfig['method'] == "existing") {
+        			$reqdfields = explode(" ", "name cert");
+        			$reqdfieldsn = explode(",", "Desriptive name,Certificate data");
+    			}
+    			if ($pconfig['method'] == "internal") {
+        			$reqdfields = explode(" ",
+                		"name keylen lifetime dn_country dn_state dn_city ".
+                		"dn_organization dn_email dn_commonname");
+        			$reqdfieldsn = explode(",",
+                		"Desriptive name,Key length,Lifetime,".
+                		"Distinguished name Country Code,".
+                		"Distinguished name State or Province,".
+                		"Distinguished name City,".
+                		"Distinguished name Organization,".
+                		"Distinguished name Email Address,".
+                		"Distinguished name Common Name");
+    			}
+
+				if (!$input_errors) {
+
+        			$ca = array();
+        			$ca['refid'] = uniqid('');
+        			if (isset($id) && $a_ca[$id])
+            			$ca = $a_ca[$id];
+
+        			$ca['name'] = $pconfig['name'];
+
+        			if ($pconfig['method'] == "existing")
+            			ca_import($ca, $pconfig['cert']);
+
+        			if ($pconfig['method'] == "internal")
+        			{
+            			$dn = array(
+                			'countryName' => $pconfig['dn_country'],
+                			'stateOrProvinceName' => $pconfig['dn_state'],
+                			'localityName' => $pconfig['dn_city'],
+                			'organizationName' => $pconfig['dn_organization'],
+                			'emailAddress' => $pconfig['dn_email'],
+                			'commonName' => $pconfig['dn_commonname']);
+
+            				ca_create(& $ca, $pconfig['keylen'], $pconfig['lifetime'], $dn);
+        			}
+
+        			if (isset($id) && $a_ca[$id])
+            			$a_ca[$id] = $ca;
+        			else
+            			$a_ca[] = $ca;
+
+        			write_config();
+					push_config('accounts');
+            	    $retval = 0;
+                    $retval = system_password_configure();
+                    $savemsg = get_std_save_message($retval);
+
+            		if ($retval == 0) {
+                    sleep(2);
+                    echo '<!-- SUBMITSUCCESS --><center>Configuration saved successfully</center>';
+            		} else {
+                    	print_input_errors($input_errors);
+                                        echo '<script type="text/javascript">
+                                        $("#okbtn").click(function () {
+                                            $("#save_config").dialog("close");
+                                        });
+                                        </script>';
+                    	echo '<INPUT TYPE="button" value="OK" id="okbtn"></center>';
+            		}
+				}
+					return $retval;
+				case "system_certmanager":
+
+                	if (!is_array($config['system']['certmgr']['cert']))
+                    	$config['system']['certmgr']['cert'] = array();
+
+                        $a_cert =& $config['system']['certmgr']['cert'];
+
+                unset($input_errors);
+                $pconfig = $_POST;
+
+                /* input validation */
+                if ($pconfig['method'] == "existing") {
+                    $reqdfields = explode(" ", "name cert");
+                    $reqdfieldsn = explode(",", "Desriptive name,Certificate data");
+                }
+                if ($pconfig['method'] == "internal") {
+                    $reqdfields = explode(" ",
+                        "name keylen lifetime dn_country dn_state dn_city ".
+                        "dn_organization dn_email dn_commonname");
+                    $reqdfieldsn = explode(",",
+                        "Desriptive name,Key length,Lifetime,".
+                        "Distinguished name Country Code,".
+                        "Distinguished name State or Province,".
+                        "Distinguished name City,".
+                        "Distinguished name Organization,".
+                        "Distinguished name Email Address,".
+                        "Distinguished name Common Name");
+                }
+
+                if (!$input_errors) {
+
+                        
+                        unset($input_errors);
+                        $pconfig = $_POST;
+
+                        $id = $_GET['id'];
+                        if (isset($_POST['id']))
+                            $id = $_POST['id'];
+
+                        if (!is_array($config['system']['certmgr']['ca']))
+                            $config['system']['certmgr']['ca'] = array();
+
+                        system_ca_sort();
+
+                        $a_ca = &$config['system']['certmgr']['ca'];
+
+                        if (!is_array($config['system']['certmgr']['cert']))
+                            $config['system']['certmgr']['cert'] = array();
+
+                        system_cert_sort();
+
+                        $a_cert = &$config['system']['certmgr']['cert'];
+
+            		$cert = array();
+            		$cert['refid'] = uniqid('');
+            		if (isset($id) && $a_cert[$id])
+                		$cert = $a_cert[$id];
+
+            		$cert['name'] = $pconfig['name'];
+
+            		if ($pconfig['method'] == "existing")
+                		cert_import(& $cert, $pconfig['cert'], $pconfig['key']);
+
+            		if ($pconfig['method'] == "internal") {
+                		$dn = array(
+                    	'countryName' => $pconfig['dn_country'],
+                    	'stateOrProvinceName' => $pconfig['dn_state'],
+                    	'localityName' => $pconfig['dn_city'],
+                    	'organizationName' => $pconfig['dn_organization'],
+                    	'emailAddress' => $pconfig['dn_email'],
+                    	'commonName' => $pconfig['dn_commonname']);
+
+                		cert_create(& $cert, $pconfig['caref'], $pconfig['keylen'],
+                    	$pconfig['lifetime'], $dn);
+            		}
+
+            		if ($pconfig['method'] == "external") {
+                		$dn = array(
+                    	'countryName' => $pconfig['csr_dn_country'],
+                    	'stateOrProvinceName' => $pconfig['csr_dn_state'],
+                    	'localityName' => $pconfig['csr_dn_city'],
+                    	'organizationName' => $pconfig['csr_dn_organization'],
+                    	'emailAddress' => $pconfig['csr_dn_email'],
+                   	 	'commonName' => $pconfig['csr_dn_commonname']);
+
+                		csr_generate(& $cert, $pconfig['csr_keylen'], $dn);
+            		}
+
+            		if (isset($id) && $a_cert[$id])
+                		$a_cert[$id] = $cert;
+            		else
+               			$a_cert[] = $cert;
+
+            		write_config();
+	    			push_config('certmgr');
+					
+					$retval = 0;
+                    $retval = system_password_configure();
+                    $savemsg = get_std_save_message($retval);
+
+					if ($retval == 0) {
+                    sleep(2);
+                    echo '<!-- SUBMITSUCCESS --><center>Configuration saved successfully</center>';
+                    } else {
+                        print_input_errors($input_errors);
+                                        echo '<script type="text/javascript">
+                                        $("#okbtn").click(function () {
+                                            $("#save_config").dialog("close");
+                                        });
+                                        </script>';
+                        echo '<INPUT TYPE="button" value="OK" id="okbtn"></center>';
+                    }
+                }
+	
+				return $retval;
+				case "system_ca_delete":
+            		$id = $_POST['id'];
+            		if (!is_array($config['system']['certmgr']['ca']))
+                		$config['system']['certmgr']['ca'] = array();
+
+                	$a_ca = &$config['system']['certmgr']['ca'];
+
+            		// go through all the firewall rules and make sure none use this if
+            		foreach($config['filter']['rule'] as $rule) {
+                    	if ($rule['interface'] == vlan . $a_ca[$id]['tag']) {
+                        	$input_errors[] = "A firewall rule is referenced by this VLAN";
+                            $input_errors[] = "You must delete all firewall rules used by this interface";
+                        }
+            		}
+
+		            if ($retval == 0 && !$input_errors) {
+            			unset($a_ca[$id]);
+            			write_config();
+                		sleep(2);
+                		echo '<!-- SUBMITSUCCESS --><center>Configuration saved successfully</center>';
+            		} else {
+                		print_input_errors($input_errors);
+                		echo '<script type="text/javascript">
+                    	$("#okbtn").click(function () {
+                        	$("#save_config").dialog("close");
+                    	});
+                      	</script>';
+                		echo '<center><INPUT TYPE="button" value="OK" id="okbtn"></center>';
+            		}
+            	return $retval;
+			case "system_cert_delete":
+            	$id = $_POST['id'];
+				if (!is_array($config['system']['certmgr']['cert']))
+                        $config['system']['certmgr']['cert'] = array();
+
+                    $a_cert = &$config['system']['certmgr']['cert'];
+
+            	// go through all the firewall rules and make sure none use this if
+                	if ($config['system']['general']['webgui']['certificate'] == $a_cert[$id]['name']) {
+                    	    $input_errors[] = "This certificate is in use by the WebUI.";
+                            $input_errors[] = "You must change the WebUI certificate before deleting this certificate";
+                	}
+
+             	if ($retval == 0 && !$input_errors) {
+            		unset($a_cert[$id]);
+            		write_config();
+                	sleep(2);
+                	echo '<!-- SUBMITSUCCESS --><center>Configuration saved successfully</center>';
+            	} else {
+                	print_input_errors($input_errors);
+                	echo '<script type="text/javascript">
+                    	$("#okbtn").click(function () {
+                        	$("#save_config").dialog("close");
+                    	});
+                      	</script>';
+                	echo '<center><INPUT TYPE="button" value="OK" id="okbtn"></center>';
+            	}
+            return $retval;
 			default;
  				echo '<center>Unknown form submited!<br><INPUT TYPE="button" value="OK" name="OK"></center>';
 				 // When a user clicks on the submit button, post the form.

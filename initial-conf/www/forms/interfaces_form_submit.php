@@ -11,6 +11,218 @@ if ($_POST) {
 	$form = $_POST['formname'];
 
 	switch($form) {
+		case "interface_trunk":
+            if (!is_array($config['trunks']['trunk']))
+                $config['trunks']['trunk'] = array();
+
+            trunks_sort();
+            $a_trunks = &$config['trunks']['trunk'];
+
+            if (isset($_POST['id']))
+                $id = $_POST['id'];
+
+            unset($input_errors);
+			$pconfig = $_POST;
+
+			/* input validation 
+			$reqdfields = explode(" ", "name type children");
+			$reqdfieldsn = explode(",", "Name,Type,Children");
+	
+			do_input_validation($_POST, $reqdfields, $reqdfieldsn, &$input_errors);*/
+
+			if (($_POST['name'] && !is_validaliasname($_POST['name']))) {
+				$input_errors[] = "The trunk name may only consist of the characters a-z, A-Z, 0-9.";
+			}
+
+			/* check for name conflicts */
+			foreach ($a_trunks as $trunk) {
+				if (isset($id) && ($a_trunks[$id]) && ($a_trunks[$id] == $trunk))
+					continue;
+
+				if ($trunk['name'] == $_POST['name']) {
+					$input_errors[] = "A trunk with this name already exists.";
+					break;
+				}
+			}
+
+			$trunk = array();
+        	$trunk['name'] = $_POST['name'];
+			$trunk['descr'] = $_POST['descr'];
+			$trunk['type'] = $_POST['type'];
+			$trunk['trunkport'] = $_POST['trunkport'];
+        	$childiflist = explode(' ', $_POST['children']);
+        	for($i=0;$i<sizeof($childiflist); $i++) {
+                $childif = 'childif'."$i";
+                $prop = preg_replace("/ /", "", $childiflist[$i]);
+                $trunk['childiflist'][$childif] = $prop;
+        	}
+        	if (isset($id) && $a_trunks[$id])
+                $a_trunks[$id] = $trunk;
+        	else
+                $a_trunks[] = $trunk;
+
+			$retval = 0;
+			if (!$input_errors) {
+					write_config(); 
+					config_lock();
+                    $retval = interfaces_trunk_configure();
+                    config_unlock();
+            }
+            if ($retval == 0 && !$input_errors) {
+            	sleep(2);
+                echo '<!-- SUBMITSUCCESS --><center>Configuration saved successfully</center>';
+            } else {
+                print_input_errors($input_errors);
+                echo '<script type="text/javascript">
+            	    $("#okbtn").click(function () {
+                	    $("#save_config").dialog("close");
+                    });
+                      </script>';
+                echo '<INPUT TYPE="button" value="OK" id="okbtn"></center>';
+            }
+            return $retval;
+
+		case "interface_trunk_delete":
+            $id = $_POST['id'];
+            if (!is_array($config['trunks']['trunk']))
+                $config['trunks']['trunk'] = array();
+
+                $a_trunk = &$config['trunks']['trunk'];
+
+            // go through all the firewall rules and make sure none use this if
+            foreach($config['filter']['rule'] as $rule) {
+            	if ($rule['interface'] == $a_trunk[$id]['trunkport']) {
+            		$input_errors[] = "A firewall rule is referenced by this trunk";
+            		$input_errors[] = "You must delete all firewall rules used by this interface";
+            		break;
+				}
+            }
+
+			// go through all the firewall rules and make sure none use this if
+            if (is_array($config['vlans']['vlan'])) {
+				foreach($config['vlans']['vlan'] as $vlan) {
+                	if ($vlan['if'] == $a_trunk[$id]['trunkport']) {
+                    	$input_errors[] = "A VLAN is referenced by this trunk";
+                    	$input_errors[] = "You must delete all VLANs used by this interface";
+                		break;
+					}
+            	}
+			}	
+
+            if ($retval == 0 && !$input_errors) {
+                mwexec("/sbin/ifconfig $a_trunk[$id]['trunkport']} destroy");
+            unset($a_trunk[$id]);
+            write_config();
+                sleep(2);
+                echo '<!-- SUBMITSUCCESS --><center>Configuration saved successfully</center>';
+            } else {
+                print_input_errors($input_errors);
+                echo '<script type="text/javascript">
+                    $("#okbtn").click(function () {
+                        $("#save_config").dialog("close");
+                    });
+                      </script>';
+                echo '<center><INPUT TYPE="button" value="OK" id="okbtn"></center>';
+            }
+			return $retval;
+		case "interface_vlan":
+     		unset($input_errors);
+	                $id = $_POST['id'];
+                        if (!is_array($config['vlans']['vlan']))
+                           $config['vlans']['vlan'] = array();
+		        vlans_sort();
+			$a_vlan = &$config['vlans']['vlan'];
+                        $pconfig = $_POST;
+
+			/* input validation */
+			$reqdfields = explode(" ", "ipaddr subnet");
+			$reqdfieldsn = explode(",", "IP address,Subnet bit count");
+
+			do_input_validation($_POST, $reqdfields, $reqdfieldsn, &$input_errors);
+
+			if (($_POST['ipaddr'] && !is_ipaddr($_POST['ipaddr']))) {
+				$input_errors[] = "A valid IP address must be specified.";
+			}
+			if (($_POST['subnet'] && !is_numeric($_POST['subnet']))) {
+				$input_errors[] = "A valid subnet bit count must be specified.";
+			}
+
+			if (!$input_errors) {
+				$vlanent = array();
+				$vlanent['descr'] = $_POST['descr'];
+				$vlanent['oldif'] = $_POST['oldif'];
+				$vlanent['if'] = $_POST['if'];
+				$vlanent['tag'] = $_POST['tag'];
+				$vlanent['oldtag'] = $_POST['oldtag'];
+				$vlanent['ipaddr'] = $_POST['ipaddr'];
+				$vlanent['subnet'] = $_POST['subnet'];
+      			
+                                // For some reason we have to destroy the if before changing the tag, annoying.
+				if(isset($vlanent['oldtag']) && $vlanent['oldtag'] != $vlanent['tag'])
+			            mwexec("/sbin/ifconfig vlan{$vlanent['oldtag']} destroy");
+                                
+				if(isset($vlanent['oldif']) && $vlanent['oldif'] != $vlanent['if'])
+			            mwexec("/sbin/ifconfig vlan{$vlanent['oldtag']} destroy");      
+			
+				if (isset($id) && $a_vlan[$id]) {
+	                            $a_vlan[$id] = $vlanent;
+               	                } else {
+                   	            $a_vlan[] = $vlanent;
+            	                }
+	
+				write_config();
+
+				$retval = 0;
+				config_lock();
+				$retval = interfaces_vlan_configure();
+				config_unlock();
+			}
+			if ($retval == 0) {
+            	sleep(2);
+                echo '<!-- SUBMITSUCCESS --><center>Configuration saved successfully</center>';
+			} else {
+                print_input_errors($input_errors);
+                echo '<script type="text/javascript">
+                    $("#okbtn").click(function () {
+                        $("#save_config").dialog("close");
+                    });
+                    </script>';
+                echo '<INPUT TYPE="button" value="OK" id="okbtn"></center>';
+          	} 
+		return $retval; 
+		 case "interface_vlan_delete":
+		    $id = $_POST['id'];
+        	if (!is_array($config['vlans']['vlan']))
+            	$config['vlans']['vlan'] = array();
+
+                $a_vlan = &$config['vlans']['vlan'];
+           
+			// go through all the firewall rules and make sure none use this if
+			foreach($config['filter']['rule'] as $rule) {
+                              
+                            if ($rule['interface'] == vlan . $a_vlan[$id]['tag']) {
+                                $input_errors[] = "A firewall rule is referenced by this VLAN";
+								$input_errors[] = "You must delete all firewall rules used by this interface";
+                            }
+
+			}
+			
+             if ($retval == 0 && !$input_errors) {
+                mwexec("/sbin/ifconfig vlan{$a_vlan[$id]['tag']} destroy");
+            unset($a_vlan[$id]);
+            write_config();	
+                sleep(2);
+                echo '<!-- SUBMITSUCCESS --><center>Configuration saved successfully</center>';
+            } else {
+                print_input_errors($input_errors);
+                echo '<script type="text/javascript">
+                    $("#okbtn").click(function () {
+                        $("#save_config").dialog("close");
+                    });
+                      </script>';
+                echo '<center><INPUT TYPE="button" value="OK" id="okbtn"></center>';
+            }
+            return $retval;
 		 case "interface_pfsync":
             if (!$input_errors) {
             	$config['pfsync']['pfsyncenable'] = $_POST['pfsyncenable'];
@@ -311,6 +523,8 @@ $input_errors = array_merge($input_errors, $wi_input_errors);
 if (!$input_errors) {
 $lancfg['ipaddr'] = $_POST['ipaddr'];
 $lancfg['subnet'] = $_POST['subnet'];
+$lancfg['mtu'] = $_POST['mtu'];
+$lancfg['spoofmac'] = $_POST['spoofmac'];
 unset($lancfg['aliaslist']);
 if ($_POST['memberslist'] != '') {
           $aliaslist = explode(' ', $_POST['memberslist']);
@@ -394,6 +608,8 @@ if ($retval == 0) {
               $optcfg['aliaslist'][$alias] = $prop;
           }
       }
+	  		 $optcfg['mtu'] = $_POST['mtu'];
+			 $optcfg['spoofmac'] = $_POST['spoofmac'];
 	  		 $optcfg['bandwidth'] = $_POST['bandwidth'];
 			 $optcfg['altqenable'] = $_POST['altqenable'] ? true : false;
 		 	/* Wireless interface? */
@@ -451,5 +667,35 @@ if ($retval == 0) {
 					echo '<INPUT TYPE="button" value="OK" id="okbtn"></center>';
 			}
 	}
+}
+if ($_GET) {
+     $id = $_GET['id'];
+     $action = $_GET['action'];
+     $type = $_GET['type'];
+
+     if ($type == 'vlan') {
+        if (!is_array($config['vlans']['vlan']))
+            $config['vlans']['vlan'] = array();
+
+          
+			$a_vlan = &$config['vlans']['vlan'];
+          	if ($action == 'delete') {
+                    mwexec("/sbin/ifconfig vlan{$a_vlan[$id]['tag']} destroy");
+            	    unset($a_vlan[$id]);
+                    write_config();
+          	}
+     }
+	 if ($type == 'trunk') {
+        if (!is_array($config['trunks']['trunk']))
+            $config['trunks']['trunk'] = array();
+
+
+            $a_trunk = &$config['trunks']['trunk'];
+            if ($action == 'delete') {
+                    mwexec("/sbin/ifconfig {$a_trunk[$id]['trunkport']} destroy");
+                    unset($a_trunk[$id]);
+                    write_config();
+            }
+     }
 }
 ?>

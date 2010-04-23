@@ -479,6 +479,16 @@ function trunks_sort() {
         usort($config['trunks']['trunk'], "trunkcmp");
 }
 
+function vlans_sort() {
+        global $g, $config;
+
+        function vlancmp($a, $b) {
+                return strcmp($a['tag'], $b['tag']);
+        }
+		if (is_array($config['vlans']['vlan']))
+        	usort($config['vlans']['vlan'], "vlancmp");
+}
+
 function pptpd_users_sort() {
 	global $g, $config;
 	

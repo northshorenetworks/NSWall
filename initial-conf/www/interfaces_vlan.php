@@ -1,40 +1,13 @@
 #!/bin/php
-<?php 
-/*
-	$Id: interfaces_vlan.php,v 1.6 2009/04/20 06:59:37 jrecords Exp $
-	part of m0n0wall (http://m0n0.ch/wall)
-	
-	Copyright (C) 2003-2006 Manuel Kasper <mk@neon1.net>.
-	All rights reserved.
-	
-	Redistribution and use in source and binary forms, with or without
-	modification, are permitted provided that the following conditions are met:
-	
-	1. Redistributions of source code must retain the above copyright notice,
-	   this list of conditions and the following disclaimer.
-	
-	2. Redistributions in binary form must reproduce the above copyright
-	   notice, this list of conditions and the following disclaimer in the
-	   documentation and/or other materials provided with the distribution.
-	
-	THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
-	INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
-	AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
-	AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
-	OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
-	SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-	INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
-	CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-	ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-	POSSIBILITY OF SUCH DAMAGE.
-*/
+<?php
 
-$pgtitle = array("Interfaces", "Assign network ports");
+$pgtitle = array("Interfaces", "VLANs");
 require("guiconfig.inc");
 
 if (!is_array($config['vlans']['vlan']))
 	$config['vlans']['vlan'] = array();
 
+vlans_sort();
 $a_vlans = &$config['vlans']['vlan'] ;
 
 function vlan_inuse($num) {
@@ -44,19 +17,19 @@ function vlan_inuse($num) {
 		return true;
 	if ($config['interfaces']['wan']['if'] == "vlan{$num}")
 		return true;
-	
+
 	for ($i = 1; isset($config['interfaces']['opt' . $i]); $i++) {
 		if ($config['interfaces']['opt' . $i]['if'] == "vlan{$num}")
 			return true;
 	}
-	
+
 	return false;
 }
 
 function renumber_vlan($if, $delvlan) {
 	if (!preg_match("/^vlan/", $if))
 		return $if;
-	
+
 	$vlan = substr($if, 4);
 	if ($vlan > $delvlan)
 		return "vlan" . ($vlan - 1);
@@ -64,73 +37,89 @@ function renumber_vlan($if, $delvlan) {
 		return $if;
 }
 
-if ($_GET['act'] == "del") {
-	/* check if still in use */
-	if (vlan_inuse($_GET['id'])) {
-		$input_errors[] = "This VLAN cannot be deleted because it is still being used as an interface.";
-	} else {
-		unset($a_vlans[$_GET['id']]);
-		
-		/* renumber all interfaces that use VLANs */
-		$config['interfaces']['lan']['if'] = renumber_vlan($config['interfaces']['lan']['if'], $_GET['id']);
-		$config['interfaces']['wan']['if'] = renumber_vlan($config['interfaces']['wan']['if'], $_GET['id']);
-		for ($i = 1; isset($config['interfaces']['opt' . $i]); $i++)
-			$config['interfaces']['opt' . $i]['if'] = renumber_vlan($config['interfaces']['opt' . $i]['if'], $_GET['id']);
-		
-		write_config();
-		#touch($d_sysrebootreqd_path);
-		header("Location: interfaces_vlan.php");
-		exit;
-	}
-}
-
 ?>
-<?php if ($input_errors) print_input_errors($input_errors); ?>
-<?php if (file_exists($d_sysrebootreqd_path)) print_info_box(get_std_save_message(0)); ?>
-<table width="100%" border="0" cellpadding="0" cellspacing="0">
-  <tr><td class="tabnavtbl">
-  <ul id="tabnav">
-    <li class="tabinact1"><a href="interfaces_assign.php">Interface assignments</a></li>
-    <li class="tabact">VLANs</li>
-    <li class="tabinact1"><a href="interfaces_trunk.php">Trunks</a></li>
-  </ul>
-  </td></tr>
-  <tr> 
-    <td class="tabcont">
-<table width="100%" border="0" cellpadding="0" cellspacing="0">
-                <tr>
-                  <td width="20%" class="listhdrr">Interface</td>
-                  <td width="20%" class="listhdrr">VLAN tag</td>
-                  <td width="50%" class="listhdr">Description</td>
-                  <td width="10%" class="list"></td>
-				</tr>
-			  <?php $i = 0; foreach ($a_vlans as $vlan): ?>
-                <tr>
-                  <td class="listlr">
-					<?=htmlspecialchars($vlan['if']);?>
-                  </td>
-                  <td class="listr">
-					<?=htmlspecialchars($vlan['tag']);?>
-                  </td>
-                  <td class="listbg">
-                    <?=htmlspecialchars($vlan['descr']);?>&nbsp;
-                  </td>
-                  <td valign="middle" nowrap class="list"> <a href="interfaces_vlan_edit.php?id=<?=$i;?>"><img src="images/e.gif" title="edit VLAN" width="17" height="17" border="0"></a>
-                     &nbsp;<a href="interfaces_vlan.php?act=del&id=<?=$i;?>" onclick="return confirm('Do you really want to delete this VLAN?')"><img src="images/x.gif" title="delete VLAN" width="17" height="17" border="0"></a></td>
-				</tr>
-			  <?php $i++; endforeach; ?>
-                <tr> 
-                  <td class="list" colspan="3">&nbsp;</td>
-                  <td class="list"> <a href="interfaces_vlan_edit.php"><img src="images/plus.gif" title="add VLAN" width="17" height="17" border="0"></a></td>
-				</tr>
-				<tr>
-				<td colspan="3" class="list"><span class="vexpl"><span class="red"><strong>
-				  Note:<br>
-				  </strong></span>
-				  </td>
-				<td class="list">&nbsp;</td>
-				</tr>
-              </table>
-			  </td>
-	</tr>
-</table>
+
+<style type="text/css">
+    #vlansortable { list-style-type: none; margin: auto auto 1em; padding: 0; width: 95%; }
+    #vlansortable li { padding: 0.1em; margin-left: 0; padding-left: 1em; font-size: 1.4em; height: 18px; border:1px solid #E4E4E4;  font-size:1em; }
+    #vlansortable li span.col1 { position:relative; float:left; width:4.5%; }
+    #vlansortable li span.col2 { position:relative; float:left; width:5.5%; }
+    #vlansortable li span.col3 { position:relative; float:left; width:5.5%; }
+    #vlansortable li span.col4 { position:relative; float:left; width:5.5%; }
+	#vlansortable li span.col5 { position:relative; float:left; width:60%; }
+</style>
+
+
+<script type="text/javascript">
+
+// Hide the Save Changes Button
+$(document).ready(function() {
+        //hidediv("<?=$if . 'saveneworder';?>");
+});
+
+// Make the list of rules for this interface sortable
+$("#vlansortable").sortable({
+   axis: 'y',
+   containment: 'parent',
+   items: 'li:not(.ui-state-disabled)',
+   update: function(event, ui) {
+        //showdiv("<?=$if . 'saveneworder';?>");
+   }
+});
+
+// When a user clicks on the rule edit button, load firewall_nat_dynamic_edit.php?id=$id
+$(".col2 a, #newvlan a").click(function () {
+    var toLoad = $(this).attr('href');
+        clearInterval(refreshId);
+        $('#content').load(toLoad);
+        return false;
+});
+
+// When a user clicks on the rule delete button, load firewall_dynamic_nat_edit.php?id=$id
+ $(".col3 a").click(function () {
+        if (confirm('Are you sure you want to delete this vlan?')){
+		displayProcessingDiv();
+		var id = $(this).attr('href');
+        	$.post("forms/interfaces_form_submit.php", id, function(output) {
+            	$("#save_config").html(output);
+            	if(output.match(/SUBMITSUCCESS/))
+                	setTimeout(function(){ $('#save_config').dialog('close'); }, 1000);
+                	setTimeout(function(){ $('#content').load('interfaces_vlan_tabs.php'); }, 1250);
+        	});
+    		return false;
+		}    
+});
+
+</script>
+
+<div class="demo">
+<ul id="vlansortable">
+<li id="element_<?=$i;?>" class="connectedSortable ui-state-disabled">
+<span class="col1">Tag</span> 
+<span class="col2">Edit</span>
+<span class="col3">Delete</span>
+<span class="col4">Interface</span>
+<span class="col5">Description</span>
+</li>
+<?php $nrules = 0; for ($i = 0; isset($a_vlans[$i]); $i++):
+$vlanent = $a_vlans[$i]; 
+?>
+<li id="listItem_<?=$i;?>">
+<span class="col1"><span class="col4"><?php echo $vlanent['tag'];?></span></span>
+<span class="col2">
+<a href="interfaces_vlan_edit.php?id=<?=$i;?>">
+<span title="edit this nat rule" class="ui-icon ui-icon-circle-zoomin"></span>
+</a>
+</span>
+<span class="col3">
+ <a href="id=<?=$i;?>&formname=interface_vlan_delete">
+<span title="delete this vlan" class="ui-icon ui-icon-circle-close"></span>
+</a>
+</span>
+<span class="col4"><?php if (isset($vlanent['if'])) echo $vlanent['if'];?></span>
+<span class="col5"><?php if (isset($vlanent['descr'])) echo $vlanent['descr'];?></span>
+</li>
+<?php $nrules++; endfor; ?>
+</ul>
+<div id="newvlan"><center><a href="interfaces_vlan_edit.php"><span title="add a new vlan" class="ui-icon ui-icon-circle-plus"></span></a></center></div>
+</div>

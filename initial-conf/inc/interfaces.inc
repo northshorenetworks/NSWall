@@ -45,40 +45,34 @@ function interfaces_trunk_configure() {
 	if (is_array($config['trunks']['trunk']) && count($config['trunks']['trunk'])) {
 		if ($g['booting'])
                 echo "Configuring Trunk interfaces... ";
-		/* prepare the children interfaces*/
         	foreach($config['trunks']['trunk'] as $trunkcfg) {
-			/* only bring up the trunk if it's directly in use */
-			foreach ($config['interfaces'] as $interface) {
+				/* prepare the children interfaces*/
+				foreach ($config['interfaces'] as $interface) {
         			if ($interface['if'] == $trunkcfg['trunkport']) {
 					$trunkif = $trunkcfg['trunkport'] . ' trunkproto ';
 					$trunkif .= $trunkcfg['type'];
 					for($i=0;$i<sizeof($trunkcfg['childiflist']); $i++ ) {
-        					$child = "childif" . "$i";
-        					$trunkif .= " trunkport {$trunkcfg['childiflist'][$child]}";
-        					/*bring up the child interfaces*/
-						mwexec("/sbin/ifconfig {$trunkcfg['childiflist'][$child]} up");
+       					$child = "childif" . "$i";
+       					$trunkif .= " trunkport {$trunkcfg['childiflist'][$child]}";
+       					/*bring up the child interfaces*/
+						mwexec("/sbin/ifconfig {$trunkcfg['childiflist'][$child]} -inet6 up");
 	        			}
-        				mwexec("/sbin/ifconfig $trunkif up");
+        				mwexec("/sbin/ifconfig $trunkif -inet6 up");
+					}
 				}
+               	$trunkif = $trunkcfg['trunkport'] . ' trunkproto ';
+               	$trunkif .= $trunkcfg['type'];
+               	for($i=0;$i<sizeof($trunkcfg['childiflist']); $i++ ) {
+               		$child = "childif" . "$i";
+               		$trunkif .= " trunkport {$trunkcfg['childiflist'][$child]}";
+               		/*bring up the child interfaces*/
+               		mwexec("/sbin/ifconfig {$trunkcfg['childiflist'][$child]} -inet6 up");
+                }
+               	mwexec("/sbin/ifconfig $trunkif -inet6 up");
 			}
-			/* only bring up the trunk if it's in use by a vlan */
-			foreach ($config['vlans']['vlan'] as $vlan) {
-                		if ($vlan['if'] == $trunkcfg['trunkport']) {
-                			$trunkif = $trunkcfg['trunkport'] . ' trunkproto ';
-                			$trunkif .= $trunkcfg['type'];
-                			for($i=0;$i<sizeof($trunkcfg['childiflist']); $i++ ) {
-                				$child = "childif" . "$i";
-                				$trunkif .= " trunkport {$trunkcfg['childiflist'][$child]}";
-                				/*bring up the child interfaces*/
-                				mwexec("/sbin/ifconfig {$trunkcfg['childiflist'][$child]} up");
-                			}
-                			mwexec("/sbin/ifconfig $trunkif up");
-                		}
-                	}
-		}
 		if ($g['booting'])
         		echo "done\n";
-	}
+		}
 	return 0;
 }
 
@@ -167,12 +161,21 @@ function interfaces_vlan_configure() {
 		
 		foreach ($config['vlans']['vlan'] as $vlan) {
 			
-			$cmd = "/sbin/ifconfig vlan{$i} create vlan " . 
+			/* Create the vlan if */
+			$cmd = "/sbin/ifconfig vlan{$vlan['tag']} create vlan " . 
 				escapeshellarg($vlan['tag']) . " vlandev " . 
 				escapeshellarg($vlan['if']);
-			
 			mwexec($cmd);
-			
+
+			/* Setup IP info for vlan */
+			$addflags = ' description "VLAN"';
+			if ($vlan['mtu'])
+                $addflags .= " mtu " . $vlan['mtu'];
+	
+			$vlanif = "vlan{$vlan['tag']}";
+
+    		mwexec("/sbin/ifconfig " . $vlanif . " -inet6 " . escapeshellarg($vlan['ipaddr'] . "/" . $vlan['subnet']) . $addflags);
+    		
 			$i++;
 		}
 	if ($g['booting'])
@@ -199,7 +202,7 @@ function interfaces_lan_configure() {
 	/* MAC spoofing? */
 	if ($lancfg['spoofmac'])
 		mwexec("/sbin/ifconfig " . escapeshellarg($lancfg['if']) . 
-			" link " . escapeshellarg($lancfg['spoofmac']));
+			" lladdr " . escapeshellarg($lancfg['spoofmac']));
 	
 	/* media */
 	if ($lancfg['media'] || $lancfg['mediaopt']) {
@@ -214,7 +217,10 @@ function interfaces_lan_configure() {
 	$addflags = ' -inet6 description "LAN"';
 	if (strpos($lancfg['if'], "fxp") !== false)
 		$addflags .= " link0";
-	
+
+	if ($lancfg['mtu'])
+		$addflags .= " mtu " . $lancfg['mtu'];
+
         	$lanif = $lancfg['if'];
 	
 	mwexec("/sbin/ifconfig " . $lanif . " " . escapeshellarg($lancfg['ipaddr'] . "/" . $lancfg['subnet']) . $addflags);
@@ -323,7 +329,7 @@ function interfaces_optional_configure_if($opti) {
 		/* MAC spoofing? */
 		if ($optcfg['spoofmac'])
 			mwexec("/sbin/ifconfig " . escapeshellarg($optcfg['if']) . 
-				" link " . escapeshellarg($optcfg['spoofmac']));
+				" lladdr " . escapeshellarg($optcfg['spoofmac']));
 		
 		/* media */
 		if ($optcfg['media'] || $optcfg['mediaopt']) {
@@ -336,6 +342,9 @@ function interfaces_optional_configure_if($opti) {
 		}
 	
 		$addflags = " -inet6 description " . escapeshellarg($optcfg['descr']);
+		if ($optcfg['mtu'])
+		    $addflags .= " mtu " . escapeshellarg($optcfg['mtu']);
+		
 		$optif = $optcfg['if'];
 	
 		if ($optcfg['wireless']['ifmode'] == 'lanbridge' || $optcfg['wireless']['ifmode'] == 'dmzbridge') {
@@ -525,7 +534,7 @@ function interfaces_wan_configure() {
 	
 	if ($wancfg['spoofmac'])
 		mwexec("/sbin/ifconfig " . escapeshellarg($wancfg['if']) . 
-			" link " . escapeshellarg($wancfg['spoofmac']));
+			" lladdr " . escapeshellarg($wancfg['spoofmac']));
 		
 	/* media */
 	if ($wancfg['media'] || $wancfg['mediaopt']) {
@@ -541,6 +550,9 @@ function interfaces_wan_configure() {
 
 	if (strpos($wancfg['if'], "fxp") !== false)
 		$addflags .= " link0";
+
+	if ($wancfg['mtu'])
+        $addflags .= " mtu " . $wancfg['mtu'];
 
 	switch ($wancfg['ipaddr']) {
 	
@@ -564,8 +576,7 @@ function interfaces_wan_configure() {
 		default:
                  	
 			$wanif = $wancfg['if'];
-                        
-			
+   
 			if (isset($wancfg['ispointtopoint']) && $wancfg['pointtopoint']) {
 				mwexec("/sbin/ifconfig " . escapeshellarg($wancfg['if']) . " " . 
 					escapeshellarg($wancfg['ipaddr'] . "/" . $wancfg['subnet']) . 

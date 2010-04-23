@@ -21,16 +21,18 @@ if (isset($optcfg['wireless'])) {
     wireless_config_init();
 }
 
-$pconfig['descr'] = $optcfg['descr'];
-$pconfig['ipaddr'] = $optcfg['ipaddr'];
-$pconfig['subnet'] = $optcfg['subnet'];
-$pconfig['aliaslist'] = $optcfg['aliaslist'];
-$pconfig['enable'] = isset($optcfg['enable']);
-$pconfig['gateway'] = $optcfg['gateway'];
-$pconfig['iftype'] = $optcfg['iftype'];
-$pconfig['wantype'] = $optcfg['wantype'];
+$pconfig['descr']      = $optcfg['descr'];
+$pconfig['ipaddr']     = $optcfg['ipaddr'];
+$pconfig['subnet']     = $optcfg['subnet'];
+$pconfig['aliaslist']  = $optcfg['aliaslist'];
+$pconfig['enable']     = isset($optcfg['enable']);
+$pconfig['gateway']    = $optcfg['gateway'];
+$pconfig['iftype']     = $optcfg['iftype'];
+$pconfig['wantype']    = $optcfg['wantype'];
+$pconfig['mtu'] 	   = $optcfg['mtu'];
+$pconfig['spoofmac']   = $optcfg['spoofmac'];
 $pconfig['altqenable'] = isset($optcfg['altqenable']);
-$pconfig['bandwidth'] = $optcfg['bandwidth'];
+$pconfig['bandwidth']  = $optcfg['bandwidth'];
 
 
 $pgtitle = array("Interfaces", htmlspecialchars($optcfg['descr']));

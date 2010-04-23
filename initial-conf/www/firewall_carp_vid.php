@@ -24,7 +24,6 @@ virtualhosts_sort();
 
 // Hide the Save Changes Button
 $(document).ready(function() {
-        //hidediv("<?=$if . 'saveneworder';?>");
 });
 
 // Make the list of rules for this interface sortable
@@ -33,14 +32,7 @@ $("#aliassortable").sortable({
    containment: 'parent',
    items: 'li:not(.ui-state-disabled)',
    update: function(event, ui) {
-        //showdiv("<?=$if . 'saveneworder';?>");
    }
-});
-
-// When a user clicks the save new order button submit the order to the backend processing
-$("#saveneworder").click(function () {
-    displayProcessingDiv();
-    var order = $("#aliassortable").sortable("serialize");
 });
 
 // When a user clicks on the rule edit button, load firewall_nat_dynamic_edit.php?id=$id
@@ -92,5 +84,4 @@ $aliasent = $a_virtualhost[$i]; ?>
 <?php $nrules++; endfor; ?>
 </ul>
 <div id="newrule"><center><a href="firewall_carp_vid_edit.php"><span title="add a new alias" class="ui-icon ui-icon-circle-plus"></span></a></center></div>
-<div id="<?=$if . 'saveneworder';?>"><center>SAVE NEW ORDER LINK</center></div>
 </div>

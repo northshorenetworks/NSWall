@@ -1,228 +1,160 @@
 #!/bin/php
-<?php 
-/*
-	$Id: interfaces_opt.php,v 1.1.1.1 2008/08/01 07:56:20 root Exp $
-	part of m0n0wall (http://m0n0.ch/wall)
-	
-	Copyright (C) 2003-2006 Manuel Kasper <mk@neon1.net>.
-	All rights reserved.
-	
-	Redistribution and use in source and binary forms, with or without
-	modification, are permitted provided that the following conditions are met:
-	
-	1. Redistributions of source code must retain the above copyright notice,
-	   this list of conditions and the following disclaimer.
-	
-	2. Redistributions in binary form must reproduce the above copyright
-	   notice, this list of conditions and the following disclaimer in the
-	   documentation and/or other materials provided with the distribution.
-	
-	THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
-	INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
-	AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
-	AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
-	OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
-	SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-	INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
-	CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-	ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-	POSSIBILITY OF SUCH DAMAGE.
-*/
-
+<?php
+$pgtitle = array("Interfaces", "Trunks", "Edit Trunk");
+ 
 require("guiconfig.inc");
+include("ns-begin.inc");
 
-unset($index);
-if ($_GET['index'])
-	$index = $_GET['index'];
-else if ($_POST['index'])
-	$index = $_POST['index'];
-	
-if (!$index)
-	exit;
+if (!is_array($config['trunks']['trunk']))
+	$config['trunks']['trunk'] = array();
 
-$optcfg = &$config['interfaces']['opt' . $index];
-$pconfig['descr'] = $optcfg['descr'];
-$pconfig['ipaddr'] = $optcfg['ipaddr'];
-$pconfig['subnet'] = $optcfg['subnet'];
-$pconfig['enable'] = isset($optcfg['enable']);
-$pconfig['gateway'] = $optcfg['gateway'];
+trunks_sort();
+$a_trunks = &$config['trunks']['trunk'];
 
-/* Wireless interface? */
-if (isset($optcfg['wireless'])) {
-	require("interfaces_wlan.inc");
-	wireless_config_init();
-}
+$id = $_GET['id'];
 
-if ($_POST) {
+if (isset($_POST['id']))
+	$id = $_POST['id'];
 
-	unset($input_errors);
-	$pconfig = $_POST;
-
-	/* input validation */
-	if ($_POST['enable']) {
-	
-		/* description unique? */
-		for ($i = 1; isset($config['interfaces']['opt' . $i]); $i++) {
-			if ($i != $index) {
-				if ($config['interfaces']['opt' . $i]['descr'] == $_POST['descr']) {
-					$input_errors[] = "An interface with the specified description already exists.";
-				}
-			}
-		}
-		
-	}
-	
-	/* Wireless interface? */
-	if (isset($optcfg['wireless'])) {
-		$wi_input_errors = wireless_config_post();
-		if ($wi_input_errors) {
-			$input_errors = array_merge($input_errors, $wi_input_errors);
-		}
-	}
-	
-	if (!$input_errors) {
-		$optcfg['descr'] = $_POST['descr'];
-		$optcfg['ipaddr'] = $_POST['ipaddr'];
-		$optcfg['subnet'] = $_POST['subnet'];
-		$optcfg['enable'] = $_POST['enable'] ? true : false;
-		$optcfg['gateway'] = $_POST['gateway'];
-
-		write_config();
-		
-		$retval = 0;
-		if (!file_exists($d_sysrebootreqd_path)) {
-			config_lock();
-			$retval = interfaces_optional_configure();
-			
-			/* is this the captive portal interface? */
-			if (isset($config['captiveportal']['enable']) && 
-				($config['captiveportal']['interface'] == ('opt' . $index))) {
-				captiveportal_configure();
-			}
-			config_unlock();
-		}
-		$savemsg = get_std_save_message($retval);
-	}
-}
-
-$pgtitle = array("Interfaces", "Optional $index (" . htmlspecialchars($optcfg['descr']) . ")");
-?>
-
-<script language="JavaScript">
-<!--
-function enable_change(enable_over) {
-	var endis;
-	endis = !(document.iform.enable.checked || enable_over);
-	document.iform.descr.disabled = endis;
-	document.iform.ipaddr.disabled = endis;
-	document.iform.subnet.disabled = endis;
-
-	if (document.iform.mode) {
-		 document.iform.mode.disabled = endis;
-		 document.iform.ssid.disabled = endis;
-		 document.iform.channel.disabled = endis;
-		 document.iform.stationname.disabled = endis;
-		 document.iform.wep_enable.disabled = endis;
-		 document.iform.key1.disabled = endis;
-		 document.iform.key2.disabled = endis;
-		 document.iform.key3.disabled = endis;
-		 document.iform.key4.disabled = endis;
-	}
-}
-function gen_bits(ipaddr) {
-    if (ipaddr.search(/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/) != -1) {
-        var adr = ipaddr.split(/\./);
-        if (adr[0] > 255 || adr[1] > 255 || adr[2] > 255 || adr[3] > 255)
-            return 0;
-        if (adr[0] == 0 && adr[1] == 0 && adr[2] == 0 && adr[3] == 0)
-            return 0;
-		
-		if (adr[0] <= 127)
-			return 23;
-		else if (adr[0] <= 191)
-			return 15;
-		else
-			return 7;
+if (isset($id) && $a_trunks[$id]) {
+	$pconfig['name'] = $a_trunks[$id]['name'];
+	$pconfig['descr'] = $a_trunks[$id]['descr'];
+	$pconfig['childiflist'] = $a_trunks[$id]['childiflist'];
+	$pconfig['type'] = $a_trunks[$id]['type'];
+	$pconfig['trunkport'] = $a_trunks[$id]['trunkport'];
+} else{
+	/* find the next availible trunk interface and use it */
+	for($i=0;$i<100; $i++) {
+       	foreach($a_trunks as $trunk) {
+     		if($trunk['trunkport'] == 'trunk' . "$i") {
+		         continue 2;
+		    }
+	    }	
+            $pconfig['trunkport'] = 'trunk' . "$i";
+             	 break;
     }
-    else
-        return 0;
 }
-function ipaddr_change() {
-	document.iform.subnet.selectedIndex = gen_bits(document.iform.ipaddr.value);
+
+/* get list without VLAN interfaces */
+$portlist = get_interface_list();
+
+/* Find an unused port for this interface */
+foreach ($portlist as $portname => $portinfo) {
+	$portused = false;
+        foreach ($config['interfaces'] as $ifname => $ifdata) {
+        	if ($ifdata['if'] == $portname) {
+                	$portused = true;
+                        break;
+                }
+         }
 }
-//-->
-</script>
-<?php if ($input_errors) print_input_errors($input_errors); ?>
-<?php if ($savemsg) print_info_box($savemsg); ?>
-<?php if ($optcfg['if']): ?>
-            <form action="interfaces_opt.php" method="post" name="iform" id="iform">
-              <table width="100%" border="0" cellpadding="6" cellspacing="0">
-                <tr> 
-                  <td width="22%" valign="top" class="vtable">&nbsp;</td>
-                  <td width="78%" class="vtable">
-<input name="enable" type="checkbox" value="yes" <?php if ($pconfig['enable']) echo "checked"; ?> onClick="enable_change(false);bridge_change(false)">
-                    <strong>Enable Optional <?=$index;?> interface</strong></td>
-				</tr>
-                <tr> 
-                  <td width="22%" valign="top" class="vncell">Description</td>
-                  <td width="78%" class="vtable"> 
-                    <input name="descr" type="text" class="formfld" id="descr" size="30" value="<?=htmlspecialchars($pconfig['descr']);?>">
-					<br> <span class="vexpl">Enter a description (name) for the interface here.</span>
-				 </td>
-				</tr>
-                <tr> 
-                  <td colspan="2" valign="top" height="16"></td>
-				</tr>
-				<tr> 
-                  <td colspan="2" valign="top" class="listtopic">IP configuration</td>
-				</tr>
-                <tr> 
-                  <td width="22%" valign="top" class="vncellreq">IP address</td>
-                  <td width="78%" class="vtable"> 
-                    <?=$mandfldhtml;?><input name="ipaddr" type="text" class="formfld" id="ipaddr" size="20" value="<?=htmlspecialchars($pconfig['ipaddr']);?>" onchange="ipaddr_change()">
-                    /
-                	<select name="subnet" class="formfld" id="subnet">
-					<?php for ($i = 31; $i > 0; $i--): ?>
-					<option value="<?=$i;?>" <?php if ($i == $pconfig['subnet']) echo "selected"; ?>><?=$i;?></option>
-					<?php endfor; ?>
-                    </select>
-				 </td>
-				</tr>
-				<?php /* Wireless interface? */
-				if (isset($optcfg['wireless']))
-					wireless_config_print();
-				?>
-		<?php if ($optcfg['type'] == 'WAN'): ?>
-    		<tr>
-                  <td valign="top" class="vncellreq">Gateway</td>
-                  <td class="vtable"><?=$mandfldhtml;?><input name="gateway" type="text" class="formfld" id="gateway" size="20" value="<?=htmlspecialchars($pconfig['gateway']);?>">
-                  </td>
-		</tr><?php endif; ?>
-                <tr> 
-                  <td width="22%" valign="top">&nbsp;</td>
-                  <td width="78%"> 
-                    <input name="index" type="hidden" value="<?=$index;?>"> 
-				  <input name="Submit" type="submit" class="formbtn" value="Save" onclick="enable_change(true);bridge_change(true)"> 
-                  </td>
-                </tr>
-                <tr> 
-                  <td width="22%" valign="top">&nbsp;</td>
-                  <td width="78%"><span class="vexpl"><span class="red"><strong>Note:<br>
-                    </strong></span>be sure to add firewall rules to permit traffic 
-                    through the interface. Firewall rules for an interface in 
-                    bridged mode have no effect on packets to hosts other than 
-                    m0n0wall itself, unless &quot;Enable filtering bridge&quot; 
-                    is checked on the <a href="system_advanced.php">System: 
-                    Advanced functions</a> page.</span></td>
-                </tr>
-              </table>
-</form>
-<script language="JavaScript">
-<!--
-enable_change(false);
-bridge_change(false);
-//-->
-</script>
-<?php else: ?>
-<strong>Optional <?=$index;?> has been disabled because there is no OPT<?=$index;?> interface.</strong>
-<?php endif; ?>
+
+?> 
+
+<script type="text/javascript">
+
+// wait for the DOM to be loaded
+$(document).ready(function() {
+     $('div fieldset div').addClass('ui-widget ui-widget-content ui-corner-content');
+
+     // When a user clicks on the add button, validate and add the host.
+     $("#addbutton").click(function () {
+          var ip = $("#childifs");
+	  $('#MEMBERS').append("<option value='" + ip.val() + "'>"+ip.val() + '</option>');
+          return false;
+     });
+
+     // When a user highlights an item and clicks remove, remove it
+          $('#removebtn').click(function() {  
+          return !$('#MEMBERS option:selected').remove();  
+     });
+
+     // When a user clicks on the submit button, post the form.
+     $("#submitbutton").click(function () {
+	  displayProcessingDiv();
+	  var Options = $.map($('#MEMBERS option'), function(e) { return $(e).val(); } );
+	  var str = Options.join(' ');
+	  var QueryString = $("#iform").serialize()+'&children='+str;
+	  $.post("forms/interfaces_form_submit.php", QueryString, function(output) {
+               $("#save_config").html(output);	  
+	  		   setTimeout(function(){ $('#save_config').dialog('close'); }, 1000);
+			   setTimeout(function(){ $('#content').load('interfaces_trunks_tabs.php'); }, 1250);
+	  });
+	  return false;
+     });
+  
+});
+
+</script> 
+
+<div id="wrapper">
+        <div class="form-container ui-tabs ui-widget ui-corner-all">
+
+	<form action="forms/firewall_form_submit.php" method="post" name="iform" id="iform">
+    <input name="formname" type="hidden" value="interface_trunk">
+	<input name="id" type="hidden" value="<?=$id;?>">
+	<input name="trunkport" type="hidden" value="<?=htmlspecialchars($pconfig['trunkport']);?>">
+	<fieldset>
+		<legend><?=join(": ", $pgtitle);?></legend>
+			<div>
+                             <label for="name">Name</label>
+                             <input id="name" type="text" name="name" value="<?=htmlspecialchars($pconfig['name']);?>" />
+			</div>
+                        <div>
+                             <label for="descr">Description</label>
+                             <input id="descr" type="text" size="50" name="descr" value="<?=htmlspecialchars($pconfig['descr']);?>" />
+			     <p class="note">You may enter a description here for your reference (not parsed).</p>
+			</div>
+            <div>
+                         <label for="type">Trunk Protocol</label>
+            			 <select name="type" class="formfld">
+                      	 	<?php $types = explode(" ", "roundrobin failover loadbalance broadcast none"); foreach ($types as $type): ?>
+                      		<option value="<?=strtolower($type);?>" <?php if (strtolower($type) == strtolower($pconfig['type'])) echo "selected"; ?>>
+                      			<?=htmlspecialchars($type);?>
+                      		</option>
+                      		<?php endforeach; ?>
+                    	</select> 
+			</div>
+            <div>
+            <div>
+                 <label for="MEMBERS">Child Interfaces</label>
+           		 <select style="width: 150px; height: 100px" id="MEMBERS" NAME="MEMBERS" MULTIPLE size=6 width=30>
+                <?php for ($i = 0; $i<sizeof($pconfig['childiflist']); $i++): ?>
+                <option value="<?=$pconfig['childiflist']["childif$i"];?>">
+                <?=$pconfig['childiflist']["childif$i"];?>
+                </option>
+                <?php endfor; ?>
+                <input type=button id='removebtn' value='Remove Selected'><br><br> 
+                <div>
+                  <label for="childifs">Interfaces</label>
+                    <select name="childifs" class="formfld" id="childifs">
+<?php foreach ($portlist as $portname => $portinfo): ?>
+                  <option value="<?=$portname;?>" <?php if ($portname == $iface['if']) echo "selected";?>>
+                  <?php if ($portinfo['isvlan']) {
+                                        $descr = "VLAN {$portinfo['tag']} on {$portinfo['if']}";
+                                        if ($portinfo['descr'])
+                                                $descr .= " (" . $portinfo['descr'] . ")";
+                                        echo htmlspecialchars($descr);
+                                  } else
+                                        echo htmlspecialchars($portname);
+                  ?>
+                  </option>
+
+                  <?php endforeach; ?>
+                    </select> 
+            	  <input type=button id='addbutton' value='Add'>
+	       </div>
+	       </div>   
+               </div>
+                  
+	</fieldset>
+	
+	<div class="buttonrow">
+		<input type="submit" id="submitbutton" value="Save" class="button" />
+	</div>
+
+	</form>
+	
+	</div><!-- /form-container -->
+	
+</div><!-- /wrapper -->

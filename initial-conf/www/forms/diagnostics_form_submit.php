@@ -41,7 +41,7 @@ if ($_POST) {
 
 	switch($form) {
 		case "diagnostic_tcpdump":
-	        global $config, $g;
+	    global $config, $g;
 		unset($input_errors);
 
 		/* input validation */
@@ -85,7 +85,54 @@ if ($_POST) {
         	echo '<INPUT TYPE="button" value="OK" id="okbtn"></center>';
     }
             return $retval;
-	
+
+			case "diagnostic_backuprestore":
+
+			unset($input_errors);
+
+			if (stristr($_POST['Submit'], "Restore"))
+				$mode = "restore";
+			else if (stristr($_POST['Submit'], "Download"))
+				$mode = "download";
+
+			if ($mode) {
+				if ($mode == "download") {
+					config_lock();
+
+					$fn = "config-" . $config['system']['hostname'] . "." . 
+						$config['system']['general']['domain'] . "-" . date("YmdHis") . ".xml";
+
+					$fs = filesize($g['conf_path'] . "/config.xml");
+					header("Content-Type: application/octet-stream"); 
+					header("Content-Disposition: attachment; filename=$fn");
+					header("Content-Length: $fs");
+					readfile($g['conf_path'] . "/config.xml");
+					config_unlock();
+					exit;
+				} else if ($mode == "restore") {
+					if (is_uploaded_file($_FILES['conffile']['tmp_name'])) {
+						if (config_install($_FILES['conffile']['tmp_name']) == 0) {
+							system_reboot();
+							$savemsg = "The configuration has been restored. The firewall is now rebooting.";
+						} else {
+							$errstr = "The configuration could not be restored.";
+							if ($xmlerr)
+								$errstr .= " (XML error: $xmlerr)";
+							$input_errors[] = $errstr;
+						}
+					} else {
+						$input_errors[] = "The configuration could not be restored (file upload error).";
+					}
+                                        echo "<center>$savemsg</center>";
+                                        echo '<script type="text/javascript">
+                                        $("#upload_firmware").dialog("close");
+                                        $("#reboot_nswall").dialog("open");
+                                        setTimeout(function(){ $("#reboot_nswall").dialog("close"); window.location = "/login.htm"; }, 75000);
+                                        </script>';
+				}
+			}
+
+            return;
 			default;
                   echo '<center>Unknown form submited!<br><INPUT TYPE="button" value="OK" name="OK" onClick="$(\'#save_config\').dialog(\'close\')"></center>';
 			return 0;
@@ -121,3 +168,4 @@ if ($_GET) {
 
 
 ?>
+

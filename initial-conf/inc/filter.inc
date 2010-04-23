@@ -1137,8 +1137,11 @@ EOD;
 			
 			if (!$ispptp) {
 			
-				$interface = get_interface_name($rule['interface']);
-				
+				if (!strstr($rule['interface'], "vlan")) {
+					$interface = get_interface_name($rule['interface']);
+				} else {
+                                        $interface = $rule['interface'];
+                                }
 				if (!$interface) {
 					printf("Invalid interface name in rule $i\n");
 					break;
@@ -1568,8 +1571,11 @@ function filter_rdrrules_generate() {
 			for ($iif = 0; $iif < $nif; $iif++) {
 			
 				if (!$ispptp) {
-			
-					$interface = get_interface_name($rule['interface']);
+					if (!strstr($rule['interface'], "vlan")) {
+					        $interface = get_interface_name($rule['interface']);
+				        } else {
+                                                $interface = $rule['interface'];
+                                        }
 				
 					if (!$interface) {
 						printf("Invalid interface name in rule $i\n");

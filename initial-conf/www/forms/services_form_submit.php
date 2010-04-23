@@ -76,7 +76,36 @@ if ($_POST) {
         echo '<INPUT TYPE="button" value="OK" id="okbtn"></center>';
     }
             return $retval;
-	
+			case "service_dnsforwarder":
+				unset($input_errors);
+			    $pconfig = $_POST;
+		 		if (!$input_errors) {	
+		 			$config['dnsmasq']['enable'] = $_POST['enable'] ? true : false;
+
+        			write_config();
+
+        			$retval = 0;
+        			if (!file_exists($d_sysrebootreqd_path)) {
+            			/* nuke the cache file */
+            			config_lock();
+            			$retval = services_dnsmasq_configure();
+						config_unlock();
+        			}
+        			$savemsg = get_std_save_message($retval);
+    			}
+    			if ($retval == 0) {
+            		sleep(2);
+                	echo '<!-- SUBMITSUCCESS --><center>Configuration saved successfully</center>';
+    			} else {
+        			print_input_errors($input_errors);
+        			echo '<script type="text/javascript">
+                 		$("#okbtn").click(function () {
+                     		$("#save_config").dialog("close");
+                 		});
+              			</script>';
+        			echo '<INPUT TYPE="button" value="OK" id="okbtn"></center>';
+    			}
+            	return $retval;
 			default;
                   echo '<center>Unknown form submited!<br><INPUT TYPE="button" value="OK" name="OK" onClick="$(\'#save_config\').dialog(\'close\')"></center>';
 			return 0;

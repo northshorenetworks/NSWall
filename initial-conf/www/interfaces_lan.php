@@ -7,10 +7,11 @@ include("ns-begin.inc");
 
 $lancfg = &$config['interfaces']['lan'];
 
-$pconfig['ipaddr'] = $config['interfaces']['lan']['ipaddr'];
-$pconfig['subnet'] = $config['interfaces']['lan']['subnet'];
-$pconfig['aliaslist'] = $config['interfaces']['lan']['aliaslist'];
-
+$pconfig['ipaddr']    = $lancfg['ipaddr'];
+$pconfig['subnet']    = $lancfg['subnet'];
+$pconfig['aliaslist'] = $lancfg['aliaslist'];
+$pconfig['mtu'] 	  = $lancfg['mtu'];
+$pconfig['spoofmac']  = $lancfg['spoofmac'];
 /* Wireless interface? */
 if (isset($optcfg['wireless'])) {
         require("interfaces_wlan.inc");

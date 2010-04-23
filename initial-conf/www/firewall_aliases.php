@@ -36,12 +36,6 @@ $("#aliassortable").sortable({
    }
 });
 
-// When a user clicks the save new order button submit the order to the backend processing
-$("#saveneworder").click(function () {
-    displayProcessingDiv();
-    var order = $("#aliassortable").sortable("serialize");
-});
-
 // When a user clicks on the rule edit button, load firewall_nat_dynamic_edit.php?id=$id
 $(".col1 a, #newrule a").click(function () {
     var toLoad = $(this).attr('href');
@@ -75,11 +69,11 @@ $(".col2 a").click(function () {
 <?php $nrules = 0; for ($i = 0; isset($a_alias[$i]); $i++):
 $aliasent = $a_alias[$i]; ?>
 <li id="listItem_<?=$i;?>">
-<n class="col1">
+<span class="col1">
 <a href="firewall_aliases_edit.php?id=<?=$i;?>">
 <span title="edit this rule" class="ui-icon ui-icon-circle-zoomin"></span>
 </a>
-</span>/span>
+</span>
 <span class="col2">
 <a href="forms/firewall_form_submit.php?id=<?=$i;?>&action=delete&type=alias">
 <span title="delete this rule" class="ui-icon ui-icon-circle-close"></span>
@@ -91,5 +85,4 @@ $aliasent = $a_alias[$i]; ?>
 <?php $nrules++; endfor; ?>
 </ul>
 <div id="newrule"><center><a href="firewall_aliases_edit.php"><span title="add a new alias" class="ui-icon ui-icon-circle-plus"></span></a></center></div>
-<div id="<?=$if . 'saveneworder';?>"><center>SAVE NEW ORDER LINK</center></div>
 </div>

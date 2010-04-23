@@ -12,9 +12,12 @@ include("ns-begin.inc");
 
 	for ($i = 1; isset($config['interfaces']['opt' . $i]); $i++) {
 		if ($config['interfaces']['opt' . $i]['wireless']['ifmode'] != 'lanbridge' && $config['interfaces']['wireless']['ifmode'] != 'dmzbridge')
-			$iflist['opt' . $i] = $config['interfaces']['opt' . $i]['descr'];
+		$iflist['opt' . $i] = $config['interfaces']['opt' . $i]['descr'];
 	}
 
+	for ($i = 0; isset($config['vlans']['vlan'][$i]); $i++) {
+		$iflist['vlan' . $config['vlans']['vlan'][$i]['tag']] = "VLAN{$config['vlans']['vlan'][$i]['tag']}";
+	}
 ?>
 
 <script type="text/javascript">

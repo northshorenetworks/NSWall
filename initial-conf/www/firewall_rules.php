@@ -24,6 +24,11 @@ require("guiconfig.inc");
             $iflist['opt' . $i] = $config['interfaces']['opt' . $i]['descr'];
     }
 
+	 for ($i = 0; isset($config['vlans']['vlan'][$i]); $i++) {
+	     $iflist['vlan' . $config['vlans']['vlan'][$i]['tag']] = "VLAN{$config['vlans']['vlan'][$i]['tag']}";
+	 }
+
+
 if (!$if || !isset($iflist[$if]))
     $if = "wan";
 

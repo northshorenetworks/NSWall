@@ -262,7 +262,7 @@ $(document).ready(function() {
                         <p class="note">The state if both hosts have sent packets.</p>
 		  </div>
                   <div>
-		        <input type="submit" id"submitbutton" value="Save" class="button" />
+		        <input type="submit" id="submitbutton" value="Save" class="button" />
 	          </div>
 	     </fieldset>
 	</div>
@@ -547,7 +547,7 @@ extended PAWS checks
 		  </div>
          </fieldset>
 		 <div>
-            <input type="submit" id="#submitbutton5" value="Save" class="button" />
+            <input type="submit" id="submitbutton5" value="Save" class="button" />
         </div>
         </div>
 </form>

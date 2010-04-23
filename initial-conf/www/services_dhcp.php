@@ -19,6 +19,10 @@ for ($i = 1; isset($config['interfaces']['opt' . $i]); $i++) {
     }
 }
 
+for ($i = 0; isset($config['vlans']['vlan'][$i]); $i++) {
+    $iflist['vlan' . $config['vlans']['vlan'][$i]['tag']] = "VLAN{$config['vlans']['vlan'][$i]['tag']}";
+}
+
 if (!$if || !isset($iflist[$if]))
     $if = "lan";
 
@@ -32,7 +36,16 @@ list($pconfig['dns1'],$pconfig['dns2']) = $config['dhcpd'][$if]['dnsserver'];
 $pconfig['enable'] = isset($config['dhcpd'][$if]['enable']);
 $pconfig['denyunknown'] = isset($config['dhcpd'][$if]['denyunknown']);
 
-$ifcfg = $config['interfaces'][$if];
+if (strstr($if,'vlan')) {
+    for ($i = 0; isset($config['vlans']['vlan'][$i]); $i++) {
+        if ('vlan' . $config['vlans']['vlan'][$i]['tag'] == $if) {
+            $ifcfg = $config['vlans']['vlan'][$i];
+            break;
+        }
+    }
+} else {
+    $ifcfg = $config['interfaces'][$if];
+}
 
 if (!is_array($config['dhcpd'][$if]['staticmap'])) {
     $config['dhcpd'][$if]['staticmap'] = array();

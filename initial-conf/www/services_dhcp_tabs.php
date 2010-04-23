@@ -14,6 +14,11 @@ for ($i = 1; isset($config['interfaces']['opt' . $i]); $i++) {
         $iflist['opt' . $i] = $oc['descr'];
     }
 }
+
+for ($i = 0; isset($config['vlans']['vlan'][$i]); $i++) {
+	$iflist['vlan' . $config['vlans']['vlan'][$i]['tag']] = "VLAN{$config['vlans']['vlan'][$i]['tag']}";
+}
+
 ?>
 
 <script type="text/javascript">
