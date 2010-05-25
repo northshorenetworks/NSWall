@@ -1,9 +1,0 @@
-COPY    ${DESTDIR}/var/named/etc/named.conf             var/named/etc/named.conf
-COPY    ${DESTDIR}/var/named/standard/localhost         var/named/standard/localhost
-COPY    ${DESTDIR}/var/named/standard/loopback          var/named/standard/loopback
-COPY    ${DESTDIR}/var/named/standard/loopback6.arpa    var/named/standard/loopback6.arpa
-
-COPY    ${DESTDIR}/usr/sbin/named               usr/sbin/named
-COPY    ${DESTDIR}/usr/sbin/rndc                usr/sbin/rndc
-COPY    ${DESTDIR}/usr/sbin/rndc-confgen        usr/sbin/rndc-confgen
-COPY    ${DESTDIR}/usr/sbin/dig                 usr/sbin/dig

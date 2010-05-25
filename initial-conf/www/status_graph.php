@@ -5,6 +5,8 @@ $pgtitle = array("Status", "Traffic graph");
 require("guiconfig.inc");
 include("ns-begin.inc");
 
+system_determine_hwplatform();
+
 $curif = "wan";
 if ($_GET['if'])
 	$curif = $_GET['if'];
@@ -12,9 +14,11 @@ if ($_GET['if'])
 if ($curif == "wan")
 	$ifnum = get_real_wan_interface();
 else
-	$ifnum = $config['interfaces'][$curif]['if'];
+	$ifnum = get_interface_name_by_descr($curif);
 ?>
+
 <?php
+
 $ifdescrs = array('wan' => 'WAN', 'lan' => 'LAN');
 	
 for ($j = 1; isset($config['interfaces']['opt' . $j]); $j++) {
@@ -38,8 +42,8 @@ Interface:
 <select name="if" class="formfld">
 <?php
 foreach ($ifdescrs as $ifn => $ifd) {
-	echo "<option value=\"$ifn\"";
-	if ($ifn == $curif) echo " selected";
+	echo "<option value=\"$ifd\"";
+	if ($ifd == $curif) echo " selected";
 	echo ">" . htmlspecialchars($ifd) . "</option>\n";
 }
 ?>

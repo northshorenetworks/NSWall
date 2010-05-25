@@ -30,11 +30,15 @@
 	POSSIBILITY OF SUCH DAMAGE.
 */
 
+require("guiconfig.inc");
 header("Content-type: image/svg+xml");
+
+system_determine_hwplatform();
 
 /********** HTTP GET Based Conf ***********/
 $ifnum=@$_GET["ifnum"];  // BSD / SNMP interface name / number
-$ifname=@$_GET["ifname"]?$_GET["ifname"]:"Interface $ifnum";  //Interface name that will be showed on top right of graph
+$ifstring = strtoupper(get_interface_descr($ifnum));
+$ifname=@$_GET["ifname"]?$_GET["ifname"]:"Interface $ifstring";  //Interface name that will be showed on top right of graph
 
 /********* Other conf *******/
 $scale_type="up";               //Autoscale default setup : "up" = only increase scale; "follow" = increase and decrease scale according to current graphed datas

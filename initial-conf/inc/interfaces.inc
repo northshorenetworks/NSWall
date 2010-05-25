@@ -365,7 +365,7 @@ function interfaces_optional_configure_if($opti) {
 		if ($optcfg['ipaddr'] == 'dhcp') {
 			 mwexec("/sbin/ifconfig " . $optif . " " . $addflags);
 			 killbypid("{$g['varrun_path']}/" . $optif . "_dhclient.pid"); 
-			 mwexec("/sbin/dhclient -bq " . $optif);
+			 mwexec("/sbin/dhclient -q " . $optif);
 			 system("/usr/bin/pgrep -U _dhcp -f \"dhclient: $optif\" > {$g['varrun_path']}/" . "_dhclient.pid");
 		} else {	
 			mwexec("/sbin/ifconfig " . $optif . " " . 
@@ -691,7 +691,7 @@ EOD;
         mwexec("/sbin/ifconfig " . $wanif); 
 
 	/* fire up dhclient - don't wait for the lease (-n) */
-	mwexec("/sbin/dhclient -bqc {$g['varetc_path']}/dhclient.conf " . $wanif);
+	mwexec("/sbin/dhclient -qc {$g['varetc_path']}/dhclient.conf " . $wanif);
 	system("/usr/bin/pgrep -U _dhcp -f \"dhclient: $wanif\" > {$g['varrun_path']}/dhclient.pid");
 	system("/usr/bin/pgrep -o dhclient > {$g['varrun_path']}/dhclient.pid");
 	mwexec("/sbin/ifconfig " . $wanif . $addflags);

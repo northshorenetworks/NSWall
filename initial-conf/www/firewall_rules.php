@@ -33,7 +33,7 @@ if (!$if || !isset($iflist[$if]))
     $if = "wan";
 
 $ifsortable = '#' . $if . 'sortable';
-$ifsaveneworder = '#' . $if . 'saveneworder';
+$ifsaveneworder = '"#' . $if . 'saveneworder"';
 ?>
 
 <style type="text/css">
@@ -50,7 +50,7 @@ $ifsaveneworder = '#' . $if . 'saveneworder';
 
 // Hide the Save Changes Button
 $(document).ready(function() {
-        //hidediv("<?=$if . 'saveneworder';?>");
+        $(<?=$ifsaveneworder;?>).hide();
 });
 
 // Make the list of rules for this interface sortable
@@ -59,18 +59,18 @@ $("<?= $ifsortable; ?>").sortable({
    containment: 'parent',
    items: 'li:not(.ui-state-disabled)',
    update: function(event, ui) {
-        //showdiv("<?=$if . 'saveneworder';?>");
+        $(<?=$ifsaveneworder;?>).show();
    }
 });
 
 // When a user clicks the save new order button submit the order to the backend processing
-$("<?= $ifsaveneworder; ?>").click(function () {
+$(<?=$ifsaveneworder;?>).click(function () {
     displayProcessingDiv();
     var order = $("<?= $ifsortable; ?>").sortable("serialize");
     $("#currentorder").load("processing_sortable.php?"+order+"&sortif=<?=$if?>");
         $("<?= $ifsortable; ?>").sortable('refresh');
-        hidediv("<?=$if . 'saveneworder';?>");
-        setTimeout(function(){ $('#save_config').dialog('close'); }, 1000);
+        $(<?=$ifsaveneworder;?>).hide();
+        setTimeout(function(){ $('#save_config').dialog('close'); }, 2500);
     });
 
 // When a user clicks on the rule edit button, load firewall_rules_edittabs.php?id=$id
@@ -126,5 +126,5 @@ continue; ?>
 <?php $nrules++; endfor; ?>
 </ul>
 <div id="newrule"><center><a href="firewall_rules_edittabs.php?if=<?=$if;?>"><span title="add a new rule" class="ui-icon ui-icon-circle-plus"></span></a></center></div>
-<div id="<?=$if . 'saveneworder';?>"><center>SAVE NEW ORDER LINK</center></div>
+<div id=<?=$if . 'saveneworder';?>><center>SAVE NEW ORDER LINK</center></div>
 </div>

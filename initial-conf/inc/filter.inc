@@ -109,7 +109,7 @@ function filter_configure() {
 	
 	/* load pf ruleset */
 	if(isset($config['system']['pfdebug'])) {
-		$fd = popen("/sbin/pfctl -Fn -Fq -Fr -FT -vv -f - > /tmp/pfctl.error", "w");
+		$fd = popen("/sbin/pfctl -Fq -Fr -FT -vv -f - > /tmp/pfctl.error", "w");
         	if (!$fd) {
                 	printf("Cannot open /sbin/pfctl in filter_configure()\n");
                 	return 1;
@@ -128,7 +128,7 @@ function filter_configure() {
         	fclose($debug_pfconf);
 
 	} else {
-		$fd = popen("/sbin/pfctl -Fn -Fq -Fr -FT -q -f - > /dev/null 2>&1", "w");
+		$fd = popen("/sbin/pfctl -Fq -Fr -FT -q -f - > /dev/null 2>&1", "w");
 		if (!$fd) {
 			printf("Cannot open /sbin/pfctl in filter_configure()\n");
 			return 1;
@@ -216,14 +216,14 @@ function filter_flush_nat_table() {
 function filter_flush_state_table() {
 	global $config, $g;
 	
-	return mwexec("/sbin/pfctl -F statesS");
+	return mwexec("/sbin/pfctl -F states");
 }
 
 function filter_nat_rules_generate_if($if, $src, $dst, $target, $portmap = true) {
         if (is_ipaddr($target)) {
-			$natrule .= "nat on $if from $src $dst -> $target\n";
+			$natrule .= "match out on $if from $src $dst nat-to $target\n";
 		} else {
-			$natrule .= "nat on $if from $src $dst -> ($if)\n";
+			$natrule .= "match out on $if from $src $dst nat-to ($if)\n";
         }
 		return $natrule;
 }
@@ -422,9 +422,7 @@ function filter_nat_rules_generate() {
 			
 			$natrules .= "binat on {$natif} from {$natent['internal']} to any -> {$natent['external']}\n";
 		}
-	}
-	/* we will always have the nat anchors for ftp */
-                $natrules .= 'nat-anchor "ftp-proxy/*"' . "\n";
+	}       
 		
 		/* Dynamic outbound rules - advanced or standard */
                 if (is_array($config['nat']['advancedoutbound']['rule'])) {
@@ -1396,7 +1394,7 @@ EOD;
 ##### System Anchors #####
 ##########################
 anchor "ftp-proxy/*"
-anchor "vpn/*"
+anchor "vpn/*" 
 
 EOD;
 if(isset($config['relays']['pfanchor']))
@@ -1464,7 +1462,6 @@ function filter_rdrrules_generate() {
 	$ipfrules .= "#################\n";
 
 	/* if we have a rule with dst port 20/21 setup the ftpproxy anchor */
-        $ipfrules .= 'rdr-anchor "ftp-proxy/*"' . "\n";
 	$i = 0;
 	if (isset($config['filter']['rule']))
 		foreach ($config['filter']['rule'] as $rule) {
@@ -1609,7 +1606,7 @@ function filter_rdrrules_generate() {
 				}
 
 				if (!$ispptp) {
-					$line .= "rdr on $interface ";
+					$line .= "match in on $interface ";
 				}
 			
 				if($proto != 'none') {
@@ -1636,7 +1633,7 @@ function filter_rdrrules_generate() {
                                 	        $string .= "$portlist[$protocol], ";
                                 	}
 					$string = preg_replace("/\, $/", "", $string);
-					$line .= "\\\nport{ $string } -> $internal";	
+					$line .= "\\\nport{ $string } rdr-to $internal";	
 				}	
 			
 				$line .= "\n";

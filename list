@@ -138,7 +138,7 @@ SPECIAL sh ${CURDIR}/tools/runlist.sh ${CURDIR}/list.debug
 #SPECIAL sh ${CURDIR}/tools/runlist.sh ${CURDIR}/list.firewall
 # Copy files specifc to MGMTSVR module
 #SPECIAL sh ${CURDIR}/tools/runlist.sh ${CURDIR}/list.mgmtsvr
-SPECIAL ${BINDIR}/SG/bin/sourceguardian --conj -r --external /conf/license.lic --projkey 12345 --projid 12345 --phpversion 4.4 -z 9 -b- @${CURDIR}/sgproject
+#SPECIAL ${BINDIR}/SG/bin/sourceguardian --conj -r --external /conf/license.lic --projkey 12345 --projid 12345 --phpversion 4.4 -z 9 -b- @${CURDIR}/sgproject
 
 # Miscellaneous extra tools
 COPY	${CURDIR}/tools/rw.sh			bin/rw
@@ -175,7 +175,6 @@ COPY ${DESTDIR}/bin/stty			bin/stty
 COPY ${DESTDIR}/bin/sync			bin/sync
 COPY ${DESTDIR}/bin/systrace			bin/systrace
 COPY ${DESTDIR}/bin/test			bin/test
-COPY ${DESTDIR}/sbin/brconfig			sbin/brconfig
 COPY ${DESTDIR}/sbin/ldconfig			sbin/ldconfig
 COPY ${DESTDIR}/sbin/dhclient			sbin/dhclient
 COPY ${DESTDIR}/sbin/dhclient-script		sbin/dhclient-script
