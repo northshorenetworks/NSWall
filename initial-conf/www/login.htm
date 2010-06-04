@@ -1,4 +1,6 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" 
+"http://www.w3.org/TR/html4/strict.dtd">
+
 <html>
 <head>
 <title>NSWall User Login</title>
@@ -16,7 +18,8 @@
 
      $(document).ready(function() {
       $('div fieldset div').addClass('ui-widget ui-widget-content ui-corner-content');
-		$("#login_nswall").dialog({ 
+				$.ui.dialog.defaults.bgiframe = true;
+				$("#login_nswall").dialog({ 
                     width: 400, 
                     height: 300, 
                     hide: 'scale', 

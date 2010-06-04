@@ -613,7 +613,10 @@ if ($retval == 0) {
 	  		 $optcfg['bandwidth'] = $_POST['bandwidth'];
 			 $optcfg['altqenable'] = $_POST['altqenable'] ? true : false;
 		 	/* Wireless interface? */
-			if (isset($optcfg['wireless'])) {
+			system_determine_hwplatform();
+			$optcfg['if'] = $g['hwplatformconfig'][INTERFACES]['OPT' . $index]['IF'];
+			
+			if (preg_match($g['wireless_regex'], $optcfg['if'])) {
 				unset($optcfg['wireless']);
  
 				$optcfg['wireless']['ifmode'] = $_POST['ifmode'];

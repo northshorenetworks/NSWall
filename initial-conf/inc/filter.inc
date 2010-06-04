@@ -236,7 +236,7 @@ function filter_tables_generate() {
 ################
 #### Tables  ###
 ################
-table <abusive_hosts> persist
+table <blocked_sites> persist
 EOD;
 
 if (isset($config['filter']['rule'])) {
@@ -792,6 +792,13 @@ function filter_rules_generate() {
 	$ipfrules .= <<<EOD
 
 #######################
+#### Blocked Sites ####
+#######################
+anchor "Blocked_Sites" {
+	block in $log quick from <blocked_sites> to any
+}
+
+#######################
 #### Default Policy ###
 #######################
 anchor "default" {
@@ -830,7 +837,7 @@ EOD;
 	}
 
 EOD;
-	}
+	} else {
 	$ipfrules .= <<<EOD
 
 	#######################################################
@@ -839,6 +846,7 @@ EOD;
 	block in quick from urpf-failed
 
 EOD;
+	}
 	
 	/* pass traffic between statically routed subnets and the subnet on the
 	   interface in question to avoid problems with complicated routing
@@ -1360,7 +1368,7 @@ EOD;
 					$optionsline .= "max-src-conn-rate {$rule['options']['maxsrcconrateconns']}/{$rule['options']['maxsrcconrateseconds']}, ";
 				}
 			 	if (isset($rule['options']['overload'])) {
-                                        $optionsline .= 'overload <abusive_hosts> ';
+                                        $optionsline .= 'overload <blocked_sites> ';
                                 }
 				if (isset($rule['options']['flush'])) {
                                         $optionsline .= "flush, ";

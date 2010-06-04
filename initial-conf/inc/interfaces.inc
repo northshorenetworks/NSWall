@@ -349,14 +349,14 @@ function interfaces_optional_configure_if($opti) {
 	
 		if ($optcfg['wireless']['ifmode'] == 'lanbridge' || $optcfg['wireless']['ifmode'] == 'dmzbridge') {
 			if ($optcfg['wireless']['ifmode'] == 'lanbridge') {
-				mwexec("/sbin/ifconfig ral0 up" . $addflags);	
+				mwexec("/sbin/ifconfig $optif up" . $addflags);	
 				mwexec("/sbin/ifconfig bridge0 create up");
-				mwexec("/sbin/brconfig bridge0 add " . $optif . " add " . $config['interfaces']['lan']['if']);
+				mwexec("/sbin/ifconfig bridge0 add " . $optif . " add " . $g['hwplatformconfig'][INTERFACES][LAN]);
 			}
 			if ($optcfg['wireless']['ifmode'] == 'dmzbridge') {
       				mwexec("/sbin/ifconfig ral0 up"); 
 	                        mwexec("/sbin/ifconfig bridge0 create up");
-                        	mwexec("/sbin/brconfig bridge0 add " . $optif . " add " . $config['interfaces']['opt1']['if']);
+                        	mwexec("/sbin/ifconfig bridge0 add " . $optif . " add " . $config['interfaces']['opt1']['if']);
 			}
 			if ($g['booting'])
                         	echo "done\n";
@@ -365,7 +365,7 @@ function interfaces_optional_configure_if($opti) {
 		if ($optcfg['ipaddr'] == 'dhcp') {
 			 mwexec("/sbin/ifconfig " . $optif . " " . $addflags);
 			 killbypid("{$g['varrun_path']}/" . $optif . "_dhclient.pid"); 
-			 mwexec("/sbin/dhclient -q " . $optif);
+			 mwexec("/sbin/dhclient -bq " . $optif);
 			 system("/usr/bin/pgrep -U _dhcp -f \"dhclient: $optif\" > {$g['varrun_path']}/" . "_dhclient.pid");
 		} else {	
 			mwexec("/sbin/ifconfig " . $optif . " " . 
@@ -379,17 +379,18 @@ function interfaces_optional_configure_if($opti) {
        		}	
 			
 			/* Check for any old aliases or ip's that are on the interface and delete them if not configured */
-        	if (is_array(get_current_ip_addresses($optif))) {
-				foreach (get_current_ip_addresses($optif) as $ip) {
-            		if ($ip == $optcfg['ipaddr']) {
-                		continue;
-            		} elseif (in_array($ip, $optcfg['aliaslist'])) {
+   			if (get_current_ip_addresses($optif)) {
+   				if (is_array(get_current_ip_addresses($optif))) {
+					foreach (get_current_ip_addresses($optif) as $ip) {
+            			if ($ip == $optcfg['ipaddr']) {
+                			continue;
+            			} elseif (in_array($ip, $optcfg['aliaslist'])) {
                 		    continue;
-            		} else {
-                		mwexec("/usr/bin/logger -p local0.info -t webui removing address: $ip from $optif");
-               	 		mwexec("/sbin/ifconfig " . $optif . " delete " . $ip);
-            		}
-
+            			} else {
+                			mwexec("/usr/bin/logger -p local0.info -t webui removing address: $ip from $optif");
+               	 			mwexec("/sbin/ifconfig " . $optif . " delete " . $ip);
+            			}
+					}
         		}
 			}
 		}
@@ -691,7 +692,7 @@ EOD;
         mwexec("/sbin/ifconfig " . $wanif); 
 
 	/* fire up dhclient - don't wait for the lease (-n) */
-	mwexec("/sbin/dhclient -qc {$g['varetc_path']}/dhclient.conf " . $wanif);
+	mwexec("/sbin/dhclient -bqc {$g['varetc_path']}/dhclient.conf " . $wanif);
 	system("/usr/bin/pgrep -U _dhcp -f \"dhclient: $wanif\" > {$g['varrun_path']}/dhclient.pid");
 	system("/usr/bin/pgrep -o dhclient > {$g['varrun_path']}/dhclient.pid");
 	mwexec("/sbin/ifconfig " . $wanif . $addflags);

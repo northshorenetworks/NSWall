@@ -15,8 +15,15 @@ if (!$index)
 
 $optcfg = &$config['interfaces']['opt' . $index];
 
+/* Find Wireless interface(s), It is possible that a platform
+may have more than 1 wireless interface, however we will use the
+first wireless interace we find here for the wizard to configure */
+system_determine_hwplatform();
+$optcfg['if'] = $g['hwplatformconfig'][INTERFACES]['OPT' . $index]['IF'];
+
 /* Wireless interface? */
-if (isset($optcfg['wireless'])) {
+
+if (preg_match($g['wireless_regex'], $optcfg['if'])) {
     require("interfaces_wlan.inc");
     wireless_config_init();
 }
@@ -46,7 +53,7 @@ $pgtitle = array("Interfaces", htmlspecialchars($optcfg['descr']));
 $(document).ready(function() {
      $('div fieldset div').addClass('ui-widget ui-widget-content ui-corner-content');
 
-     <?php if (isset($optcfg['wireless'])): ?>
+     <?php if (preg_match($g['wireless_regex'], $optcfg['if'])): ?>
      var wifimode = $("#ifmode");
      switch(wifimode.val()){
           case 'nobridge':
@@ -277,7 +284,7 @@ $(document).ready(function() {
                 </div>
               </div>
                 <div style='display: none;' id='dhcpdiv'></div>
-			<?php if (isset($optcfg['wireless'])): ?>
+			<?php if (preg_match($g['wireless_regex'], $optcfg['if'])): ?>
                              <div>
                                  <label for="ifmode">Wireless Mode</label>
                                  <select name="ifmode" class="formfld" id="ifmode" onChange="switchwifibridge(document.iform.ifmode.value)">

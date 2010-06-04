@@ -164,6 +164,8 @@ COPY ${CURDIR}/initial-conf/www/js/ui.draggable.js              usr/www/js/ui.dr
 COPY ${CURDIR}/initial-conf/www/js/ui.droppable.js              usr/www/js/ui.droppable.js
 COPY ${CURDIR}/initial-conf/www/js/ui.sortable.js               usr/www/js/ui.sortable.js
 COPY ${CURDIR}/initial-conf/www/js/ui.progressbar.js            usr/www/js/ui.progressbar.js
+COPY ${CURDIR}/initial-conf/www/js/jquery.flot.js 	            usr/www/js/jquery.flot.js
+COPY ${CURDIR}/initial-conf/www/js/excanvas.min.js              usr/www/js/excanvas.min.js
 COPY ${CURDIR}/initial-conf/www/js/init.js                      usr/www/js/init.js
 COPY ${CURDIR}/initial-conf/www/js/jquery.form.js               usr/www/js/jquery.form.js
 COPY ${CURDIR}/initial-conf/www/js/nss.js     		            usr/www/js/nss.js

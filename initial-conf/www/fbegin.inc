@@ -149,7 +149,8 @@ $menu['Support']['Submit Case'] = array ('support_case.php');
 <script type="text/javascript" src="js/ui.sortable.js"></script>
 <script type="text/javascript" src="js/swfobject.js"></script>
 <script type="text/javascript" src="js/jquery.uploadify.v2.1.0.min.js"></script>
-
+<!--[if IE]><script language="javascript" type="text/javascript" src="../excanvas.min.js"></script><![endif]--> 
+<script type="text/javascript" src="js/jquery.flot.js"></script> 
 
 <body link="#0000CC" vlink="#0000CC" alink="#0000CC">
 <div id="webui">

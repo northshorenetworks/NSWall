@@ -782,6 +782,14 @@ $defaults = split(' ', $defaults);
                   <input name="maxsrcconrateseconds" type="text" class="formfld" id="maxsrcconrateseconds" size="5" value="<?=htmlspecialchars($pconfig['maxsrcconrateseconds']);?>"> seconds
                   <p class="note">Limit the rate of new connections over a time interval.  The connection rate is an approximation calculated as a moving average.</p>
                 </div>
+				<div>
+                  <label for="overload">Add Violators to Blocked Sites List</label>
+                  <input name="overload" type="checkbox" id="overload" value="yes" <?php if ($pconfig['overload']) echo "checked"; ?>>
+                </div>
+			 	<div>
+                  <label for="flush">Flush all States of Violators</label>
+                  <input name="flush" type="checkbox" id="flush" value="yes" <?php if ($pconfig['flush']) echo "checked"; ?>>
+                </div>
                 </fieldset>
                 <div class="buttonrow">
 		<input type="submit" id="submitbutton3" value="Save" class="button" />

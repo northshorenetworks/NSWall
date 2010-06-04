@@ -156,11 +156,6 @@ body,td,th,input,select {
         margin: 0;
 }
 
-table,tr {
-        padding-left: 2em;
-        width: 80%;
-}
-
 form {
 	margin: 0px;
 }

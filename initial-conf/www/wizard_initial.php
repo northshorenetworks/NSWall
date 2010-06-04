@@ -43,8 +43,11 @@ function is_timezone($elt) {
 /* Find Wireless interface(s), It is possible that a platform 
 may have more than 1 wireless interface, however we will use the
 first wireless interace we find here for the wizard to configure */
-for ($i = 1; isset($config['interfaces']['opt' . $i]); $i++) {
+system_determine_hwplatform();
+
+for ($i = 1; isset($g['hwplatformconfig'][INTERFACES]['OPT' . $i]); $i++) {
 	$optcfg = $config['interfaces']['opt' . $i];
+	$optcfg['if'] = $g['hwplatformconfig'][INTERFACES]['OPT' . $i]['IF'];
  	if (preg_match($g['wireless_regex'], $optcfg['if'])) {	
 		$wireless_index = $i;
 		break;
