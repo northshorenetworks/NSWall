@@ -3,10 +3,11 @@
 
 require("guiconfig.inc");
 
+    filter_rules_sort();
+
     if (!is_array($config['filter']['rule']))
         $config['filter']['rule'] = array();
 
-    filter_rules_sort();
     $a_filter = &$config['filter']['rule'];
 
     $if = $_GET['if'];
@@ -24,9 +25,9 @@ require("guiconfig.inc");
             $iflist['opt' . $i] = $config['interfaces']['opt' . $i]['descr'];
     }
 
-	 for ($i = 0; isset($config['vlans']['vlan'][$i]); $i++) {
-	     $iflist['vlan' . $config['vlans']['vlan'][$i]['tag']] = "VLAN{$config['vlans']['vlan'][$i]['tag']}";
-	 }
+     for ($i = 0; isset($config['vlans']['vlan'][$i]); $i++) {
+         $iflist['vlan' . $config['vlans']['vlan'][$i]['tag']] = "VLAN{$config['vlans']['vlan'][$i]['tag']}";
+     }
 
 
 if (!$if || !isset($iflist[$if]))
@@ -42,8 +43,9 @@ $ifsaveneworder = '"#' . $if . 'saveneworder"';
     <?= $ifsortable; ?> li span.col1 { position:relative; float:left; width:5em; }
     <?= $ifsortable; ?> li span.col2 { position:relative; float:left; width:5em; }
     <?= $ifsortable; ?> li span.col3 { position:relative; float:left; width:5em; }
-    <?= $ifsortable; ?> li span.col4 { position:relative; float:left; width:10em; }
-    <?= $ifsortable; ?> li span.col5 { position:relative; float:left; width:30em; }
+    <?= $ifsortable; ?> li span.col4 { position:relative; float:left; width:7.5em; }
+    <?= $ifsortable; ?> li span.col5 { position:relative; float:left; width:12.5em; }
+    <?= $ifsortable; ?> li span.col6 { position:relative; float:left; width:30em; }
 </style>
 
 <script type="text/javascript">
@@ -67,7 +69,7 @@ $("<?= $ifsortable; ?>").sortable({
 $(<?=$ifsaveneworder;?>).click(function () {
     displayProcessingDiv();
     var order = $("<?= $ifsortable; ?>").sortable("serialize");
-    $("#currentorder").load("processing_sortable.php?"+order+"&sortif=<?=$if?>");
+    $("#currentorder").load("process_rule_sortable.php?"+order+"&sortif=<?=$if?>");
         $("<?= $ifsortable; ?>").sortable('refresh');
         $(<?=$ifsaveneworder;?>).hide();
         setTimeout(function(){ $('#save_config').dialog('close'); }, 2500);
@@ -101,13 +103,12 @@ $(".col3 a").click(function () {
 <span class="col1">Order</span>
 <span class="col2">Edit</span>
 <span class="col3">Delete</span>
-<span class="col4">Name</span>
-<span class="col5">Description</span>
+<span class="col4">Interface</span>
+<span class="col5">Name</span>
+<span class="col6">Description</span>
 </li>
 <?php $nrules = 0; for ($i = 0; isset($a_filter[$i]); $i++):
-$filterent = $a_filter[$i];
-if ($filterent['interface'] != $if)
-continue; ?>
+$filterent = $a_filter[$i]; ?>
 <li id="listItem_<?=$i;?>">
 <span class="col1"><span class="ui-icon ui-icon-triangle-2-n-s"></span></span>
 <span class="col2">
@@ -120,8 +121,9 @@ continue; ?>
 <span title="delete this rule" class="ui-icon ui-icon-circle-close"></span>
 </a>
 </span>
-<span class="col4"><?php if (isset($filterent['name'])) echo strtoupper($filterent['name']); else echo "*"; ?><?=$textse;?></span>
-<span class="col5"><?php if (isset($filterent['descr'])) echo $filterent['descr'];?></span>
+<span class="col4"><?php if (isset($filterent['name'])) echo strtoupper($filterent['interface']); else echo "*"; ?><?=$textse;?></span>
+<span class="col5"><?php if (isset($filterent['name'])) echo strtoupper($filterent['name']); else echo "*"; ?><?=$textse;?></span>
+<span class="col6"><?php if (isset($filterent['descr'])) echo $filterent['descr'];?></span>
 </li>
 <?php $nrules++; endfor; ?>
 </ul>

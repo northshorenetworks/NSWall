@@ -168,13 +168,16 @@ function interfaces_vlan_configure() {
 			mwexec($cmd);
 
 			/* Setup IP info for vlan */
-			$addflags = ' description "VLAN"';
+			$addflags = " description VLAN{$vlan['tag']}";
 			if ($vlan['mtu'])
                 $addflags .= " mtu " . $vlan['mtu'];
 	
 			$vlanif = "vlan{$vlan['tag']}";
 
-    		mwexec("/sbin/ifconfig " . $vlanif . " -inet6 " . escapeshellarg($vlan['ipaddr'] . "/" . $vlan['subnet']) . $addflags);
+			if ($vlan['rtable'] != 'DEFAULT')
+				$addflags .= " rdomain " . get_route_table_id_by_name($vlan['rtable']);
+			
+			mwexec("/sbin/ifconfig " . $vlanif . " -inet6 " . escapeshellarg($vlan['ipaddr'] . "/" . $vlan['subnet']) . $addflags);
     		
 			$i++;
 		}

@@ -55,7 +55,6 @@ foreach ($portlist as $portname => $portinfo) {
 
 // wait for the DOM to be loaded
 $(document).ready(function() {
-     $('div fieldset div').addClass('ui-widget ui-widget-content ui-corner-content');
 
      // When a user clicks on the add button, validate and add the host.
      $("#addbutton").click(function () {

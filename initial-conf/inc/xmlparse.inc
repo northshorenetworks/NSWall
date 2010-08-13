@@ -34,8 +34,8 @@
  */
 $listtags = explode(" ", "rule user group key dnsserver virtualhost winsserver pages relay " .
      "proxyaction encryption-algorithm-option hash-algorithm-option hosts gw onetoone " .
-     "staticmap abusivehost route alias trunk pipe queue shellcmd cacert cert ca earlyshellcmd mobilekey " .
-     "configsynchost proxyarpnet sslcert passthrumac allowedip wolentry vlan domainoverrides element");
+     "staticmap abusivehost table route alias trunk pipe queue shellcmd cacert cert ca earlyshellcmd mobilekey " .
+     "configsynchost proxyarpnet sslcert passthrumac allowedip wolentry vlan domainoverrides element routetable");
 
 function startElement($parser, $name, $attrs){
      global $depth, $curpath, $config, $havedata, $listtags;

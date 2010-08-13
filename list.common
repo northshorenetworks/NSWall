@@ -59,7 +59,8 @@ COPY ${CURDIR}/initial-conf/www/forms/vpn_form_submit.php       usr/www/forms/vp
 COPY ${CURDIR}/initial-conf/www/graph.php						usr/www/graph.php
 COPY ${CURDIR}/initial-conf/www/firewall_rules_tabs.php      	usr/www/firewall_rules_tabs.php
 COPY ${CURDIR}/initial-conf/www/firewall_rules.php				usr/www/firewall_rules.php
-COPY ${CURDIR}/initial-conf/www/processing_sortable.php      	usr/www/processing_sortable.php
+COPY ${CURDIR}/initial-conf/www/process_rule_sortable.php      	usr/www/process_rule_sortable.php
+COPY ${CURDIR}/initial-conf/www/process_nat_sortable.php        usr/www/process_nat_sortable.php
 COPY ${CURDIR}/initial-conf/www/firewall_rules_edittabs.php		usr/www/firewall_rules_edittabs.php
 COPY ${CURDIR}/initial-conf/www/firewall_virtual_ip.php			usr/www/firewall_virtual_ip.php
 COPY ${CURDIR}/initial-conf/www/firewall_virtual_ip_edit.php	usr/www/firewall_virtual_ip_edit.php
@@ -120,6 +121,8 @@ COPY ${CURDIR}/initial-conf/www/system_firmware.php				usr/www/system_firmware.p
 COPY ${CURDIR}/initial-conf/www/system_groupmanager.php			usr/www/system_groupmanager.php
 COPY ${CURDIR}/initial-conf/www/system_networking.php			usr/www/system_networking.php
 COPY ${CURDIR}/initial-conf/www/system_routes.php				usr/www/system_routes.php
+COPY ${CURDIR}/initial-conf/www/system_route_tables.php         usr/www/system_route_tables.php
+COPY ${CURDIR}/initial-conf/www/system_route_table_edit.php     usr/www/system_route_table_edit.php
 COPY ${CURDIR}/initial-conf/www/system_routes_edit.php			usr/www/system_routes_edit.php
 COPY ${CURDIR}/initial-conf/www/system_routes_tabs.php          usr/www/system_routes_tabs.php
 COPY ${CURDIR}/initial-conf/www/system_usermanager.php			usr/www/system_usermanager.php

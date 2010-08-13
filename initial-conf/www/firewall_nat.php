@@ -63,7 +63,7 @@ $("<?= $ifsortable; ?>").sortable({
 $("<?= $ifsaveneworder; ?>").click(function () {
     displayProcessingDiv();
     var order = $("<?= $ifsortable; ?>").sortable("serialize");
-    $("#currentorder").load("processing_sortable.php?"+order+"&sortif=<?=$if?>");
+    $("#currentorder").load("process_nat_sortable.php?"+order+"&sortif=<?=$if?>");
         $("<?= $ifsortable; ?>").sortable('refresh');
         hidediv("<?=$if . 'saveneworder';?>");
         setTimeout(function(){ $('#save_config').fadeOut('slow'); }, 1000);

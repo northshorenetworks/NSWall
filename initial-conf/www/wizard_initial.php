@@ -77,7 +77,6 @@ sort($timezonelist);
 <script language="javascript">
 
      $(document).ready(function() {
-      $('div fieldset div').addClass('ui-widget ui-widget-content ui-corner-content');
      
       // Display the Welcome Screen
       $("#loading").hide();

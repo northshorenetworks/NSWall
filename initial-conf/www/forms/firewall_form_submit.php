@@ -383,6 +383,66 @@ if ($_POST) {
 					echo '<INPUT TYPE="button" value="OK" id="okbtn"></center>';
 			}
 				return $retval;
+		case "firewall_blockedsites":
+                
+			$a_blockedsites = &$config['filter']['blockedsites'];
+
+			unset($input_errors);
+			$pconfig = $_POST;
+
+    		/* input validation */
+    		$reqdfields = explode(" ", "memberslist");
+    		$reqdfieldsn = explode(",", "Memberslist");
+
+    		do_input_validation($_POST, $reqdfields, $reqdfieldsn, &$input_errors);
+    		
+    		$memberslist = explode(' ', $_POST['memberslist']);
+        	for($i=0;$i<sizeof($memberslist); $i++) {
+                    $member = 'member'."$i";
+                    $prop = preg_replace("/ /", "", $memberslist[$i]);
+                    $a_blockedsites['memberlist'][$member] = $prop;
+        	}
+                 
+                $nonmemberslist = explode(' ', $_POST['nonmemberslist']);
+        	for($i=0;$i<sizeof($nonmemberslist); $i++) {
+                    $nonmember = 'nonmember'."$i";
+                    $nonprop = preg_replace("/ /", "", $nonmemberslist[$i]);
+                    $a_blockedsites['nonmemberlist'][$nonmember] = $nonprop;
+        	}
+
+		$a_blockedsites['dynamictimeout'] = $_POST['dynamictimeout'];
+
+    		$xmlconfig = dump_xml_config($config, $g['xml_rootobj']);
+
+		    if (filter_parse_config($xmlconfig)) {
+                $input_errors[] = "Could not parse the generated config file";
+                $input_errors[] = "See log file for details";
+                $input_errors[] = "XML Config file not modified";
+            }
+
+
+			$retval = 0;
+                if (!$input_errors) {
+                    write_config();
+                    config_lock();
+                    $retval = filter_configure();
+					$retval |= system_cron_reload();
+					config_unlock();
+                    push_config('pftables');
+                }
+                if ($retval == 0 && !$input_errors) {
+                    sleep(2);
+                    echo '<!-- SUBMITSUCCESS --><center>Configuration saved successfully</center>';
+                } else {
+					print_input_errors($input_errors);
+                                        echo '<script type="text/javascript">
+                                        $("#okbtn").click(function () {	
+                                            $("#save_config").dialog("close");
+                                        });
+                                        </script>';
+					echo '<INPUT TYPE="button" value="OK" id="okbtn"></center>';
+			}
+				return $retval;	
 		case "firewall_nat":
 				if (!is_array($config['nat']['advancedoutbound']['rule']))
     				$config['nat']['advancedoutbound']['rule'] = array();

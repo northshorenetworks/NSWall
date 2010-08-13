@@ -26,56 +26,56 @@ function dump_pfoptions() {
 }
 
 function dump_df() {
-        global $g, $config;
-        printf("<pre>");
-        $df = `/bin/df -h`;
-   	 	echo $df;
+    global $g, $config;
+    printf("<pre>");
+    $df = `/bin/df -h`;
+    echo $df;
 }
 
 function dump_arp() {
-        global $g, $config;
-        printf("<pre>");
-        $arp = `/usr/sbin/arp -a`;
-    	echo $arp;
+    global $g, $config;
+    printf("<pre>");
+    $arp = `/usr/sbin/arp -a`;
+    echo $arp;
 }
 
 function dump_interfaces() {
-        global $g, $config;
-        printf("<pre>");
-        $ifconfig = `/sbin/ifconfig -A`;
-    	echo $ifconfig;
+    global $g, $config;
+    printf("<pre>");
+    $ifconfig = `/sbin/ifconfig -A`;
+    echo $ifconfig;
 }
 
 function dump_routes() {
-        global $g, $config;
-        printf("<pre>");
-        $routes = `/sbin/route -n show -inet`;
-    	echo $routes;
+    global $g, $config;
+    printf("<pre>");
+    $routes = `/sbin/route -n show -inet`;
+    echo $routes;
 }
 
 function dump_xmlconf() {
-        global $g, $config;
-        printf("<pre>\n");
-        $xml = `cat /conf/config.xml`;
-	    $xml = htmlentities($xml);
-    	echo $xml;
-        printf("</pre>\n");
+    global $g, $config;
+    printf("<pre>\n");
+    $xml = `cat /conf/config.xml`;
+    $xml = htmlentities($xml);
+    echo $xml;
+    printf("</pre>\n");
 }
 
 function dump_dmesg() {
-        global $g, $config;
-        printf("<pre>\n");
-        $dmesg = `cat /var/log/dmesg.boot`;
-    	$dmesg = htmlentities($dmesg);
-   	 	echo $dmesg;
-        printf("</pre>\n");
+    global $g, $config;
+    printf("<pre>\n");
+    $dmesg = `cat /var/log/dmesg.boot`;
+    $dmesg = htmlentities($dmesg);
+    echo $dmesg;
+    printf("</pre>\n");
 }
 
 function dump_dhcp() {
-       	global $g, $config;
-       	printf("<pre>");
-       	$leases = `cat /var/db/dhcpd.leases`;
- 	   	echo $leases;
+    global $g, $config;
+    printf("<pre>");
+    $leases = `cat /var/db/dhcpd.leases`;
+    echo $leases;
 }
 
 function get_cgi_stat($stat) {
@@ -106,20 +106,19 @@ EOD;
     printf("$output");
 }
 
-
 switch ($stat) {
     case 'pfconf':
         get_php_stat('pfconf_content');
-		break;
+        break;
     case 'pfconf_content':
         dump_pfconf();
-		break;
+        break;
     case 'pfoptions':
         get_php_stat('pfoptions_content');
-		break;
+        break;
     case 'pfoptions_content':
         dump_pfoptions();
-		break;
+        break;
     case 'pfrules':
         get_cgi_stat('rules');
                 break;
@@ -132,46 +131,46 @@ switch ($stat) {
     case 'pfqueues':
         get_cgi_stat('queues');
                 break;
-	case 'top':
-		get_cgi_stat('top');
-				break;
-	case 'df':
+    case 'top':
+        get_cgi_stat('top');
+                break;
+    case 'df':
         get_php_stat('df_content');
         break;
-	case 'df_content':
+    case 'df_content':
         dump_df();
-        break;	
-	case 'arp':
+        break;  
+    case 'arp':
         get_php_stat('arp_content');
         break;
     case 'arp_content':
         dump_arp();
         break;
-	case 'interfaces':
+    case 'interfaces':
         get_php_stat('interfaces_content');
         break;
     case 'interfaces_content':
         dump_interfaces();
         break; 
-	case 'routes':
+    case 'routes':
         get_php_stat('routes_content');
         break;
     case 'routes_content':
         dump_routes();
         break;
-	case 'dhcp':
+    case 'dhcp':
         get_php_stat('dhcp_content');
         break;
     case 'dhcp_content':
         dump_dhcp();
-        break;	
-	case 'xmlconf':
+        break;  
+    case 'xmlconf':
         get_php_stat('xmlconf_content');
         break;
     case 'xmlconf_content':
         dump_xmlconf();
         break;
-	case 'dmesg':
+    case 'dmesg':
         get_php_stat('dmesg_content');
         break;
     case 'dmesg_content':

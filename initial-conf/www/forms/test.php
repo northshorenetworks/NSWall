@@ -1,4 +1,3 @@
-#!/bin/php
 <?php 
 /*
     Northshore Software Header
@@ -140,20 +139,13 @@ if ($_POST) {
 
             do_input_validation($_POST, $reqdfields, $reqdfieldsn, &$input_errors);
 
-            if (($_POST['ipaddr'] && !is_ipaddr($_POST['ipaddr'])))
+            if (($_POST['ipaddr'] && !is_ipaddr($_POST['ipaddr']))) {
                 $input_errors[] = "A valid IP address must be specified.";
-            if (($_POST['subnet'] && !is_numeric($_POST['subnet'])))
+            }
+            if (($_POST['subnet'] && !is_numeric($_POST['subnet']))) {
                 $input_errors[] = "A valid subnet bit count must be specified.";
-            /* check for name conflicts */
-        foreach ($a_vlan as $vlan) {
-        if (isset($id) && ($a_vlans[$id]) && ($a_vlan[$id] == $vlan))
-            continue;
-        if ($vlan['tag'] == $_POST['tag']) {
-            $input_errors[] = "A vlan with this tag already exists.";
-            break;
-        }
-        }
-             
+            }
+
             if (!$input_errors) {
                 $vlanent = array();
                 $vlanent['descr'] = $_POST['descr'];
@@ -165,65 +157,28 @@ if ($_POST) {
                 $vlanent['subnet'] = $_POST['subnet'];
                 $vlanent['rtable'] = $_POST['rtable'];
                 
-                if (isset($_POST['dhcpdenable'])) {            
-                    if (($_POST['gateway'] && !is_ipaddr($_POST['gateway'])))
-                        $input_errors[] = "a valid gateway must be specified.";
-                    if (($_POST['range_from'] && !is_ipaddr($_POST['range_from'])))
-                        $input_errors[] = "a valid range must be specified.";
-                    if (($_POST['range_to'] && !is_ipaddr($_POST['range_to'])))
-                        $input_errors[] = "a valid range must be specified.";
-                    if (($_POST['wins1'] && !is_ipaddr($_POST['wins1'])) || ($_POST['wins2'] && !is_ipaddr($_POST['wins2'])))
-                        $input_errors[] = "a valid ip address must be specified for the primary/secondary wins server.";
-                    if (($_POST['dns1'] && !is_ipaddr($_POST['dns1'])) || ($$_POST['dns2'] && !is_ipaddr($_POST['dns2'])))
-                        $input_errors[] = "a valid ip address must be specified for the primary/secondary dns server.";
-                    if ($_POST['deftime'] && (!is_numericint($_POST['deftime'])))
-                        $input_errors[] = "the default lease time must be an integer.";
-                    if ($_POST['maxtime'] && (!is_numericint($_POST['maxtime']) || ($_POST['maxtime'] <= $_POST['deftime'])))
-                        $input_errors[] = "the maximum lease time must be higher than the default lease time.";
+                
+                                $vlanent['dhcpd']['gateway'] = $_POST['gateway'];
+                                $vlanent['dhcpd']['range']['from'] = $_POST['range_from'];
+                                $vlanent['dhcpd']['range']['to'] = $_POST['range_to'];
+                                $vlanent['dhcpd']['defaultleasetime'] = $_POST['deftime'];
+                                $vlanent['dhcpd']['maxleasetime'] = $_POST['maxtime'];
+                                $vlanent['dhcpd']['enable'] = $_POST['enable'] ? true : false;
+                                $vlanent['dhcpd']['denyunknown'] = $_POST['denyunknown'] ? true : false;
 
-                    if (!$input_errors) {
-                        /* make sure the range lies within the current subnet */
-                        $subnet_start = (ip2long($ifcfg['ipaddr']) & gen_subnet_mask_long($ifcfg['subnet']));
-                        $subnet_end = (ip2long($ifcfg['ipaddr']) | (~gen_subnet_mask_long($ifcfg['subnet'])));
+                                unset($lancfg['dhcpd']['winsserver']);
+                                if ($_POST['wins1'])
+                                    $lancfg['dhcpd']['winsserver'][] = $_POST['wins1'];
+                                if ($_POST['wins2'])
+                                    $lancfg['dhcpd']['winsserver'][] = $_POST['wins2'];
 
-                        /*if ((ip2long($_POST['range_from']) < $subnet_start) || (ip2long($_POST['range_from']) > $subnet_end) ||
-                        (ip2long($_POST['range_to']) < $subnet_start) || (ip2long($_POST['range_to']) > $subnet_end)) {
-                        $input_errors[] = "the specified range lies outside of the current subnet.";
-                        }*/
+                                unset($lancfg['dhcpd']['dnsserver']);
+                                if ($_POST['dns1'])
+                                   $lancfg['dhcpd']['dnsserver'][] = $_POST['dns1'];
+                                if ($_POST['dns2'])
+                                    $lancfg['dhcpd']['dnserver'][] = $_POST['dns2'];    
 
-                        if (ip2long($_POST['range_from']) > ip2long($_POST['range_to']))
-                            $input_errors[] = "the range is invalid (first element higher than second element).";
-
-                        /* make sure that the dhcp relay isn't enabled on this interface */
-                        if (isset($config['dhcrelay'][$if]['enable']))
-                            $input_errors[] = "you must disable the dhcp relay on the {$iflist[$if]} interface before enabling the dhcp server.";
-                    }
- 
-            
-                    $vlanent['dhcpd']['enable'] = $_POST['dhcpdenable'] ? true : false;
-                    $vlanent['dhcpd']['gateway'] = $_POST['gateway'];
-                    $vlanent['dhcpd']['range']['from'] = $_POST['range_from'];
-                    $vlanent['dhcpd']['range']['to'] = $_POST['range_to'];
-                    $vlanent['dhcpd']['defaultleasetime'] = $_POST['deftime'];
-                    $vlanent['dhcpd']['maxleasetime'] = $_POST['maxtime'];
-                    $vlanent['dhcpd']['denyunknown'] = $_POST['denyunknown'] ? true : false;
-
-                    unset($vlanent['dhcpd']['winsserver']);
-                    if ($_POST['wins1'])
-                        $vlanent['dhcpd']['winsserver'][] = $_POST['wins1'];
-                    if ($_POST['wins2'])
-                        $vlanent['dhcpd']['winsserver'][] = $_POST['wins2'];
-
-                    unset($vlanent['dhcpd']['dnsserver']);
-                    if ($_POST['dns1'])
-                       $vlanent['dhcpd']['dnsserver'][] = $_POST['dns1'];
-                    if ($_POST['dns2'])
-                        $vlanent['dhcpd']['dnserver'][] = $_POST['dns2'];
-                } else {
-                    unset($vlanent['dhcpd']);
-                }
-
-                // For some reason we have to destroy the if before changing the tag, annoying.
+                                // For some reason we have to destroy the if before changing the tag, annoying.
                 if(isset($vlanent['oldtag']) && $vlanent['oldtag'] != $vlanent['tag'])
                         mwexec("/sbin/ifconfig vlan{$vlanent['oldtag']} destroy");
                                 
@@ -246,7 +201,7 @@ if ($_POST) {
                 $retval = interfaces_vlan_configure();
                 config_unlock();
             }
-            if ($retval == 0 && !$input_errors) {
+            if ($retval == 0) {
                 sleep(2);
                 echo '<!-- SUBMITSUCCESS --><center>Configuration saved successfully</center>';
             } else {
@@ -258,7 +213,7 @@ if ($_POST) {
                     </script>';
                 echo '<INPUT TYPE="button" value="OK" id="okbtn"></center>';
             } 
-        return $retval;  
+        return $retval; 
          case "interface_vlan_delete":
             $id = $_POST['id'];
             if (!is_array($config['vlans']['vlan']))
@@ -563,7 +518,7 @@ if ($_POST) {
                     echo '<INPUT TYPE="button" value="OK" id="okbtn"></center>';
             } 
     return $retval;
-   case "interface_lan":
+    case "interface_lan":
      unset($input_errors);
 $lancfg = &$config['interfaces']['lan'];
 $pconfig = $_POST;
@@ -603,73 +558,35 @@ if ($_POST['memberslist'] != '') {
           $lancfg['aliaslist'][$alias] = $prop;
       }
 }
-if (isset($_POST['dhcpdenable'])) {
-    $lancfg['dhcpd']['enable'] = $_POST['dhcpdenable'] ? true : false;
-    $lancfg['dhcpd']['gateway'] = $_POST['gateway'];
-    $lancfg['dhcpd']['range']['from'] = $_POST['range_from'];
-    $lancfg['dhcpd']['range']['to'] = $_POST['range_to'];
-    $lancfg['dhcpd']['defaultleasetime'] = $_POST['deftime'];
-    $lancfg['dhcpd']['maxleasetime'] = $_POST['maxtime'];
-    $lancfg['dhcpd']['denyunknown'] = $_POST['denyunknown'] ? true : false;
+$lancfg['dhcpd']['gateway'] = $_POST['gateway'];
+$lancfg['dhcpd']['range']['from'] = $_POST['range_from'];
+$lancfg['dhcpd']['range']['to'] = $_POST['range_to'];
+$lancfg['dhcpd']['defaultleasetime'] = $_POST['deftime'];
+$lancfg['dhcpd']['maxleasetime'] = $_POST['maxtime'];
+$lancfg['dhcpd']['enable'] = $_POST['enable'] ? true : false;
+$lancfg['dhcpd']['denyunknown'] = $_POST['denyunknown'] ? true : false;
 
-    unset($lancfg['dhcpd']['winsserver']);
-    if ($_POST['wins1'])
-        $lancfg['dhcpd']['winsserver'][] = $_POST['wins1'];
-    if ($_POST['wins2'])
-        $lancfg['dhcpd']['winsserver'][] = $_POST['wins2'];
+unset($lancfg['dhcpd']['winsserver']);
+if ($_POST['wins1'])
+    $lancfg['dhcpd']['winsserver'][] = $_POST['wins1'];
+if ($_POST['wins2'])
+    $lancfg['dhcpd']['winsserver'][] = $_POST['wins2'];
 
-    unset($lancfg['dhcpd']['dnsserver']);
-    if ($_POST['dns1'])
-        $lancfg['dhcpd']['dnsserver'][] = $_POST['dns1'];
-    if ($_POST['dns2'])
-        $lancfg['dhcpd']['dnserver'][] = $_POST['dns2'];    
+unset($lancfg['dhcpd']['dnsserver']);
+if ($_POST['dns1'])
+    $lancfg['dhcpd']['dnsserver'][] = $_POST['dns1'];
+if ($_POST['dns2'])
+    $lancfg['dhcpd']['dnserver'][] = $_POST['dns2'];    
 
-    if (($_POST['gateway'] && !is_ipaddr($_POST['gateway'])))
-        $input_errors[] = "a valid gateway must be specified.";
+ 
+write_config();
 
-    if (($_POST['range_from'] && !is_ipaddr($_POST['range_from'])))
-        $input_errors[] = "a valid range must be specified.";
-    if (($_POST['range_to'] && !is_ipaddr($_POST['range_to'])))
-        $input_errors[] = "a valid range must be specified.";
-    if (($_POST['wins1'] && !is_ipaddr($_POST['wins1'])) || ($_POST['wins2'] && !is_ipaddr($_POST['wins2']))) 
-        $input_errors[] = "a valid ip address must be specified for the primary/secondary wins server.";
-    if (($_POST['dns1'] && !is_ipaddr($_POST['dns1'])) || ($$_POST['dns2'] && !is_ipaddr($_POST['dns2'])))
-        $input_errors[] = "a valid ip address must be specified for the primary/secondary dns server.";
-    if ($_POST['deftime'] && (!is_numericint($_POST['deftime'])))
-        $input_errors[] = "the default lease time must be an integer.";
-    if ($_POST['maxtime'] && (!is_numericint($_POST['maxtime']) || ($_POST['maxtime'] <= $_POST['deftime'])))
-        $input_errors[] = "the maximum lease time must be higher than the default lease time.";
+$retval = 0;
+config_lock();
+$retval = interfaces_lan_configure();
+config_unlock();
 
-    if (!$input_errors) {
-        /* make sure the range lies within the current subnet */
-        $subnet_start = (ip2long($ifcfg['ipaddr']) & gen_subnet_mask_long($ifcfg['subnet']));
-        $subnet_end = (ip2long($ifcfg['ipaddr']) | (~gen_subnet_mask_long($ifcfg['subnet'])));
-
-        /*if ((ip2long($_POST['range_from']) < $subnet_start) || (ip2long($_POST['range_from']) > $subnet_end) ||
-            (ip2long($_POST['range_to']) < $subnet_start) || (ip2long($_POST['range_to']) > $subnet_end)) {
-            $input_errors[] = "the specified range lies outside of the current subnet.";    
-        }*/
-
-        if (ip2long($_POST['range_from']) > ip2long($_POST['range_to']))
-            $input_errors[] = "the range is invalid (first element higher than second element).";
-
-        /* make sure that the dhcp relay isn't enabled on this interface */
-        if (isset($config['dhcrelay'][$if]['enable']))
-            $input_errors[] = "you must disable the dhcp relay on the {$iflist[$if]} interface before enabling the dhcp server.";
-    }
-} else {
-    unset($lancfg['dhcpd']);
-}
-
-if(!$input_errors) {
-    write_config();
-    $retval = 0;
-    config_lock();
-    $retval = interfaces_lan_configure();
-    config_unlock();
-}
-
-if ($retval == 0 && !$input_errors) {
+if ($retval == 0) {
                     sleep(2);
                     if (file_exists('/conf/set_wizard_initial')) {
                         conf_mount_rw();
@@ -687,7 +604,7 @@ if ($retval == 0 && !$input_errors) {
                     echo '<INPUT TYPE="button" value="OK" id="okbtn"></center>';
             }
 }
-       case "interface_opt":
+    case "interface_opt":
         unset($input_errors);
         unset($index);
         if ($_GET['index'])
@@ -766,76 +683,34 @@ if ($retval == 0 && !$input_errors) {
             }
         }   
 
-    if (isset($_POST['dhcpdenable'])) { 
-        $optcfg['dhcpd']['enable'] = $_POST['dhcpdenable'] ? true : false;
         $optcfg['dhcpd']['gateway'] = $_POST['gateway'];
-        $optcfg['dhcpd']['range']['from'] = $_POST['range_from'];
-        $optcfg['dhcpd']['range']['to'] = $_POST['range_to'];
-        $optcfg['dhcpd']['defaultleasetime'] = $_POST['deftime'];
-        $optcfg['dhcpd']['maxleasetime'] = $_POST['maxtime'];
-        $optcfg['dhcpd']['denyunknown'] = $_POST['denyunknown'] ? true : false;
+                $optcfg['dhcpd']['range']['from'] = $_POST['range_from'];
+                $optcfg['dhcpd']['range']['to'] = $_POST['range_to'];
+                $optcfg['dhcpd']['defaultleasetime'] = $_POST['deftime'];
+                $optcfg['dhcpd']['maxleasetime'] = $_POST['maxtime'];
+                $optcfg['dhcpd']['enable'] = $_POST['enable'] ? true : false;
+                $optcfg['dhcpd']['denyunknown'] = $_POST['denyunknown'] ? true : false;
 
-        unset($optcfg['dhcpd']['winsserver']);
-        if ($_POST['wins1'])
-            $optcfg['dhcpd']['winsserver'][] = $_POST['wins1'];
-        if ($_POST['wins2'])
-            $optcfg['dhcpd']['winsserver'][] = $_POST['wins2'];
+                unset($lancfg['dhcpd']['winsserver']);
+                if ($_POST['wins1'])
+                    $optcfg['dhcpd']['winsserver'][] = $_POST['wins1'];
+                if ($_POST['wins2'])
+                    $optcfg['dhcpd']['winsserver'][] = $_POST['wins2'];
 
-        unset($optcfg['dhcpd']['dnsserver']);
-        if ($_POST['dns1'])
-            $optcfg['dhcpd']['dnsserver'][] = $_POST['dns1'];
-        if ($_POST['dns2'])
-            $optcfg['dhcpd']['dnserver'][] = $_POST['dns2'];    
-if (($_POST['gateway'] && !is_ipaddr($_POST['gateway']))) {
-                            $input_errors[] = "a valid gateway must be specified.";
-                    }
-            if (($_POST['range_from'] && !is_ipaddr($_POST['range_from']))) {
-                $input_errors[] = "a valid range must be specified.";
-            }
-            if (($_POST['range_to'] && !is_ipaddr($_POST['range_to']))) {
-                $input_errors[] = "a valid range must be specified.";
-            }
-            if (($_POST['wins1'] && !is_ipaddr($_POST['wins1'])) || ($_POST['wins2'] && !is_ipaddr($_POST['wins2']))) {
-                $input_errors[] = "a valid ip address must be specified for the primary/secondary wins server.";
-            }
-            if (($_POST['dns1'] && !is_ipaddr($_POST['dns1'])) || ($$_POST['dns2'] && !is_ipaddr($_POST['dns2']))) {
-                            $input_errors[] = "a valid ip address must be specified for the primary/secondary dns server.";
-                    }
-            if ($_POST['deftime'] && (!is_numericint($_POST['deftime']))) {
-                $input_errors[] = "the default lease time must be an integer.";
-            }
-            if ($_POST['maxtime'] && (!is_numericint($_POST['maxtime']) || ($_POST['maxtime'] <= $_POST['deftime']))) {
-                $input_errors[] = "the maximum lease time must be higher than the default lease time.";
-            }
-            if (!$input_errors) {
-                /* make sure the range lies within the current subnet */
-                $subnet_start = (ip2long($ifcfg['ipaddr']) & gen_subnet_mask_long($ifcfg['subnet']));
-                $subnet_end = (ip2long($ifcfg['ipaddr']) | (~gen_subnet_mask_long($ifcfg['subnet'])));
+                unset($lancfg['dhcpd']['dnsserver']);
+                if ($_POST['dns1'])
+                    $optcfg['dhcpd']['dnsserver'][] = $_POST['dns1'];
+                if ($_POST['dns2'])
+                    $optcfg['dhcpd']['dnserver'][] = $_POST['dns2'];    
 
-                /*if ((ip2long($_POST['range_from']) < $subnet_start) || (ip2long($_POST['range_from']) > $subnet_end) ||
-                    (ip2long($_POST['range_to']) < $subnet_start) || (ip2long($_POST['range_to']) > $subnet_end)) {
-                    $input_errors[] = "the specified range lies outside of the current subnet.";    
-                }*/
-
-                if (ip2long($_POST['range_from']) > ip2long($_POST['range_to']))
-                    $input_errors[] = "the range is invalid (first element higher than second element).";
-
-                /* make sure that the dhcp relay isn't enabled on this interface */
-                if (isset($config['dhcrelay'][$if]['enable']))
-                    $input_errors[] = "you must disable the dhcp relay on the {$iflist[$if]} interface before enabling the dhcp server.";
-            }
-    } else {
-        unset($optcfg['dhcpd']);
-    }
-if (!$input_errors) {
         write_config();
 
         $retval = 0;
         config_lock();
             $retval = interfaces_optional_configure($index);
         config_unlock();
-}
-        if ($retval == 0 && !$input_errors) {
+
+        if ($retval == 0) {
             sleep(2);
             echo '<!-- SUBMITSUCCESS --><center>Configuration saved successfully</center>';
         } else {
@@ -880,3 +755,4 @@ if ($_GET) {
      }
 }
 ?>
+

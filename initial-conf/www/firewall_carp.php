@@ -18,7 +18,6 @@ $a_carp = &$config['carp'];
 
 // wait for the DOM to be loaded
 $(document).ready(function() {
-    $('div fieldset div').addClass('ui-widget ui-widget-content ui-corner-content');
     $("#submitbutton").click(function () {
         displayProcessingDiv();
         var QueryString = $("#iform").serialize();

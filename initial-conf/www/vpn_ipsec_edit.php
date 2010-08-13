@@ -176,8 +176,6 @@ $(function(){
 
 // wait for the DOM to be loaded
 $(document).ready(function() {
-	 $('div fieldset div').addClass('ui-widget ui-widget-content ui-corner-content');
-
           // Add routing policies to select boxes when user clicks the add button
           $('#addbutton').click(function() {
               var srctype     = $('#srctype').val();

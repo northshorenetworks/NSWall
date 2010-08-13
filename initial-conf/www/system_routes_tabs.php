@@ -20,6 +20,7 @@ include("ns-begin.inc");
 <div class="demo">
     <div id="aliastabs">
         <ul>
+             <li><a href="system_route_tables.php">Route Tables</a></li>
              <li><a href="system_routes.php">Static Routes</a></li>
         </ul>
     </div>

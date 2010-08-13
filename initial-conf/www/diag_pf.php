@@ -18,12 +18,13 @@ include("ns-begin.inc");
 <div class="demo">  
 	<div id="pftabs">  
     	<ul>
-		<li><a href="stats.php?stat=pfconf">Configuration</a></li>  
+			<li><a href="stats.php?stat=pfconf">Configuration</a></li>  
        		<li><a href="stats.php?stat=pfrules">Rules</a></li>  
        		<li><a href="stats.php?stat=pfstates">States</a></li>
-		<li><a href="stats.php?stat=pfoptions">Options</a></li>
-		<li><a href="stats.php?stat=pfqueues">Queues</a></li>  
-     	</ul>  
+			<li><a href="stats.php?stat=pfoptions">Options</a></li>
+			<li><a href="stats.php?stat=pfqueues">Queues</a></li>  
+     		<!--<li><a href="stats.php?stat=pfblockedsites">Blocked Sites</a></li>-->	
+		</ul>  
 		<div id="livediag" class="livediagdiv"></div>
 	</div>
 </div>

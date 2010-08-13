@@ -24,6 +24,12 @@ $ifdescrs = array('wan' => 'WAN', 'lan' => 'LAN');
 for ($j = 1; isset($config['interfaces']['opt' . $j]); $j++) {
     $ifdescrs['opt' . $j] = $config['interfaces']['opt' . $j]['descr'];
 }
+
+if (is_array($config['vlans']['vlan'])) {
+    foreach ($config['vlans']['vlan'] as $vlan) {
+        $ifdescrs[$vlan['descr']] = $vlan['descr'];
+    }
+} 
 ?>
 
 <p class="pgtitle"><?=join(": ", $pgtitle);?></p>
@@ -127,4 +133,3 @@ $("select").change( function() {
           $('#content').load('status_graph.php?if=' + $(this).val());
 });
 </script>
-

@@ -16,8 +16,8 @@ include("ns-begin.inc");
 <div class="demo">  
 	<div id="utiltabs">  
     	<ul>
-		<li><a href="diag_ping.php">Ping</a></li>  
-       	<li><a href="diag_traceroute.php">Traceroute</a></li>  
+		<!--<li><a href="diag_ping.php">Ping</a></li>  
+       	<li><a href="diag_traceroute.php">Traceroute</a></li>-->  
        	<li><a href="diag_tcpdump.php">Tcp Dump</a></li>
        	<li><a href="diag_backup.php">Backup/Restore</a></li>
 		<li><a href="diag_defaults.php">Factory Default</a></li>

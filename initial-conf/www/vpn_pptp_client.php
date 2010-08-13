@@ -57,8 +57,6 @@ $(function(){
 
 // wait for the DOM to be loaded
 $(document).ready(function() {
-     $('div fieldset div').addClass('ui-widget ui-widget-content ui-corner-content');
-
      // When a user clicks the forceall button, grey out the route configuration area
      $("#forcetunnel").click(function () {
                if ($("#forcetunnel").is(":checked")) {    

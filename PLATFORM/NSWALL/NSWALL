@@ -128,9 +128,18 @@ wdc0	at isa? port 0x1f0 irq 14 flags 0x00
 wdc1	at isa? port 0x170 irq 15 flags 0x00
 wdc*	at isapnp?
 
-# IDE hard drives
+#IDE hard drives
 wd*	at wdc? flags 0x0000
 wd*	at pciide? flags 0x0000
+
+# SCSI Contorllers
+atapiscsi* at pciide?
+scsibus* at atapiscsi?
+mpi* at pci?
+scsibus* at mpi?
+
+#SCSI hard drives
+sd* at scsibus?     # SCSI disk drives
 
 # Networking devices
 vr*	at pci?				# VIA Rhine ethernet

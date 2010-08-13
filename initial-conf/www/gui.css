@@ -125,7 +125,7 @@ round_black_30.png); }
 #diagnostics div { display:block; overflow:auto; min-height:600px; min-width:100%; max-height:600px; max-width:100%; color: white; background: black;}
 
 /* Form styles */
-div.form-container { padding: 5px; background-color: #FFF; border: #EEE 1px solid; }
+div.form-container { padding: 5px; background: url("images/ui-bg_highlight-hard_100_f2f5f7_1x100.png") repeat-x scroll 50% top #F2F5F7; border: #EEE 1px solid; }
 p.legend { margin-bottom: 1em; }
 p.legend em { color: #C00; font-style: normal; }
 div.errors { margin: 0 0 10px 0; padding: 5px 10px; border: #FC6 1px solid; background-color: #FFC; }
@@ -137,7 +137,7 @@ div.form-container form fieldset { margin: 10px 0; padding: 10px; border: #DDD 1
 div.form-container form legend { font-weight: bold; color: #666; }
 div.form-container form fieldset div { padding: 0.5em 0; margin: 0.5em; }
 div.form-container label, 
-div.form-container span.label { margin-right: 10px; padding-right: 10px; width: 150px; display: block; float: left; text-align: right; position: relative; font-size: .9em; font-style: bold;}
+div.form-container span.label { margin-right: 10px; padding-right: 10px; width: 150px; display: block; float: left; text-align: right; position: relative; font-size: 1em; font-style: italic; font-weight: bold;}
 div.form-container label.error, 
 div.form-container span.error { color: #C00; }
 div.form-container label em, 
@@ -161,6 +161,9 @@ form {
 }
 p {
 	margin: 0 0 10px 0;
+}
+.buttonrow {
+    text-align: center;
 }
 .pgtitle {
 	font-size: 18px;

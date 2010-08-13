@@ -45,7 +45,7 @@ function renumber_vlan($if, $delvlan) {
     #vlansortable li span.col1 { position:relative; float:left; width:4.5%; }
     #vlansortable li span.col2 { position:relative; float:left; width:5.5%; }
     #vlansortable li span.col3 { position:relative; float:left; width:5.5%; }
-    #vlansortable li span.col4 { position:relative; float:left; width:5.5%; }
+    #vlansortable li span.col4 { position:relative; float:left; width:7.5%; }
 	#vlansortable li span.col5 { position:relative; float:left; width:60%; }
 </style>
 

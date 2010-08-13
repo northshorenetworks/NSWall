@@ -1,1 +1,1 @@
-*/1 * * * * root /usr/sbin/splunkstats
+* * * * * root /sbin/pfctl -t blocked_sites -T expire 60

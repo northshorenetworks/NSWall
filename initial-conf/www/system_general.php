@@ -42,7 +42,6 @@ sort($timezonelist);
 
 // wait for the DOM to be loaded
 $(document).ready(function() {
-    $('div fieldset div').addClass('ui-widget ui-widget-content ui-corner-content');
     $("#submitbutton").click(function () {
         displayProcessingDiv();
         var QueryString = $("#iform").serialize();
@@ -94,7 +93,8 @@ $(document).ready(function() {
                              <input id="password2" type="password" name="password2" value="" />
                              &nbsp;(confirmation) <br> <p class="note">If you want to change the password for accessing the webGUI, enter it here twice.</p>
 			</div>
-                       	 <div>
+			<!--
+            <div>
                              <label for="webguiport">WebGUI Port</label>
             				 <input id="webguiport" type="text" name="webguiport" value="<?=htmlspecialchars($pconfig['webguiport']);?>" />
 			</div> 
@@ -111,6 +111,7 @@ $(document).ready(function() {
                                   <?php endforeach; ?>
                              </select>
 			</div>
+			-->
 			<div>
                              <label for="timezone">Timezone</label>
                              <select name="timezone" id="timezone">

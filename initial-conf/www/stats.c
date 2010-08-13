@@ -184,6 +184,29 @@ void nat() {
        exit (1);
 }
 
+void blockedsites() {
+        FILE *inpipe;
+        char inbuf[1000];
+        int lineno = 0;
+
+        char *command = "/sbin/pfctl -vt dynamic_blocked_sites -T show";
+
+       inpipe = popen(command, "r");
+       if (!inpipe) {
+              printf("couldn't open pipe %s\n", command);
+              exit (1);
+       }
+       printf("<pre>\n");
+       while (fgets(inbuf, sizeof(inbuf), inpipe)) {
+              printf("%s", inbuf);
+       }
+       printf("</pre>\n");
+       pclose(inpipe);
+
+       exit (1);
+}
+
+
 void states() {
         FILE *inpipe;
         char inbuf[1000];
@@ -258,6 +281,8 @@ int main(int argc, char *argv[]) {
                 rules();
 	else if (strncmp(cl, "nat", 3) == 0)
                 nat();
+	else if (strncmp(cl, "blockedsites", 12) == 0)
+		        blockedsites();
 	else if (strncmp(cl, "states", 6) == 0)
                 states();
 	else if (strncmp(cl, "queues", 6) == 0)

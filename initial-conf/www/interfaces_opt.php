@@ -36,10 +36,20 @@ $pconfig['enable']     = isset($optcfg['enable']);
 $pconfig['gateway']    = $optcfg['gateway'];
 $pconfig['iftype']     = $optcfg['iftype'];
 $pconfig['wantype']    = $optcfg['wantype'];
-$pconfig['mtu'] 	   = $optcfg['mtu'];
+$pconfig['mtu']        = $optcfg['mtu'];
 $pconfig['spoofmac']   = $optcfg['spoofmac'];
 $pconfig['altqenable'] = isset($optcfg['altqenable']);
 $pconfig['bandwidth']  = $optcfg['bandwidth'];
+
+$pconfig['dhcpgateway'] = $optcfg['dhcpd']['gateway'];
+$pconfig['range_from'] = $optcfg['dhcpd']['range']['from'];
+$pconfig['range_to'] = $optcfg['dhcpd']['range']['to'];
+$pconfig['deftime'] = $optcfg['dhcpd']['defaultleasetime'];
+$pconfig['maxtime'] = $optcfg['dhcpd']['maxleasetime'];
+list($pconfig['wins1'],$optcfg['wins2']) = $optcfg['dhcpd']['winsserver'];
+list($pconfig['dns1'],$optcfg['dns2']) = $optcfg['dhcpd']['dnsserver'];
+$pconfig['dhcpdenable'] = isset($optcfg['dhcpd']['enable']);
+$pconfig['denyunknown'] = isset($optcfg['dhcpd']['denyunknown']);
 
 
 $pgtitle = array("Interfaces", htmlspecialchars($optcfg['descr']));
@@ -51,17 +61,16 @@ $pgtitle = array("Interfaces", htmlspecialchars($optcfg['descr']));
 
 // wait for the DOM to be loaded
 $(document).ready(function() {
-     $('div fieldset div').addClass('ui-widget ui-widget-content ui-corner-content');
 
      <?php if (preg_match($g['wireless_regex'], $optcfg['if'])): ?>
      var wifimode = $("#ifmode");
      switch(wifimode.val()){
           case 'nobridge':
-              $("#ipdiv").show();
+              $("#staticdiv").show();
               $("#aliasdiv").show();
               break;
           default:
-              $("#ipdiv").hide();
+              $("#staticdiv").hide();
               $("#aliasdiv").hide();
               break;
           }
@@ -70,11 +79,11 @@ $(document).ready(function() {
           var val = $(this).val();
           switch(val){
           case 'nobridge':
-              $("#ipdiv").show();
+              $("#staticdiv").show();
               $("#aliasdiv").show();
               break;
           default:
-              $("#ipdiv").hide();
+              $("#staticdiv").hide();
               $("#aliasdiv").hide();
               break;
           }
@@ -93,7 +102,7 @@ $(document).ready(function() {
          break;
      case 'wpa':
          $("#wpadiv").show();
-         $("#wepdiv").show();
+         $("#wepdiv").hide();
          break;
      }
   
@@ -129,7 +138,7 @@ $(document).ready(function() {
               $("#gatewaydiv").hide();
               $("#connectiontype").hide();
                $("#altqdiv").hide();
-			  break;
+              break;
           }
 
      $("#iftype").change(function() {
@@ -140,13 +149,13 @@ $(document).ready(function() {
               $("#laniftype").hide();
               $("#gatewaydiv").show();
               $("#connectiontype").show();
-			  $("#altqdiv").show();
+          $("#altqdiv").show();
               break;
           case 'lan':
               $("#waniftype").show();
               $("#gatewaydiv").hide();
               $("#connectiontype").hide();
-			  $("#altqdiv").hide();
+          $("#altqdiv").hide();
               break;
           }
      });
@@ -177,7 +186,17 @@ $(document).ready(function() {
           }
      });
 
-     // When a user clicks on the host add button, validate and add the host.
+     $("#dhcpdenable").click(function() {
+         var val = $("#dhcpdenable:checked").val();
+         if (val != undefined) $('#dhcpddiv').show();
+         else $('#dhcpddiv').hide();
+     });
+
+     var val = $("#dhcpdenable:checked").val();
+     if (val != undefined) $('#dhcpddiv').show();
+     else $('#dhcpddiv').hide();
+ 
+    // When a user clicks on the host add button, validate and add the host.
      $("#hostaddbutton").click(function () {
           var ip = $("#srchost");
       $('#MEMBERS').append("<option value='" + ip.val() + "'>"+ip.val() + '</option>');
@@ -210,38 +229,38 @@ $(document).ready(function() {
 </script> 
 
 <div id="wrapper">
-	<div class="form-container ui-tabs ui-widget ui-corner-all">
-	<form action="forms/interfaces_form_submit.php" method="post" name="iform" id="iform">
+    <div class="form-container ui-tabs ui-widget ui-corner-all">
+    <form action="forms/interfaces_form_submit.php" method="post" name="iform" id="iform">
     <input name="formname" type="hidden" value="interface_opt">
-	<input name="index" type="hidden" value="<?=$index;?>">
-	<fieldset>
-		<legend><?=join(": ", $pgtitle);?></legend>
-			<div>
+    <input name="index" type="hidden" value="<?=$index;?>">
+    <fieldset>
+        <legend><?=join(": ", $pgtitle);?></legend>
+            <div>
                              <label for="enable">
                                   Enable <?=$pconfig['descr']; ?> IF
                              </label>
                              <input id="enable" type="checkbox" name="enable" value="Yes" <?php if ($pconfig['enable']) echo "checked"; ?> />
                         </div>
                         <div>
-			     <label for="descr">Interface Name</label>
+                 <label for="descr">Interface Name</label>
                              <input name="descr" type="text" class="formfld" id="descr" size="30" value="<?=htmlspecialchars($pconfig['descr']);?>">
                              <p class="note">The name of the interface (not parsed)</p>
                         </div>
-				<?php if (isset($config['system']['advanced']['multiwansupport']) && sg_get_const("ENTERPRISE_ROUTING") == 'ENABLED'): ?>
-   				 <div>
-                 		    <label for=="iftype">Interface Type</label>
-                 		    <select name="iftype" class="formfld" id="iftype">
+                <?php if (isset($config['system']['advanced']['multiwansupport']) && sg_get_const("ENTERPRISE_ROUTING") == 'ENABLED'): ?>
+                 <div>
+                            <label for=="iftype">Interface Type</label>
+                            <select name="iftype" class="formfld" id="iftype">
                                        <?php $modes = array('lan' => 'LAN Interface', 'wan' => 'WAN Interface');
                                          foreach ($modes as $mode => $modename): ?>
                                             <option value="<?=$mode;?>" <?php if ($mode == $pconfig['iftype']) echo "selected"; ?>>
                                                <?=htmlspecialchars($modename);?>
                                             </option>
                                          <?php endforeach; ?>
-                                    </select>	
+                                    </select>   
                                     <p class="note">Select WAN to configure this interface as an additional WAN connection</p>
-            			</div>
+                        </div>
                              <div id='waniftype'>
-			      <div id ='connectiontype'>
+                  <div id ='connectiontype'>
                              <label for="wantype">Connection Type</label>
                              <select name="wantype" class="formfld" id="wantype">
                                  <option value="Static" >Static IP</option>
@@ -250,7 +269,7 @@ $(document).ready(function() {
                         </div>
                         <?php endif; ?>
                         <div id='staticdiv'>
-            <div>
+            <div id='ipdiv'>
                              <label for="ipaddr">IP address</label>
                              <input name="ipaddr" type="text" class="formfld" id="ipaddr" size="20" value="<?=htmlspecialchars($pconfig['ipaddr']);?>">
                     /
@@ -284,7 +303,7 @@ $(document).ready(function() {
                 </div>
               </div>
                 <div style='display: none;' id='dhcpdiv'></div>
-			<?php if (preg_match($g['wireless_regex'], $optcfg['if'])): ?>
+            <?php if (preg_match($g['wireless_regex'], $optcfg['if'])): ?>
                              <div>
                                  <label for="ifmode">Wireless Mode</label>
                                  <select name="ifmode" class="formfld" id="ifmode" onChange="switchwifibridge(document.iform.ifmode.value)">
@@ -296,8 +315,9 @@ $(document).ready(function() {
                                  <?php endforeach; ?>
                                  </select>
                              </div>
+                             <?php wireless_config_print();?>
                         <?php endif; ?>
-	 	<div>
+        <div>
                     <label for="spoofmac">MAC Address Override</label>
                     <input name="spoofmac" type="text" class="formfld" id="spoofmac" size="30" value="<?=htmlspecialchars($pconfig['spoofmac']);?>">
                     <p class="note">This field can be used to modify (&quot;spoof&quot;) the MAC address of the interface<br>
@@ -312,9 +332,68 @@ $(document).ready(function() {
                     an MTU of 1492 bytes for PPPoE and 1500 bytes for all other
                     connection types will be assumed.</p>
                </div>
-				<?php if (isset($config['system']['advanced']['multiwansupport']) && sg_get_const("ENTERPRISE_ROUTING") == 'ENABLED'): ?>
+                             <div>
+                             <label for="dhcpdenable">Enable DHCP Server</label>
+                    <input id="dhcpdenable" type="checkbox" name="dhcpdenable" value="Yes" <?php if ($pconfig['dhcpdenable']) echo "checked"; ?> />
+                             <p class="note">Enable DHCP server on <?=htmlspecialchars($iflist[$if]);?> interface.</p>
+                             <input name="if" type="hidden" value="<?=htmlspecialchars($iflist[$if]);?>">
+                        </div>
+                        <div id="dhcpddiv" name="dhcpddiv">  
+                        <div>
+                             <label for="subnet">Subnet</label>
+                             <?=gen_subnet($pconfig['ipaddr'], $pconfig['subnet']);?>
+                        </div>
+                        <div>    
+                             <label for="subnet">Subnet mask</label>
+                             <?=gen_subnet_mask($pconfig['subnet']);?>
+                        </div>
+                        <div>     
+                             <label for="subnet">Availible Range</label>
+                             <?=long2ip(ip2long($pconfig['ipaddr']) & gen_subnet_mask_long($pconfig['subnet']));?>
+                          -
+                          <?=long2ip(ip2long($pconfig['ipaddr']) | (~gen_subnet_mask_long($pconfig['subnet']))); ?>
+                                         
+                        </div>
+                        <div>
+                             <label for="range_from">Range</label>
+                             <input name="range_from" type="text" class="formfld" id="range_from" size="20" value="<?=htmlspecialchars($pconfig['range_from']);?>">
+                             &nbsp;to&nbsp;
+                             <input name="range_to" type="text" class="formfld" id="range_to" size="20" value="<?=htmlspecialchars($pconfig['range_to']);?>">
+                             <p class="note">Define the address range for the DHCP server.</p>
+            </div>
+                        <div>
+                             <label for="dhcpgateway">Gateway</label>
+                             <input name="dhcpgateway" type="text" class="formfld" id="dhcpgateway" size="20" value="<?=htmlspecialchars($pconfig['gateway']);?>">
+                             <p class="note">Define the Gateway IP for the DHCP server.  Hint: leaving this blank will use the interface IP address</p>
+            </div>
+                        <div>
+                             <label for="dns1">DNS Servers</label>
+                             <input name="dns1" type="text" class="formfld" id="dns1" size="20" value="<?=htmlspecialchars($pconfig['dns1']);?>">
+                             &nbsp;
+                             <input name="dns2" type="text" class="formfld" id="dns2" size="20" value="<?=htmlspecialchars($pconfig['dns2']);?>">
+                             <p class="note">Define the DNS servers for the DHCP server.</p>
+            </div>
+                        <div>
+                             <label for="wins1">Wins Servers</label>
+                              <input name="wins1" type="text" class="formfld" id="wins1" size="20" value="<?=htmlspecialchars($pconfig['wins1']);?>">
+                             &nbsp;
+                              <input name="wins2" type="text" class="formfld" id="wins2" size="20" value="<?=htmlspecialchars($pconfig['wins2']);?>">
+                             <p class="note">Define the DNS servers for the DHCP server.</p>
+            </div>
+                        <div>
+                             <label for="deftime">Default Lease Time</label>
+                             <input name="deftime" type="text" class="formfld" id="deftime" size="10" value="<?=htmlspecialchars($pconfig['deftime']);?>">seconds
+                             <p class="note">This is used for clients that do not ask for a specific expiration time.  The default is 7200 seconds.</p>
+            </div>
+                        <div>
+                             <label for="maxtime">Maximum Lease Time</label>
+                             <input name="maxtime" type="text" class="formfld" id="maxtime" size="10" value="<?=htmlspecialchars($pconfig['maxtime']);?>">seconds
+                             <p class="note">This is the maximum lease time for clients that ask for a specific expiration time.  The default is 86400 seconds.</p>
+            </div>
+            </div>
+                <?php if (isset($config['system']['advanced']['multiwansupport']) && sg_get_const("ENTERPRISE_ROUTING") == 'ENABLED'): ?>
                 <div id='altqdiv'>
-			    <div>
+                <div>
                     <label for="altqenable">Enable ALTQ</label>
                     <input id="altqenable" type="checkbox" name="altqenable" value="Yes" <?php if ($pconfig['altqenable']) echo "checked"; ?> />
                 </div>
@@ -323,16 +402,16 @@ $(document).ready(function() {
                     <input id="bandwidth" type="text" name="bandwidth" value="<?=htmlspecialchars($pconfig['bandwidth']);?>" />
                     <p class="note">Uplink speed of interface in Kilobits/s.</p>
                 </div>
-				</div>
-				<?php endif; ?>
-	</fieldset>
-	
-	<div class="buttonrow">
-		<input type="submit" id="submitbutton" value="Save" class="button" />
-	</div>
+                </div>
+                <?php endif; ?>
+    </fieldset>
+    
+    <div class="buttonrow">
+        <input type="submit" id="submitbutton" value="Save" class="button" />
+    </div>
 
-	</form>
-	
-	</div><!-- /form-container -->
-	
+    </form>
+    
+    </div><!-- /form-container -->
+    
 </div><!-- /wrapper -->

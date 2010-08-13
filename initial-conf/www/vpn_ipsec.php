@@ -45,14 +45,8 @@ $("#saveneworder").click(function () {
 $("#newrule a").click(function () {
     var toLoad = $(this).attr('href');
         clearInterval(refreshId);
-        if ( <?php echo sizeof($a_gw)?> < <?php echo sg_get_const("IPSEC_GATEWAYS")?> ) {
-            $('#content').load(toLoad);
-            return false;
-        }
-        else {
-            alert('The maximum number of licensed IPSec Gateways has been reached');
-            return false;
-        }
+        $('#content').load(toLoad);
+        return false;
 });
 
 

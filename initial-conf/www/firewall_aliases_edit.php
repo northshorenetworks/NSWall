@@ -59,8 +59,6 @@ $(function(){
 
 // wait for the DOM to be loaded
 $(document).ready(function() {
-     $('div fieldset div').addClass('ui-widget ui-widget-content ui-corner-content');
-
      // When a user clicks on the host add button, validate and add the host.
      $("#hostaddbutton").click(function () {
           var ip = $("#srchost");

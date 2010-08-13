@@ -77,33 +77,31 @@ break;
 }
  
 $menu['System']['General setup'] = array('system_general.php');
-$menu['System']['Static routes'] = array('system_routes_tabs.php');
+$menu['System']['Routing'] = array('system_routes_tabs.php');
 $menu['System']['License'] = array('system_license.php');
 $menu['System']['Firmware'] = array('system_firmware.php');
 $menu['System']['Advanced'] = array('system_advanced.php');
 $menu['System']['Networking'] = array('system_networking.php');
-$menu['System']['Manage Certificates'] = array('system_cacert_tabs.php');
+//$menu['System']['Manage Certificates'] = array('system_cacert_tabs.php');
 //$menu['System']['User manager'] = array('system_accounts_tabs.php');
  
-//$menu['Firewall']['Abusive Sites'] = array('firewall_abusive_sites.php');
+//$menu['Firewall']['Blocked Sites'] = array('firewall_abusive_sites.php');
 $menu['Firewall']['Aliases'] = array('firewall_aliases_tabs.php');
 $menu['Firewall']['Global Options'] = array('firewall_options_edit.php');
 $menu['Firewall']['NAT'] = array('firewall_nat_tabs.php');
 $menu['Firewall']['Rules'] = array('firewall_rules_tabs.php');
 
 if ($g['module'] == 'FIREWALL') { 
-	$menu['Services']['DHCP server'] = array('services_dhcp_tabs.php');
 	$menu['Services']['DNS forwarder'] = array('services_dnsmasq.php');
-	$menu['Services']['Dynamic DNS'] = array('services_dyndns.php');
+	//$menu['Services']['Dynamic DNS'] = array('services_dyndns.php');
 }
-if (sg_get_const("CARP") == 'ACTIVE/STANDBY' || sg_get_const("CARP") == 'ACTIVE/ACTIVE')
-	$menu['Services']['CARP'] = array('services_carp.php');
+	//$menu['Services']['CARP'] = array('services_carp.php');
 //$menu['Services']['Config Server'] = array('services_config_server.php');
 // $menu['Services']['Relayd'] = array('firewall_relayd_relays.php');
  
 if ($g['module'] == 'FIREWALL') {
 	$menu['VPN']['IPSec'] = array('vpn_ipsec_tabs.php');
-	$menu['VPN']['PPTP Client'] = array('vpn_pptp_client.php');
+	//$menu['VPN']['PPTP Client'] = array('vpn_pptp_client.php');
 	//$menu['VPN']['PPTP Server'] = array('vpn_pptp_server.php');
 }
 
@@ -281,10 +279,8 @@ echo '<a href="/interfaces_assign.php" class="navlnks"> (assign)</a>';
                 .'</a></li>';
     }
     }
-	if (sg_get_const("ENTERPRISE_ROUTING") == 'ENABLED') {
 		echo '<li><a href="interfaces_vlan_tabs.php" class="navlnk">VLANs</a></li>';
-		echo '<li><a href="interfaces_trunks_tabs.php" class="navlnk">Trunks</a></li>';
-	}
+		//echo '<li><a href="interfaces_trunks_tabs.php" class="navlnk">Trunks</a></li>';
 }
 echo '</span></div>';
 

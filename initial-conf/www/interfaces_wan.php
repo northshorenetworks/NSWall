@@ -45,8 +45,6 @@ if (isset($optcfg['wireless'])) {
 
 // wait for the DOM to be loaded
 $(document).ready(function() {
-     $('div fieldset div').addClass('ui-widget ui-widget-content ui-corner-content');
-     $('div fieldset div div').addClass('ui-widget ui-widget-content ui-corner-content');
      
      var wantype = $("#type");
      switch(wantype.val()){

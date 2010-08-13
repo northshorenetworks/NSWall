@@ -251,8 +251,8 @@ COPY ${DESTDIR}/usr/libexec/ld.so		usr/libexec/ld.so
 #COPY ${DESTDIR}/usr/libexec/spamd-setup	usr/libexec/spamd-setup
 COPY ${BINDIR}/symon  		             	usr/libexec/symon
 COPY ${DESTDIR}/usr/sbin/arp			usr/sbin/arp
-#COPY ${DESTDIR}/usr/sbin/bgpd			usr/sbin/bgpd
-#COPY ${DESTDIR}/usr/sbin/bgpctl		usr/sbin/bgpctl
+COPY ${DESTDIR}/usr/sbin/bgpd			usr/sbin/bgpd
+COPY ${DESTDIR}/usr/sbin/bgpctl			usr/sbin/bgpctl
 COPY ${DESTDIR}/usr/sbin/chroot			usr/sbin/chroot
 COPY ${DESTDIR}/usr/sbin/cron			usr/sbin/cron
 COPY ${DESTDIR}/usr/sbin/dev_mkdb		usr/sbin/dev_mkdb

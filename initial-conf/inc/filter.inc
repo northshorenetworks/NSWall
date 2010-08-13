@@ -152,7 +152,7 @@ function filter_parse_config($config) {
  
         /* generate pf rules */
         $pfrules = filter_tables_generate();
-	$pfrules .= filter_aliasrules_generate();
+		$pfrules .= filter_aliasrules_generate();
         $pfrules .= filter_options_generate();
         $pfrules .= filter_normalization_generate();
         $pfrules .= altq_conf_generate();
@@ -236,8 +236,10 @@ function filter_tables_generate() {
 ################
 #### Tables  ###
 ################
-table <blocked_sites> persist
+
 EOD;
+
+$line .= filter_static_blocked_sites_generate();
 
 if (isset($config['filter']['rule'])) {
         foreach ($config['filter']['rule'] as $rule) {
@@ -251,7 +253,7 @@ if (isset($config['filter']['rule'])) {
                                 $line .= "$srclist[$src], ";
                         }
                         $line = preg_replace("/\, $/", "", $line);
-                        $line .= " } persist";
+                        $line .= " } persist counters";
                  }
               }
                  /* destination address */
@@ -274,7 +276,7 @@ if (isset($config['filter']['rule'])) {
                                 $line .= "$dstlist[$dst], ";
                         }
 			$line = preg_replace("/\, $/", "", $line);
-                        $line .= " } persist";
+                        $line .= " } persist counters";
 			if ($rdrset && !$rdrdhcp) {
                                 $line .= "\ntable <" . $rule['name'] . "_dst_ext> { ";
                                 $dstlist = $rule['dstlist'];
@@ -286,7 +288,7 @@ if (isset($config['filter']['rule'])) {
                                     }
                                 }
  			        $line = preg_replace("/\, $/", "", $line);
-			        $line .= " } persist";
+			        $line .= " } persist counters";
                        	}
                     }
                 }
@@ -305,7 +307,7 @@ $line .= <<<EOD
 EOD;
 	if (is_array($config['system']['accounts']['user'])) {
 		foreach ($config['system']['accounts']['user'] as $user) {
-			$line .= 'table <' . $user['name'] . '> persist' . "\n";
+			$line .= 'table <' . $user['name'] . '> persist counters' . "\n";
 		}
 	} 
 
@@ -319,13 +321,53 @@ EOD;
 
 	if (is_array($config['system']['accounts']['group'])) {
                 foreach ($config['system']['accounts']['group'] as $group) {
-                        $line .= 'table <' . $group['name'] . '> persist' . "\n";
+                        $line .= 'table <' . $group['name'] . '> persist counters' . "\n";
                 }
         }
 
  	$line .= "\n";
 	
 	return $line;
+}
+
+function filter_static_blocked_sites_generate() {
+        global $config, $g;
+        $line = '';
+		if (isset($config['filter']['blockedsites'])) {
+            
+                            unset($recursive);
+                            if (isset($config['filter']['blockedsites']['memberlist'])) {
+                                    $memberlist = $config['filter']['blockedsites']['memberlist'];
+                                    for($i=0;$i<sizeof($memberlist); $i++) {
+                                            $mem = "member" . "$i";
+                                    }
+                                    $line .= 'table <static_blocked_sites>' .  ' { ';
+                           
+                                    for($i=0;$i<sizeof($memberlist); $i++) {
+                                            $mem = "member" . "$i";
+                                            $line .= "$memberlist[$mem], ";
+                                    }
+                                    $line = preg_replace('/, $/', '', $line);
+                            }
+                    $line .= ' } persist counters' . "\n";
+                    unset($recursive);
+                    if (isset($config['filter']['blockedsites']['nonmemberlist'])) {
+                                    $nonmemberlist = $config['filter']['blockedsites']['nonmemberlist'];
+                                    for($i=0;$i<sizeof($nonmemberlist); $i++) {
+                                            $mem = "nonmember" . "$i";
+                                    }
+                                    $line .= 'table <dynamic_blocked_sites>' .  ' { ';
+                           
+                                    for($i=0;$i<sizeof($nonmemberlist); $i++) {
+                                            $mem = "nonmember" . "$i";
+                                            $line .= "!$nonmemberlist[$mem], ";
+                                    }
+                                    $line = preg_replace('/, $/', '', $line);
+                            }
+                    $line .= ' } persist counters' . "\n";
+        
+        }
+        return $line;
 }
 
 function filter_aliasrules_generate() {
@@ -536,16 +578,14 @@ function altq_conf_generate() {
 }
 
 function filter_options_generate() {
-        global $config, $g;
+    global $config, $g;
 	$pfglobals = "#########################\n";
 	$pfglobals .= "### Global PF Options ###\n";
 	$pfglobals .= "#########################\n";
 	$pfglobals .= "set skip on lo0\n";
-    if (file_exists("{$g['etc_path']}/hwplatform")) {
-        $g['hwplatform'] = chop(file_get_contents("{$g['etc_path']}/hwplatform"));
-        $pla = explode("_", $g['hwplatform']);
-        $g['hwplatform'] = $pla[0];
-    }
+    
+    system_determine_hwplatform();
+    
     $hwplatformconfig = parse_nonconfig_xml("{$g['etc_path']}/hwplatformconfig.xml");
    
 	#$pfglobals .= 'set loginterface '.$g['hwplatformconfig'][INTERFACES][LAN]."\n";
@@ -795,7 +835,8 @@ function filter_rules_generate() {
 #### Blocked Sites ####
 #######################
 anchor "Blocked_Sites" {
-	block in $log quick from <blocked_sites> to any
+	block log quick from { <dynamic_blocked_sites>, <static_blocked_sites> } to any
+	block log quick from any to { <dynamic_blocked_sites>, <static_blocked_sites> }
 }
 
 #######################
@@ -1368,7 +1409,7 @@ EOD;
 					$optionsline .= "max-src-conn-rate {$rule['options']['maxsrcconrateconns']}/{$rule['options']['maxsrcconrateseconds']}, ";
 				}
 			 	if (isset($rule['options']['overload'])) {
-                                        $optionsline .= 'overload <blocked_sites> ';
+                                        $optionsline .= 'overload <dynamic_blocked_sites> ';
                                 }
 				if (isset($rule['options']['flush'])) {
                                         $optionsline .= "flush, ";

@@ -277,6 +277,16 @@ function filter_rulesets_sort() {
         usort($config['grouppolicies']['ruleset'], "rulesetcmp");
 }
 
+function route_tables_sort() {
+        global $g, $config;
+
+        function rtablescmp($a, $b) {
+                return strcmp($a['rtableid'], $b['rtableid']);
+        }
+
+        usort($config['system']['routetables']['routetable'], "rtablescmp");
+}
+
 /* sort by interface only, retain the original order of rules that apply to
    the same interface */
 function vpn_ipsec_gateway_sort() {
@@ -308,10 +318,7 @@ function filter_rules_sort() {
 		$config['filter']['rule'][$i]['seq'] = $i;
 	
 	function filtercmp($a, $b) {
-		if ($a['interface'] == $b['interface'])
-			return $a['seq'] - $b['seq'];
-		else
-			return -strcmp($a['interface'], $b['interface']);
+		return $a['seq'] - $b['seq'];
 	}
 	
 	usort($config['filter']['rule'], "filtercmp");

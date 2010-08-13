@@ -7,8 +7,6 @@ include("ns-begin.inc");
 
 <script type="text/javascript">
 $(document).ready(function() {
-     $('div fieldset div').addClass('ui-widget ui-widget-content ui-corner-content');
-
      // When a user clicks on the submit button, post the form.
      $("#submitbutton").click(function () {
 	  displayProcessingDiv();

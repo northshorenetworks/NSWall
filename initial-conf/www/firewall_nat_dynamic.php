@@ -7,7 +7,8 @@ if (!is_array($config['nat']['advancedoutbound']['rule']))
     $config['nat']['advancedoutbound']['rule'] = array();
     
 $a_dnat = &$config['nat']['advancedoutbound']['rule'];
-nat_out_rules_sort();
+
+//nat_out_rules_sort();
 
 ?>
 
@@ -44,7 +45,7 @@ $("#dnatsortable").sortable({
 $("#dnatsaveneworder").click(function () {                                    
     displayProcessingDiv();                                                     
     var order = $("#dnatsortable").sortable("serialize");                 
-    $("#currentorder").load("processing_sortable.php?"+order+"&sort=dnat");
+    $("#currentorder").load("process_nat_sortable.php?"+order+"&sort=dnat");
         $("#dnatsortable").sortable('refresh');                           
         $("#dnatsaveneworder").hide();                                        
         setTimeout(function(){ $('#save_config').dialog('close'); }, 2500);     

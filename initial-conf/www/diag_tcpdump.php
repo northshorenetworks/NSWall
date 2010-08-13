@@ -48,7 +48,6 @@ if (!preg_match('/No such file or directory/', $execOutput[0])) {
 
 // wait for the DOM to be loaded
 $(document).ready(function() {
-	$('div fieldset div').addClass('ui-widget ui-widget-content ui-corner-content');
 
         // Make the list of rules for this interface sortable
         $("#capturesortable").sortable({
@@ -114,7 +113,7 @@ $(document).ready(function() {
                     					<option value="proto icmp">ICMP</option>
                     					<option value="">Any</option>
                               </select>
-			     <p class="note">Choose on which interface to send the ping packets from</p>
+			     <p class="note">Choose what protocol to filter for</p>
 			</div>
                         <div>
                              <label for="interface">Interface</label>
@@ -131,8 +130,8 @@ $(document).ready(function() {
 </select>
 			     <p class="note">Choose on which interface to tcpdump from</p>
 			</div>
-                        <div>
-                             <label for="interface">Count</label>
+                     <div>
+                        <label for="interface">Count</label>
                               <select name="count" class="formfld" id="count">
                     <option selected value="10">10</option>
                     <option value="100">100</option>
@@ -155,7 +154,7 @@ $(document).ready(function() {
 <span class="col1">Filename</span>
 <span class="col2">Download</span>
 <span class="col3">Delete</span>
-<span class="col4">Support</span>
+<!--<span class="col4">Support</span>-->
 </li>
 <?php echo $output ?>       
 </ul>

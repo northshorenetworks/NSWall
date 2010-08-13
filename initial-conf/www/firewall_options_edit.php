@@ -145,7 +145,6 @@ $pconfig['logging']['default'] = isset($a_filter['logging']['default']);
 
 // wait for the DOM to be loaded
 $(document).ready(function() {
-    $('div fieldset div').addClass('ui-widget ui-widget-content ui-corner-content');
 	
 	$(function() {
         $("#firewalloptionstabs").tabs();
