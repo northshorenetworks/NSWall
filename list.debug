@@ -9,6 +9,8 @@ COPY ${DESTDIR}/usr/libexec/tftpd               usr/libexec/tftpd
 COPY ${DESTDIR}/usr/bin/systat                  usr/bin/systat
 COPY ${DESTDIR}/usr/bin/nc                  	usr/bin/nc
 COPY ${BINDIR}/iperf	                        usr/bin/iperf
+COPY ${DESTDIR}/usr/sbin/kgmon                  usr/sbin/kgmon
+COPY ${DESTDIR}/usr/bin/gprof                   usr/bin/gprof
 
 SPECIAL chown root.kmem   				        usr/bin/systat
 SPECIAL chmod 2755           				    usr/bin/systat

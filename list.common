@@ -1,4 +1,5 @@
-COPY ${CURDIR}/initial-conf/www/login.htm	                	usr/www/login.htm
+COPY ${CURDIR}/initial-conf/nssh/nssh.php  	                 bin/nssh
+COPY ${CURDIR}/initial-conf/www/login.htm	                usr/www/login.htm
 COPY ${CURDIR}/initial-conf/www/do-login.php                    usr/www/do-login.php
 COPY ${CURDIR}/initial-conf/www/logout.php                      usr/www/logout.php
 COPY ${CURDIR}/initial-conf/www/adminLogin.php                  usr/www/adminLogin.php
@@ -7,6 +8,7 @@ COPY ${CURDIR}/initial-conf/www/adminOnly.php	                usr/www/adminOnly.
 COPY ${CURDIR}/initial-conf/www/sessioninfo.php                 usr/www/sessioninfo.php
 COPY ${CURDIR}/initial-conf/www/config_sync.php					usr/www/config_sync.php
 COPY ${CURDIR}/initial-conf/www/diag_backup.php					usr/www/diag_backup.php
+COPY ${CURDIR}/initial-conf/www/diag_bgpd.php                                    usr/www/diag_bgp.php
 COPY ${CURDIR}/initial-conf/www/diag_defaults.php				usr/www/diag_defaults.php
 COPY ${CURDIR}/initial-conf/www/diag_vpn.php					usr/www/diag_vpn.php
 COPY ${CURDIR}/initial-conf/www/diag_logs.php					usr/www/diag_logs.php
@@ -15,7 +17,7 @@ COPY ${CURDIR}/initial-conf/www/diag_pf.php         			usr/www/diag_pf.php
 COPY ${CURDIR}/initial-conf/www/diag_sys.php         			usr/www/diag_sys.php
 COPY ${CURDIR}/initial-conf/www/diag_util.php         			usr/www/diag_util.php
 COPY ${CURDIR}/initial-conf/www/diag_ping.php					usr/www/diag_ping.php
- COPY ${CURDIR}/initial-conf/www/diag_registration.php     		usr/www/diag_registration.php
+COPY ${CURDIR}/initial-conf/www/diag_registration.php     		usr/www/diag_registration.php
 COPY ${CURDIR}/initial-conf/www/diag_resetstate.php				usr/www/diag_resetstate.php
 COPY ${CURDIR}/initial-conf/www/diag_tcpdump.php				usr/www/diag_tcpdump.php
 COPY ${CURDIR}/initial-conf/www/diag_traceroute.php				usr/www/diag_traceroute.php
@@ -50,14 +52,17 @@ COPY ${CURDIR}/initial-conf/www/firewall_pfsync.php				usr/www/firewall_pfsync.p
 #COPY ${CURDIR}/initial-conf/www/firewall_relayd_relays.php		usr/www/firewall_relayd_relays.php
 #COPY ${CURDIR}/initial-conf/www/firewall_relayd_relays_edit.php	usr/www/firewall_relayd_relays_edit.php
 #COPY ${CURDIR}/initial-conf/www/firewall_relays_edit.php		usr/www/firewall_relays_edit.php
+COPY ${CURDIR}/initial-conf/www/forms/diagnostics_form_submit.php  usr/www/forms/diagnostics_form_submit.php
 COPY ${CURDIR}/initial-conf/www/forms/firewall_form_submit.php  usr/www/forms/firewall_form_submit.php
+COPY ${CURDIR}/initial-conf/www/forms/services_form_submit.php  usr/www/forms/services_form_submit.php
 COPY ${CURDIR}/initial-conf/www/forms/system_form_submit.php    usr/www/forms/system_form_submit.php
 COPY ${CURDIR}/initial-conf/www/forms/system_firmware_form_submit.php    usr/www/forms/system_firmware_form_submit.php
 COPY ${CURDIR}/initial-conf/www/forms/vpn_form_submit.php       usr/www/forms/vpn_form_submit.php
 COPY ${CURDIR}/initial-conf/www/graph.php						usr/www/graph.php
 COPY ${CURDIR}/initial-conf/www/firewall_rules_tabs.php      	usr/www/firewall_rules_tabs.php
 COPY ${CURDIR}/initial-conf/www/firewall_rules.php				usr/www/firewall_rules.php
-COPY ${CURDIR}/initial-conf/www/processing_sortable.php      	usr/www/processing_sortable.php
+COPY ${CURDIR}/initial-conf/www/process_rule_sortable.php      	usr/www/process_rule_sortable.php
+COPY ${CURDIR}/initial-conf/www/process_nat_sortable.php        usr/www/process_nat_sortable.php
 COPY ${CURDIR}/initial-conf/www/firewall_rules_edittabs.php		usr/www/firewall_rules_edittabs.php
 COPY ${CURDIR}/initial-conf/www/firewall_virtual_ip.php			usr/www/firewall_virtual_ip.php
 COPY ${CURDIR}/initial-conf/www/firewall_virtual_ip_edit.php	usr/www/firewall_virtual_ip_edit.php
@@ -72,23 +77,33 @@ COPY ${CURDIR}/initial-conf/www/interfaces_lan.php				usr/www/interfaces_lan.php
 COPY ${CURDIR}/initial-conf/www/interfaces_opt.php				usr/www/interfaces_opt.php
 COPY ${CURDIR}/initial-conf/www/interfaces_trunk.php			usr/www/interfaces_trunk.php
 COPY ${CURDIR}/initial-conf/www/interfaces_trunk_edit.php		usr/www/interfaces_trunk_edit.php
-COPY ${CURDIR}/initial-conf/www/interfaces_vlan.php				usr/www/interfaces_vlan.php
+COPY ${CURDIR}/initial-conf/www/interfaces_trunks_tabs.php   	        usr/www/interfaces_trunks_tabs.php
+COPY ${CURDIR}/initial-conf/www/interfaces_vlan.php			usr/www/interfaces_vlan.php
+COPY ${CURDIR}/initial-conf/www/interfaces_vlan_tabs.php                usr/www/interfaces_vlan_tabs.php
 COPY ${CURDIR}/initial-conf/www/interfaces_vlan_edit.php		usr/www/interfaces_vlan_edit.php
-COPY ${CURDIR}/initial-conf/www/interfaces_wan.php				usr/www/interfaces_wan.php
+COPY ${CURDIR}/initial-conf/www/interfaces_wan.php			usr/www/interfaces_wan.php
 COPY ${CURDIR}/initial-conf/www/interfaces_wlan.inc     		usr/www/interfaces_wlan.inc
-COPY ${CURDIR}/initial-conf/www/license.php						usr/www/license.php
-COPY ${CURDIR}/initial-conf/www/pingtest.php                    usr/www/pingtest.php
-COPY ${CURDIR}/initial-conf/www/reboot.php						usr/www/reboot.php
+COPY ${CURDIR}/initial-conf/www/license.php				usr/www/license.php
+COPY ${CURDIR}/initial-conf/www/pingtest.php                    	usr/www/pingtest.php
+COPY ${CURDIR}/initial-conf/www/reboot.php				usr/www/reboot.php
 COPY ${CURDIR}/initial-conf/www/services_config_server.php		usr/www/services_config_server.php
 COPY ${CURDIR}/initial-conf/www/services_carp.php      			usr/www/services_carp.php
-COPY ${CURDIR}/initial-conf/www/services_dhcp.php				usr/www/services_dhcp.php
-COPY ${CURDIR}/initial-conf/www/services_dhcp_tabs.php     	    usr/www/services_dhcp_tabs.php
+COPY ${CURDIR}/initial-conf/www/services_dhcp.php			usr/www/services_dhcp.php
+COPY ${CURDIR}/initial-conf/www/services_dhcp_tabs.php     	        usr/www/services_dhcp_tabs.php
 COPY ${CURDIR}/initial-conf/www/services_dhcp_edit.php			usr/www/services_dhcp_edit.php
 COPY ${CURDIR}/initial-conf/www/services_dhcp_relay.php			usr/www/services_dhcp_relay.php
 COPY ${CURDIR}/initial-conf/www/services_dnsmasq.php			usr/www/services_dnsmasq.php
 COPY ${CURDIR}/initial-conf/www/services_dnsmasq_domainoverride_edit.php		usr/www/services_dnsmasq_domainoverride_edit.php
 COPY ${CURDIR}/initial-conf/www/services_dnsmasq_edit.php		usr/www/services_dnsmasq_edit.php
-COPY ${CURDIR}/initial-conf/www/services_dyndns.php				usr/www/services_dyndns.php
+COPY ${CURDIR}/initial-conf/www/services_dyndns.php			usr/www/services_dyndns.php
+COPY ${CURDIR}/initial-conf/www/services_bgp_config.php                 usr/www/services_bgp_config.php
+COPY ${CURDIR}/initial-conf/www/services_bgp_filters.php                usr/www/services_bgp_filters.php
+COPY ${CURDIR}/initial-conf/www/services_bgp_filters_edittabs.php       usr/www/services_bgp_filters_edittabs.php
+COPY ${CURDIR}/initial-conf/www/services_bgpd.php                       usr/www/services_bgpd.php
+COPY ${CURDIR}/initial-conf/www/services_bgp_neighbors.php              usr/www/services_bgp_neighbors.php
+COPY ${CURDIR}/initial-conf/www/services_bgp_neighbors_edit.php         usr/www/services_bgp_neighbors_edit.php
+COPY ${CURDIR}/initial-conf/www/services_bgp_groups.php                 usr/www/services_bgp_groups.php
+COPY ${CURDIR}/initial-conf/www/services_bgp_groups_edit.php            usr/www/services_bgp_groups_edit.php
 COPY ${CURDIR}/initial-conf/www/services_proxyarp.php			usr/www/services_proxyarp.php
 COPY ${CURDIR}/initial-conf/www/services_proxyarp_edit.php		usr/www/services_proxyarp_edit.php
 COPY ${CURDIR}/initial-conf/www/services_snmp.php				usr/www/services_snmp.php
@@ -109,11 +124,15 @@ COPY ${CURDIR}/initial-conf/www/system_advanced.php				usr/www/system_advanced.p
 COPY ${CURDIR}/initial-conf/www/system_advanced_create_certs.php		usr/www/system_advanced_create_certs.php
 COPY ${CURDIR}/initial-conf/www/system_cacert_tabs.php      	usr/www/system_cacert_tabs.php
 COPY ${CURDIR}/initial-conf/www/system_camanager.php			usr/www/system_camanager.php
+COPY ${CURDIR}/initial-conf/www/system_camanager_edit.php       usr/www/system_camanager_edit.php
 COPY ${CURDIR}/initial-conf/www/system_certmanager.php			usr/www/system_certmanager.php
+COPY ${CURDIR}/initial-conf/www/system_certmanager_edit.php     usr/www/system_certmanager_edit.php
 COPY ${CURDIR}/initial-conf/www/system_firmware.php				usr/www/system_firmware.php
 COPY ${CURDIR}/initial-conf/www/system_groupmanager.php			usr/www/system_groupmanager.php
 COPY ${CURDIR}/initial-conf/www/system_networking.php			usr/www/system_networking.php
 COPY ${CURDIR}/initial-conf/www/system_routes.php				usr/www/system_routes.php
+COPY ${CURDIR}/initial-conf/www/system_route_tables.php         usr/www/system_route_tables.php
+COPY ${CURDIR}/initial-conf/www/system_route_table_edit.php     usr/www/system_route_table_edit.php
 COPY ${CURDIR}/initial-conf/www/system_routes_edit.php			usr/www/system_routes_edit.php
 COPY ${CURDIR}/initial-conf/www/system_routes_tabs.php          usr/www/system_routes_tabs.php
 COPY ${CURDIR}/initial-conf/www/system_usermanager.php			usr/www/system_usermanager.php
@@ -158,6 +177,8 @@ COPY ${CURDIR}/initial-conf/www/js/ui.draggable.js              usr/www/js/ui.dr
 COPY ${CURDIR}/initial-conf/www/js/ui.droppable.js              usr/www/js/ui.droppable.js
 COPY ${CURDIR}/initial-conf/www/js/ui.sortable.js               usr/www/js/ui.sortable.js
 COPY ${CURDIR}/initial-conf/www/js/ui.progressbar.js            usr/www/js/ui.progressbar.js
+COPY ${CURDIR}/initial-conf/www/js/jquery.flot.js 	            usr/www/js/jquery.flot.js
+COPY ${CURDIR}/initial-conf/www/js/excanvas.min.js              usr/www/js/excanvas.min.js
 COPY ${CURDIR}/initial-conf/www/js/init.js                      usr/www/js/init.js
 COPY ${CURDIR}/initial-conf/www/js/jquery.form.js               usr/www/js/jquery.form.js
 COPY ${CURDIR}/initial-conf/www/js/nss.js     		            usr/www/js/nss.js
@@ -166,6 +187,8 @@ COPY ${CURDIR}/initial-conf/www/js/shBrushPhp.js	            usr/www/js/shBrushP
 COPY ${CURDIR}/initial-conf/www/js/shBrushJScript.js            usr/www/js/shBrushJScript.js
 COPY ${CURDIR}/initial-conf/www/js/shBrushXml.js	            usr/www/js/shBrushXml.js
 COPY ${CURDIR}/initial-conf/www/js/contentload.js               usr/www/js/contentload.js
+COPY ${CURDIR}/initial-conf/www/js/jquery.validate.js           usr/www/js/jquery.validate.js
+COPY ${CURDIR}/initial-conf/www/js/jquery.contextmenu.js        usr/www/js/jquery.contextmenu.js
 
 # copy over sourceguardian loaders
 SPECIAL cp -R -p ${CURDIR}/initial-conf/www/phpext              usr/www/

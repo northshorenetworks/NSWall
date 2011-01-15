@@ -59,8 +59,6 @@ $(function(){
 
 // wait for the DOM to be loaded
 $(document).ready(function() {
-     $('div fieldset div').addClass('ui-widget ui-widget-content ui-corner-content');
-
      // When a user clicks on the host add button, validate and add the host.
      $("#hostaddbutton").click(function () {
           var ip = $("#srchost");
@@ -83,6 +81,25 @@ $(document).ready(function() {
           return !$('#MEMBERS option:selected').remove();  
      });
 
+      $("#srchost, #srcnet").focus(function() {
+         $(this).css({"background-color": "#FFFFCC"});
+     });
+
+     $("#srchost, #srcnet").blur(function() {
+         value = $(this).val();
+         if (verifyIP(value) == 0)
+             $(this).css({"background-color": "#FFFFFF"});
+         else 
+             $(this).css({"background-color": "#FFAEAE"});
+     });
+
+     $("#srchost, #srcnet").keyup(function() {
+        value = $(this).val();
+          $(this).css({"background-color": "#FFAEAE"});
+        if (verifyIP(value) == 0)
+          $(this).css({"background-color": "#CDFECD"});
+     }); 
+
      // When a user clicks on the submit button, post the form.
      $("#submitbutton").click(function () {
 	  displayProcessingDiv();
@@ -91,7 +108,8 @@ $(document).ready(function() {
 	  var QueryString = $("#iform").serialize()+'&memberslist='+str;
 	  $.post("forms/firewall_form_submit.php", QueryString, function(output) {
                $("#save_config").html(output);	  
-               setTimeout(function(){ $('#save_config').fadeOut('slow'); }, 1000);            
+	  		   setTimeout(function(){ $('#save_config').dialog('close'); }, 1000);
+			   setTimeout(function(){ $('#content').load('firewall_aliases_tabs.php'); }, 1250);
 	  });
 	  return false;
      });

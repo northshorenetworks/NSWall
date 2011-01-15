@@ -1,122 +1,90 @@
-#!/bin/php
-<?php 
-/*
-	$Id: firewall_nat.php,v 1.1.1.1 2008/08/01 07:56:19 root Exp $
-    part of m0n0wall (http://m0n0.ch/wall)
-    
-    Copyright (C) 2003-2006 Manuel Kasper <mk@neon1.net>.
-    All rights reserved.
-    
-    Redistribution and use in source and binary forms, with or without
-    modification, are permitted provided that the following conditions are met:
-    
-    1. Redistributions of source code must retain the above copyright notice,
-       this list of conditions and the following disclaimer.
-    
-    2. Redistributions in binary form must reproduce the above copyright
-       notice, this list of conditions and the following disclaimer in the
-       documentation and/or other materials provided with the distribution.
-    
-    THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
-    INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
-    AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
-    AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
-    OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
-    SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-    INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
-    CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-    ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-    POSSIBILITY OF SUCH DAMAGE.
-*/
-
-$pgtitle = array("Interfaces", "Trunks", "Assign");
-require("guiconfig.inc");
-
-if (!is_array($config['trunks']['trunk']))
-    $config['trunks']['trunk'] = array();
-
-$a_out = &$config['trunks']['trunk'];
-trunks_sort();
-
-if ($_POST) {
-
-    $pconfig = $_POST;
-
-    $config['nat']['advancedoutbound']['enable'] = ($_POST['enable']) ? true : false;
-    write_config();
-    
-    $retval = 0;
-    
-    if (!file_exists($d_sysrebootreqd_path)) {
-		config_lock();
-        $retval |= filter_configure();
-		config_unlock();
-    }
-    $savemsg = get_std_save_message($retval);
-    
-    if ($retval == 0) {
-        if (file_exists($d_natconfdirty_path))
-            unlink($d_natconfdirty_path);
-        if (file_exists($d_filterconfdirty_path))
-            unlink($d_filterconfdirty_path);
-    }
-}
-
-if ($_GET['act'] == "del") {
-    if ($a_out[$_GET['id']]) {
-	foreach ( $config['interfaces'] as $interface ) {
-                if($a_out[$_GET['id']]['trunkport'] == $interface['if']) { 
-			exit;		
-		}
-	}	 
-        unset($a_out[$_GET['id']]);
-        write_config();
-        header("Location: interfaces_trunk.php");
-        exit;
-    }
-}
-
+#!/bin/php  
+<?php   
+$pgtitle = array("Interfaces", "Trunks");      
+require("guiconfig.inc");      
+include("ns-begin.inc");       
+if (!is_array($config['trunks']['trunk'])) {      
+    $config['trunks']['trunk'] = array();      
+}      
+$a_trunk = &$config['trunks']['trunk'];      
+trunks_sort();   
 ?>
-<form action="interfaces_trunk.php" method="post">
-<?php if ($savemsg) print_info_box($savemsg); ?>
-<?php if (file_exists($d_natconfdirty_path)): ?><p>
-<?php print_info_box_np("The NAT configuration has been changed.<br>You must apply the changes in order for them to take effect.");?><br>
-<input name="apply" type="submit" class="formbtn" id="apply" value="Apply changes"></p>
-<?php endif; ?>
-<table width="100%" border="0" cellpadding="0" cellspacing="0">
-<tr><td class="tabnavtbl">
-  <ul id="tabnav">
-    <li class="tabinact"><a href="interfaces_assign.php">Interface assignments</a></li>
-    <li class="tabinact"><a href="interfaces_vlan.php">VLANs</a></li>
-    <li class="tabact">Trunks</li>
-  </ul>
-  </td></tr>
-  <tr> 
-    <td class="tabcont">
-              <table width="100%" border="0" cellpadding="0" cellspacing="0">
-                <tr> 
-                  <td width="10%" class="listhdrr">Name</td>
-                  <td width="50%" class="listhdr">Description</td>
-                  <td width="5%" class="list"></td>
-                </tr>
-              <?php $i = 0; foreach ($a_out as $natent): ?>
-                <tr valign="top">
-                  <td class="listbg"> 
-                    <?=htmlspecialchars($natent['name']);?>&nbsp;
-                  </td>
-                  <td class="listbg"> 
-                    <?=htmlspecialchars($natent['descr']);?>&nbsp;
-                  </td>
-                  <td class="list" nowrap> <a href="trunks_edit.php?id=<?=$i;?>"><img src="images/e.gif" title="edit mapping" width="17" height="17" border="0"></a>
-                     &nbsp;<a href="interfaces_trunk.php?act=del&id=<?=$i;?>" onclick="return confirm('Do you really want to delete this trunk?')"><img src="images/x.gif" title="delete mapping" width="17" height="17" border="0"></a></td>
-                </tr>
-              <?php $i++; endforeach; ?>
-                <tr> 
-                  <td class="list" colspan="5"></td>
-                  <td class="list"> <a href="trunks_edit.php"><img src="images/plus.gif" title="add mapping" width="17" height="17" border="0"></a></td>
-                </tr>
-              </table>
-</td>
-  </tr>
-</table>
-            </form>
+
+<style type="text/css">
+    #trunksortable { list-style-type: none; margin: auto auto 1em; padding: 0; width: 95%; }
+    #trunksortable li { padding: 0.1em; margin-left: 0; padding-left: 1em; font-size: 1.4em; height: 18px; border:1px solid #E4E4E4;  font-size:1em; }
+    #trunksortable li span.col1 { position:relative; float:left; width:5%; }
+    #trunksortable li span.col2 { position:relative; float:left; width:5%; }
+    #trunksortable li span.col3 { position:relative; float:left; width:15%; }
+    #trunksortable li span.col4 { position:relative; float:left; width:50%; }
+</style>
+
+<script type="text/javascript">
+
+// Hide the Save Changes Button
+$(document).ready(function() {
+});
+
+// Make the list of rules for this interface sortable
+$("#trunksortable").sortable({
+   axis: 'y',
+   containment: 'parent',
+   items: 'li:not(.ui-state-disabled)',
+   update: function(event, ui) {
+        //showdiv("<?=$if . 'saveneworder';?>");
+   }
+});
+
+// When a user clicks on the rule edit button, load firewall_nat_dynamic_edit.php?id=$id
+$(".col1 a, #newtrunk a").click(function () {
+    var toLoad = $(this).attr('href');
+        clearInterval(refreshId);
+        $('#content').load(toLoad);
+        return false;
+});
+
+// When a user clicks on the rule delete button, load firewall_dynamic_nat_edit.php?id=$id
+ $(".col2 a").click(function () {
+        if (confirm('Are you sure you want to delete this trunk?')){
+        displayProcessingDiv();
+        var id = $(this).attr('href');
+            $.post("forms/interfaces_form_submit.php", id, function(output) {
+                $("#save_config").html(output);
+                if(output.match(/SUBMITSUCCESS/))
+                    setTimeout(function(){ $('#save_config').dialog('close'); }, 1000);
+                    setTimeout(function(){ $('#content').load('interfaces_trunks_tabs.php'); }, 1250);
+            });
+            return false;
+        }
+});
+
+</script>
+
+<div class="demo">
+<ul id="trunksortable">
+<li id="element_<?=$i;?>" class="connectedSortable ui-state-disabled">
+<span class="col1">Edit</span>
+<span class="col2">Delete</span>
+<span class="col3">Name</span>
+<span class="col4">Description</span>
+</li>
+<?php $nrules = 0; for ($i = 0; isset($a_trunk[$i]); $i++):
+$trunkent = $a_trunk[$i]; ?>
+<li id="listItem_<?=$i;?>">
+<span class="col1">
+<a href="interfaces_trunk_edit.php?id=<?=$i;?>">
+<span title="edit this rule" class="ui-icon ui-icon-circle-zoomin"></span>
+</a>
+</span>
+<span class="col2">
+<a href="id=<?=$i;?>&formname=interface_trunk_delete">
+<span title="delete this rule" class="ui-icon ui-icon-circle-close"></span>
+</a>
+</span>
+<span class="col3"><?php if (isset($trunkent['name'])) echo strtoupper($trunkent['name']); else echo "*"; ?><?=$textse;?></span>
+<span class="col4"><?php if (isset($trunkent['descr'])) echo $trunkent['descr'];?></span>
+</li>
+<?php $nrules++; endfor; ?>
+</ul>
+<div id="newtrunk"><center><a href="interfaces_trunk_edit.php"><span title="add a new trunk" class="ui-icon ui-icon-circle-plus"></span></a></center></div>
+</div>

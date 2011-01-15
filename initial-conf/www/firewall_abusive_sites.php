@@ -1,104 +1,182 @@
 #!/bin/php
-<?php 
-/*
-	$Id: services_config_server.php,v 1.1 2009/04/20 06:59:37 jrecords Exp $
-	part of m0n0wall (http://m0n0.ch/wall)
-	
-	Copyright (C) 2003-2006 Manuel Kasper <mk@neon1.net>.
-	All rights reserved.
-	
-	Redistribution and use in source and binary forms, with or without
-	modification, are permitted provided that the following conditions are met:
-	
-	1. Redistributions of source code must retain the above copyright notice,
-	   this list of conditions and the following disclaimer.
-	
-	2. Redistributions in binary form must reproduce the above copyright
-	   notice, this list of conditions and the following disclaimer in the
-	   documentation and/or other materials provided with the distribution.
-	
-	THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
-	INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
-	AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
-	AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
-	OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
-	SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-	INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
-	CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-	ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-	POSSIBILITY OF SUCH DAMAGE.
-*/
-
-$pgtitle = array("Firewall", "Abusive Hosts");
+<?php
+$pgtitle = array("Firewall", "Abusive Sites");
+ 
 require("guiconfig.inc");
+include("ns-begin.inc");
 
-if ($_POST) {
+$a_blockedsites = &$config['filter']['blockedsites'];
 
-	if ($_POST['submit'] == "Save") {
-	unset($input_errors);
-	$pconfig = $_POST;
+$pconfig['memberlist'] = $a_blockedsites['memberlist'];
+$pconfig['nonmemberlist'] = $a_blockedsites['nonmemberlist'];
+$pconfig['dynamictimeout'] = $a_blockedsites['dynamictimeout'];
+?> 
 
-	/* input validation */
-	if (!$input_errors) {
-		unset($config['filter']['abusivehosts']['abusiveslist']);
-	        $abusiveslist = array_reverse(explode(',', $_POST['memberslist']));
-		for($i=0;$i<sizeof($abusiveslist); $i++) {
-			$member = 'abuser'."$i";
-			$source = preg_replace("/ /", "", $abusiveslist[$i]);
-			$config['filter']['abusivehosts']['abusiveslist'][$member] = $source;
-		}
-        	write_config();
-	}
-		
-		$retval = 0;
-		if (!file_exists($d_sysrebootreqd_path)) {
-			config_lock();
-			config_unlock();
-		}
-		$savemsg = get_std_save_message($retval);
-	}
-}
+<script type="text/javascript">
+// when a user changes the type of memeber, change the related div to sytle = display: block and hide all others
+$(function(){
+     $("#srctype").change(function() {
+          var val = $(this).val();
+          switch(val){
+        case 'srchostdiv':
+            $("#srchostdiv").show();
+            $("#srcnetdiv").hide();
+            $("#srcblockedsitesdiv").hide();
+            $("#srcuserdiv").hide();
+            break;
+        case 'srcnetdiv':
+            $("#srcnetdiv").show();
+            $("#srchostdiv").hide();
+            $("#srcblockedsitesdiv").hide();
+            $("#srcuserdiv").hide();
+            break;
+        case 'srcblockedsitesdiv':
+            $("#srcblockedsitesdiv").show();
+            $("#srchostdiv").hide();
+            $("#srcnetdiv").hide();
+            $("#srcuserdiv").hide();
+            break;
+        case 'srcuserdiv':
+            $("#srcuserdiv").show();
+            $("#srcblockedsitesdiv").hide();
+            $("#srchostdiv").hide();
+            $("#srcnetdiv").hide();
+            break;
+        }  
+     });
+}); 
 
-$pconfig['abusiveslist'] =  $config['filter']['abusivehosts']['abusiveslist'];
+$(function(){
+     $("#exceptionsrctype").change(function() {
+          var val = $(this).val();
+          switch(val){
+        case 'exceptionsrchostdiv':
+            $("#exceptionsrchostdiv").show();
+            $("#exceptionsrcnetdiv").hide();
+            $("#exceptionsrcblockedsitesdiv").hide();
+            $("#exceptionsrcuserdiv").hide();
+            break;
+        case 'exceptionsrcnetdiv':
+            $("#exceptionsrcnetdiv").show();
+            $("#exceptionsrchostdiv").hide();
+            $("#exceptionsrcblockedsitesdiv").hide();
+            $("#exceptionsrcuserdiv").hide();
+            break;
+        case 'exceptionsrcblockedsitesdiv':
+            $("#exceptionsrcblockedsitesdiv").show();
+            $("#exceptionsrchostdiv").hide();
+            $("#exceptionsrcnetdiv").hide();
+            $("#exceptionsrcuserdiv").hide();
+            break;
+        case 'exceptionsrcuserdiv':
+            $("#exceptionsrcuserdiv").show();
+            $("#exceptionsrcblockedsitesdiv").hide();
+            $("#exceptionsrchostdiv").hide();
+            $("#exceptionsrcnetdiv").hide();
+            break;
+        }  
+     });
+}); 
 
-?>
-<?php include("fbegin.inc"); ?>
-<script language="javascript" src="/nss.js"></script>
+// wait for the DOM to be loaded
+$(document).ready(function() {
+     // When a user clicks on the host add button, validate and add the host.
+     $("#hostaddbutton").click(function () {
+          var ip = $("#srchost");
+      $('#MEMBERS').append("<option value='" + ip.val() + "'>"+ip.val() + '</option>');
+          ip.val("");
+          return false;
+     });
 
-            <?php if ($input_errors) print_input_errors($input_errors); ?>
-            <?php if ($savemsg) print_info_box($savemsg); ?>
-            <p><span class="vexpl"><span class="red"><strong>Note: </strong></span>the 
-              options on this page are intended for use by advanced users only.</span></p>
-            <form action="firewall_abusive_sites.php" onSubmit="return prepareSubmit()" method="post" name="iform" id="iform">
-            <input name="memberslist" type="hidden" value="">
-            <table width="100%" border="0" cellpadding="6" cellspacing="0">
-		<tr> 
-                  <td colspan="2" valign="top" class="listtopic">Abusive Sites</td>
-                </tr>
-		<tr>
-                <td width="22%" valign="top" class="vncellreq">Abusive Sites</td>
-                <td width="78%" class="vtable">
-                <SELECT style="width: 150px; height: 100px" id="MEMBERS" NAME="MEMBERS" MULTIPLE size=6 width=30>
-                <?php for ($i = 0; $i<sizeof($pconfig['abusiveslist']); $i++): ?>
-                <option value="<?=$pconfig['abusiveslist']["abuser$i"];?>">
-                <?=$pconfig['abusiveslist']["abuser$i"];?>
+     // When a user clicks on the host add button, validate and add the host.
+     $("#exceptionhostaddbutton").click(function () {
+          var ip = $("#exceptionsrchost");
+      $('#NONMEMBERS').append("<option value='" + ip.val() + "'>"+ip.val() + '</option>');
+          ip.val("");
+          return false;
+     });
+
+     // When a user clicks on the net add button, validate and add the host.
+     $("#netaddbutton").click(function () {
+          var ip = $("#srcnet");
+          var netmask = $("#srcmask");
+      $('#MEMBERS').append("<option value='" + ip.val() + "/" + netmask.val() + "'>"+ip.val() + "/" + netmask.val() + '</option>');
+          ip.val("");
+          return false;
+     });
+
+     // When a user clicks on the net add button, validate and add the host.
+     $("#exceptionnetaddbutton").click(function () {
+          var ip = $("#exceptionsrcnet");
+          var netmask = $("#exceptionsrcmask");
+      $('#NONMEMBERS').append("<option value='" + ip.val() + "/" + netmask.val() + "'>"+ip.val() + "/" + netmask.val() + '</option>');
+          ip.val("");
+          return false;
+     });
+
+     // When a user highlights an item and clicks remove, remove it
+          $('#remove').click(function() {  
+          return !$('#MEMBERS option:selected').remove();  
+     });
+
+     // When a user highlights an item and clicks remove, remove it
+          $('#exceptionremove').click(function() {  
+          return !$('#NONMEMBERS option:selected').remove();  
+     });
+
+     // When a user clicks on the submit button, post the form.
+     $("#submitbutton").click(function () {
+      displayProcessingDiv();
+      var Options = $.map($('#MEMBERS option'), function(e) { return $(e).val(); } );
+      var str = Options.join(' ');
+          var ExceptionOptions = $.map($('#NONMEMBERS option'), function(e) { return $(e).val(); } );
+      var Exceptionstr = ExceptionOptions.join(' ');
+      var QueryString = $("#iform").serialize()+'&memberslist='+str+'&nonmemberslist='+Exceptionstr;
+      $.post("forms/firewall_form_submit.php", QueryString, function(output) {
+               $("#save_config").html(output);    
+               setTimeout(function(){ $('#save_config').dialog('close'); }, 1000);
+               setTimeout(function(){ $('#content').load('firewall_abusive_sites.php'); }, 1250);
+      });
+      return false;
+     });
+  
+});
+</script> 
+
+<div id="wrapper">
+        <div class="form-container ui-tabs ui-widget ui-corner-all">
+
+    <form action="forms/firewall_form_submit.php" method="post" name="iform" id="iform">
+        <input name="formname" type="hidden" value="firewall_blockedsites">
+    <input name="id" type="hidden" value="<?=$id;?>">
+    <fieldset>
+        <legend><?=join(": ", $pgtitle);?></legend>
+                      <div>
+                             <label for="members">Blocked Sites</label>
+                             <select name="MEMBERS" style="width: 160px; height: 100px" id="MEMBERS" multiple>
+        <?php for ($i = 0; $i<sizeof($pconfig['memberlist']); $i++): ?>
+                <option value="<?=$pconfig['memberlist']["member$i"];?>">
+                <?=$pconfig['memberlist']["member$i"];?>
                 </option>
                 <?php endfor; ?>
-                <input type=button onClick="removeOptions(MEMBERS)"; value='Remove Selected'><br><br>
-                  <strong>Type</strong>
-                    <select name="srctype" class="formfld" id="srctype" onChange="switchsrcid(document.iform.srctype.value)">
-                      <option value="srchost" selected>Host</option>
-                      <option value="srcnet" >Network</option>
-                      <option value="srcalias" >Alias</option>
-                    </select><br><br>
-                <div id='srchost' style="display:block;">
-                 <strong>Address</strong>
-                  <?=$mandfldhtml;?><input name="srchost" type="text" class="formfld" id="srchost" size="16" value="<?=htmlspecialchars($pconfig['address']);?>">
-                <input type=button onClick="addOption('MEMBERS',document.iform.srchost.value + '/32','host' + ':' + document.iform.srchost.value + '/32')"; value='Add'>
-		</div>
-                <div id='srcnet' style="display:none;">
-                 <strong>Address</strong>
-                  <?=$mandfldhtml;?><input name="srcnet" type="text" class="formfld" id="srcnet" size="16" value="<?=htmlspecialchars($pconfig['address']);?>">
+        </select>
+                <input type=button id='remove' value='Remove Selected'><br><br>
+                  <label for="members">Type</label>
+                    <select name="srctype" class="formfld" id="srctype">
+                      <option value="srchostdiv" selected>Host</option>
+                      <option value="srcnetdiv" >Network</option>
+                      <option value="srcblockedsitesdiv" >Alias</option>
+                      <option value="srcuserdiv" >User</option>
+                    </select>
+                </div>
+                <div id='srchostdiv' style="display:block;">
+                 <label for="srchost">Address</label>
+                  <input name="srchost" type="text" class="formfld" id="srchost" size="16" value="<?=htmlspecialchars($pconfig['address']);?>">
+                <input type=button id='hostaddbutton' value='Add'>
+                </div>
+                <div id='srcnetdiv' style="display:none;">
+                 <label for="srcnet">Address</label>
+                  <input name="srcnet" type="text" class="formfld" id="srcnet" size="16" value="<?=htmlspecialchars($pconfig['address']);?>">
                    <strong>/</strong>
                     <select name="srcmask" class="formfld" id="srcmask">
                       <?php for ($i = 30; $i >= 1; $i--): ?>
@@ -107,38 +185,37 @@ $pconfig['abusiveslist'] =  $config['filter']['abusivehosts']['abusiveslist'];
                       </option>
                       <?php endfor; ?>
                     </select>
-                <input type=button onClick="addOption('MEMBERS',document.iform.srcnet.value + '/' + document.iform.srcmask.value,'net' + ':' + document.iform.srcnet.value + '/' + document.iform.srcmask.value)"; value='Add'>
-		</div>
-                <div id='srcalias' style="display:none;">
-                <strong>Alias</strong>
-                    <select name="srcalias" class="formfld" id="srcalias">
-                      <?php
-                       $defaults = filter_system_aliases_names_generate();
-                       $defaults = split(' ', $defaults);
-                       foreach( $defaults as $i): ?>
-                      <option value="<?='$' . $i;?>"><?=$i;?>
-                      </option>
-                      <?php endforeach; ?>
-                      <?php foreach($config['aliases']['alias'] as $i): ?>
+                <input type=button id='netaddbutton' value='Add'>
+                </div>
+                <div id='srcblockedsitesdiv' style="display:none;">
+                 <label for="srcblockedsites">Table</label>
+                    <select name="srcblockedsites" class="formfld" id="srcblockedsites">
+                      <?php foreach($config['blockedsiteses']['blockedsites'] as $i): ?>
                       <option value="<?='$' . $i['name'];?>" <?php if ($i == $pconfig['address_subnet']) echo "selected"; ?>>
                         <?=$i['name'];?>
                       </option>
                       <?php endforeach; ?>
                     </select>
-		<input type=button onClick="addOption('MEMBERS',document.iform.srcalias.value + '/32','net' + ':' + document.iform.srcalias.value + '/32')"; value='Add'>
-		</div>
-                </td>
-                </tr>
-                  <td width="22%" valign="top">&nbsp;</td>
-                  <td width="78%"> 
-                    <input name="submit" type="submit" class="formbtn" value="Save" onclick="enable_change(true)"> 
-                  </td>
-                </tr>
-              </table>
-</form>
-<script language="JavaScript">
-<!--
-enable_change(false);
-//-->
-</script>
-<?php include("fend.inc"); ?>
+                <input type=button value='Add'>
+                </div>
+                <div id='srcuser' style="display:none;">
+                <strong>User</strong>
+                    <select name="srcuser" class="formfld" id="srcuser">
+                      <?php foreach($config['system']['accounts']['user'] as $i): ?>
+                      <option value="<?=$i['name'];?>">
+                        <?=$i['name'];?>
+                      </option>
+                      <?php endforeach; ?>
+                    </select>
+                <input type=button value='Add'>
+                </div>
+    </fieldset>
+    
+    <div class="buttonrow">
+        <input type="submit" id="submitbutton" value="Save" class="button" />
+    </div>
+
+    </form>
+    
+    </div><!-- /form-container -->
+</div><!-- /wrapper -->

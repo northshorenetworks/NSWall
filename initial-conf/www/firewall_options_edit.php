@@ -6,7 +6,7 @@ require("guiconfig.inc");
 include("ns-begin.inc");
 
 if (!is_array($config['filter']['options'])) {
-	$config['filter']['options'] = array();
+    $config['filter']['options'] = array();
 }
 $a_filter = &$config['filter']['options'];
 
@@ -16,9 +16,9 @@ if($a_filter['timeouts']['tcpfirst']) {
         $pconfig['timeouts']['tcpfirst'] = "120";
 }
 if($a_filter['timeouts']['tcpopening']) {
-	$pconfig['timeouts']['tcpopening'] = $a_filter['timeouts']['tcpopening'];
+    $pconfig['timeouts']['tcpopening'] = $a_filter['timeouts']['tcpopening'];
 } else {
-	$pconfig['timeouts']['tcpopening'] = "30";
+    $pconfig['timeouts']['tcpopening'] = "30";
 }
 if($a_filter['timeouts']['tcpextablished']) {
         $pconfig['timeouts']['tcpestablished'] = $a_filter['timeouts']['tcpestablished'];
@@ -113,7 +113,7 @@ if($a_filter['opt']['rulesetopt']) {
 if($a_filter['opt']['stateopt']) {
         $pconfig['opt']['stateopt'] = $a_filter['opt']['stateopt'];
 } else {
-	$pconfig['opt']['stateopt'] = "normal";
+    $pconfig['opt']['stateopt'] = "normal";
 }
 if($a_filter['opt']['blockpol']) {
         $pconfig['opt']['blockpol'] = $a_filter['opt']['blockpol'];
@@ -134,7 +134,7 @@ if($a_filter['scrub']['maxmss']) {
 }
 $pconfig['scrub']['randid'] = isset($a_filter['scrub']['randid']);
 if($a_filter['scrub']['fraghandle']) {
-	$pconfig['scrub']['fraghandle'] = $a_filter['scrub']['fraghandle'];
+    $pconfig['scrub']['fraghandle'] = $a_filter['scrub']['fraghandle'];
 }
 $pconfig['scrub']['reassembletcp'] = isset($a_filter['scrub']['reassembletcp']);
 $pconfig['logging']['default'] = isset($a_filter['logging']['default']);
@@ -145,11 +145,52 @@ $pconfig['logging']['default'] = isset($a_filter['logging']['default']);
 
 // wait for the DOM to be loaded
 $(document).ready(function() {
-    $('div fieldset div').addClass('ui-widget ui-widget-content ui-corner-content');
-	
-	$(function() {
-        $("#firewalloptionstabs").tabs();
-    });
+    
+    var index = 0;
+        if (window.location.hash) {
+             var hash = window.location.hash.substr(1);
+             if (hash.match(/_tab_timeouts$/)) {
+                 index = 0;
+             }
+             else if (hash.match(/_tab_limits$/)) {
+                 index = 1;
+             }
+             else if (hash.match(/_tab_options$/)) {
+                 index = 2;
+             }
+             else if (hash.match(/_tab_normalization$/)) {
+                 index = 3;
+             }
+             else if (hash.match(/_tab_logging$/)) {
+                 index = 4;
+             }
+        }
+        $('#firewalloptionstabs').tabs({ selected: index });
+        $('#firewalloptionstabs').tabs("select", index);
+
+        $('#firewalloptionstabs').bind( "tabsshow", function(event, ui) {
+            var selected = $('#firewalloptionstabs').tabs( "option", "selected" );
+            switch (selected) {
+                case 0:
+                    document.location = '#firewall_options_edit_tab_timeouts';
+                    break;
+                case 1:
+                    document.location = '#firewall_options_edit_tab_limits';
+                    break;
+                case 2:
+                    document.location = '#firewall_options_edit_tab_options';
+                    break;
+                case 3:
+                    document.location = '#firewall_options_edit_tab_normalization';
+                    break;
+                case 4:
+                    document.location = '#firewall_options_edit_tab_logging';
+                    break;
+                default:
+                    document.location = '#firewall_options_edit_tab_timetouts';
+                    break;
+            }
+        });
 
     $("#submitbutton, #submitbutton2, #submitbutton3, #submitbutton4, #submitbutton5").click(function () {
         displayProcessingDiv();
@@ -177,30 +218,30 @@ $(document).ready(function() {
         <li><a href="#tabLogging">Logging</a></li>
     </ul>
          <form action="forms/firewall_form_submit.php" method="post" name="iform" id="iform">
-	     <input name="formname" type="hidden" value="firewall_options">
+         <input name="formname" type="hidden" value="firewall_options">
              <div id="tabTimeouts">
              <fieldset>
-	     <legend><?=join(": ", $pgtitle);?></legend>
-	          <div>
+         <legend><?=join(": ", $pgtitle);?></legend>
+              <div>
                        <label for="tcpfirst">TCP First</label>
                        <input name="tcpfirst" type="text" class="formfld" id="tcpfirst" size="5" value="<?=htmlspecialchars($pconfig['timeouts']['tcpfirst']);?>" />
                         <p class="note">The state after the first packet.</p>
-		  </div>
+          </div>
                   <div>
                        <label for="tcpopening">TCP Opening</label>
                        <input name="tcpopening" type="text" class="formfld" id="tcpopening" size="5" value="<?=htmlspecialchars($pconfig['timeouts']['tcpopening']);?>" />
                         <p class="note">The state before the destination host ever sends a packet.</p>
-		  </div>
+          </div>
                   <div>
                        <label for="tcpestablished">TCP Established</label>
                        <input name="tcpestablished" type="text" class="formfld" id="tcpestablished" size="5" value="<?=htmlspecialchars($pconfig['timeouts']['tcpestablished']);?>" />
                         <p class="note">The fully established state.</p>
-		  </div>
+          </div>
                   <div>
                        <label for="tcpclosing">TCP Closing</label>
                        <input name="tcpclosing" type="text" class="formfld" id="tcpclosing" size="5" value="<?=htmlspecialchars($pconfig['timeouts']['tcpclosing']);?>" />
                         <p class="note">The state after the first FIN has been sent.</p>
-		  </div>
+          </div>
                   <div>
                        <label for="tcpfinwait">TCP FIN Wait</label>
                        <input name="tcpfinwait" type="text" class="formfld" id="tcpfinwait" size="5" value="<?=htmlspecialchars($pconfig['timeouts']['tcpfinwait']);?>" />
@@ -209,63 +250,63 @@ $(document).ready(function() {
                  send TCP packets even after closing the connection.  Increas-
                  ing tcp.finwait (and possibly tcp.closing) can prevent block-
                  ing of such packets.</p>
-		  </div>
+          </div>
                   <div>
                        <label for="tcpclosing">TCP Closed</label>
                        <input name="tcpclosed" type="text" class="formfld" id="tcpclosed" size="5" value="<?=htmlspecialchars($pconfig['timeouts']['tcpclosed']);?>" />
                         <p class="note">The state after one endpoint sends a RST.</p>
-		  </div>
+          </div>
                   <div>
                        <label for="udpfirst">UDP First</label>
                        <input name="udpfirst" type="text" class="formfld" id="udpfirst" size="5" value="<?=htmlspecialchars($pconfig['timeouts']['udpfirst']);?>" />
                         <p class="note">The state after the first packet.</p>
-		  </div>
+          </div>
                   <div>
                        <label for="udpsingle">UDP Single</label>
                        <input name="udpsingle" type="text" class="formfld" id="udpsingle" size="5" value="<?=htmlspecialchars($pconfig['timeouts']['udpfirst']);?>" />
                         <p class="note">The state if the source host sends more than one packet but
                  the destination host has never sent one back.</p>
-		  </div>
+          </div>
                   <div>
                        <label for="udpmultiple">UDP Multiple</label>
                        <input name="udpmultiple" type="text" class="formfld" id="udpmultiple" size="5" value="<?=htmlspecialchars($pconfig['timeouts']['udpmultiple']);?>" />
                         <p class="note">The state if both hosts have sent packets.</p>
-		  </div>
+          </div>
                   <div>
                        <label for="icmpfirst">ICMP First</label>
                        <input name="icmpfirst" type="text" class="formfld" id="icmpfirst" size="5" value="<?=htmlspecialchars($pconfig['timeouts']['icmpfirst']);?>" />
                         <p class="note">The state after the first packet.</p>
-		  </div>
+          </div>
                   <div>
                        <label for="icmperror">ICMP Error</label>
                        <input name="icmperror" type="text" class="formfld" id="icmperror" size="5" value="<?=htmlspecialchars($pconfig['timeouts']['icmperror']);?>" />
                         <p class="note">The state after an ICMP error came back in response to an ICMP packet.</p>
-		  </div>
+          </div>
                   <div>
                        <label for="otherfirst">Other First</label>
                        <input name="otherfirst" type="text" class="formfld" id="otherfirst" size="5" value="<?=htmlspecialchars($pconfig['timeouts']['otherfirst']);?>" />
                         <p class="note">The state after the first packet.</p>
-		  </div>
+          </div>
                   <div>
                        <label for="othersingle">Other Single</label>
                        <input name="othersingle" type="text" class="formfld" id="othersingle" size="5" value="<?=htmlspecialchars($pconfig['timeouts']['othersingle']);?>" />
                         <p class="note">The state after the first packet.</p>
-		  </div>
+          </div>
                   <div>
                        <label for="othermultiple">Other Multiple</label>
                        <input name="othermultiple" type="text" class="formfld" id="othermultiple" size="5" value="<?=htmlspecialchars($pconfig['timeouts']['othermultiple']);?>" />
                         <p class="note">The state if both hosts have sent packets.</p>
-		  </div>
+          </div>
                   <div>
                        <label for="othermultiple">Other Multiple</label>
                        <input name="othermultiple" type="text" class="formfld" id="othermultiple" size="5" value="<?=htmlspecialchars($pconfig['timeouts']['othermultiple']);?>" />
                         <p class="note">The state if both hosts have sent packets.</p>
-		  </div>
+          </div>
                   <div>
-		        <input type="submit" id"submitbutton" value="Save" class="button" />
-	          </div>
-	     </fieldset>
-	</div>
+                <input type="submit" id="submitbutton" value="Save" class="button" />
+              </div>
+         </fieldset>
+    </div>
         <div id="tabLimits">
              <fieldset>
                  <div>
@@ -275,42 +316,42 @@ $(document).ready(function() {
                  scaling begins.  All timeout values are scaled linearly with
                  factor (adaptive.end - number of states) / (adaptive.end -
                  adaptive.start).</p>
-		  </div>
+          </div>
                   <div>
                        <label for="adaptiveend">Adaptive End</label>
                        <input name="adaptiveend" type="text" class="formfld" id="adaptiveend" size="5" value="<?=htmlspecialchars($pconfig['timeouts']['adaptiveend']);?>" />
                         <p class="note">When reaching this number of state entries, all timeout values 
-		 become zero, effectively purging all state entries immediately.  
-		 This value is used to define the scale factor, it
+         become zero, effectively purging all state entries immediately.  
+         This value is used to define the scale factor, it
                  should not actually be reached (set a lower state limit, see
                  below).</p>
-		  </div>
+          </div>
                   <div>
                        <label for="maxstates">Max States</label>
                        <input name="maxstates" type="text" class="formfld" id="maxstates" size="5" value="<?=htmlspecialchars($pconfig['limits']['maxstates']);?>" />
                         <p class="note">Sets the maximum number of entries in the memory pool used by state
            table entries (generated by pass rules which do not specify no
            state).</p>
-		  </div>
+          </div>
                    <div>
                        <label for="maxfrags">Max Frags</label>
                        <input name="maxfrags" type="text" class="formfld" id="maxfrags" size="5" value="<?=htmlspecialchars($pconfig['limits']['maxfrags']);?>" />
                         <p class="note">Sets the maximum number of entries in the memory pool used for
            fragment reassembly (generated by scrub rules).</p>
-		  </div>
+          </div>
                   <div>
                        <label for="srcnodes">Max Source Nodes</label>
                        <input name="srcnodes" type="text" class="formfld" id="srcnodes" size="5" value="<?=htmlspecialchars($pconfig['limits']['srcnodes']);?>" />
                         <p class="note">Sets the maximum number of entries in the memory pool used for
            tracking source IP addresses (generated by the sticky-address and
            src.track options).</p>
-		  </div> 
+          </div> 
        </fieldset>
-		<div>
+        <div>
             <input type="submit" id="submitbutton2" value="Save" class="button" />
-        </div>	
-	</div>
-	<div id="tabOptions">
+        </div>  
+    </div>
+    <div id="tabOptions">
                <fieldset>
                 <div>
                        <label for="rulesetopt">Ruleset Optimization</label>
@@ -344,7 +385,7 @@ meanings than before.  If per-rule accounting is important for
 billing purposes or whatnot, either the ruleset optimizer should
 not be used or a label field should be added to all of the account-
 ing rules to act as optimization barriers.
-		</p>
+        </p>
                 </div>
                 <div>
                        <label for="stateopt">State Optimizations</label>
@@ -374,7 +415,7 @@ conservative
        connections at the expense of greater memory utilization
        (possibly much greater on a busy network) and slightly in-
        creased processor utilization.
-		</p>
+        </p>
                 </div>
                  <div>
                        <label for="blockpolpol">Block Policy</label>
@@ -410,17 +451,17 @@ The state-policy option sets the default behaviour for states:
    if-bound     States are bound to interface.
    floating     States can match packets on any interfaces (the de-
                 fault).
-		</p>
+        </p>
                 </div>
                 </fieldset>       
-        	<div>
-	            <input type="submit" id="submitbutton3" value="Save" class="button" />
-    	    </div>
-		</div>	
-	<div id="tabNormalization">
+            <div>
+                <input type="submit" id="submitbutton3" value="Save" class="button" />
+            </div>
+        </div>  
+    <div id="tabNormalization">
                 <fieldset>
-	        <legend><?=join(": ", $pgtitle);?></legend>
-	        <div>
+            <legend><?=join(": ", $pgtitle);?></legend>
+            <div>
                      <label for="tcpfirst">No DF</label>
                      <input name="dfbit" type="checkbox" id="dfbit" value="Yes" <?php if ($pconfig['scrub']['dfbit']) echo "checked"; ?>>
                      <p class="note">Clears the dont-fragment bit from a matching IP packet.  Some oper-
@@ -433,17 +474,17 @@ dont-fragment bit on packets with a zero IP ID may cause deleteri-
 ous results if an upstream router later fragments the packet.  Us-
 ing the random-id modifier (see below) is recommended in combina-
 tion with the no-df modifier to ensure unique IP identifiers.</p>
-		  </div>
+          </div>
                   <div>
                      <label for="tcpfirst">Min TTL</label>
                      <input name="minttl" type="text" class="formfld" id="minttl" size="5" value="<?=htmlspecialchars($pconfig['scrub']['minttl']);?>" />
                      <p class="note">Enforces a minimum TTL for matching IP packets.</p>
-		  </div>
+          </div>
                   <div>
                      <label for="tcpfirst">Min MSS</label>
                      <input name="maxmss" type="text" class="formfld" id="maxmss" size="5" value="<?=htmlspecialchars($pconfig['scrub']['maxmss']);?>" />
                      <p class="note">Enforces a maximum MSS for matching TCP packets.</p>
-		  </div>
+          </div>
                   <div>
                      <label for="tcpfirst">Randomize ID</label>
                      <input name="randid" type="checkbox" id="randid" value="yes" <?php if ($pconfig['scrub']['randid']) echo "checked"; ?> />
@@ -451,7 +492,7 @@ tion with the no-df modifier to ensure unique IP identifiers.</p>
 sate for predictable values generated by many hosts.  This option
 only applies to packets that are not fragmented after the optional
 fragment reassembly.</p>
-		  </div>
+          </div>
                   <div>
                   <label for="statepol">Fragment Handling</label>
                   <select name="fraghandle" class="formfld">
@@ -487,14 +528,14 @@ Fragment Drop Overlap:
 This option is similar to the fragment crop modifier except that
 all overlapping or duplicate fragments will be dropped, and all
 further corresponding fragments will be dropped as well.
-		</p>
+        </p>
                 </div>
                 <div>
                      <label for="tcpfirst">Reassemble TCP</label>
                      <input name="reassembletcp" type="checkbox" id="fragdropol" value="yes" <?php if ($pconfig['scrub']['reassembletcp']) echo "checked"; ?> />
                      <p class="note">Statefully normalizes TCP connections.  scrub reassemble tcp rules
          may not have the direction (in/out) specified.  reassemble
-	 tcp performs the following normalizations:
+     tcp performs the following normalizations:
 
 ttl      Neither side of the connection is allowed to reduce their
          IP TTL.  An attacker may send a packet such that it reach-
@@ -533,21 +574,21 @@ extended PAWS checks
          guess the timestamp as well.</p>
              </div>
              </fieldset>
-		<div>
+        <div>
             <input type="submit" id="#submitbutton4" value="Save" class="button" />
         </div>
-	</div>
-	<div id="tabLogging">
-	     <fieldset>
-	     <legend><?=join(": ", $pgtitle);?></legend>
-	          <div>
+    </div>
+    <div id="tabLogging">
+         <fieldset>
+         <legend><?=join(": ", $pgtitle);?></legend>
+              <div>
                        <label for="tcpfirst">Default Packet Logging</label>
                        <input name="logdefault" type="checkbox" id="logdefault" value="yes" <?php if ($pconfig['logging']['default']) echo "checked"; ?>>
                         <p class="note"> Log packets that match the default rule.</p>
-		  </div>
+          </div>
          </fieldset>
-		 <div>
-            <input type="submit" id="#submitbutton5" value="Save" class="button" />
+         <div>
+            <input type="submit" id="submitbutton5" value="Save" class="button" />
         </div>
         </div>
 </form>

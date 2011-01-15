@@ -6,6 +6,7 @@
      #include <netinet/in.h>
      #include <net/pfvar.h>
      #include <err.h>
+     #include <string.h>
      #include <stdio.h>
      #include <stdlib.h>
 
@@ -39,7 +40,7 @@ int
  				gettimeofday(&tv, NULL);
                 uusec = (double)tv.tv_sec + (double)tv.tv_usec / 1000000.0;
         		printf("Content-Type: text/plain\n\n");
-	    		printf("%lf|%llu|0\n", uusec, (unsigned long long) (pr.rule.states_curent));
+	    		printf("%lf|%llu|0\n", uusec, (unsigned long long) (pr.rule.states_cur));
 	     		return(0);
   			}
 	     }

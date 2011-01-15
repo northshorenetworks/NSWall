@@ -6,6 +6,7 @@
      #include <netinet/in.h>
      #include <net/pfvar.h>
      #include <err.h>
+     #include <string.h>
      #include <stdio.h>
      #include <stdlib.h>
 

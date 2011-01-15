@@ -63,7 +63,7 @@ $("<?= $ifsortable; ?>").sortable({
 $("<?= $ifsaveneworder; ?>").click(function () {
     displayProcessingDiv();
     var order = $("<?= $ifsortable; ?>").sortable("serialize");
-    $("#currentorder").load("processing_sortable.php?"+order+"&sortif=<?=$if?>");
+    $("#currentorder").load("process_nat_sortable.php?"+order+"&sortif=<?=$if?>");
         $("<?= $ifsortable; ?>").sortable('refresh');
         hidediv("<?=$if . 'saveneworder';?>");
         setTimeout(function(){ $('#save_config').fadeOut('slow'); }, 1000);
@@ -124,5 +124,5 @@ continue; ?>
 <?php $nrules++; endfor; ?>
 </ul>
 <div id="newrule"><center><a href="firewall_rules_edittabs.php?if=<?=$if;?>"><span title="add a new rule" class="ui-icon ui-icon-circle-plus"></span></a></center></div>
-<div id="<?=$if . 'saveneworder';?>"><center>SAVE NEW ORDER LINK</center></div>
+<div id="<?=$if . 'saveneworder';?>"><center><input type="submit" value="Save new order" class="button" /></center></div>
 </div>

@@ -31,6 +31,7 @@
 #include <sys/socket.h>
 #include <net/if.h>
 #include <stdio.h>
+#include <string.h>
 #include <stdlib.h>
 #include <sys/time.h>
 #include <sys/dkstat.h>
@@ -80,7 +81,7 @@ void if_stats(char *name){
 	int sd;
 	struct timeval tv;
 	double uusec;
-	static struct if_data *get_if_data(char *name) {
+	struct if_data *get_if_data(char *name) {
 	struct ifreq ifr;
     
 	strlcpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
@@ -133,7 +134,7 @@ void logs() {
               exit (1);
        }
        while (fgets(inbuf, sizeof(inbuf), inpipe)) {
-              printf("<tr valign=\"top\"><td class=\"listlogr\" nowrap>%s</td></tr>", inbuf);
+              printf("<tr class=\"listlogr\" valign=\"top\"><td nowrap>%s</td></tr>", inbuf);
        }
        pclose(inpipe);
 
@@ -183,6 +184,29 @@ void nat() {
 
        exit (1);
 }
+
+void blockedsites() {
+        FILE *inpipe;
+        char inbuf[1000];
+        int lineno = 0;
+
+        char *command = "/sbin/pfctl -vt dynamic_blocked_sites -T show";
+
+       inpipe = popen(command, "r");
+       if (!inpipe) {
+              printf("couldn't open pipe %s\n", command);
+              exit (1);
+       }
+       printf("<pre>\n");
+       while (fgets(inbuf, sizeof(inbuf), inpipe)) {
+              printf("%s", inbuf);
+       }
+       printf("</pre>\n");
+       pclose(inpipe);
+
+       exit (1);
+}
+
 
 void states() {
         FILE *inpipe;
@@ -258,6 +282,8 @@ int main(int argc, char *argv[]) {
                 rules();
 	else if (strncmp(cl, "nat", 3) == 0)
                 nat();
+	else if (strncmp(cl, "blockedsites", 12) == 0)
+		        blockedsites();
 	else if (strncmp(cl, "states", 6) == 0)
                 states();
 	else if (strncmp(cl, "queues", 6) == 0)

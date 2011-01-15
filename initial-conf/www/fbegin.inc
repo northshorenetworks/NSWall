@@ -76,49 +76,51 @@ break;
 }
 }
  
-$menu['System']['General setup'] = array('system_general.php');
-$menu['System']['Static routes'] = array('system_routes_tabs.php');
-$menu['System']['License'] = array('system_license.php');
-$menu['System']['Firmware'] = array('system_firmware.php');
-$menu['System']['Advanced'] = array('system_advanced.php');
-$menu['System']['Networking'] = array('system_networking.php');
-//$menu['System']['Manage Certificates'] = array('system_cacert_tabs.php');
-//$menu['System']['User manager'] = array('system_accounts_tabs.php');
+$menu['System']['General setup'] = array('#system_general');
+$menu['System']['Routing'] = array('#system_routes_tabs');
+$menu['System']['License'] = array('#system_license');
+$menu['System']['Firmware'] = array('#system_firmware');
+$menu['System']['Advanced'] = array('#system_advanced');
+$menu['System']['Networking'] = array('#system_networking');
+$menu['System']['Manage Certificates'] = array('#system_cacert_tabs');
+$menu['System']['User manager'] = array('#system_accounts_tabs');
  
-//$menu['Firewall']['Abusive Sites'] = array('firewall_abusive_sites.php');
-$menu['Firewall']['Aliases'] = array('firewall_aliases_tabs.php');
-$menu['Firewall']['Global Options'] = array('firewall_options_edit.php');
-$menu['Firewall']['NAT'] = array('firewall_nat_tabs.php');
-$menu['Firewall']['Rules'] = array('firewall_rules_tabs.php');
+$menu['Firewall']['Abusive Sites'] = array('#firewall_abusive_sites');
+$menu['Firewall']['Aliases'] = array('#firewall_aliases_tabs');
+$menu['Firewall']['Global Options'] = array('#firewall_options_edit');
+$menu['Firewall']['NAT'] = array('#firewall_nat_tabs');
+$menu['Firewall']['Rules'] = array('#firewall_rules_tabs');
 
 if ($g['module'] == 'FIREWALL') { 
-	$menu['Services']['DHCP server'] = array('services_dhcp_tabs.php');
-	$menu['Services']['DNS forwarder'] = array('services_dnsmasq.php');
+    $menu['Services']['DNS forwarder'] = array('#services_dnsmasq');
+    $menu['Services']['Dynamic DNS'] = array('3services_dyndns');
 }
-//$menu['Services']['CARP'] = array('services_carp.php');
-//$menu['Services']['Config Server'] = array('services_config_server.php');
-// $menu['Services']['Relayd'] = array('firewall_relayd_relays.php');
+$menu['Services']['CARP'] = array('#services_carp');
+$menu['Services']['OpenBGPd'] = array('#services_bgpd');
+$menu['Services']['Config Server'] = array('#services_config_server');
+// $menu['Services']['Relayd'] = array('#firewall_relayd_relays');
  
 if ($g['module'] == 'FIREWALL') {
-	$menu['VPN']['IPSec'] = array('vpn_ipsec_tabs.php');
-	$menu['VPN']['PPTP Client'] = array('vpn_pptp_client.php');
-	//$menu['VPN']['PPTP Server'] = array('vpn_pptp_server.php');
+    $menu['VPN']['IPSec'] = array('#vpn_ipsec_tabs');
+    $menu['VPN']['PPTP Client'] = array('#vpn_pptp_client');
+    $menu['VPN']['PPTP Server'] = array('#vpn_pptp_server');
 }
 
-$menu['Status']['System'] = array('status_system.php');
-$menu['Status']['Traffic graph'] = array('status_graph.php');
-$menu['Status']['CPU graph'] = array('status_graph_cpu.php');
-$menu['Status']['PF Traffic graph'] = array('status_graph_rule.php');
-$menu['Status']['PF PPS graph'] = array('status_graph_pps.php');
-$menu['Status']['PF States graph'] = array('status_graph_states.php');
+$menu['Status']['System'] = array('#status_system');
+$menu['Status']['Traffic graph'] = array('#status_graph');
+$menu['Status']['CPU graph'] = array('#status_graph_cpu');
+$menu['Status']['PF Traffic graph'] = array('#status_graph_rule');
+$menu['Status']['PF PPS graph'] = array('#status_graph_pps');
+$menu['Status']['PF States graph'] = array('3status_graph_states');
  
-$menu['Diagnostics']['PF'] = array('diag_pf.php');
-$menu['Diagnostics']['System'] = array ('diag_sys.php');
-$menu['Diagnostics']['Logs'] = array ('diag_logs.php');
-$menu['Diagnostics']['VPN'] = array('diag_vpn.php');
-$menu['Diagnostics']['Utilities'] = array('diag_util.php');
+$menu['Diagnostics']['PF'] = array('#diag_pf');
+$menu['Diagnostics']['System'] = array ('#diag_sys');
+$menu['Diagnostics']['Logs'] = array ('#diag_logs');
+$menu['Diagnostics']['VPN'] = array('#diag_vpn');
+$menu['Diagnostics']['BGPd'] = array('#diag_bgp');
+$menu['Diagnostics']['Utilities'] = array('#diag_util');
 
-$menu['Support']['Submit Case'] = array ('support_case.php');
+$menu['Support']['Submit Debug'] = array ('#support_case');
 
 ?>
  
@@ -132,6 +134,7 @@ $menu['Support']['Submit Case'] = array ('support_case.php');
 <link href="/images/logo.jpg" width="100px" height="50px" type="image/x-icon" rel="shortcut icon"/>
 <link href="gui.css" rel="stylesheet" type="text/css">
 <link type="text/css" href="style/jquery-ui-1.7.2.custom.css" rel="stylesheet" />
+<link type="text/css" href="style/jquery.contextmenu.css" rel="stylesheet" />
 
 </head>
 <script src="js/jquery-1.3.2.min.js"></script> 
@@ -147,7 +150,10 @@ $menu['Support']['Submit Case'] = array ('support_case.php');
 <script type="text/javascript" src="js/ui.sortable.js"></script>
 <script type="text/javascript" src="js/swfobject.js"></script>
 <script type="text/javascript" src="js/jquery.uploadify.v2.1.0.min.js"></script>
-
+<script type="text/javascript" src="js/jquery.validate.js"></script>
+<script type="text/javascript" src="js/jquery.contextmenu.js"></script>
+<!--[if IE]><script language="javascript" type="text/javascript" src="../excanvas.min.js"></script><![endif]--> 
+<script type="text/javascript" src="js/jquery.flot.js"></script> 
 
 <body link="#0000CC" vlink="#0000CC" alink="#0000CC">
 <div id="webui">
@@ -157,13 +163,14 @@ $menu['Support']['Submit Case'] = array ('support_case.php');
 <body>
 
 <div id="login_nswall" title="NSWall Login">
+<p>Welcome to Northshore software's NSWall Firewall/VPN appliance.<br></p>
 <div id="wrapper">
 <div class="form-container ui-tabs ui-widget ui-corner-all">
 <form id="supportlogin" method="post" name="login">
  <fieldset>
         <legend>Support : Login</legend>
             <div>
-                             <label for="username">Username</label>
+                             <label for="username">Username1</label>
                              <input type="text" size="10" name="username">
             </div>
             <div>
@@ -209,19 +216,19 @@ $menu['Support']['Submit Case'] = array ('support_case.php');
 </div>
 
 <div class="ui-widget-content" id="header">
-		<div id="logout"><a href="logout.php">Log out</a></div>
-		<div id="deviceid"><div style=""><label>Hostname:</label><a target="contentframe" title="<?php readfile("/etc/version"); ?>" href="system.php"><?php echo $config['system']['hostname'] . "." . $config['system']['general']['domain']; ?></a></div><div style=""><label>IP Address:</label>
-	<?php if (!$pgtitle_omit): ?>
-		<?php echo $config['interfaces']['lan']['ipaddr']; ?>
-	<?php else: ?>
-		<?php echo get_current_wan_address(); ?>
-	<?php endif; ?>
+        <div id="logout"><a href="logout.php">Log out</a></div>
+        <div id="deviceid"><div style=""><label>Hostname:</label><a target="contentframe" title="<?php readfile("/etc/version"); ?>" href="system.php"><?php echo $config['system']['hostname'] . "." . $config['system']['general']['domain']; ?></a></div><div style=""><label>IP Address:</label>
+    <?php if (!$pgtitle_omit): ?>
+        <?php echo $config['interfaces']['lan']['ipaddr']; ?>
+    <?php else: ?>
+        <?php echo get_current_wan_address(); ?>
+    <?php endif; ?>
 
 </div></div>
-	
+    
 <div id="uptimeload"></div>
 
-		<div id="userinfo"><div style=""><label>User:</label><a target="contentframe" href="/tmui/Control/jspmap/tmui/system/user/properties.jsp?name=admin">admin</a></div>
+        <div id="userinfo"><div style=""><label>User:</label><a target="contentframe" href="/tmui/Control/jspmap/tmui/system/user/properties.jsp?name=admin">admin</a></div>
                 <div style=""><label>Last Config Change:</label><?=htmlspecialchars(date("D M j G:i:s T Y", $config['lastchange']));?></a></div>
                 </div>
 </div>
@@ -244,7 +251,7 @@ echo '<div id="ifpanel" class="ui-widget-header panel"><img src="/images/interfa
 
 // The Interfaces menu is different than the rest because of the Assign link and
 // The dynamic nature of the optional interfaces.
-$if_menu = array('(assign)' => 'interfaces_assign.php',
+$if_menu = array('(assign)' => '3interfaces_assign',
      'LAN' => 'interfaces_lan.php',
 'WAN' => 'interfaces_wan.php',
 'OPTx' => 'interfaces_opt.php');
@@ -257,11 +264,11 @@ echo '<a href="/interfaces_assign.php" class="navlnks"> (assign)</a>';
 }*/
     echo '<br>';
     if (in_array('interfaces_wan.php',$allowed)) {
-     echo '<li><a href="interfaces_wan.php" class="navlnk">WAN</a></li>';
+     echo '<li><a href="#interfaces_wan" class="navlnk">WAN</a></li>';
     }
     if ($g['module'] == 'FIREWALL') { 
     if (in_array('interfaces_lan.php',$allowed)) {
-     echo '<li><a href="interfaces_lan.php" class="navlnk">LAN</a></li>';
+     echo '<li><a href="#interfaces_lan" class="navlnk">LAN</a></li>';
     }
     if (file_exists("{$g['etc_path']}/hwplatform")) {
         $g['hwplatform'] = chop(file_get_contents("{$g['etc_path']}/hwplatform"));
@@ -273,11 +280,13 @@ echo '<a href="/interfaces_assign.php" class="navlnks"> (assign)</a>';
     $wanif = array_shift($ifs);
     $lanif = array_shift($ifs);
     for ($i = 1; isset($ifs['OPT' . $i]); $i++) {
-         echo '<li><a href="interfaces_opt.php?index=' .$i.
+         echo '<li><a href="#interfaces_opt_index_' .$i.
                 '" class="navlnk">'.htmlspecialchars($ifs['OPT' . $i]['DESCR'])
                 .'</a></li>';
     }
     }
+        echo '<li><a href="#interfaces_vlan_tabs" class="navlnk">VLANs</a></li>';
+        echo '<li><a href="#interfaces_trunks_tabs" class="navlnk">Trunks</a></li>';
 }
 echo '</span></div>';
 
@@ -312,6 +321,7 @@ echo '</span></div>';
 echo '<div id="supportpanel" class="ui-widget-header panel"><img src="/images/support.png" id="support_img" border="0"></a><strong>Support</strong><br>
 <span id="support" style="display: none">';
 dynamic_menu($menu['Support'], '');
+echo '<a class="navlnk" href="http://www.onlinechatcenters.com/chat/?id=13692&amp;dep=17438" target="_blank">Live Chat</a>';
 echo '</span></div>';
 
 ?>
@@ -328,16 +338,23 @@ $("#alert").show();
 var refreshId = "";
 
 function updateUptimeLoad () {
-	      $('#uptimeload').load('uptimeload.php?top' + "&random=" + Math.random());
+          $('#uptimeload').load('uptimeload.php?top' + "&random=" + Math.random());
 }
 
 $('#panels li a').click(function(){  
-	 $('#load_content').dialog('open');
-	 var toLoad = $(this).attr('href');  
-     window.location.hash = $(this).attr('href').substr(0,$(this).attr('href').length-4);  
+     $('#load_content').dialog('open'); 
+     var toLoad = $(this).attr('href').substr(1)+'.php'; 
+     // special case to handle opt interfaces
+     if( toLoad.match(/\_index\_/) ) {
+         index = toLoad.replace(/interfaces\_opt\_index\_/,'');
+         index = index.replace(/.php/,'');
+         hash = toLoad.replace(/\_index\_.+/,'');
+         var toLoad = hash+'.php?index='+index;
+     }    
+     window.location.hash = $(this).attr('href');  
      clearInterval(refreshId);
-	 $("#content").load(toLoad);
-	 return false;  
+     $("#content").load(toLoad);
+     return false;  
 });  
 
 $('#alert a').click(function(){
@@ -354,29 +371,38 @@ $(document).ready(function() {
       if (window.location.hash) {
            var hash = window.location.hash.substr(1);   
            if (hash == 'index') {
-			    var toLoad = 'status_system.php';
-		   } else { 
-		   		var toLoad = hash+'.php';  
+                var toLoad = 'status_system.php';
+           } else { 
+                if( hash.match(/\_tab\_/) ) {
+                    hash = hash.replace(/\_tab\_.+/,'');
+                    var toLoad = hash+'.php';
+                } 
+                // handle optional interfaces
+                if( hash.match(/\_index\_/) ) {
+                    index = hash.replace(/interfaces\_opt\_index\_/,'');
+                    hash = hash.replace(/\_index\_.+/,'');
+                    var toLoad = hash+'.php?index='+index;
+                }   
            }
-		   clearInterval(refreshId);
+           clearInterval(refreshId);
            $('#content').load(toLoad);
-		   updateUptimeLoad()
+           updateUptimeLoad()
            var displayLoadUptime = setInterval("updateUptimeLoad()", 60000);
       } else {
            var toLoad = 'status_system.php';
            clearInterval(refreshId);
            $('#content').load(toLoad);
-		   updateUptimeLoad();
-		   var displayLoadUptime = setInterval("updateUptimeLoad()", 60000);
+           updateUptimeLoad();
+           var displayLoadUptime = setInterval("updateUptimeLoad()", 60000);
       }  
       //Initialize all of our dialogs
-	$.ui.dialog.defaults.bgiframe = true;
+    $.ui.dialog.defaults.bgiframe = true;
 
         // Support Login dialog, displayed whenever a config change is written
         $("#support_login").dialog({ 
             autoOpen: false, 
-            width: 400, 
-            height: 250, 
+            width: 640, 
+            height: 405, 
             hide: 'scale', 
             show: 'scale', 
             resizable: false, 
@@ -391,8 +417,8 @@ $(document).ready(function() {
         // Support dialog, displayed whenever a config change is written
         $("#support_diag").dialog({ 
             autoOpen: false, 
-            width: 400, 
-            height: 250, 
+            width: 650, 
+            height: 405, 
             hide: 'scale', 
             show: 'scale', 
             resizable: false, 
@@ -404,7 +430,7 @@ $(document).ready(function() {
             } 
         });
 
-	// Save Configuration dialog, displayed whenever a config change is written
+    // Save Configuration dialog, displayed whenever a config change is written
         $("#save_config").dialog({ 
             autoOpen: false, 
             width: 400, 
@@ -419,7 +445,7 @@ $(document).ready(function() {
                 $(".ui-dialog-titlebar").css('display','block'); 
             } 
         });
-	
+    
         // Upload Firmware dialog, displayed when uploading a new firmware image to the device
         $("#upload_firmware").dialog({ 
             autoOpen: false, 
@@ -435,12 +461,12 @@ $(document).ready(function() {
                 $(".ui-dialog-titlebar").css('display','block'); 
             } 
         });
-	
+    
         // Reboot Nswall dialog, displayed when rebooting device
         $("#reboot_nswall").dialog({ 
             autoOpen: false, 
-            width: 400, 
-            height: 300, 
+            width: 650, 
+            height: 405, 
             hide: 'scale', 
             show: 'scale', 
             resizable: false, 
@@ -495,14 +521,15 @@ $(document).ready(function() {
 });
 
 function showhide(tspan, tri) {
-	tspanel = document.getElementById(tspan);
-	if (tspanel.style.display == 'none') {
-		tspanel.style.display = '';
-	} else {
-		tspanel.style.display = 'none';
-	}
+    tspanel = document.getElementById(tspan);
+    if (tspanel.style.display == 'none') {
+        tspanel.style.display = '';
+    } else {
+        tspanel.style.display = 'none';
+    }
 }
 
 -->
 </script>
 <div id="content" style="margin-top: .5em; margin-left: 18.5em; margin-right: 2.5em"></div>
+

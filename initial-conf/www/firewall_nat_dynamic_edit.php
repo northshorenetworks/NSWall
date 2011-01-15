@@ -54,7 +54,6 @@ if (isset($id) && $a_out[$id]) {
 
 // wait for the DOM to be loaded
 $(document).ready(function() {
-    $('div fieldset div').addClass('ui-widget ui-widget-content ui-corner-content');
     $("#submitbutton").click(function () {
         displayProcessingDiv();
         var QueryString = $("#iform").serialize();
@@ -65,6 +64,25 @@ $(document).ready(function() {
         });
     return false;
     });
+
+    $("#source").focus(function() {
+        $(this).css({"background-color": "#FFFFCC"});
+    });
+
+    $("#source").blur(function() {
+        value = $(this).val();
+        if (verifyIP(value) == 0)
+            $(this).css({"background-color": "#FFFFFF"});
+        else 
+            $(this).css({"background-color": "#FFAEAE"});
+    });
+
+    $("#source").keyup(function() {
+        value = $(this).val();
+          $(this).css({"background-color": "#FFAEAE"});
+        if (verifyIP(value) == 0)
+          $(this).css({"background-color": "#CDFECD"});
+    }); 
 });
 </script>
 
@@ -76,26 +94,28 @@ $(document).ready(function() {
 			  <input name="id" type="hidden" value="<?=$id;?>">
 	<fieldset>
 		<legend><?=join(": ", $pgtitle);?></legend>
-			<div>
-                             <label for="interface">Interface</label>
-                             <select name="interface" class="formfld">
-                        <?php
-                        $interfaces = array('wan' => 'WAN', 'pptp' => 'PPTP');
-                        for ($i = 1; isset($config['interfaces']['opt' . $i]); $i++) {
-                            $interfaces['opt' . $i] = $config['interfaces']['opt' . $i]['descr'];
-                        }
-                        foreach ($interfaces as $iface => $ifacename): ?>
-                        <option value="<?=$iface;?>" <?php if ($iface == $pconfig['interface']) echo "selected"; ?>>
-                        <?=htmlspecialchars($ifacename);?>
-                        </option>
-                        <?php endforeach; ?>
-                    </select>
-			     <p class="note">Choose which interface this rule applies to.  Hint: in most cases, you'll want to use WAN here..</p>
-			</div>
                         <div>
-                             <label for="descr">Description</label>
-                             <input id="descr" type="text" size="50" name="descr" value="<?=htmlspecialchars($pconfig['descr']);?>" />
-			     <p class="note">You may enter a description here for your reference (not parsed).</p>
+                             <label for="interface">Interface</label>
+                              <select name="interface" id="interface" class="formfld">
+                                <?php $interfaces = array('wan' => 'WAN', 'lan' => 'LAN', 'pptp' => 'PPTP');
+                                    for ($i = 1; isset($config['interfaces']['opt' . $i]); $i++) {
+                                        $interfaces['opt' . $i] = $config['interfaces']['opt' . $i]['descr'];
+                                    }
+                                    foreach ($config['vlans']['vlan'] as $vlan) {
+                                        $interfaces[$vlan['descr']] = "{$vlan['descr']}";
+                                    }
+                                    foreach ($interfaces as $iface => $ifacename): ?>
+                                        <option value="<?=$iface;?>" <?php if ($iface == $pconfig['interface']) echo "selected"; ?>>
+                                            <?=htmlspecialchars($ifacename);?>
+                                        </option>
+                                    <?php endforeach; ?>
+                             </select>
+                 <p class="note">Choose which interface this rule applies to. Hint: in most cases, you'll want to use WAN here.</p>
+            </div> 
+            <div>
+                <label for="descr">Description</label>
+                <input id="descr" type="text" size="50" name="descr" value="<?=htmlspecialchars($pconfig['descr']);?>" />
+			    <p class="note">You may enter a description here for your reference (not parsed).</p>
 			</div>
                         <div>
                              <label for="source">Source</label>
@@ -109,6 +129,11 @@ $(document).ready(function() {
                              </select>
 			     <p class="note">Enter the source network for the outbound NAT mapping.</p>
 			</div>
+			<div>
+                 <label for "target">Target</label>
+                 <input name="target" type="text" class="formfld" id="target" size="20" value="<?=htmlspecialchars($pconfig['target']);?>">
+                 <p class="note">Packets matching this rule will be mapped to the IP address given here. Leave blank to use the selected interface's IP address.</p>
+            </div>	
 	</fieldset>
 	
 	<div class="buttonrow">

@@ -4,6 +4,9 @@
 require("guiconfig.inc");
 include("ns-begin.inc");
 $pgtitle = array("Diagnostics", "Support");
+
+if (isset($_GET['capturefile']))
+    $capturefile = $_GET['capturefile'];
 ?>
 
 <script type="text/javascript">
@@ -11,11 +14,11 @@ $pgtitle = array("Diagnostics", "Support");
         // When a user clicks on the submit button, post the form.
           $("#support_login_button").click(function () {
                $('#support_login').dialog('close');
-               $("#support").html('<center>Submitting troubleshooting ticket to support.<br><br><img src="images/ajax-loader.gif" height="25" width="25" name="spinner">');
-               $('#support').dialog('open');
+               $("#support_diag").html('<center>Submitting troubleshooting ticket to support.<br><br><img src="images/ajax-loader.gif" height="25" width="25" name="spinner">');
+               $('#support_diag').dialog('open');
                var QueryString = $("#supportlogin").serialize()+'&'+$("#supportform").serialize();   
                $.post("forms/system_form_submit.php", QueryString, function(output) {
-                    $("#support").html(output);
+                    $("#support_diag").html(output);
                });
                return false;
           });
@@ -26,12 +29,6 @@ $("#support_submit_button").click(function () {
     return false;
 });
 
-// wait for the DOM to be loaded
-$(document).ready(function() {
-     $('div fieldset div').addClass('ui-widget ui-widget-content ui-corner-content');
-
-});
-
 </script>
 
 <div class="demo">
@@ -39,7 +36,7 @@ $(document).ready(function() {
 <div class="form-container ui-tabs ui-widget ui-corner-content">
 <form method="post" name="supportform" id="supportform">
              <input name="formname" type="hidden" value="system_submit_support_ticket">
-			 <div id="tabAddress">
+             <div id="tabAddress">
             <fieldset>
                         <legend><?=join(": ", $pgtitle);?></legend>
                 <div>
@@ -58,15 +55,20 @@ $(document).ready(function() {
                              </select
                              <p class="note">Select a Category that relates to your issue</p>   
                </div>
+               <div>
+                             <label for="title">Summary</label>
+                             <input id="title" size="40" type="text" name="title" value="" />
+                             <p class="note">Enter a summary of the issue here</p>
+                </div> 
                 <div>
                              <label for="notes">Case Notes</label>
                              <textarea name="notes" cols="60" rows="7" id="notes" class="notes"></textarea> 
                              <p class="note">Enter any relevant information here to be read by a support technician</p>   
                </div>
-			   <div>
+               <div>
                              <label for="notes">Support Access</label>
                              <input id="all" type="checkbox" name="all" value="" checked/>
-			     <p class="note">Create rule to allow support to connect to this appliance</p><br>
+                 <p class="note">Create rule to allow support to connect to this appliance</p><br>
                </div>
                <div>
                              <label for="all">Debug Info</label>
@@ -82,3 +84,4 @@ $(document).ready(function() {
 </div>
 </div>
 </div>
+

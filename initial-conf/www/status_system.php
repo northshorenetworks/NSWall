@@ -7,8 +7,6 @@ include("ns-begin.inc");
 
 <script type="text/javascript">
 $(document).ready(function() {
-     $('div fieldset div').addClass('ui-widget ui-widget-content ui-corner-content');
-
      // When a user clicks on the submit button, post the form.
      $("#submitbutton").click(function () {
 	  displayProcessingDiv();
@@ -29,26 +27,26 @@ $(document).ready(function() {
         <input name="formname" type="hidden" value="system_status">
 	<fieldset>
 		<legend><?=join(": ", $pgtitle);?></legend>
-			<div>
+	    <div>
                 <label for="hostname">Host Name</label>
                 <?php echo $config['system']['hostname'] . "." . $config['system']['general']['domain'];?>
-			</div>
-			<div>
-           		<label for="serial_no">Serial Number</label>
-                <?php echo sg_get_const("SERIAL")?>
-            </div>
+	    </div>
             <div>
                 <label for="version">Version</label>
-                <?php readfile("/etc/version"); ?> built on <?php readfile("/etc/version.buildtime"); ?>
-			</div>
+                <?php readfile("/etc/version"); ?> B<?php readfile("/etc/version.build"); ?> built on <?php readfile("/etc/version.buildtime"); ?>
+	    </div>
             <div>
                 <label for="platform">Platform</label>
-			    <?php readfile("/etc/hwplatform"); ?>
-			</div>
+	        <?php readfile("/etc/hwplatform"); ?>
+	    </div>
             <div>
                 <label for="cpuusage">CPU Usage</label>
                 <a href="status_graph_cpu.php">view graph</a>
-			</div>
+	    </div>
+            <div>
+           	<label for="serial_no">Serial Number</label>
+                <?php echo sg_get_const("SERIAL")?>
+            </div>
             <div>
                 <label for="cpuusage">System Notes</label>
                 <textarea name="notes" cols="75" rows="7" id="notes" class="notes"><?=htmlspecialchars(base64_decode($config['system']['notes']));?></textarea>

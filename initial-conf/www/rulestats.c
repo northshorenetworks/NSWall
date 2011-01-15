@@ -3,6 +3,7 @@
      #include <sys/ioctl.h>
      #include <sys/fcntl.h>
      #include <net/if.h>
+     #include <string.h>
      #include <netinet/in.h>
      #include <net/pfvar.h>
      #include <err.h>

@@ -66,7 +66,7 @@ function system_sshd_start() {
 		else {		
 			conf_mount_rw();
 			echo "ssh-keygen: generating new RSA host key... ";
-			mwexec("mkdir -p /flash/conf/etc/ssh 2>/dev/null");
+			mwexec("mkdir -p /conf/etc/ssh");
 			exec("/usr/bin/ssh-keygen -q -t rsa -f $hostkey -N ''");
 			exec("cp -p $hostkey $hostkey.pub /etc/ssh");
 			conf_mount_ro();
@@ -123,7 +123,8 @@ function system_cronconf_generate() {
                         	printf("Error: cannot open nswall in system_cronconf_generate().\n");
                         	return 1;
                 	}
-					$crontab = "*/1 * * * * /usr/sbin/splunkstats\n";
+					$dynbstimeout = $config['filter']['blockedsites']['dynamictimeout'] * 60;
+					$crontab = "*/1 * * * * /sbin/pfctl -t dynamic_blocked_sites -T expire $dynbstimeout\n";
 		if($config['system']['configserver']['checkint']) {
 			$confcheck = $config['system']['configserver']['checkint'];
 		} else {
@@ -278,44 +279,45 @@ function system_hostname_configure() {
 }
 
 function system_routing_configure() {
-	global $config, $g;
-	
-	/* clear out old routes, if necessary */
-	if (file_exists("{$g['vardb_path']}/routes.db")) {
-		$fd = fopen("{$g['vardb_path']}/routes.db", "r");
-		if (!$fd) {
-			printf("Error: cannot open routes DB file in system_routing_configure().\n");
-			return 1;		
-		}
-		while (!feof($fd)) {
-			$oldrt = fgets($fd);
-			if ($oldrt)
-				mwexec("/sbin/route delete -inet $oldrt");
-		}
-		fclose($fd);
-		unlink("{$g['vardb_path']}/routes.db");
-	}
-	
-	if (is_array($config['staticroutes']['route'])) {
-		
-		$fd = fopen("{$g['vardb_path']}/routes.db", "w");
-		if (!$fd) {
-			printf("Error: cannot open routes DB file in system_routing_configure().\n");
-			return 1;		
-		}
-		
-		foreach ($config['staticroutes']['route'] as $rtent) {
-			mwexec("/sbin/route add " . escapeshellarg($rtent['network']) . 
-				" " . escapeshellarg($rtent['gateway']));
-			
-			/* record route so it can be easily removed later (if necessary) */
-			fwrite($fd, $rtent['network'] . "\n");
-		}
-		
-		fclose($fd); 
-	}
-	
-	return 0;
+    global $config, $g;
+
+    /* clear out old routes, if necessary */
+    if (file_exists("{$g['vardb_path']}/routes.db")) {
+        $fd = fopen("{$g['vardb_path']}/routes.db", "r");
+        if (!$fd) {
+            printf("Error: cannot open routes DB file in system_routing_configure().\n");
+            return 1;       
+        }
+        while (!feof($fd)) {
+            $oldrt = fgets($fd);
+            if ($oldrt)
+                mwexec("/sbin/route $oldrt");
+        }
+        fclose($fd);
+        unlink("{$g['vardb_path']}/routes.db");
+    }
+
+    if (is_array($config['staticroutes']['route'])) {
+
+        $fd = fopen("{$g['vardb_path']}/routes.db", "w");
+        if (!$fd) {
+            printf("Error: cannot open routes DB file in system_routing_configure().\n");
+            return 1;       
+        }
+
+        foreach ($config['staticroutes']['route'] as $rtent) {
+            $addflags = '';
+            if ($rtent['rtable'] != 'DEFAULT')
+                $addflags .= "-T " . get_route_table_id_by_name($rtent['rtable']);
+            mwexec("/sbin/route $addflags add " . escapeshellarg($rtent['network']) .
+                " " . escapeshellarg($rtent['gateway']));
+            /* record route so it can be easily removed later (if necessary) */
+            fwrite($fd, $addflags . ' delete ' . $rtent['network'] . "\n");
+        }
+        fclose($fd); 
+    }
+
+    return 0;
 }
 
 function system_advancednetwork_configure() {

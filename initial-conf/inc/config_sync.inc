@@ -148,7 +148,7 @@ function sync_config_area($area, $action, $newconfig) {
 			$retval = relay_relayd_reload();
 			return;
                 }
-	} elseif ($area == 'nats') {
+	} elseif ($area == 'nat') {
 		if (!is_array($config['nat'])) {
                        $config['nat'] = array();
                 }
@@ -309,23 +309,25 @@ function decode_array($array) {
 function config_sync_hosts_post($array, $type, $md5) {
 	global $config, $g;
 	if (is_array($config['carp']['configsynchost'])) {
-        	foreach($config['carp']['configsynchost'] as $synchost) {
-        		$remotemd5 = http_request( $synchost['username'], $synchost['password'], "http://{$synchost['ip']}/config_sync.php?action=md5compare&type=$type", '', 'GET' );
-			if($remotemd5 == '' )
-				return false;
-			if($remotemd5 == $md5) {
-				mwexec("/usr/bin/logger -p local0.info -t sync DEBUG: $type config, local md5: $md5 == remote md5 $remotemd5 on {$synchost['ip']}");
-			} else {
-				mwexec("/usr/bin/logger -p local0.info -t sync DEBUG: $type config, local md5: $md5 != remote md5 $remotemd5 on {$synchost['ip']}");
-				$retval = http_request( $synchost['username'], $synchost['password'], "http://{$synchost['ip']}/config_sync.php", $array, 'POST' );
-        			if ($retval == 'SUCCESS') {
-        				mwexec("/usr/bin/logger -p local0.info -t sync Successfully pushed $type to {$synchost['ip']}");
-       				} else {
-					mwexec("/usr/bin/logger -p local0.info -t sync Failed to push $type to {$synchost['ip']}");
-				}
-			}
-		}
+        foreach($config['carp']['configsynchost'] as $synchost) {
+            $remotemd5 = http_request( $synchost['username'], $synchost['password'], "https://{$synchost['ip']}/config_sync.php?action=getmd5&type=$type", '', 'GET' );
+            if($remotemd5 == '' ) {
+                mwexec("/usr/bin/logger -p local0.info -t sync DEBUG: $type config unable to get md5 from {$synchost['ip']}");
+                continue;
+            }
+            if($remotemd5 == $md5) {
+                mwexec("/usr/bin/logger -p local0.info -t sync DEBUG: $type config, local md5: $md5 == remote md5 $remotemd5 on {$synchost['ip']}");
+            } else {
+                mwexec("/usr/bin/logger -p local0.info -t sync DEBUG: $type config, local md5: $md5 != remote md5 $remotemd5 on {$synchost['ip']}");
+                $retval = http_request( $synchost['username'], $synchost['password'], "https://{$synchost['ip']}/config_sync.php", $array, 'POST' );
+                if ($retval == 'SUCCESS') {
+                    mwexec("/usr/bin/logger -p local0.info -t sync Successfully pushed $type to {$synchost['ip']}");
+                } else {
+                    mwexec("/usr/bin/logger -p local0.info -t sync Failed to push $type to {$synchost['ip']}");
+                }
+            }
         }
+    }
 } 
 
 /* get config area or md5s from policy server and request config if it doesn't match current md5 */

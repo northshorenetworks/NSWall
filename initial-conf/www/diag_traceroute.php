@@ -16,16 +16,6 @@ if (!isset($do_ping)) {
 
 ?>
 
-<script type="text/javascript">
-
-// wait for the DOM to be loaded
-$(document).ready(function() {
-	 $('div fieldset div').addClass('ui-widget ui-widget-content ui-corner-content');
-
-});
-
-</script> 
-
 <div class="demo">
 <div id="wrapper">
 <div class="form-container ui-tabs ui-widget ui-corner-content">

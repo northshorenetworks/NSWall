@@ -20,6 +20,7 @@ if (isset($id) && $a_routes[$id]) {
     list($pconfig['network'],$pconfig['network_subnet']) =
         explode('/', $a_routes[$id]['network']);
     $pconfig['gateway'] = $a_routes[$id]['gateway'];
+    $pconfig['rtable'] = $a_routes[$id]['rtable'];
     $pconfig['descr'] = $a_routes[$id]['descr'];
 }
 
@@ -29,7 +30,6 @@ if (isset($id) && $a_routes[$id]) {
 
 // wait for the DOM to be loaded
 $(document).ready(function() {
-    $('div fieldset div').addClass('ui-widget ui-widget-content ui-corner-content');
     $("#submitbutton").click(function () {
         displayProcessingDiv();
         var QueryString = $("#iform").serialize();
@@ -49,7 +49,11 @@ $(document).ready(function() {
 	<form action="forms/firewall_form_submit.php" method="post" name="iform" id="iform">
               <input name="formname" type="hidden" value="system_routes">
 			  <input name="id" type="hidden" value="<?=$id;?>">
-	<fieldset>
+              <input name="oldif" type="hidden" value="<?=$pconfig['interface'];?>">
+              <input name="olddst" type="hidden" value="<?=$pconfig['network'];?>">
+              <input name="oldgw" type="hidden" value="<?=$pconfig['gateway'];?>">
+              <input name="oldrtable" type="hidden" value="<?=$pconfig['rtable'];?>">
+    <fieldset>
 		<legend><?=join(": ", $pgtitle);?></legend>
                         <div>
                              <label for="descr">Description</label>
@@ -74,6 +78,18 @@ $(document).ready(function() {
                              <input name="gateway" type="text" class="formfld" id="gateway" size="20" value="<?=htmlspecialchars($pconfig['gateway']);?>">
                              <p class="note">Gateway to be used to reach the destination network.</p>
                         </div>
+                         <div>
+                <label for="rtable">Route Table</label>
+                <select name="rtable" class="formfld">
+                      <option value="DEFAULT" <?php if ($rtable['name'] == "DEFAULT") echo "selected"; ?>>DEFAULT</option>
+                      <?php
+                      foreach ($config['system']['routetables']['routetable'] as $rtable): ?>
+                      <option value="<?=$rtable['name'];?>" <?php if ($rtable['name'] == $pconfig['rtable']) echo "selected"; ?>><?=$rtable['name'];?>
+                      </option>
+                      <?php endforeach; ?>
+                    </select>
+                <p class="note">Choose which route table this vlan will use</p>
+            </div>
 	</fieldset>
 	
 	<div class="buttonrow">

@@ -277,24 +277,55 @@ function filter_rulesets_sort() {
         usort($config['grouppolicies']['ruleset'], "rulesetcmp");
 }
 
+function bgpneighbors_sort() {
+        global $g, $config;
+
+        function neighborscmp($a, $b) {
+                return strcmp($a['name'], $b['name']);
+        }
+
+        usort($config['bgpd']['neighbor'], "neighborscmp");
+}
+
+function bgpgroups_sort() {
+        global $g, $config;
+
+        function groupscmp($a, $b) {
+                return strcmp($a['name'], $b['name']);
+        }
+
+        usort($config['bgpd']['group'], "groupscmp");
+}
+
+
+function route_tables_sort() {
+        global $g, $config;
+
+        function rtablescmp($a, $b) {
+                return strcmp($a['rtableid'], $b['rtableid']);
+        }
+
+        usort($config['system']['routetables']['routetable'], "rtablescmp");
+}
+
 /* sort by interface only, retain the original order of rules that apply to
    the same interface */
 function vpn_ipsec_gateway_sort() {
     global $g, $config;
 
     /* mark each rule with the sequence number (to retain the order while sorting) */
-    for ($i = 0; isset($config['ipsec']['gateway'][$i]); $i++)
-        $config['ipsec']['gateway'][$i]['seq'] = $i;
+    for ($i = 0; isset($config['ipsec']['gw'][$i]); $i++)
+        $config['ipsec']['gw'][$i]['seq'] = $i;
 
     function ipsecgatewaycmp($a, $b) {
     	return -strcmp($a['name'], $b['name']);
     }
 
-    usort($config['ipsec']['gateway'], "ipsecgatewaycmp");
+    usort($config['ipsec']['gw'], "ipsecgatewaycmp");
 
     /* strip the sequence numbers again */
-    for ($i = 0; isset($config['ipsec']['gateway'][$i]); $i++)
-        unset($config['ipsec']['gateway'][$i]['seq']);
+    for ($i = 0; isset($config['ipsec']['gw'][$i]); $i++)
+        unset($config['ipsec']['gw'][$i]['seq']);
 }
 
 
@@ -308,10 +339,7 @@ function filter_rules_sort() {
 		$config['filter']['rule'][$i]['seq'] = $i;
 	
 	function filtercmp($a, $b) {
-		if ($a['interface'] == $b['interface'])
-			return $a['seq'] - $b['seq'];
-		else
-			return -strcmp($a['interface'], $b['interface']);
+		return $a['seq'] - $b['seq'];
 	}
 	
 	usort($config['filter']['rule'], "filtercmp");
@@ -319,6 +347,24 @@ function filter_rules_sort() {
 	/* strip the sequence numbers again */
 	for ($i = 0; isset($config['filter']['rule'][$i]); $i++)
 		unset($config['filter']['rule'][$i]['seq']);
+}
+
+function bgp_filter_rules_sort() {
+        global $g, $config;
+
+        /* mark each rule with the sequence number (to retain the order while sorting) */
+        for ($i = 0; isset($config['bgpd']['filter']['rule'][$i]); $i++)
+                $config['bgpd']['filter']['rule'][$i]['seq'] = $i;
+
+        function filtercmp($a, $b) {
+                return $a['seq'] - $b['seq'];
+        }
+
+        usort($config['bgpd']['filter']['rule'], "filtercmp");
+
+        /* strip the sequence numbers again */
+        for ($i = 0; isset($config['bgpd']['filter']['rule'][$i]); $i++)
+                unset($config['bgpd']['filter']['rule'][$i]['seq']);
 }
 
 /* sort by interface only, retain the original order of rules that apply to
@@ -477,6 +523,16 @@ function trunks_sort() {
         }
 
         usort($config['trunks']['trunk'], "trunkcmp");
+}
+
+function vlans_sort() {
+        global $g, $config;
+
+        function vlancmp($a, $b) {
+                return strcmp($a['tag'], $b['tag']);
+        }
+		if (is_array($config['vlans']['vlan']))
+        	usort($config['vlans']['vlan'], "vlancmp");
 }
 
 function pptpd_users_sort() {

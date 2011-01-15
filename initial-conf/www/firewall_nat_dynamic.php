@@ -7,7 +7,8 @@ if (!is_array($config['nat']['advancedoutbound']['rule']))
     $config['nat']['advancedoutbound']['rule'] = array();
     
 $a_dnat = &$config['nat']['advancedoutbound']['rule'];
-nat_out_rules_sort();
+
+//nat_out_rules_sort();
 
 ?>
 
@@ -17,9 +18,9 @@ nat_out_rules_sort();
     #dnatsortable li span.col1 { position:relative; float:left; width:4.5%; }
     #dnatsortable li span.col2 { position:relative; float:left; width:5.5%; }
     #dnatsortable li span.col3 { position:relative; float:left; width:5.5%; }
-    #dnatsortable li span.col4 { position:relative; float:left; width:5.5%; }
+    #dnatsortable li span.col4 { position:relative; float:left; width:7.5%; }
     #dnatsortable li span.col5 { position:relative; float:left; width:10.5%; }
-	#dnatsortable li span.col6 { position:relative; float:left; width:60%; }
+    #dnatsortable li span.col6 { position:relative; float:left; width:58%; }
 </style>
 
 
@@ -27,7 +28,7 @@ nat_out_rules_sort();
 
 // Hide the Save Changes Button
 $(document).ready(function() {
-        //hidediv("<?=$if . 'saveneworder';?>");
+        $("#dnatsaveneworder").hide();
 });
 
 // Make the list of rules for this interface sortable
@@ -36,15 +37,19 @@ $("#dnatsortable").sortable({
    containment: 'parent',
    items: 'li:not(.ui-state-disabled)',
    update: function(event, ui) {
-        //showdiv("<?=$if . 'saveneworder';?>");
+        $("#dnatsaveneworder").show();
    }
 });
 
-// When a user clicks the save new order button submit the order to the backend processing
-$("#saveneworder").click(function () {
-    displayProcessingDiv();
-    var order = $("#dnatsortable").sortable("serialize");
-});
+// When a user clicks the save new order button submit the order to the backend processing                                                                      
+$("#dnatsaveneworder").click(function () {                                    
+    displayProcessingDiv();                                                     
+    var order = $("#dnatsortable").sortable("serialize");                 
+    $("#currentorder").load("process_nat_sortable.php?"+order+"&sort=dnat");
+        $("#dnatsortable").sortable('refresh');                           
+        $("#dnatsaveneworder").hide();                                        
+        setTimeout(function(){ $('#save_config').dialog('close'); }, 2500);     
+    });  
 
 // When a user clicks on the rule edit button, load firewall_nat_dynamic_edit.php?id=$id
 $(".col2 a, #newrule a").click(function () {
@@ -93,16 +98,12 @@ $filterent = $a_dnat[$i];
 <span title="delete this nat rule" class="ui-icon ui-icon-circle-close"></span>
 </a>
 </span>
-<?php if ($filterent['interface'] == 'wan' ): ?>
 <span class="col4"><?php if (isset($filterent['interface'])) echo $filterent['interface'];?></span>
-<?php else: ?>
-<span class="col4"><?php if (isset($filterent['interface'])) echo strtolower($config['interfaces'][$filterent['interface']]['descr']);?></span>
-<?php endif; ?>
 <span class="col5"><?php if (isset($filterent['source']['network'])) echo strtoupper($filterent['source']['network']); else echo "*"; ?><?=$textse;?></span>
 <span class="col6"><?php if (isset($filterent['descr'])) echo $filterent['descr'];?></span>
 </li>
 <?php $nrules++; endfor; ?>
 </ul>
 <div id="newrule"><center><a href="firewall_nat_dynamic_edit.php"><span title="add a new rule" class="ui-icon ui-icon-circle-plus"></span></a></center></div>
-<div id="<?=$if . 'saveneworder';?>"><center>SAVE NEW ORDER LINK</center></div>
+<div id="dnatsaveneworder"><center><input type="submit" value="Save new order" class="button" /></center></div>
 </div>

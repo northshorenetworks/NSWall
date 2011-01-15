@@ -51,6 +51,7 @@ _ntp:*:83:
 _ftp:*:84:
 _ospfd:*:85:
 _relayd:*:89:
+_iked:*:101:
 dialer:*:117:
 nogroup:*:32766:
 nobody:*:32767:

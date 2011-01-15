@@ -6,9 +6,10 @@
      #include <netinet/in.h>
      #include <net/pfvar.h>
      #include <err.h>
+     #include <string.h>
      #include <stdio.h>
      #include <stdlib.h>
-	 #include <syslog.h>
+     #include <syslog.h>
 
 int
  main(int argc, char *argv[]) 

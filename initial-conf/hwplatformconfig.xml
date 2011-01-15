@@ -48,4 +48,18 @@
             </opt2>
 		</interfaces>
     </jetway>
+    <nick>
+        <interfaces>
+            <wan>xl0</wan>
+            <lan>fxp0</lan>
+            <opt1>
+                <if>xl1</if>
+                <descr>WAN_2</descr>
+            </opt1>
+            <opt2>
+                <if>xl2</if>
+                <descr>LAN_2</descr>
+            </opt2>
+        </interfaces>
+    </nick> 
 </nswall>

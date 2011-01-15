@@ -1,5 +1,6 @@
 #!/bin/sh
 
+BASE=`pwd`
 PROG_NAME=$(basename $0)
 DEBUG_FLAG=FALSE
 
@@ -13,6 +14,9 @@ do
            exit 2;;
     esac
 done
+
+cp ${BASE}/initial-conf/BUILD_STAMP ${BASE}/obj/${PLATFORM}/version
+./incbuild.sh
 
 DISTNAME=$PLATFORM
 KERNCONF=PLATFORM/$DISTNAME/$DISTNAME
@@ -42,3 +46,9 @@ gzip $DISTNAME
 DATETIME=`date "+%Y-%m-%d-%H:%M:%S"`
 mv -f $DISTNAME.update ../../public_html/$MODULE-$DISTNAME.update.$DATETIME
 mv -f $DISTNAME.gz ../../public_html/$MODULE-$DISTNAME.image.$DATETIME
+
+# SCP and load this to a dut if we want to
+echo "scp ../../public_html/$MODULE-$DISTNAME.update.$DATETIME root@192.168.254.1:/ftmp"
+scp ../../public_html/$MODULE-$DISTNAME.update.$DATETIME root@192.168.254.1:/ftmp
+echo "ssh root@192.168.254.1 cd /ftmp; gzcat $MODULE-$DISTNAME.update.$DATETIME > /dev/sd0a; reboot"
+ssh root@192.168.254.1 "cd /ftmp; gzcat $MODULE-$DISTNAME.update.$DATETIME > /dev/sd0a; reboot"

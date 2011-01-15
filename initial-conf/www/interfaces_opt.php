@@ -1,329 +1,525 @@
-#!/bin/php
 <?php
+/*
+$Id: fbegin.inc,v 1.16 2009/04/20 06:52:10 jrecords Exp $
+part of m0n0wall (http://m0n0.ch/wall) 
+Copyright (C) 2003-2006 Manuel Kasper <mk@neon1.net>.
+All rights reserved.
+ 
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+ 
+1. Redistributions of source code must retain the above copyright notice,
+this list of conditions and the following disclaimer.
+ 
+2. Redistributions in binary form must reproduce the above copyright
+notice, this list of conditions and the following disclaimer in the
+documentation and/or other materials provided with the distribution.
+ 
+THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
+INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
+AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
+OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+POSSIBILITY OF SUCH DAMAGE.
+*/
+/* make sure the user is an admin */
+require_once("adminOnly.php");
 
-require("guiconfig.inc");
-include("ns-begin.inc");
+$navlevelsep = ": "; /* navigation level separator string */
+$mandfldhtml = ""; /* display this before mandatory input fields */
+$mandfldhtmlspc = ""; /* same as above, but with spacing */
+ 
+function gentitle($title) {
+global $navlevelsep;
+return join($navlevelsep, $title);
+}
+ 
+function genhtmltitle($title) {
+global $allowed, $config;
+return $config['system']['hostname'] . "." . $config['system']['general']['domain'] . " - " . gentitle($title);
+}
+ 
+function dynamic_menu(&$menu, $menu_title) {
+global $config;
+ 
+// Make sure the admin can see everything
+unset($allowed);
+    foreach ($menu as $item) {
+         $allowed[] = $item[0];
+}
+ 
+foreach ($menu as $desc => $links) {
+if ($intersect = array_intersect($menu[$desc],$allowed)) {
+if (!isset($header_displayed)) {
+echo "\n <strong>".$menu_title.'</strong><br>';
+$header_displayed = true;
+}
+else {
+if (!isset($header_displayed)) {
+} 
+}
+// $intersect may contain one or more links, but we only need the first one
+// BUT, we are doing a foreach here because it might not be element [0]
+foreach ($intersect as $link) {
+// Below lines are spaced out oddly to help improve the look of resulting HTML code.
+?>
+ 
+<li><a href="<?=$link?>" class="navlnk"><?=$desc?></a></li><?
+// Only need the first one, so break out of foreach
+break;
+}
+}
+}
+}
+ 
+$menu['System']['General setup'] = array('#system_general');
+$menu['System']['Routing'] = array('#system_routes_tabs');
+$menu['System']['License'] = array('#system_license');
+$menu['System']['Firmware'] = array('#system_firmware');
+$menu['System']['Advanced'] = array('#system_advanced');
+$menu['System']['Networking'] = array('#system_networking');
+//$menu['System']['Manage Certificates'] = array('#system_cacert_tabs');
+//$menu['System']['User manager'] = array('#system_accounts_tabs');
+ 
+//$menu['Firewall']['Blocked Sites'] = array('#firewall_abusive_sites');
+$menu['Firewall']['Aliases'] = array('#firewall_aliases_tabs');
+$menu['Firewall']['Global Options'] = array('#firewall_options_edit');
+$menu['Firewall']['NAT'] = array('#firewall_nat_tabs');
+$menu['Firewall']['Rules'] = array('#firewall_rules_tabs');
 
-unset($index);
-if ($_GET['index'])
-    $index = $_GET['index'];
-else if ($_POST['index'])
-    $index = $_POST['index'];
-
-if (!$index)
-    exit;
-
-$optcfg = &$config['interfaces']['opt' . $index];
-
-/* Wireless interface? */
-if (isset($optcfg['wireless'])) {
-    require("interfaces_wlan.inc");
-    wireless_config_init();
+if ($g['module'] == 'FIREWALL') { 
+    $menu['Services']['DNS forwarder'] = array('#services_dnsmasq');
+    //$menu['Services']['Dynamic DNS'] = array('3services_dyndns');
+}
+    //$menu['Services']['CARP'] = array('#services_carp');
+//$menu['Services']['Config Server'] = array('#services_config_server');
+// $menu['Services']['Relayd'] = array('#firewall_relayd_relays');
+ 
+if ($g['module'] == 'FIREWALL') {
+    $menu['VPN']['IPSec'] = array('#vpn_ipsec_tabs');
+    //$menu['VPN']['PPTP Client'] = array('#vpn_pptp_client');
+    //$menu['VPN']['PPTP Server'] = array('#vpn_pptp_server');
 }
 
-$pconfig['descr'] = $optcfg['descr'];
-$pconfig['ipaddr'] = $optcfg['ipaddr'];
-$pconfig['subnet'] = $optcfg['subnet'];
-$pconfig['aliaslist'] = $optcfg['aliaslist'];
-$pconfig['enable'] = isset($optcfg['enable']);
-$pconfig['gateway'] = $optcfg['gateway'];
-$pconfig['iftype'] = $optcfg['iftype'];
-$pconfig['wantype'] = $optcfg['wantype'];
-$pconfig['altqenable'] = isset($optcfg['altqenable']);
-$pconfig['bandwidth'] = $optcfg['bandwidth'];
+$menu['Status']['System'] = array('#status_system');
+$menu['Status']['Traffic graph'] = array('#status_graph');
+$menu['Status']['CPU graph'] = array('#status_graph_cpu');
+$menu['Status']['PF Traffic graph'] = array('#status_graph_rule');
+$menu['Status']['PF PPS graph'] = array('#status_graph_pps');
+$menu['Status']['PF States graph'] = array('3status_graph_states');
+ 
+$menu['Diagnostics']['PF'] = array('#diag_pf');
+$menu['Diagnostics']['System'] = array ('#diag_sys');
+$menu['Diagnostics']['Logs'] = array ('#diag_logs');
+$menu['Diagnostics']['VPN'] = array('#diag_vpn');
+$menu['Diagnostics']['Utilities'] = array('#diag_util');
+
+$menu['Support']['Submit Debug'] = array ('#support_case');
+
+?>
+ 
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
+"http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+<title><?=genhtmltitle($pgtitle);?></title>
+ 
+<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+<link href="/images/logo.jpg" width="100px" height="50px" type="image/x-icon" rel="shortcut icon"/>
+<link href="gui.css" rel="stylesheet" type="text/css">
+<link type="text/css" href="style/jquery-ui-1.7.2.custom.css" rel="stylesheet" />
+<link type="text/css" href="style/jquery.contextmenu.css" rel="stylesheet" />
+
+</head>
+<script src="js/jquery-1.3.2.min.js"></script> 
+<script src="js/nss.js"></script>
+<script type="text/javascript" src="js/jquery.form.js"></script>
+<script type="text/javascript" src="js/ui.core.js"></script>  
+<script type="text/javascript" src="js/ui.tabs.js"></script>
+<script type="text/javascript" src="js/ui.resizable.js"></script>
+<script type="text/javascript" src="js/ui.dialog.js"></script>
+<script type="text/javascript" src="js/ui.draggable.js"></script>
+<script type="text/javascript" src="js/ui.droppable.js"></script>
+<script type="text/javascript" src="js/ui.progressbar.js"></script>
+<script type="text/javascript" src="js/ui.sortable.js"></script>
+<script type="text/javascript" src="js/swfobject.js"></script>
+<script type="text/javascript" src="js/jquery.uploadify.v2.1.0.min.js"></script>
+<script type="text/javascript" src="js/jquery.validate.js"></script>
+<script type="text/javascript" src="js/jquery.contextmenu.js"></script>
+<!--[if IE]><script language="javascript" type="text/javascript" src="../excanvas.min.js"></script><![endif]--> 
+<script type="text/javascript" src="js/jquery.flot.js"></script> 
+
+<body link="#0000CC" vlink="#0000CC" alink="#0000CC">
+<div id="webui">
+
+<div id="support_diag" title="NSWall Support"></div>
+<div id="support_login" title="NSWall Support">
+<body>
+
+<div id="login_nswall" title="NSWall Login">
+<div id="wrapper">
+<div class="form-container ui-tabs ui-widget ui-corner-all">
+<form id="supportlogin" method="post" name="login">
+ <fieldset>
+        <legend>Support : Login</legend>
+            <div>
+                             <label for="username">Username</label>
+                             <input type="text" size="10" name="username">
+            </div>
+            <div>
+                             <label for="password">Password</label>
+                             <input type="password" size="10" name="password">
+            </div>
+ </fieldset>
+ <div class="buttonrow">
+     <center><input type="submit" id="support_login_button" value="Login" class="button" /></center>
+ </div>
+
+</form>
+
+</div>
+</div>
+</div>
+
+</body>
+</html>
+    </center>
+</div>
+
+<div id="save_config" title="Saving Configuration"></div>
+
+<div id="upload_firmware" title="Uploading Firmware Image">
+    <center>Uploading Firmware Image<br>
+        This may take a moment...<br><br>
+        <img src="images/ajax-loader.gif" height="25" width="25" name="spinner">
+    </center>
+</div>
+
+<div id="reboot_nswall" title="Rebooting NSWall">
+    <center>Rebooting NSWall Device...<br>
+        You will be redirected to the login page when the device is back up...<br><br>
+        <img src="images/ajax-loader.gif" height="25" width="25 name="spinner">
+    </center>
+</div>
+
+<div id="load_content">
+    <center>Loading Content...<br><br><br>
+        <img src="images/ajax-loader.gif" height="25" width="25" name="spinner">
+    </center>
+</div>
+
+<div class="ui-widget-content" id="header">
+        <div id="logout"><a href="logout.php">Log out</a></div>
+        <div id="deviceid"><div style=""><label>Hostname:</label><a target="contentframe" title="<?php readfile("/etc/version"); ?>" href="system.php"><?php echo $config['system']['hostname'] . "." . $config['system']['general']['domain']; ?></a></div><div style=""><label>IP Address:</label>
+    <?php if (!$pgtitle_omit): ?>
+        <?php echo $config['interfaces']['lan']['ipaddr']; ?>
+    <?php else: ?>
+        <?php echo get_current_wan_address(); ?>
+    <?php endif; ?>
+
+</div></div>
+    
+<div id="uptimeload"></div>
+
+        <div id="userinfo"><div style=""><label>User:</label><a target="contentframe" href="/tmui/Control/jspmap/tmui/system/user/properties.jsp?name=admin">admin</a></div>
+                <div style=""><label>Last Config Change:</label><?=htmlspecialchars(date("D M j G:i:s T Y", $config['lastchange']));?></a></div>
+                </div>
+</div>
+
+<div class="ui-widget-header" id="banner">
+<div id="logo"><a onclick="return loadContent(path_startPage ? path_startPage : $('#mainpanel div.module ul a:first').attr('href'));" href="http://www.northshoresoftware.com"><img alt="NSS Logo" title="Click to return to the start page" class="png" width="50" height="50" src="/images/logo.jpg"/></a></div>
+<div id="alert"></div>
+</div>
+
+<div class="ui-widget-header ui-corner-bottom left" style="list-style: none;" id="panels">
+
+<?php
+echo '<div id="systempanel" class="ui-widget-header panel"><img src="/images/system.png" id="system_img" border="0"></a><strong>System</strong><br>
+<span id="system" style="display: none">';
+dynamic_menu($menu['System'], '');
+echo '</span></div>';
+
+echo '<div id="ifpanel" class="ui-widget-header panel"><img src="/images/interface.png" id="if_img" border="0"></a><strong>Interfaces</strong><br>
+<span id="if" style="display: none">';
+
+// The Interfaces menu is different than the rest because of the Assign link and
+// The dynamic nature of the optional interfaces.
+$if_menu = array('(assign)' => '3interfaces_assign',
+     'LAN' => 'interfaces_lan.php',
+'WAN' => 'interfaces_wan.php',
+'OPTx' => 'interfaces_opt.php');
+
+$allowed = $if_menu;
+if (array_intersect($if_menu,$allowed)) {
+        /*if ((!isset($config['system']['webgui']['noassigninterfaces'])) &&
+(in_array('interfaces_assign.php',$allowed))) {
+echo '<a href="/interfaces_assign.php" class="navlnks"> (assign)</a>';
+}*/
+    echo '<br>';
+    if (in_array('interfaces_wan.php',$allowed)) {
+     echo '<li><a href="#interfaces_wan" class="navlnk">WAN</a></li>';
+    }
+    if ($g['module'] == 'FIREWALL') { 
+    if (in_array('interfaces_lan.php',$allowed)) {
+     echo '<li><a href="#interfaces_lan" class="navlnk">LAN</a></li>';
+    }
+    if (file_exists("{$g['etc_path']}/hwplatform")) {
+        $g['hwplatform'] = chop(file_get_contents("{$g['etc_path']}/hwplatform"));
+        $pla = explode("_", $g['hwplatform']);
+        $g['hwplatform'] = $pla[0];
+    }
+    $hwplatformconfig = parse_nonconfig_xml("{$g['etc_path']}/hwplatformconfig.xml");
+    $ifs = $hwplatformconfig[strtoupper($g['hwplatform'])][INTERFACES];
+    $wanif = array_shift($ifs);
+    $lanif = array_shift($ifs);
+    for ($i = 1; isset($ifs['OPT' . $i]); $i++) {
+         echo '<li><a href="interfaces_opt_index_' .$i.
+                '" class="navlnk">'.htmlspecialchars($ifs['OPT' . $i]['DESCR'])
+                .'</a></li>';
+    }
+    }
+        echo '<li><a href="#interfaces_vlan_tabs" class="navlnk">VLANs</a></li>';
+        //echo '<li><a href="#interfaces_trunks_tabs" class="navlnk">Trunks</a></li>';
+}
+echo '</span></div>';
+
+echo '<div id="firewallpanel" class="ui-widget-header panel"><img src="/images/firewall.png" id="firewall_img" border="0"></a><strong>Firewall</strong><br>
+<span id="firewall" style="display: none">';
+dynamic_menu($menu['Firewall'], '');
+echo '</span></div>';
 
 
-$pgtitle = array("Interfaces", htmlspecialchars($optcfg['descr']));
+echo '<div id="servicespanel" class="ui-widget-header panel"><img src="/images/service.png" id="services_img" border="0"></a><strong>Services</strong><br>
+<span id="services" style="display: none">';
+dynamic_menu($menu['Services'], '');
+echo '</span></div>';
 
-?> 
+if ($g['module'] == 'FIREWALL') {
+echo '<div id="vpnpanel" class="ui-widget-header panel"><img src="/images/vpn.png" id="vpn_img" border="0"></a><strong>VPN</strong><br>
+<span id="vpn" style="display: none">';
+dynamic_menu($menu['VPN'], '');
+echo '</span></div>';
+}
 
-<script type="text/javascript">
-// when a user changes the type of member, change the related div to sytle = display: block and hide all others
+echo '<div id="statuspanel" class="ui-widget-header panel"><img src="/images/status.png" id="status_img" border="0"></a><strong>Status</strong><br>
+<span id="statusmenu" style="display: none">';
+dynamic_menu($menu['Status'], '');
+echo '</span></div>';
 
-// wait for the DOM to be loaded
-$(document).ready(function() {
-     $('div fieldset div').addClass('ui-widget ui-widget-content ui-corner-content');
+echo '<div id="diagpanel" class="ui-widget-header panel"><img src="/images/diagnostics.png" id="diagnostics_img" border="0"></a><strong>Diagnostics</strong><br>
+<span id="diagnostics" style="display: none">';
+dynamic_menu($menu['Diagnostics'], '');
+echo '</span></div>';
 
-     <?php if (isset($optcfg['wireless'])): ?>
-     var wifimode = $("#ifmode");
-     switch(wifimode.val()){
-          case 'nobridge':
-              $("#ipdiv").show();
-              $("#aliasdiv").show();
-              break;
-          default:
-              $("#ipdiv").hide();
-              $("#aliasdiv").hide();
-              break;
-          }
+echo '<div id="supportpanel" class="ui-widget-header panel"><img src="/images/support.png" id="support_img" border="0"></a><strong>Support</strong><br>
+<span id="support" style="display: none">';
+dynamic_menu($menu['Support'], '');
+echo '<a class="navlnk" href="http://www.onlinechatcenters.com/chat/?id=13692&amp;dep=17438" target="_blank">Live Chat</a>';
+echo '</span></div>';
 
-     $("#ifmode").change(function() {
-          var val = $(this).val();
-          switch(val){
-          case 'nobridge':
-              $("#ipdiv").show();
-              $("#aliasdiv").show();
-              break;
-          default:
-              $("#ipdiv").hide();
-              $("#aliasdiv").hide();
-              break;
-          }
-     });
-     <?php endif; ?>
+?>
+</div>
+<script language="javascript">
+<!--
 
-     var encmode = $("#encmode");
-     switch(encmode.val()){
-     case 'open':
-         $("#wpadiv").hide();
-         $("#wepdiv").hide();
-         break;
-     case 'wep':
-         $("#wpadiv").hide();
-         $("#wepdiv").show();
-         break;
-     case 'wpa':
-         $("#wpadiv").show();
-         $("#wepdiv").show();
-         break;
-     }
-  
-     $("#encmode").change(function() {
-          var val = $(this).val();
-          switch(val){
-          case 'open':
-              $("#wpadiv").hide();
-              $("#wepdiv").hide();
-              break;
-          case 'wep':
-              $("#wpadiv").hide();
-              $("#wepdiv").show();
-              break;
-          case 'wpa':
-              $("#wpadiv").show();
-              $("#wepdiv").show();
-              break;
-          }
-     });
+// Check if the box has been registered, if it hasn't dislay an alert
+<?php if (file_exists("/conf/unregistered")): ?>
+$("#alert").html('This device has not been registerd, please register it by clicking <a href="support_registration.php">here</a>');
+$("#alert").show();
+<?php endif; ?>
 
-     var iftype = $("#iftype");
-     switch(iftype.val()){
-          case 'wan':
-              $("#waniftype").show();
-              $("#laniftype").hide();
-              $("#gatewaydiv").show();
-              $("#connectiontype").show();
-              $("#altqdiv").show();
-              break;
-          case 'lan':
-              $("#waniftype").show();
-              $("#gatewaydiv").hide();
-              $("#connectiontype").hide();
-               $("#altqdiv").hide();
-			  break;
-          }
+var refreshId = "";
 
-     $("#iftype").change(function() {
-          var val = $(this).val();
-          switch(val){
-          case 'wan':
-              $("#waniftype").show();
-              $("#laniftype").hide();
-              $("#gatewaydiv").show();
-              $("#connectiontype").show();
-			  $("#altqdiv").show();
-              break;
-          case 'lan':
-              $("#waniftype").show();
-              $("#gatewaydiv").hide();
-              $("#connectiontype").hide();
-			  $("#altqdiv").hide();
-              break;
-          }
-     });
+function updateUptimeLoad () {
+          $('#uptimeload').load('uptimeload.php?top' + "&random=" + Math.random());
+}
 
-      var wantype = $("#wantype");
-      switch(wantype.val()){
-          case 'Static':
-              $("#staticdiv").show();
-              $("#dhcpdiv").hide();
-              break;
-          case 'DHCP':
-              $("#staticdiv").hide();
-              $("#dhcpdiv").show();
-              break;
-          }
+$('#panels li a').click(function(){  
+     $('#load_content').dialog('open'); 
+     var toLoad = $(this).attr('href').substr(1)+'.php'; 
+     window.location.hash = $(this).attr('href');  
+     clearInterval(refreshId);
+     $("#content").load(toLoad);
+     return false;  
+});  
 
-     $("#wantype").change(function() {
-          var val = $(this).val();
-          switch(val){
-          case 'Static':
-              $("#staticdiv").show();
-              $("#dhcpdiv").hide();
-              break;
-          case 'DHCP':
-              $("#staticdiv").hide();
-              $("#dhcpdiv").show();
-              break;
-          }
-     });
+$('#alert a').click(function(){
+     $('#load_content').dialog('open');
+     var toLoad = $(this).attr('href');
+     window.location.hash = $(this).attr('href').substr(0,$(this).attr('href').length-4);
+     clearInterval(refreshId);
+     $("#content").load(toLoad);
+     return false;
+});
 
-     // When a user clicks on the host add button, validate and add the host.
-     $("#hostaddbutton").click(function () {
-          var ip = $("#srchost");
-      $('#MEMBERS').append("<option value='" + ip.val() + "'>"+ip.val() + '</option>');
-          ip.val("");
-          return false;
-     });
+$(document).ready(function() {         
+      // Check for hash value in URL  
+      if (window.location.hash) {
+           var hash = window.location.hash.substr(1);   
+           if (hash == 'index') {
+                var toLoad = 'status_system.php';
+           } else { 
+                if( hash.match(/\_tab\_/) ) {
+                    hash = hash.replace(/\_tab\_.+/,'');
+                    var toLoad = hash+'.php';
+                } 
+                // handle optional interfaces
+                if( hash.match(/\_index\_/) ) {
+                    index = hash.replace(/interfaces\_opt\_index\_/,'');
+                    hash = hash.replace(/\_index\_.+/,'');
+                    var toLoad = hash+'.php?index='+index;
+                    alert(toLoad);
+                }   
+           }
+           clearInterval(refreshId);
+           $('#content').load(toLoad);
+           updateUptimeLoad()
+           var displayLoadUptime = setInterval("updateUptimeLoad()", 60000);
+      } else {
+           var toLoad = 'status_system.php';
+           clearInterval(refreshId);
+           $('#content').load(toLoad);
+           updateUptimeLoad();
+           var displayLoadUptime = setInterval("updateUptimeLoad()", 60000);
+      }  
+      //Initialize all of our dialogs
+    $.ui.dialog.defaults.bgiframe = true;
 
-     // When a user highlights an item and clicks remove, remove it
-          $('#remove').click(function() {
-          return !$('#MEMBERS option:selected').remove();
-     });
+        // Support Login dialog, displayed whenever a config change is written
+        $("#support_login").dialog({ 
+            autoOpen: false, 
+            width: 640, 
+            height: 405, 
+            hide: 'scale', 
+            show: 'scale', 
+            resizable: false, 
+            draggable: false, 
+            closeOnEscape: false, 
+            open: function(event, ui) { 
+                $(".ui-dialog-titlebar-close").hide(); 
+                $(".ui-dialog-titlebar").css('display','block'); 
+            } 
+        });
 
-     // When a user clicks on the submit button, post the form.
-     $("#submitbutton").click(function () {
-      $("#save_config").html('<center>Saving Configuration File<br><br><img src="images/ajax-loader.gif" height="25" width="25" name="spinner">');
-      $(".ui-dialog-titlebar").css('display','block');
-      $('#save_config').dialog('open');
-      var Options = $.map($('#MEMBERS option'), function(e) { return $(e).val(); } );
-      var str = Options.join(' ');
-      var QueryString = $("#iform").serialize()+'&memberslist='+str;
-      $.post("forms/interfaces_form_submit.php", QueryString, function(output) {
-            $("#save_config").html(output);
-            if(output.match(/SUBMITSUCCESS/))
-                setTimeout(function(){ $('#save_config').dialog('close'); }, 1000);
-      });
-      return false;
-     });
+        // Support dialog, displayed whenever a config change is written
+        $("#support_diag").dialog({ 
+            autoOpen: false, 
+            width: 650, 
+            height: 405, 
+            hide: 'scale', 
+            show: 'scale', 
+            resizable: false, 
+            draggable: false, 
+            closeOnEscape: false, 
+            open: function(event, ui) { 
+                $(".ui-dialog-titlebar-close").hide(); 
+                $(".ui-dialog-titlebar").css('display','block'); 
+            } 
+        });
+
+    // Save Configuration dialog, displayed whenever a config change is written
+        $("#save_config").dialog({ 
+            autoOpen: false, 
+            width: 400, 
+            height: 200, 
+            hide: 'scale', 
+            show: 'scale', 
+            resizable: false, 
+            draggable: false, 
+            closeOnEscape: false, 
+            open: function(event, ui) { 
+                $(".ui-dialog-titlebar-close").hide(); 
+                $(".ui-dialog-titlebar").css('display','block'); 
+            } 
+        });
+    
+        // Upload Firmware dialog, displayed when uploading a new firmware image to the device
+        $("#upload_firmware").dialog({ 
+            autoOpen: false, 
+            width: 400, 
+            height: 200, 
+            hide: 'scale', 
+            show: 'scale', 
+            resizable: false, 
+            draggable: false, 
+            closeOnEscape: false, 
+            open: function(event, ui) { 
+                $(".ui-dialog-titlebar-close").hide(); 
+                $(".ui-dialog-titlebar").css('display','block'); 
+            } 
+        });
+    
+        // Reboot Nswall dialog, displayed when rebooting device
+        $("#reboot_nswall").dialog({ 
+            autoOpen: false, 
+            width: 650, 
+            height: 405, 
+            hide: 'scale', 
+            show: 'scale', 
+            resizable: false, 
+            draggable: false, 
+            closeOnEscape: false, 
+            modal: true, 
+            open: function(event, ui) { 
+                $(".ui-dialog-titlebar-close").hide(); 
+                $(".ui-dialog-titlebar").css('display','block'); 
+            } 
+        });
+        
+        // Load Content dialog, this is displayed when moving between pages
+        $("#load_content").dialog({  
+            //width: 150, 
+            //height: 15, 
+            resizable: false, 
+            draggable: false, 
+            closeOnEscape: false,
+            open: function(event, ui) {
+                $(".ui-dialog-titlebar").hide();
+            }
+        });
+
+        // Make all nav panels clickable
+
+         $("#systempanel").click(function () {
+             showhide('system','system_img');
+         });
+         $("#ifpanel").click(function () {
+             showhide('if','if_img');
+         });
+         $("#firewallpanel").click(function () {
+             showhide('firewall','firewall_img');
+         });
+         $("#servicespanel").click(function () {
+             showhide('services','sercices_img');
+         });
+         $("#vpnpanel").click(function () {
+             showhide('vpn','vpn_img');
+         });
+         $("#statuspanel").click(function () {
+             showhide('statusmenu','status_img');
+         });
+         $("#diagpanel").click(function () {
+             showhide('diagnostics','diagnostics_img');
+         });  
+         $("#supportpanel").click(function () {
+             showhide('support','support_img');
+         });
 
 });
-</script> 
 
-<div id="wrapper">
-	<div class="form-container ui-tabs ui-widget ui-corner-all">
-	<form action="forms/interfaces_form_submit.php" method="post" name="iform" id="iform">
-    <input name="formname" type="hidden" value="interface_opt">
-	<input name="index" type="hidden" value="<?=$index;?>">
-	<fieldset>
-		<legend><?=join(": ", $pgtitle);?></legend>
-			<div>
-                             <label for="enable">
-                                  Enable <?=$pconfig['descr']; ?> IF
-                             </label>
-                             <input id="enable" type="checkbox" name="enable" value="Yes" <?php if ($pconfig['enable']) echo "checked"; ?> />
-                        </div>
-                        <div>
-			     <label for="descr">Interface Name</label>
-                             <input name="descr" type="text" class="formfld" id="descr" size="30" value="<?=htmlspecialchars($pconfig['descr']);?>">
-                             <p class="note">The name of the interface (not parsed)</p>
-                        </div>
-				<?php if (isset($config['system']['advanced']['multiwansupport']) && sg_get_const("ENTERPRISE_ROUTING") == 'ENABLED'): ?>
-   				 <div>
-                 		    <label for=="iftype">Interface Type</label>
-                 		    <select name="iftype" class="formfld" id="iftype">
-                                       <?php $modes = array('lan' => 'LAN Interface', 'wan' => 'WAN Interface');
-                                         foreach ($modes as $mode => $modename): ?>
-                                            <option value="<?=$mode;?>" <?php if ($mode == $pconfig['iftype']) echo "selected"; ?>>
-                                               <?=htmlspecialchars($modename);?>
-                                            </option>
-                                         <?php endforeach; ?>
-                                    </select>	
-                                    <p class="note">Select WAN to configure this interface as an additional WAN connection</p>
-            			</div>
-                             <div id='waniftype'>
-			      <div id ='connectiontype'>
-                             <label for="wantype">Connection Type</label>
-                             <select name="wantype" class="formfld" id="wantype">
-                                 <option value="Static" >Static IP</option>
-                                 <option value="DHCP" <?php if ('DHCP' == $pconfig['wantype']) echo "selected"; ?>>DHCP</option>
-                             </select>
-                        </div>
-                        <?php endif; ?>
-                        <div id='staticdiv'>
-            <div>
-                             <label for="ipaddr">IP address</label>
-                             <input name="ipaddr" type="text" class="formfld" id="ipaddr" size="20" value="<?=htmlspecialchars($pconfig['ipaddr']);?>">
-                    /
-                    <select name="subnet" class="formfld" id="subnet">
-                      <?php for ($i = 31; $i > 0; $i--): ?>
-                      <option value="<?=$i;?>" <?php if ($i == $pconfig['subnet']) echo "selected"; ?>>
-                      <?=$i;?>
-                      </option>
-                      <?php endfor; ?>
-                    </select>
-            </div>
-            <?php if (isset($config['system']['advanced']['multiwansupport']) && sg_get_const("ENTERPRISE_ROUTING") == 'ENABLED'): ?>
-            <div id='gatewaydiv'>
-                             <label for="gateway">Gateway</label>
-                             <input name="gateway" type="text" class="formfld" id="gateway" size="20" value="<?=htmlspecialchars($pconfig['gateway']);?>">
-            </div>
-            <?php endif; ?>
-            <div id='aliasdiv'>
-                             <label for="members">Alias IP's</label>
-                             <select name="MEMBERS" style="width: 160px; height: 100px" id="MEMBERS" multiple>
-        <?php for ($i = 0; $i<sizeof($pconfig['aliaslist']); $i++): ?>
-                <option value="<?=$pconfig['aliaslist']["alias$i"];?>">
-                <?=$pconfig['aliaslist']["alias$i"];?>
-                </option>
-                <?php endfor; ?>
-        </select>
-                <input type=button id='remove' value='Remove Selected'><br><br>
-                 <label for="srchost">Address</label>
-                  <input name="srchost" type="text" class="formfld" id="srchost" size="16" value="<?=htmlspecialchars($pconfig['address']);?>">
-                <input type=button id='hostaddbutton' value='Add'>
-                </div>
-              </div>
-                <div style='display: none;' id='dhcpdiv'></div>
-			<?php if (isset($optcfg['wireless'])): ?>
-                             <div>
-                                 <label for="ifmode">Wireless Mode</label>
-                                 <select name="ifmode" class="formfld" id="ifmode" onChange="switchwifibridge(document.iform.ifmode.value)">
-                                 <?php $modes = array('nobridge' => 'Independant Network', 'lanbridge' => 'Bridge to LAN', 'dmzbridge' => 'Bridge to DMZ');
-                                 foreach ($modes as $mode => $modename): ?>
-                                     <option value="<?=$mode;?>" <?php if ($mode == $pconfig['ifmode']) echo "selected"; ?>>
-                                         <?=htmlspecialchars($modename);?>
-                                     </option>
-                                 <?php endforeach; ?>
-                                 </select>
-                             </div>
-                        <?php endif; ?>
-	 	<div>
-                    <label for="spoofmac">MAC Address Override</label>
-                    <input name="spoofmac" type="text" class="formfld" id="spoofmac" size="30" value="<?=htmlspecialchars($pconfig['spoofmac']);?>">
-                    <p class="note">This field can be used to modify (&quot;spoof&quot;) the MAC address of the interface<br>
-                    Enter a MAC address in the following format: xx:xx:xx:xx:xx:xx or leave blank</p>
-                </div>
-                <div>
-                    <label for="mtu">MTU</label>
-                    <input name="mtu" type="text" class="formfld" id="mtu" size="8" value="<?=htmlspecialchars($pconfig['mtu']);?>">
-                    <p class="note">If you enter a value in this field, then MSS clamping for
-                    TCP connections to the value entered above minus 40 (TCP/IP
-                    header size) will be in effect. If you leave this field blank,
-                    an MTU of 1492 bytes for PPPoE and 1500 bytes for all other
-                    connection types will be assumed.</p>
-               </div>
-				<?php if (isset($config['system']['advanced']['multiwansupport']) && sg_get_const("ENTERPRISE_ROUTING") == 'ENABLED'): ?>
-                <div id='altqdiv'>
-			    <div>
-                    <label for="altqenable">Enable ALTQ</label>
-                    <input id="altqenable" type="checkbox" name="altqenable" value="Yes" <?php if ($pconfig['altqenable']) echo "checked"; ?> />
-                </div>
-                <div>
-                    <label for="bandwidth">Uplink Speed</label>
-                    <input id="bandwidth" type="text" name="bandwidth" value="<?=htmlspecialchars($pconfig['bandwidth']);?>" />
-                    <p class="note">Uplink speed of interface in Kilobits/s.</p>
-                </div>
-				</div>
-				<?php endif; ?>
-	</fieldset>
-	
-	<div class="buttonrow">
-		<input type="submit" id="submitbutton" value="Save" class="button" />
-	</div>
+function showhide(tspan, tri) {
+    tspanel = document.getElementById(tspan);
+    if (tspanel.style.display == 'none') {
+        tspanel.style.display = '';
+    } else {
+        tspanel.style.display = 'none';
+    }
+}
 
-	</form>
-	
-	</div><!-- /form-container -->
-	
-</div><!-- /wrapper -->
+-->
+</script>
+<div id="content" style="margin-top: .5em; margin-left: 18.5em; margin-right: 2.5em"></div>

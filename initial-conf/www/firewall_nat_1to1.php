@@ -100,5 +100,5 @@ $filterent = $a_1to1[$i]; ?>
 <?php $nrules++; endfor; ?>
 </ul>
 <div id="newrule"><center><a href="firewall_nat_1to1_edit.php"><span title="add a new nat rule" class="ui-icon ui-icon-circle-plus"></span></a></center></div>
-<div id="<?=$if . 'saveneworder';?>"><center>SAVE NEW ORDER LINK</center></div>
+<div id="<?=$if . 'saveneworder';?>"><center><input type="submit" value="Save new order" class="button" /></center></div>
 </div>

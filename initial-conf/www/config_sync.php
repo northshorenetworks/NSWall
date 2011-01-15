@@ -42,8 +42,8 @@ if ($_GET['action'] == 'getconfig') {
 	 } elseif ($_GET['type'] == 'relays') {
 		echo encode_array(sync_config_area('relays', 'get', ''));
 		exit;
-	 } elseif ($_GET['type'] == 'nats') {
-		echo encode_array(sync_config_area('nats', 'get', ''));
+	 } elseif ($_GET['type'] == 'nat') {
+		echo encode_array(sync_config_area('nats, 'get', ''));
 		exit;
 	 } elseif ($_GET['type'] == 'pfoptions') {
 		echo encode_array(sync_config_area('pfoptions', 'get', ''));
@@ -78,8 +78,15 @@ if ($_GET['action'] == 'getconfig') {
         }
 }
 
-if ($_GET['action'] == 'getmd5') {
-	$rules = md5(encode_array(sync_config_area('rules', 'get', '')));
+if ($_GET['action'] == 'getmd5' && isset($_GET['type'])) {
+    $type = $_GET['type'];
+
+    echo md5(encode_array(sync_config_area($type, 'get', '')));
+
+    return;
+ }
+
+    /* $rules = md5(encode_array(sync_config_area('rules', 'get', '')));
 	$aliases = md5(encode_array(sync_config_area('aliases', 'get', '')));
 	$relays = md5(encode_array(sync_config_area('relays', 'get', '')));
 	$nats = md5(encode_array(sync_config_area('nats', 'get', '')));
@@ -95,23 +102,24 @@ if ($_GET['action'] == 'getmd5') {
 	$general = md5(encode_array(sync_config_area('general', 'get', '')));
 
 	$md5s = array('rules' => $rules,
-         		'aliases' => $aliases,
+         	    	'aliases' => $aliases,
    	                'relays' => $relays,
-		        'nats' => $nats,
-			'pfoptions' => $pfoptions,
-			'altq' => $altq,
-			'dhcpd' => $dhcpd,
-			'staticroutes' => $staticroutes,
-			'ipsec' => $ipsec,
-			'dnsmasq' => $dnsmasq, 
-			'certmgr' => $certmgr,
-			'accounts' => $accounts,
-			'networking' => $networking,
-			'general' => $general
-		);
+		            'nats' => $nats,
+                    'pfoptions' => $pfoptions,
+                    'altq' => $altq,
+                    'dhcpd' => $dhcpd,
+                    'staticroutes' => $staticroutes,
+                    'ipsec' => $ipsec,
+                    'dnsmasq' => $dnsmasq, 
+                    'certmgr' => $certmgr,
+                    'accounts' => $accounts,
+                    'networking' => $networking,
+                    'general' => $general
+		    );
+
 	reset($md5s);
 	echo encode_array($md5s);
-}
+    */
 
 if ($_POST) {
 
@@ -126,7 +134,7 @@ if ($_POST) {
 		$ruleset = rawurldecode($_POST['ruleset']);
 		$ruleset = unserialize($ruleset);
 		$a_filter = $ruleset;
-		mwexec("/usr/bin/logger -p local0.info -t webui syncing config rules to referring host");
+		mwexec("/usr/bin/logger -p local0.info -t webui syncing config rules from {$_SERVER['REMOTE_ADDR']}");
                 write_config();
 		$retval = filter_configure();
 		echo "SUCCESS";
@@ -136,11 +144,11 @@ if ($_POST) {
  	                      $config['aliases']['alias'] = array();
         	        }
                 	$a_aliases = &$config['aliases']['alias'];
-			$retval = 0;
+			        $retval = 0;
                 	$aliases = rawurldecode($_POST['aliases']);
                 	$aliases = unserialize($aliases);
                 	$a_aliases = $aliases;
-                	mwexec("/usr/bin/logger -p local0.info -t webui syncing aliases to referring host");
+                	mwexec("/usr/bin/logger -p local0.info -t webui syncing aliases from {$_SERVER['REMOTE_ADDR']}");
                 	write_config();
                 	$retval = filter_configure();
 			echo "SUCCESS";
@@ -154,13 +162,13 @@ if ($_POST) {
                         $relays = rawurldecode($_POST['relays']);
                         $relays = unserialize($relays);
                         $a_relays = $relays;
-                        mwexec("/usr/bin/logger -p local0.info -t webui syncing relays to referring host");
+                        mwexec("/usr/bin/logger -p local0.info -t webui syncing relays from {$_SERVER['REMOTE_ADDR']}");
                         write_config();
 			$retval = filter_configure();
                         $retval = relay_relayd_configure();
 			echo "SUCCESS";
 			exit;
-	} elseif ($_POST['action'] == 'load' && $_POST['type'] == 'nats') {
+	} elseif ($_POST['action'] == 'load' && $_POST['type'] == 'nat') {
                         if (!is_array($config['nat'])) {
                               $config['nat'] = array();
                         }
@@ -169,7 +177,7 @@ if ($_POST) {
                         $nats = rawurldecode($_POST['nats']);
                         $nats = unserialize($nats);
                         $a_nats = $nats;
-                        mwexec("/usr/bin/logger -p local0.info -t webui syncing nats to referring host");
+                        mwexec("/usr/bin/logger -p local0.info -t webui syncing nats from {$_SERVER['REMOTE_ADDR']}");
                         write_config();
                         $retval = filter_configure();
 			echo "SUCCESS";
@@ -183,9 +191,9 @@ if ($_POST) {
                         $pfoptions = rawurldecode($_POST['pfoptions']);
                         $pfoptions = unserialize($pfoptions);
                         $a_pfoptions = $pfoptions;
-                        mwexec("/usr/bin/logger -p local0.info -t webui syncing PF options to referring host");
+                        mwexec("/usr/bin/logger -p local0.info -t webui syncing PF options from {$_SERVER['REMOTE_ADDR']}");
                         write_config();
-			$retval = filter_configure();
+			            $retval = filter_configure();
 			echo "SUCCESS";
 			exit;
 	} elseif ($_POST['action'] == 'load' && $_POST['type'] == 'altq') {
@@ -197,7 +205,7 @@ if ($_POST) {
                         $altq = rawurldecode($_POST['altq']);
                         $altq = unserialize($altq);
                         $a_altq = $altq;
-                        mwexec("/usr/bin/logger -p local0.info -t webui syncing ALTQ to referring host");
+                        mwexec("/usr/bin/logger -p local0.info -t webui syncing ALTQ from {$_SERVER['REMOTE_ADDR']}");
                         write_config();
                         $retval = filter_configure();
 			echo "SUCCESS";
@@ -211,7 +219,7 @@ if ($_POST) {
                         $dhcpd = rawurldecode($_POST['dhcpd']);
                         $dhcpd = unserialize($dhcpd);
                         $a_dhcpd = $dhcpd;
-                        mwexec("/usr/bin/logger -p local0.info -t webui syncing DHCP to referring host");
+                        mwexec("/usr/bin/logger -p local0.info -t webui syncing DHCP from {$_SERVER['REMOTE_ADDR']}");
                         write_config();
                         services_dhcpd_configure();	
 			echo "SUCCESS";
@@ -225,7 +233,7 @@ if ($_POST) {
                         $staticroutes = rawurldecode($_POST['staticroutes']);
                         $staticroutes = unserialize($staticroutes);
                         $a_staticroutes = $staticroutes;
-                        mwexec("/usr/bin/logger -p local0.info -t webui syncing Static Routes to referring host");
+                        mwexec("/usr/bin/logger -p local0.info -t webui syncing Static Routes from {$_SERVER['REMOTE_ADDR']}");
                         write_config();
                         $retval = system_routing_configure();
                         $retval |= filter_configure();	
@@ -240,7 +248,7 @@ if ($_POST) {
                         $ipsec = rawurldecode($_POST['ipsec']);
                         $ipsec = unserialize($ipsec);
                         $a_ipsec = $ipsec;
-                        mwexec("/usr/bin/logger -p local0.info -t webui syncing IPSEC to referring host");
+                        mwexec("/usr/bin/logger -p local0.info -t webui syncing IPSEC from {$_SERVER['REMOTE_ADDR']}");
                         write_config();
                         $retval = vpn_ipsec_configure();
 			echo "SUCCESS";
@@ -254,7 +262,7 @@ if ($_POST) {
                         $dnsmasq = rawurldecode($_POST['dnsmasq']);
                         $dnsmasq = unserialize($dnsmasq);
                         $a_dnsmasq = $dnsmasq;
-                        mwexec("/usr/bin/logger -p local0.info -t webui syncing dnsmasq to referring host");
+                        mwexec("/usr/bin/logger -p local0.info -t webui syncing dnsmasq from {$_SERVER['REMOTE_ADDR']}");
                         write_config();
                         $retval = services_dnsmasq_configure();	
 			echo "SUCCESS";
@@ -268,7 +276,7 @@ if ($_POST) {
                         $certmgr = rawurldecode($_POST['certmgr']);
                         $certmgr = unserialize($certmgr);
                         $a_certmgr = $certmgr;
-                        mwexec("/usr/bin/logger -p local0.info -t webui syncing Certificate Manager to referring host");
+                        mwexec("/usr/bin/logger -p local0.info -t webui syncing Certificate Manager from {$_SERVER['REMOTE_ADDR']}");
                         write_config();
                         echo "SUCCESS";
 			exit;
@@ -281,7 +289,7 @@ if ($_POST) {
                         $networking = rawurldecode($_POST['networking']);
                         $networking = unserialize($networking);
                         $a_networking = $networking;
-                        mwexec("/usr/bin/logger -p local0.info -t webui syncing Advanced  Networking to referring host");
+                        mwexec("/usr/bin/logger -p local0.info -t webui syncing Advanced Networking from {$_SERVER['REMOTE_ADDR']}");
                         write_config();
         		echo "SUCCESS";
  	                exit;
@@ -294,7 +302,7 @@ if ($_POST) {
                         $accounts = rawurldecode($_POST['accounts']);
                         $accounts = unserialize($accounts);
                         $a_accounts = $accounts;
-                        mwexec("/usr/bin/logger -p local0.info -t webui syncing User Accounts to referring host");
+                        mwexec("/usr/bin/logger -p local0.info -t webui syncing User Accounts from {$_SERVER['REMOTE_ADDR']}");
                         write_config();
                         echo "SUCCESS";
 			exit;
@@ -307,7 +315,7 @@ if ($_POST) {
                         $general = rawurldecode($_POST['general']);
                         $general = unserialize($general);
                         $a_general = $general;
-                        mwexec("/usr/bin/logger -p local0.info -t webui syncing General Ssytem config to referring host");
+                        mwexec("/usr/bin/logger -p local0.info -t webui syncing General System config from {$_SERVER['REMOTE_ADDR']}");
                         write_config();
                         echo "SUCCESS";
 			exit;

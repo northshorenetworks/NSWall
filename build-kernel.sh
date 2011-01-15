@@ -36,7 +36,7 @@ export KERNEL=$1
 # Cleanup just in case the previous build failed
 ${SUDO} umount /mnt/ 
 ${SUDO} vnconfig -u vnd0
-make KCONF=${KERNEL} clean
+#make KCONF=${KERNEL} clean
 
 # Make kernel
 make KCONF=${KERNEL} DEBUG_FLAG=${DEBUG_FLAG} MODULE=${MODULE} $4

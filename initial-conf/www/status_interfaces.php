@@ -62,6 +62,7 @@ function get_interface_info($ifdescr) {
 	
 	$ifinfo = array();
 	
+	system_determine_hwplatform();
 	/* find out interface name */
 	$ifinfo['hwif'] = get_interface_name_by_descr($ifdescr);
 	$ifinfo['if'] = $ifinfo['hwif'];

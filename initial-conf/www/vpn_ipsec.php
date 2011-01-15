@@ -3,10 +3,10 @@
 $pgtitle = array("IPSec", "Gateways");      
 require("guiconfig.inc");      
 include("ns-begin.inc");       
-if (!is_array($config['ipsec']['gateway'])) {      
-    $config['ipsec']['gateway'] = array();      
+if (!is_array($config['ipsec']['gw'])) {      
+    $config['ipsec']['gw'] = array();      
 }      
-$a_gateway = &$config['ipsec']['gateway'];      
+$a_gw = &$config['ipsec']['gw'];      
 ?>
 
 <style type="text/css">
@@ -45,14 +45,8 @@ $("#saveneworder").click(function () {
 $("#newrule a").click(function () {
     var toLoad = $(this).attr('href');
         clearInterval(refreshId);
-        if ( <?php echo sizeof($a_gateway)?> < <?php echo sg_get_const("IPSEC_GATEWAYS")?> ) {
-            $('#content').load(toLoad);
-            return false;
-        }
-        else {
-            alert('The maximum number of licensed IPSec Gateways has been reached');
-            return false;
-        }
+        $('#content').load(toLoad);
+        return false;
 });
 
 
@@ -66,13 +60,13 @@ $(".col1 a").click(function () {
 
 // When a user clicks on the rule delete button, load firewall_dynamic_nat_edit.php?id=$id
 $(".col2 a").click(function () {
-        if (confirm('Are you sure you want to delete this ipsec gateway?')){  
+        if (confirm('Are you sure you want to delete this ipsec gw?')){  
              displayProcessingDiv();
              var id = $(this).attr('href');
              $("#currentorder").load(id);
-             $("#ipsecsortable").sortable('refresh');
-             setTimeout(function(){ $('#save_config').fadeOut('slow'); }, 1000);
-        }
+             setTimeout(function(){ $('#save_config').dialog('close'); }, 1000);
+             setTimeout(function(){ $('#content').load('vpn_ipsec_tabs.php'); }, 1250);
+		}
         return false;
 });
 
@@ -86,8 +80,8 @@ $(".col2 a").click(function () {
 <span class="col3">Name</span>
 <span class="col4">Description</span>
 </li>
-<?php $nrules = 0; for ($i = 0; isset($a_gateway[$i]); $i++):
-$ipsecent = $a_gateway[$i]; ?>
+<?php $nrules = 0; for ($i = 0; isset($a_gw[$i]); $i++):
+$ipsecent = $a_gw[$i]; ?>
 <li id="listItem_<?=$i;?>">
 <span class="col1">
 <a href="vpn_ipsec_edit.php?id=<?=$i;?>">
@@ -95,8 +89,8 @@ $ipsecent = $a_gateway[$i]; ?>
 </a>
 </span>
 <span class="col2">
-<a href="forms/vpn_form_submit.php?id=<?=$i;?>&action=delete&type=ipsec_gateway">
-<span title="delete this rule" class="ui-icon ui-icon-circle-close"></span>
+<a href="forms/vpn_form_submit.php?id=<?=$i;?>&action=delete&type=ipsec_gw">
+<span title="delete this gateway" class="ui-icon ui-icon-circle-close"></span>
 </a>
 </span>
 <span class="col3"><?php if (isset($ipsecent['name'])) echo strtoupper($ipsecent['name']); else echo "*"; ?><?=$textse;?></span>

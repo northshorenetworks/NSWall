@@ -57,6 +57,10 @@ if (file_exists("{$g['etc_path']}/platform")) {
 		$fh = fopen('/etc/hwplatform', 'w+');
 		fwrite($fh, 'ALIX');
 		fclose($fh);
+    } elseif ($cpufeature[0] == 'machdep.cpufeature=58980863') {
+        $fh = fopen('/etc/hwplatform', 'w+');
+        fwrite($fh, 'NICK');
+        fclose($fh);
     } else { 
 		$fh = fopen('/etc/hwplatform', 'w+');
         fwrite($fh, 'VMWARE');

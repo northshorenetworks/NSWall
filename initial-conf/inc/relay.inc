@@ -66,14 +66,14 @@ function relay_relayd_configure() {
 
 function relay_relayd_cert_generate() {
 	/* generate cert files for ssl*/
-        global $config, $g;
+    global $config, $g;
 	if(is_array($config['relays']['relay'])) {
 		foreach ($config['relays']['relay'] as $relay) {
         		foreach ($config['relays']['proxyaction'] as $proxyaction) {
 				if($config['relays']['proto'] == $proxyaction['name']) {
 					foreach ($config['system']['crtmgr']['cert'] as $sslcert) {
                 				if($sslcert['name'] == $proxyaction['cert']) {
-							$privatekey = base64_decode($sslcert['prv']);
+										$privatekey = base64_decode($sslcert['prv']);
                         				$fd = fopen("{$g['varetc_path']}/ssl/private/{$relay['listenerip']}.key", "w");
                        					fwrite($fd, $privatekey);;
                        					fclose($fd);
