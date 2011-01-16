@@ -1,32 +1,32 @@
 <?php
 /*
-	$Id: config.inc,v 1.4 2008/12/04 03:42:46 jrecords Exp $
-	part of m0n0wall (http://m0n0.ch/wall)
-	
-	Copyright (C) 2003-2006 Manuel Kasper <mk@neon1.net>.
-	All rights reserved.
-	
-	Redistribution and use in source and binary forms, with or without
-	modification, are permitted provided that the following conditions are met:
-	
-	1. Redistributions of source code must retain the above copyright notice,
-	   this list of conditions and the following disclaimer.
-	
-	2. Redistributions in binary form must reproduce the above copyright
-	   notice, this list of conditions and the following disclaimer in the
-	   documentation and/or other materials provided with the distribution.
-	
-	THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
-	INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
-	AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
-	AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
-	OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
-	SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-	INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
-	CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-	ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-	POSSIBILITY OF SUCH DAMAGE.
-*/
+ $Id: config.inc,v 1.4 2008/12/04 03:42:46 jrecords Exp $
+ part of m0n0wall (http://m0n0.ch/wall)
+
+ Copyright (C) 2003-2006 Manuel Kasper <mk@neon1.net>.
+ All rights reserved.
+
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions are met:
+
+ 1. Redistributions of source code must retain the above copyright notice,
+ this list of conditions and the following disclaimer.
+
+ 2. Redistributions in binary form must reproduce the above copyright
+ notice, this list of conditions and the following disclaimer in the
+ documentation and/or other materials provided with the distribution.
+
+ THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
+ INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
+ AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+ AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
+ OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /* include globals/utility/XML parser files */
 require_once("globals.inc");
@@ -43,38 +43,38 @@ if (file_exists("{$g['etc_path']}/platform")) {
 }
 
 /* determine hwplatform */
-	exec('/sbin/sysctl machdep.cpufeature', $cpufeature);
+exec('/sbin/sysctl machdep.cpufeature', $cpufeature);
 
-    if ($cpufeature[0] == 'machdep.cpufeature=125938685') {
-        $fh = fopen('/etc/hwplatform', 'w+');
-        fwrite($fh, 'QEMU');
-        fclose($fh);
-	} elseif ($cpufeature[0] == 'machdep.cpufeature=-1075184641') {
-        $fh = fopen('/etc/hwplatform', 'w+');
-        fwrite($fh, 'JETWAY');
-        fclose($fh);		
-	} elseif ($cpufeature[0] == 'machdep.cpufeature=8956221') {
-		$fh = fopen('/etc/hwplatform', 'w+');
-		fwrite($fh, 'ALIX');
-		fclose($fh);
-    } elseif ($cpufeature[0] == 'machdep.cpufeature=58980863') {
-        $fh = fopen('/etc/hwplatform', 'w+');
-        fwrite($fh, 'NICK');
-        fclose($fh);
-    } else { 
-		$fh = fopen('/etc/hwplatform', 'w+');
-        fwrite($fh, 'VMWARE');
-        fclose($fh);
-    }
+if ($cpufeature[0] == 'machdep.cpufeature=125938685') {
+	$fh = fopen('/etc/hwplatform', 'w+');
+	fwrite($fh, 'QEMU');
+	fclose($fh);
+} elseif ($cpufeature[0] == 'machdep.cpufeature=-1075184641') {
+	$fh = fopen('/etc/hwplatform', 'w+');
+	fwrite($fh, 'JETWAY');
+	fclose($fh);
+} elseif ($cpufeature[0] == 'machdep.cpufeature=8956221') {
+	$fh = fopen('/etc/hwplatform', 'w+');
+	fwrite($fh, 'ALIX');
+	fclose($fh);
+} elseif ($cpufeature[0] == 'machdep.cpufeature=58980863') {
+	$fh = fopen('/etc/hwplatform', 'w+');
+	fwrite($fh, 'NICK');
+	fclose($fh);
+} else {
+	$fh = fopen('/etc/hwplatform', 'w+');
+	fwrite($fh, 'VMWARE');
+	fclose($fh);
+}
 
 
 /* read module */
 if (file_exists("{$g['etc_path']}/module")) {
-        $g['fullmodule'] = chop(file_get_contents("{$g['etc_path']}/module"));
-        $mod = explode("_", $g['fullmodule']);
-        $g['module'] = $mod[0];
+	$g['fullmodule'] = chop(file_get_contents("{$g['etc_path']}/module"));
+	$mod = explode("_", $g['fullmodule']);
+	$g['module'] = $mod[0];
 } else {
-        $g['module'] = $g['fullmodule'] = "unknown";
+	$g['module'] = $g['fullmodule'] = "unknown";
 }
 
 
@@ -82,10 +82,10 @@ if (file_exists("{$g['etc_path']}/module")) {
 if ($g['booting']) {
 	/* find the device where config.xml resides and write out an fstab */
 	unset($cfgdevice);
-	
+
 	/* check if there's already an fstab (NFS booting?) */
 	if (!file_exists("{$g['etc_path']}/fstab")) {
-	
+
 		if (strstr($g['platform'], "cdrom")) {
 			/* config is on floppy disk for CD-ROM version */
 			$cfgdevice = $cfgpartition = "fd0";
@@ -96,7 +96,7 @@ if ($g['booting']) {
 			foreach ($disks as $mountdisk) {
 				/* skip mfs mounted filesystems */
 				if (strstr($mountdisk, "rd"))
-					continue;
+				continue;
 				if (mwexec("/sbin/mount -r /dev/{$mountdisk}d {$g['cf_path']}") == 0) {
 					if (file_exists("{$g['cf_conf_path']}/config.xml")) {
 						/* found it */
@@ -105,15 +105,15 @@ if ($g['booting']) {
 						$cfgfstype = "ffs";
 						echo "Found configuration on $cfgdevice.\n";
 					}
-					
+						
 					mwexec("/sbin/umount -f {$g['cf_path']}");
-					
+						
 					if ($cfgdevice)
-						break;
+					break;
 				}
 			}
 		}
-		
+
 		if (!$cfgdevice) {
 			/* no device found, print an error and die */
 			echo <<<EOD
@@ -128,7 +128,7 @@ if ($g['booting']) {
 
 EOD;
 
-#			mwexec("/sbin/halt");
+			#			mwexec("/sbin/halt");
 			exit;
 		}
 		/* write device name to a file for rc.firmware */
@@ -138,47 +138,47 @@ EOD;
 
 		/* write out an fstab */
 		$fd = fopen("{$g['etc_path']}/fstab", "w");
-		
+
 		$fstab = "/dev/{$cfgpartition} {$g['cf_path']} {$cfgfstype} ro,sync,noatime 0 1\n";
 		$fstab .= "/dev/rd0a / {$cfgfstype}  rw 0 0\n";
-		
+
 		fwrite($fd, $fstab);
 		fclose($fd);
 	}
 
-	
 
-	
+
+
 	/* mount all filesystems */
 	mwexec("/sbin/mount -a");
 }
 
 /* parse configuration */
 if (!$noparseconfig) {
-	
+
 	config_lock();
-	
+
 	/* see if there's a newer cache file */
-	if (file_exists("{$g['tmp_path']}/config.cache") && 
-		(filemtime("{$g['tmp_path']}/config.cache") >= 
-		 filemtime("{$g['conf_path']}/config.xml"))) {
-		
+	if (file_exists("{$g['tmp_path']}/config.cache") &&
+	(filemtime("{$g['tmp_path']}/config.cache") >=
+	filemtime("{$g['conf_path']}/config.xml"))) {
+
 		/* read cache */
 		$config = unserialize(file_get_contents("{$g['tmp_path']}/config.cache"));
 	} else {
-	
+
 		if (!file_exists("{$g['conf_path']}/config.xml")) {
 			if ($g['booting']) {
 				if (strstr($g['platform'], "cdrom")) {
 					/* try copying the default config. to the floppy */
 					reset_factory_defaults();
-					
-					echo "No XML configuration file found - using factory defaults.\n"; 
+						
+					echo "No XML configuration file found - using factory defaults.\n";
 					echo "Make sure that the configuration floppy disk with the conf/config.xml\n";
 					echo "file is inserted. If it isn't, your configuration changes will be lost\n";
 					echo "on reboot.\n";
 				} else {
-					echo "XML configuration file not found. NSWall cannot continue booting.\n"; 
+					echo "XML configuration file not found. NSWall cannot continue booting.\n";
 
 					#mwexec("/sbin/halt");
 					exit;
@@ -188,9 +188,9 @@ if (!$noparseconfig) {
 				exit(0);
 			}
 		}
-		
+
 		$config = parse_xml_config("{$g['conf_path']}/config.xml", $g['xml_rootobj']);
-		
+
 		if ((float)$config['version'] > (float)$g['latest_config']) {
 			if ($g['booting']) {
 				echo <<<EOD
@@ -208,7 +208,7 @@ if (!$noparseconfig) {
 EOD;
 			}
 		}
-		
+
 		/* write config cache */
 		$fd = @fopen("{$g['tmp_path']}/config.cache", "wb");
 		if ($fd) {
@@ -216,9 +216,9 @@ EOD;
 			fclose($fd);
 		}
 	}
-	
+
 	config_unlock();
-	
+
 	/* make alias table (for faster lookups) */
 	alias_make_table();
 }
@@ -228,7 +228,7 @@ function conf_mount_rw() {
 	global $g;
 
 	/* don't use mount -u anymore
-	   (doesn't sync the files properly and /bin/sync won't help either) */
+	 (doesn't sync the files properly and /bin/sync won't help either) */
 	mwexec("/sbin/umount -f {$g['cf_path']}");
 	mwexec("/sbin/mount -w -o noatime {$g['cf_path']}");
 }
@@ -236,7 +236,7 @@ function conf_mount_rw() {
 /* mount flash card read only */
 function conf_mount_ro() {
 	global $g;
-	
+
 	mwexec("/sbin/umount -f {$g['cf_path']}");
 	mwexec("/sbin/mount -r {$g['cf_path']}");
 }
@@ -250,176 +250,176 @@ function fsck_fs($fs) {
 /* convert configuration, if necessary */
 function convert_config() {
 	global $config, $g;
-	
+
 	if ($config['version'] == $g['latest_config'])
-		return;		/* already at latest version */
-	
+	return;		/* already at latest version */
+
 	if ($g['booting'])
-		echo "Converting configuration... ";
-	
+	echo "Converting configuration... ";
+
 	/* convert 1.0 -> 1.1 */
 	if ($config['version'] == "1.0") {
 		$opti = 1;
 		$ifmap = array('lan' => 'lan', 'wan' => 'wan', 'pptp' => 'pptp');
-		
+
 		/* convert DMZ to optional, if necessary */
 		if (isset($config['interfaces']['dmz'])) {
-			
+				
 			$dmzcfg = &$config['interfaces']['dmz'];
-			
+				
 			if ($dmzcfg['if']) {
 				$config['interfaces']['opt' . $opti] = array();
 				$optcfg = &$config['interfaces']['opt' . $opti];
-				
+
 				$optcfg['enable'] = $dmzcfg['enable'];
 				$optcfg['descr'] = "DMZ";
 				$optcfg['if'] = $dmzcfg['if'];
 				$optcfg['ipaddr'] = $dmzcfg['ipaddr'];
 				$optcfg['subnet'] = $dmzcfg['subnet'];
-				
+
 				$ifmap['dmz'] = "opt" . $opti;
 				$opti++;
 			}
-			
+				
 			unset($config['interfaces']['dmz']);
 		}
-		
+
 		/* convert WLAN1/2 to optional, if necessary */
 		for ($i = 1; isset($config['interfaces']['wlan' . $i]); $i++) {
-			
+				
 			if (!$config['interfaces']['wlan' . $i]['if']) {
 				unset($config['interfaces']['wlan' . $i]);
 				continue;
 			}
-			
+				
 			$wlancfg = &$config['interfaces']['wlan' . $i];
 			$config['interfaces']['opt' . $opti] = array();
 			$optcfg = &$config['interfaces']['opt' . $opti];
-			
+				
 			$optcfg['enable'] = $wlancfg['enable'];
 			$optcfg['descr'] = "WLAN" . $i;
 			$optcfg['if'] = $wlancfg['if'];
 			$optcfg['ipaddr'] = $wlancfg['ipaddr'];
 			$optcfg['subnet'] = $wlancfg['subnet'];
 			$optcfg['bridge'] = $wlancfg['bridge'];
-			
+				
 			$optcfg['wireless'] = array();
 			$optcfg['wireless']['mode'] = $wlancfg['mode'];
 			$optcfg['wireless']['ssid'] = $wlancfg['ssid'];
 			$optcfg['wireless']['channel'] = $wlancfg['channel'];
 			$optcfg['wireless']['wep'] = $wlancfg['wep'];
-			
+				
 			$ifmap['wlan' . $i] = "opt" . $opti;
-			
+				
 			unset($config['interfaces']['wlan' . $i]);
 			$opti++;
 		}
-		
+
 		/* convert filter rules */
 		$n = count($config['filter']['rule']);
 		for ($i = 0; $i < $n; $i++) {
-		
+
 			$fr = &$config['filter']['rule'][$i];
-			
+				
 			/* remap interface */
 			if (array_key_exists($fr['interface'], $ifmap))
-				$fr['interface'] = $ifmap[$fr['interface']];
+			$fr['interface'] = $ifmap[$fr['interface']];
 			else {
 				/* remove the rule */
-				echo "\nWarning: filter rule removed " . 
+				echo "\nWarning: filter rule removed " .
 					"(interface '{$fr['interface']}' does not exist anymore).";
 				unset($config['filter']['rule'][$i]);
 				continue;
 			}
-			
+				
 			/* remap source network */
 			if (isset($fr['source']['network'])) {
 				if (array_key_exists($fr['source']['network'], $ifmap))
-					$fr['source']['network'] = $ifmap[$fr['source']['network']];
+				$fr['source']['network'] = $ifmap[$fr['source']['network']];
 				else {
 					/* remove the rule */
-					echo "\nWarning: filter rule removed " . 
+					echo "\nWarning: filter rule removed " .
 						"(source network '{$fr['source']['network']}' does not exist anymore).";
 					unset($config['filter']['rule'][$i]);
 					continue;
 				}
 			}
-					
+				
 			/* remap destination network */
 			if (isset($fr['destination']['network'])) {
 				if (array_key_exists($fr['destination']['network'], $ifmap))
-					$fr['destination']['network'] = $ifmap[$fr['destination']['network']];
+				$fr['destination']['network'] = $ifmap[$fr['destination']['network']];
 				else {
 					/* remove the rule */
-					echo "\nWarning: filter rule removed " . 
+					echo "\nWarning: filter rule removed " .
 						"(destination network '{$fr['destination']['network']}' does not exist anymore).";
 					unset($config['filter']['rule'][$i]);
 					continue;
 				}
 			}
 		}
-		
+
 		/* convert shaper rules */
 		$n = count($config['shaper']['rule']);
 		if (is_array($config['shaper']['rule']))
-			for ($i = 0; $i < $n; $i++) {
-		
+		for ($i = 0; $i < $n; $i++) {
+
 			$fr = &$config['shaper']['rule'][$i];
-			
+				
 			/* remap interface */
 			if (array_key_exists($fr['interface'], $ifmap))
-				$fr['interface'] = $ifmap[$fr['interface']];
+			$fr['interface'] = $ifmap[$fr['interface']];
 			else {
 				/* remove the rule */
-				echo "\nWarning: traffic shaper rule removed " . 
+				echo "\nWarning: traffic shaper rule removed " .
 					"(interface '{$fr['interface']}' does not exist anymore).";
 				unset($config['shaper']['rule'][$i]);
 				continue;
 			}
-			
+				
 			/* remap source network */
 			if (isset($fr['source']['network'])) {
 				if (array_key_exists($fr['source']['network'], $ifmap))
-					$fr['source']['network'] = $ifmap[$fr['source']['network']];
+				$fr['source']['network'] = $ifmap[$fr['source']['network']];
 				else {
 					/* remove the rule */
-					echo "\nWarning: traffic shaper rule removed " . 
+					echo "\nWarning: traffic shaper rule removed " .
 						"(source network '{$fr['source']['network']}' does not exist anymore).";
 					unset($config['shaper']['rule'][$i]);
 					continue;
 				}
 			}
-					
+				
 			/* remap destination network */
 			if (isset($fr['destination']['network'])) {
 				if (array_key_exists($fr['destination']['network'], $ifmap))
-					$fr['destination']['network'] = $ifmap[$fr['destination']['network']];
+				$fr['destination']['network'] = $ifmap[$fr['destination']['network']];
 				else {
 					/* remove the rule */
-					echo "\nWarning: traffic shaper rule removed " . 
+					echo "\nWarning: traffic shaper rule removed " .
 						"(destination network '{$fr['destination']['network']}' does not exist anymore).";
 					unset($config['shaper']['rule'][$i]);
 					continue;
 				}
 			}
 		}
-				
+
 		$config['version'] = "1.1";
 	}
-	
+
 	/* convert 1.1 -> 1.2 */
 	if ($config['version'] == "1.1") {
 		/* move LAN DHCP server config */
 		$tmp = $config['dhcpd'];
 		$config['dhcpd'] = array();
 		$config['dhcpd']['lan'] = $tmp;
-		
+
 		/* encrypt password */
 		$config['system']['password'] = crypt($config['system']['password']);
-		
+
 		$config['version'] = "1.2";
 	}
-	
+
 	/* convert 1.2 -> 1.3 */
 	if ($config['version'] == "1.2") {
 		/* convert advanced outbound NAT config */
@@ -431,24 +431,24 @@ function convert_config() {
 			$curent['destination'] = array();
 			$curent['destination']['any'] = true;
 		}
-		
+
 		/* add an explicit type="pass" to all filter rules to make things consistent */
 		for ($i = 0; isset($config['filter']['rule'][$i]); $i++) {
 			$config['filter']['rule'][$i]['type'] = "pass";
 		}
-		
+
 		$config['version'] = "1.3";
 	}
-	
+
 	/* convert 1.3 -> 1.4 */
 	if ($config['version'] == "1.3") {
 		/* convert shaper rules (make pipes) */
 		if (is_array($config['shaper']['rule'])) {
 			$config['shaper']['pipe'] = array();
-			
+				
 			for ($i = 0; isset($config['shaper']['rule'][$i]); $i++) {
 				$curent = &$config['shaper']['rule'][$i];
-				
+
 				/* make new pipe and associate with this rule */
 				$newpipe = array();
 				$newpipe['descr'] = $curent['descr'];
@@ -456,18 +456,18 @@ function convert_config() {
 				$newpipe['delay'] = $curent['delay'];
 				$newpipe['mask'] = $curent['mask'];
 				$config['shaper']['pipe'][$i] = $newpipe;
-				
+
 				$curent['targetpipe'] = $i;
-				
+
 				unset($curent['bandwidth']);
 				unset($curent['delay']);
 				unset($curent['mask']);
 			}
 		}
-		
+
 		$config['version'] = "1.4";
 	}
-	
+
 	/* convert 1.4 -> 1.5 */
 	if ($config['version'] == "1.4") {
 		/* Remove old certs & keys */
@@ -486,18 +486,18 @@ function convert_config() {
 			/* make new pipe and associate with this rule */
 			$newpipe = array();
 			if (isset($current['enable']))
-				$newpipe['enable'] = $current['enable'];
+			$newpipe['enable'] = $current['enable'];
 			$newpipe['descr'] = "";
 			$newpipe['tun_iface'] = $current['tun_iface'];
 			if (preg_match("/tun/", $current['tun_iface']))
-				$newpipe['type'] = "tun";
+			$newpipe['type'] = "tun";
 			else
-				$newpipe['type'] = "tap";
+			$newpipe['type'] = "tap";
 			$newpipe['psh_options'] = array();
 			if (isset($current['psh_options']['redir']))
-				$newpipe['psh_options']['redir'] = $current['psh_options']['redir'];
+			$newpipe['psh_options']['redir'] = $current['psh_options']['redir'];
 			if (isset($current['psh_options']['redir_loc']))
-				$newpipe['psh_options']['redir_loc'] = $current['psh_options']['redir_loc'];
+			$newpipe['psh_options']['redir_loc'] = $current['psh_options']['redir_loc'];
 
 			if (isset($current['psh_options']['rtedelay'])) {
 				$newpipe['psh_options']['rtedelay_int'] = $current['psh_options']['rtedelay'];
@@ -522,18 +522,18 @@ function convert_config() {
 			$newpipe['port'] = $current['port'];
 			$newpipe['proto'] = strtolower($current['proto']);
 			if (isset($current['maxcli']))
-				$newpipe['maxcli'] = $current['maxcli'];
+			$newpipe['maxcli'] = $current['maxcli'];
 			$newpipe['crypto'] = $current['crypto'];
 			if (isset($current['dupcn']))
-				$newpipe['dupcn'] = $current['dupcn'];
+			$newpipe['dupcn'] = $current['dupcn'];
 			$newpipe['verb'] = $current['verb'];
 			$newpipe['bind_iface'] = $current['bind_iface'];
 			$newpipe['ipblock'] = $current['ipblock'];
 			$newpipe['prefix'] = $current['prefix'];
 			if (isset($current['cli2cli']))
-				$newpipe['cli2cli'] = $current['cli2cli'];
+			$newpipe['cli2cli'] = $current['cli2cli'];
 			if (isset($current['dynip']))
-				$newpipe['dynip'] = $current['dynip'];
+			$newpipe['dynip'] = $current['dynip'];
 			$newpipe['ca_cert'] = $current['ca_cert'];
 			$newpipe['srv_key'] = $current['srv_key'];
 			$newpipe['srv_cert'] = $current['srv_cert'];
@@ -564,30 +564,30 @@ function convert_config() {
 
 		$config['version'] = "1.5";
 	}
-	
+
 	/* convert 1.5 -> 1.6 */
 	if ($config['version'] == "1.5") {
-	
+
 		/* Remove OpenVPN configuration */
 		unset($config['ovpn']);
-		
+
 		/* Remove OpenVPN interfaces */
 		for ($i = 1; isset($config['interfaces']['opt' . $i]); $i++) {
 			if (isset($config['interfaces']['opt' . $i]['ovpn'])) {
-			
+					
 				unset($config['interfaces']['opt' . $i]);
 
 				/* shift down other OPTn interfaces to get rid of holes */
 				$j = $i + 1;
-				
+
 				/* look at the following OPTn ports */
 				while (is_array($config['interfaces']['opt' . $j])) {
 					$config['interfaces']['opt' . ($j - 1)] =
-						$config['interfaces']['opt' . $j];
-					
+					$config['interfaces']['opt' . $j];
+						
 					if ($config['interfaces']['opt' . ($j - 1)]['descr'] == "OPT" . $j)
-						$config['interfaces']['opt' . ($j - 1)]['descr'] = "OPT" . ($j - 1);
-					
+					$config['interfaces']['opt' . ($j - 1)]['descr'] = "OPT" . ($j - 1);
+						
 					unset($config['interfaces']['opt' . $j]);
 					$j++;
 				}
@@ -596,11 +596,11 @@ function convert_config() {
 
 		$config['version'] = "1.6";
 	}
-	
+
 	write_config();
-	
+
 	if ($g['booting'])
-		echo "done\n";
+	echo "done\n";
 }
 
 /* save the system configuration */
@@ -611,34 +611,34 @@ function write_config() {
 	config_lock();
 
 	conf_mount_rw();
-	
+
 	if (time() > mktime(0, 0, 0, 9, 1, 2004))	/* make sure the clock settings is plausible */
-		$config['lastchange'] = time();
-	
+	$config['lastchange'] = time();
+
 	/* generate configuration XML */
 	$xmlconfig = dump_xml_config($config, $g['xml_rootobj']);
-	
+
 	/* write configuration */
 	$fd = fopen("{$g['cf_conf_path']}/config.xml", "w");
-	
+
 	if (!$fd)
-		die("Unable to open config.xml for writing in write_config()\n");
-		
+	die("Unable to open config.xml for writing in write_config()\n");
+
 	fwrite($fd, $xmlconfig);
 	fclose($fd);
 
-        conf_mount_ro();
-	
+	conf_mount_ro();
+
 	/* re-read configuration */
 	$config = parse_xml_config("{$g['conf_path']}/config.xml", $g['xml_rootobj']);
-	
+
 	/* write config cache */
 	$fd = @fopen("{$g['tmp_path']}/config.cache", "wb");
 	if ($fd) {
 		fwrite($fd, serialize($config));
 		fclose($fd);
 	}
-	
+
 	config_unlock();
 
 	/* log a message that the config was modified */
@@ -646,56 +646,56 @@ function write_config() {
 }
 
 function reset_factory_defaults() {
-	
+
 	global $g;
-	
+
 	config_lock();
-	
+
 	conf_mount_rw();
-	
+
 	/* create conf directory, if necessary */
 	if (!file_exists("{$g['cf_conf_path']}"))
-		@mkdir("{$g['cf_conf_path']}");
-	
+	@mkdir("{$g['cf_conf_path']}");
+
 	/* clear out /conf */
-	$dh = opendir($g['conf_path']); 
+	$dh = opendir($g['conf_path']);
 	while ($filename = readdir($dh)) {
-		if (($filename != ".") && ($filename != "..") && ($filename != "ssh") && ($filename != "serialno") && ($filename != "license.lic") && ($filename != "unregistered")) { 
-			unlink($g['conf_path'] . "/" . $filename); 
-		} 
+		if (($filename != ".") && ($filename != "..") && ($filename != "ssh") && ($filename != "serialno") && ($filename != "license.lic") && ($filename != "unregistered")) {
+			unlink($g['conf_path'] . "/" . $filename);
+		}
 	}
 	closedir($dh);
-	
+
 	/* copy default configuration */
 	@copy("{$g['conf_default_path']}/config.xml", "{$g['conf_path']}/config.xml");
 
 	touch("/conf/set_wizard_initial");
-	
+
 	conf_mount_ro();
-	
+
 	config_unlock();
-	
+
 	return 0;
 }
 
 function config_install($conffile) {
 
 	global $config, $g;
-	
+
 	if (!file_exists($conffile))
-		return 1;
+	return 1;
 
 	if (!config_validate($conffile))
-		return 1;
+	return 1;
 
 	config_lock();
 	conf_mount_rw();
-	
+
 	copy($conffile, "{$g['conf_path']}/config.xml");
-	
+
 	conf_mount_ro();
 	config_unlock();
-	
+
 	return 0;
 }
 
@@ -704,35 +704,35 @@ function config_validate($conffile) {
 	global $g, $xmlerr;
 
 	$xml_parser = xml_parser_create();
-	
+
 	if (!($fp = fopen($conffile, "r"))) {
 		$xmlerr = "XML error: unable to open file";
 		return false;
 	}
-	
+
 	while ($data = fread($fp, 4096)) {
 		if (!xml_parse($xml_parser, $data, feof($fp))) {
 			$xmlerr = sprintf("%s at line %d",
-						xml_error_string(xml_get_error_code($xml_parser)),
-						xml_get_current_line_number($xml_parser));
+			xml_error_string(xml_get_error_code($xml_parser)),
+			xml_get_current_line_number($xml_parser));
 			return false;
 		}
 	}
 	xml_parser_free($xml_parser);
-	
+
 	fclose($fp);
-	
+
 	return true;
 }
 
 /* lock configuration file, decide that the lock file is stale after
-   10 seconds */
+ 10 seconds */
 function config_lock() {
-	
+
 	global $g;
-	
+
 	$lockfile = "{$g['varrun_path']}/config.lock";
-	
+
 	$n = 0;
 	while ($n < 10) {
 		/* open the lock file in append mode to avoid race condition */
@@ -750,13 +750,13 @@ function config_lock() {
 
 /* unlock configuration file */
 function config_unlock() {
-	
+
 	global $g;
-	
+
 	$lockfile = "{$g['varrun_path']}/config.lock";
-	
+
 	if (file_exists($lockfile))
-		unlink($lockfile);
+	unlink($lockfile);
 }
 
 ?>

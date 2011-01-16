@@ -1,27 +1,27 @@
 #!/bin/php
 <?php
 $pgtitle = array("Firewall", "Aliases", "Edit Alias");
- 
+
 require("guiconfig.inc");
 include("ns-begin.inc");
 
 if (!is_array($config['aliases']['alias']))
-    $config['aliases']['alias'] = array();
+$config['aliases']['alias'] = array();
 
 aliases_sort();
 $a_aliases = &$config['aliases']['alias'];
 
 $id = $_GET['id'];
 if (isset($_POST['id']))
-    $id = $_POST['id'];
+$id = $_POST['id'];
 
 if (isset($id) && $a_aliases[$id]) {
-    $pconfig['name'] = $a_aliases[$id]['name'];
-    $pconfig['memberlist'] = $a_aliases[$id]['memberlist'];
-    $pconfig['descr'] = $a_aliases[$id]['descr'];
+	$pconfig['name'] = $a_aliases[$id]['name'];
+	$pconfig['memberlist'] = $a_aliases[$id]['memberlist'];
+	$pconfig['descr'] = $a_aliases[$id]['descr'];
 }
 
-?> 
+?>
 
 <script type="text/javascript">
 // when a user changes the type of memeber, change the related div to sytle = display: block and hide all others
@@ -115,92 +115,77 @@ $(document).ready(function() {
      });
   
 });
-</script> 
+</script>
 
 <div id="wrapper">
-        <div class="form-container ui-tabs ui-widget ui-corner-all">
+<div class="form-container ui-tabs ui-widget ui-corner-all">
 
-	<form action="forms/firewall_form_submit.php" method="post" name="iform" id="iform">
-        <input name="formname" type="hidden" value="firewall_alias">
-	<input name="id" type="hidden" value="<?=$id;?>">
-	<fieldset>
-		<legend><?=join(": ", $pgtitle);?></legend>
-			<div>
-                             <label for="name">Name</label>
-                             <input id="name" type="text" name="name" value="<?=htmlspecialchars($pconfig['name']);?>" />
-			</div>
-                        <div>
-                             <label for="descr">Description</label>
-                             <input id="descr" type="text" size="50" name="descr" value="<?=htmlspecialchars($pconfig['descr']);?>" />
-			     <p class="note">You may enter a description here for your reference (not parsed).</p>
-			</div>
-                        <div>
-                             <label for="members">Members</label>
-                             <select name="MEMBERS" style="width: 160px; height: 100px" id="MEMBERS" multiple>
-        <?php for ($i = 0; $i<sizeof($pconfig['memberlist']); $i++): ?>
-                <option value="<?=$pconfig['memberlist']["member$i"];?>">
-                <?=$pconfig['memberlist']["member$i"];?>
-                </option>
-                <?php endfor; ?>
-        </select>
-                <input type=button id='remove' value='Remove Selected'><br><br>
-                  <label for="members">Type</label>
-                    <select name="srctype" class="formfld" id="srctype">
-                      <option value="srchostdiv" selected>Host</option>
-                      <option value="srcnetdiv" >Network</option>
-                      <option value="srctablediv" >Alias</option>
-        			  <option value="srcuserdiv" >User</option>
-		            </select>
-                </div>
-                <div id='srchostdiv' style="display:block;">
-                 <label for="srchost">Address</label>
-                  <input name="srchost" type="text" class="formfld" id="srchost" size="16" value="<?=htmlspecialchars($pconfig['address']);?>">
-                <input type=button id='hostaddbutton' value='Add'>
-                </div>
-                <div id='srcnetdiv' style="display:none;">
-                 <label for="srcnet">Address</label>
-                  <input name="srcnet" type="text" class="formfld" id="srcnet" size="16" value="<?=htmlspecialchars($pconfig['address']);?>">
-                   <strong>/</strong>
-                    <select name="srcmask" class="formfld" id="srcmask">
-                      <?php for ($i = 30; $i >= 1; $i--): ?>
-                      <option value="<?=$i;?>" <?php if ($i == $pconfig['address_subnet']) echo "selected"; ?>>
-                      <?=$i;?>
-                      </option>
-                      <?php endfor; ?>
-                    </select>
-                <input type=button id='netaddbutton' value='Add'>
-                </div>
-                <div id='srctablediv' style="display:none;">
-                 <label for="srctable">Alias</label>
-                    <select name="srctable" class="formfld" id="srctable">
-                      <?php foreach($config['tablees']['table'] as $i): ?>
-                      <option value="<?='$' . $i['name'];?>" <?php if ($i == $pconfig['address_subnet']) echo "selected"; ?>>
-                        <?=$i['name'];?>
-                      </option>
-                      <?php endforeach; ?>
-                    </select>
-                <input type=button value='Add'>
-                </div>
-               	<div id='srcuser' style="display:none;">
-                <strong>User</strong>
-                    <select name="srcuser" class="formfld" id="srcuser">
-                      <?php foreach($config['system']['accounts']['user'] as $i): ?>
-                      <option value="<?=$i['name'];?>">
-                        <?=$i['name'];?>
-                      </option>
-                      <?php endforeach; ?>
-                    </select>
-                <input type=button value='Add'>
-                </div> 
-				</div>      
-	</fieldset>
-	
-	<div class="buttonrow">
-		<input type="submit" id="submitbutton" value="Save" class="button" />
-	</div>
+<form action="forms/firewall_form_submit.php" method="post" name="iform"
+	id="iform"><input name="formname" type="hidden" value="firewall_alias">
+<input name="id" type="hidden" value="<?=$id;?>">
+<fieldset><legend><?=join(": ", $pgtitle);?></legend>
+<div><label for="name">Name</label> <input id="name" type="text"
+	name="name" value="<?=htmlspecialchars($pconfig['name']);?>" /></div>
+<div><label for="descr">Description</label> <input id="descr"
+	type="text" size="50" name="descr"
+	value="<?=htmlspecialchars($pconfig['descr']);?>" />
+<p class="note">You may enter a description here for your reference (not
+parsed).</p>
+</div>
+<div><label for="members">Members</label> <select name="MEMBERS"
+	style="width: 160px; height: 100px" id="MEMBERS" multiple>
+	<?php for ($i = 0; $i<sizeof($pconfig['memberlist']); $i++): ?>
+	<option value="<?=$pconfig['memberlist']["member$i"];?>"><?=$pconfig['memberlist']["member$i"];?>
+	</option>
+	<?php endfor; ?>
+</select> <input type=button id='remove' value='Remove Selected'><br>
+<br>
+<label for="members">Type</label> <select name="srctype" class="formfld"
+	id="srctype">
+	<option value="srchostdiv" selected>Host</option>
+	<option value="srcnetdiv">Network</option>
+	<option value="srctablediv">Alias</option>
+	<option value="srcuserdiv">User</option>
+</select></div>
+<div id='srchostdiv' style="display: block;"><label for="srchost">Address</label>
+<input name="srchost" type="text" class="formfld" id="srchost" size="16"
+	value="<?=htmlspecialchars($pconfig['address']);?>"> <input type=button
+	id='hostaddbutton' value='Add'></div>
+<div id='srcnetdiv' style="display: none;"><label for="srcnet">Address</label>
+<input name="srcnet" type="text" class="formfld" id="srcnet" size="16"
+	value="<?=htmlspecialchars($pconfig['address']);?>"> <strong>/</strong>
+<select name="srcmask" class="formfld" id="srcmask">
+<?php for ($i = 30; $i >= 1; $i--): ?>
+	<option value="<?=$i;?>"
+	<?php if ($i == $pconfig['address_subnet']) echo "selected"; ?>><?=$i;?>
+	</option>
+	<?php endfor; ?>
+</select> <input type=button id='netaddbutton' value='Add'></div>
+<div id='srctablediv' style="display: none;"><label for="srctable">Alias</label>
+<select name="srctable" class="formfld" id="srctable">
+<?php foreach($config['tablees']['table'] as $i): ?>
+	<option value="<?='$' . $i['name'];?>"
+	<?php if ($i == $pconfig['address_subnet']) echo "selected"; ?>><?=$i['name'];?>
+	</option>
+	<?php endforeach; ?>
+</select> <input type=button value='Add'></div>
+<div id='srcuser' style="display: none;"><strong>User</strong> <select
+	name="srcuser" class="formfld" id="srcuser">
+	<?php foreach($config['system']['accounts']['user'] as $i): ?>
+	<option value="<?=$i['name'];?>"><?=$i['name'];?></option>
+	<?php endforeach; ?>
+</select> <input type=button value='Add'></div>
 
-	</form>
-	
-	</div><!-- /form-container -->
-	
-</div><!-- /wrapper -->
+</div>
+</fieldset>
+
+<div class="buttonrow"><input type="submit" id="submitbutton"
+	value="Save" class="button" /></div>
+
+</form>
+
+</div>
+<!-- /form-container -->
+
+</div>
+<!-- /wrapper -->

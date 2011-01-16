@@ -9,12 +9,12 @@ system_determine_hwplatform();
 
 $curif = "wan";
 if ($_GET['if'])
-    $curif = $_GET['if'];
+$curif = $_GET['if'];
 
 if ($curif == "wan")
-    $ifnum = get_real_wan_interface();
+$ifnum = get_real_wan_interface();
 else
-    $ifnum = get_interface_name_by_descr($curif);
+$ifnum = get_interface_name_by_descr($curif);
 ?>
 
 <?php
@@ -22,14 +22,14 @@ else
 $ifdescrs = array('wan' => 'WAN', 'lan' => 'LAN');
 
 for ($j = 1; isset($config['interfaces']['opt' . $j]); $j++) {
-    $ifdescrs['opt' . $j] = $config['interfaces']['opt' . $j]['descr'];
+	$ifdescrs['opt' . $j] = $config['interfaces']['opt' . $j]['descr'];
 }
 
 if (is_array($config['vlans']['vlan'])) {
-    foreach ($config['vlans']['vlan'] as $vlan) {
-        $ifdescrs[$vlan['descr']] = $vlan['descr'];
-    }
-} 
+	foreach ($config['vlans']['vlan'] as $vlan) {
+		$ifdescrs[$vlan['descr']] = $vlan['descr'];
+	}
+}
 ?>
 
 <p class="pgtitle"><?=join(": ", $pgtitle);?></p>
@@ -38,18 +38,16 @@ Interface:
 <select name="if" class="formfld">
 <?php
 foreach ($ifdescrs as $ifn => $ifd) {
-    echo "<option value=\"$ifd\"";
-    if ($ifd == $curif) echo " selected";
-    echo ">" . htmlspecialchars($ifd) . "</option>\n";
+	echo "<option value=\"$ifd\"";
+	if ($ifd == $curif) echo " selected";
+	echo ">" . htmlspecialchars($ifd) . "</option>\n";
 }
 ?>
 </select>
 
-<div id="container" style="height:450px;">
-    <div id="placeholder" style="height:450px;"></div>
-<div>
-
-<script id="source" language="javascript" type="text/javascript">
+<div id="container" style="height: 450px;">
+<div id="placeholder" style="height: 450px;"></div>
+<div><script id="source" language="javascript" type="text/javascript">
 
 // Convert Bytes to bits
 function bytes2bits(val) {

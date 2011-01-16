@@ -1,48 +1,48 @@
 #!/bin/php
-<?php 
+<?php
 /*
-	$Id: config_sync.php,v 1.2 2009/04/21 21:45:25 jrecords Exp $
-	part of m0n0wall (http://m0n0.ch/wall)
-	
-	Copyright (C) 2003-2006 Manuel Kasper <mk@neon1.net>.
-	All rights reserved.
-	
-	Redistribution and use in source and binary forms, with or without
-	modification, are permitted provided that the following conditions are met:
-	
-	1. Redistributions of source code must retain the above copyright notice,
-	   this list of conditions and the following disclaimer.
-	
-	2. Redistributions in binary form must reproduce the above copyright
-	   notice, this list of conditions and the following disclaimer in the
-	   documentation and/or other materials provided with the distribution.
-	
-	THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
-	INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
-	AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
-	AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
-	OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
-	SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-	INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
-	CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-	ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-	POSSIBILITY OF SUCH DAMAGE.
-*/
+ $Id: config_sync.php,v 1.2 2009/04/21 21:45:25 jrecords Exp $
+ part of m0n0wall (http://m0n0.ch/wall)
+
+ Copyright (C) 2003-2006 Manuel Kasper <mk@neon1.net>.
+ All rights reserved.
+
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions are met:
+
+ 1. Redistributions of source code must retain the above copyright notice,
+ this list of conditions and the following disclaimer.
+
+ 2. Redistributions in binary form must reproduce the above copyright
+ notice, this list of conditions and the following disclaimer in the
+ documentation and/or other materials provided with the distribution.
+
+ THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
+ INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
+ AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+ AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
+ OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ POSSIBILITY OF SUCH DAMAGE.
+ */
 
 require("guiconfig.inc");
 global $config, $g;
 
 if ($_GET['action'] == 'getconfig') {
-	 if ($_GET['type'] == 'rules') {
-		echo encode_array(sync_config_area('rules', 'get', ''));	 
+	if ($_GET['type'] == 'rules') {
+		echo encode_array(sync_config_area('rules', 'get', ''));
 		exit;
-	 } elseif ($_GET['type'] == 'aliases') {
+	} elseif ($_GET['type'] == 'aliases') {
 		echo encode_array(sync_config_area('aliases', 'get', ''));
-	        exit;
-	 } elseif ($_GET['type'] == 'relays') {
+		exit;
+	} elseif ($_GET['type'] == 'relays') {
 		echo encode_array(sync_config_area('relays', 'get', ''));
 		exit;
-	 } elseif ($_GET['type'] == 'nat') {
+	} elseif ($_GET['type'] == 'nat') {
 		echo encode_array(sync_config_area('nats, 'get', ''));
 		exit;
 	 } elseif ($_GET['type'] == 'pfoptions') {
@@ -316,11 +316,11 @@ if ($_POST) {
                         $general = unserialize($general);
                         $a_general = $general;
                         mwexec("/usr/bin/logger -p local0.info -t webui syncing General System config from {$_SERVER['REMOTE_ADDR']}");
-                        write_config();
-                        echo "SUCCESS";
-			exit;
+		write_config();
+		echo "SUCCESS";
+		exit;
 	} else {
-		echo "Not a supported sync request\n"; 
+		echo "Not a supported sync request\n";
 		print_r($_POST);
 	}
 }

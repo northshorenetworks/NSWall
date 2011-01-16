@@ -1,33 +1,33 @@
 #!/bin/php
 <?php
 /*
-	$Id: exec.php,v 1.2 2009/03/15 03:39:04 jrecords Exp $
-	part of m0n0wall (http://m0n0.ch/wall)
-	
-	Copyright (C) 2003-2006 technologEase (http://www.technologEase.com) and Manuel Kasper <mk@neon1.net>.
-	All rights reserved.
-	
-	Redistribution and use in source and binary forms, with or without
-	modification, are permitted provided that the following conditions are met:
-	
-	1. Redistributions of source code must retain the above copyright notice,
-	   this list of conditions and the following disclaimer.
-	
-	2. Redistributions in binary form must reproduce the above copyright
-	   notice, this list of conditions and the following disclaimer in the
-	   documentation and/or other materials provided with the distribution.
-	
-	THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
-	INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
-	AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
-	AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
-	OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
-	SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-	INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
-	CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-	ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-	POSSIBILITY OF SUCH DAMAGE.
-*/
+ $Id: exec.php,v 1.2 2009/03/15 03:39:04 jrecords Exp $
+ part of m0n0wall (http://m0n0.ch/wall)
+
+ Copyright (C) 2003-2006 technologEase (http://www.technologEase.com) and Manuel Kasper <mk@neon1.net>.
+ All rights reserved.
+
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions are met:
+
+ 1. Redistributions of source code must retain the above copyright notice,
+ this list of conditions and the following disclaimer.
+
+ 2. Redistributions in binary form must reproduce the above copyright
+ notice, this list of conditions and the following disclaimer in the
+ documentation and/or other materials provided with the distribution.
+
+ THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
+ INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
+ AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+ AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
+ OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /* omit no-cache headers because it confuses IE with file downloads */
 $omit_nocacheheaders = true;
@@ -38,9 +38,9 @@ if (($_POST['submit'] == "Download") && file_exists($_POST['dlPath'])) {
 	$fd = fopen($_POST['dlPath'], "rb");
 	header("Content-Type: application/octet-stream");
 	header("Content-Length: " . filesize($_POST['dlPath']));
-	header("Content-Disposition: attachment; filename=\"" . 
-		trim(htmlentities(basename($_POST['dlPath']))) . "\"");
-	
+	header("Content-Disposition: attachment; filename=\"" .
+	trim(htmlentities(basename($_POST['dlPath']))) . "\"");
+
 	fpassthru($fd);
 	exit;
 } else if (($_POST['submit'] == "Upload") && is_uploaded_file($_FILES['ulfile']['tmp_name'])) {
@@ -55,11 +55,11 @@ if (($_POST['submit'] == "Download") && file_exists($_POST['dlPath'])) {
 <?php
 
 /*
-	Exec+ v1.02-000 - Copyright 2001-2003, All rights reserved
-	Created by technologEase (http://www.technologEase.com).
-	
-	(modified for m0n0wall by Manuel Kasper <mk@neon1.net>)
-*/
+ Exec+ v1.02-000 - Copyright 2001-2003, All rights reserved
+ Created by technologEase (http://www.technologEase.com).
+
+ (modified for m0n0wall by Manuel Kasper <mk@neon1.net>)
+ */
 
 // Function: is Blank
 // Returns true or false depending on blankness of argument.
@@ -197,98 +197,99 @@ if (isBlank( $_POST['txtRecallBuffer'] )) {
 <link href="gui.css" rel="stylesheet" type="text/css">
 <style>
 <!--
-
 input {
-   font-family: courier new, courier;
-   font-weight: normal;
-   font-size: 9pt;
+	font-family: courier new, courier;
+	font-weight: normal;
+	font-size: 9pt;
 }
 
 pre {
-   border: 2px solid #435370;
-   background: #F0F0F0;
-   padding: 1em;
-   font-family: courier new, courier;
-   white-space: pre;
-   line-height: 10pt;
-   font-size: 10pt;
+	border: 2px solid #435370;
+	background: #F0F0F0;
+	padding: 1em;
+	font-family: courier new, courier;
+	white-space: pre;
+	line-height: 10pt;
+	font-size: 10pt;
 }
 
 .label {
-   font-family: tahoma, verdana, arial, helvetica;
-   font-size: 11px;
-   font-weight: bold;
+	font-family: tahoma, verdana, arial, helvetica;
+	font-size: 11px;
+	font-weight: bold;
 }
 
 .button {
-   font-family: tahoma, verdana, arial, helvetica;
-   font-weight: bold;
-   font-size: 11px;
+	font-family: tahoma, verdana, arial, helvetica;
+	font-weight: bold;
+	font-size: 11px;
 }
-
 -->
 </style>
 </head>
-<body<?php
+<body
+<?php
 if(!isBlank($_POST['txtCommand'])) {
-    echo ' onload="document.forms[\'frmExecPlus\'].txtCommand.focus();"';
+	echo ' onload="document.forms[\'frmExecPlus\'].txtCommand.focus();"';
 }
 ?>>
-<p><span class="pgtitle"><?=$Title ?></span>
-<?php if (isBlank($_POST['txtCommand'])): ?>
-<p class="red"><strong>Note: this function is unsupported. Use it
-on your own risk!</strong></p>
-<?php endif; ?>
-<?php if ($ulmsg) echo "<p><strong>" . $ulmsg . "</strong></p>\n"; ?>
+<p><span class="pgtitle"><?=$Title ?></span> <?php if (isBlank($_POST['txtCommand'])): ?>
+<p class="red"><strong>Note: this function is unsupported. Use it on
+your own risk!</strong></p>
+<?php endif; ?> <?php if ($ulmsg) echo "<p><strong>" . $ulmsg . "</strong></p>\n"; ?>
 <?php
 
 if (!isBlank($_POST['txtCommand'])) {
-   puts("<pre>");
-   puts("\$ " . htmlspecialchars($_POST['txtCommand']));
-   putenv("PATH=/bin:/sbin:/usr/bin:/usr/sbin:/bin:/usr/local/sbin");
-   putenv("SCRIPT_FILENAME=" . strtok($_POST['txtCommand'], " "));	/* PHP scripts */
-   $ph = popen($_POST['txtCommand'], "r" );
-   while ($line = fgets($ph)) echo htmlspecialchars($line);
-   pclose($ph);
-   puts("</pre>");
+	puts("<pre>");
+	puts("\$ " . htmlspecialchars($_POST['txtCommand']));
+	putenv("PATH=/bin:/sbin:/usr/bin:/usr/sbin:/bin:/usr/local/sbin");
+	putenv("SCRIPT_FILENAME=" . strtok($_POST['txtCommand'], " "));	/* PHP scripts */
+	$ph = popen($_POST['txtCommand'], "r" );
+	while ($line = fgets($ph)) echo htmlspecialchars($line);
+	pclose($ph);
+	puts("</pre>");
 }
 
 ?>
 
-<form action="<?=$ScriptName ?>" method="POST" enctype="multipart/form-data" name="frmExecPlus" onSubmit="return frmExecPlus_onSubmit( this );">
-  <table>
-    <tr>
-      <td class="label" align="right">Command:</td>
-      <td class="type"><input name="txtCommand" type="text" size="80" value="" onkeypress="txtCommand_onKey(event);"></td>
-    </tr>
-    <tr>
-      <td valign="top">&nbsp;</td>
-      <td valign="top" class="label">
-         <input type="hidden" name="txtRecallBuffer" value="<?=$_POST['txtRecallBuffer'] ?>">
-         <input type="button" class="button" name="btnRecallPrev" value="<" onClick="btnRecall_onClick( this.form, -1 );">
-         <input type="submit" class="button" value="Execute">
-         <input type="button" class="button" name="btnRecallNext" value=">" onClick="btnRecall_onClick( this.form,  1 );">
-         <input type="button"  class="button" value="Clear" onClick="return Reset_onClick( this.form );">
-      </td>
-    </tr>
-    <tr>
-      <td height="8"></td>
-      <td></td>
-    </tr>
-    <tr>
-      <td align="right">Download:</td>
-      <td>
-        <input name="dlPath" type="text" id="dlPath" size="50">
-        <input name="submit" type="submit"  class="button" id="download" value="Download">
-        </td>
-    </tr>
-    <tr>
-      <td align="right">Upload:</td>
-      <td valign="top" class="label">
-<input name="ulfile" type="file" class="button" id="ulfile">
-        <input name="submit" type="submit"  class="button" id="upload" value="Upload"></td>
-    </tr>
-  </table>
+<form action="<?=$ScriptName ?>" method="POST"
+	enctype="multipart/form-data" name="frmExecPlus"
+	onSubmit="return frmExecPlus_onSubmit( this );">
+<table>
+	<tr>
+		<td class="label" align="right">Command:</td>
+		<td class="type"><input name="txtCommand" type="text" size="80"
+			value="" onkeypress="txtCommand_onKey(event);"></td>
+	</tr>
+	<tr>
+		<td valign="top">&nbsp;</td>
+		<td valign="top" class="label"><input type="hidden"
+			name="txtRecallBuffer" value="<?=$_POST['txtRecallBuffer'] ?>"> <input
+			type="button" class="button" name="btnRecallPrev" value="<" onClick="btnRecall_onClick( this.form, -1 );">
+		<input type="submit" class="button" value="Execute"> <input
+			type="button" class="button" name="btnRecallNext" value=">"
+			onClick="btnRecall_onClick( this.form,  1 );"> <input type="button"
+			class="button" value="Clear"
+			onClick="return Reset_onClick( this.form );"></td>
+	</tr>
+	<tr>
+		<td height="8"></td>
+		<td></td>
+	</tr>
+	<tr>
+		<td align="right">Download:</td>
+		<td><input name="dlPath" type="text" id="dlPath" size="50"> <input
+			name="submit" type="submit" class="button" id="download"
+			value="Download"></td>
+	</tr>
+	<tr>
+		<td align="right">Upload:</td>
+		<td valign="top" class="label"><input name="ulfile" type="file"
+			class="button" id="ulfile"> <input name="submit" type="submit"
+			class="button" id="upload" value="Upload"></td>
+	</tr>
+</table>
 </form>
+
 </body>
 </html>

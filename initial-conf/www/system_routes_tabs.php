@@ -1,5 +1,5 @@
 #!/bin/php
-<?php 
+<?php
 
 $pgtitle = array("System", "Routes");
 require("guiconfig.inc");
@@ -44,11 +44,11 @@ include("ns-begin.inc");
 <p class="pgtitle"><?=join(": ", $pgtitle);?></p>
 
 <div class="demo">
-    <div id="routestabs">
-        <ul>
-             <li><a href="system_route_tables.php">Route Tables</a></li>
-             <li><a href="system_routes.php">Static Routes</a></li>
-        </ul>
-    </div>
+<div id="routestabs">
+<ul>
+	<li><a href="system_route_tables.php">Route Tables</a></li>
+	<li><a href="system_routes.php">Static Routes</a></li>
+</ul>
+</div>
 </div>
 <div id="currentorder"></div>

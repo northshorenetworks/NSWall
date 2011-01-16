@@ -42,7 +42,7 @@ if (!function_exists('array_intersect_key')) {
 		for ($i = 0; $i !== $array_count; $i++) {
 			if (!is_array($args[$i])) {
 				user_error('array_intersect_key() Argument #' .
-				 ($i +1) . ' is not an array', E_USER_WARNING);
+				($i +1) . ' is not an array', E_USER_WARNING);
 				return;
 			}
 		}

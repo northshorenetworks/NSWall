@@ -1,12 +1,12 @@
 #!/bin/php
 <?php
- 
+
 $pgtitle = array("Services", "DNS forwarder");
 require("guiconfig.inc");
 include("ns-begin.inc");
 $pconfig['enable'] = isset($config['dnsmasq']['enable']);
 
-?> 
+?>
 
 <script type="text/javascript">
 
@@ -27,25 +27,23 @@ $(document).ready(function() {
 
 
 <div id="wrapper">
-        <div class="form-container ui-tabs ui-widget ui-corner-all">
+<div class="form-container ui-tabs ui-widget ui-corner-all">
 
-	<form action="forms/services_form_submit.php" method="post" name="iform" id="iform">
-        <input name="formname" type="hidden" value="service_dnsforwarder">
+<form action="forms/services_form_submit.php" method="post" name="iform"
+	id="iform"><input name="formname" type="hidden"
+	value="service_dnsforwarder">
 
-	<fieldset>
-		<legend><?=join(": ", $pgtitle);?></legend>
-			<div>
-	            <label for="enable">Enable DNS Forwarder</label>
-    	        <input id="enable" type="checkbox" name="enable" value="Yes" <?php if ($pconfig['enable']) echo "checked"; ?> />
-			</div>
-	</fieldset>
-	
-	<div class="buttonrow">
-		<input type="submit" id="submitbutton" value="Save" class="button" />
-	</div>
+<fieldset><legend><?=join(": ", $pgtitle);?></legend>
+<div><label for="enable">Enable DNS Forwarder</label> <input id="enable"
+	type="checkbox" name="enable" value="Yes"
+	<?php if ($pconfig['enable']) echo "checked"; ?> /></div>
+</fieldset>
 
-	</form>
-	
-	</div><!-- /form-container -->
-	
-</div><!-- /wrapper -->
+<div class="buttonrow"><input type="submit" id="submitbutton"
+	value="Save" class="button" /></div>
+
+</form>
+
+</div>
+<!-- /form-container --></div>
+<!-- /wrapper -->

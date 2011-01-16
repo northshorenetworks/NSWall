@@ -1,5 +1,5 @@
 #!/bin/php
-<?php 
+<?php
 $pgtitle = array("Diagnostics", "System");
 require("guiconfig.inc");
 include("ns-begin.inc");
@@ -80,22 +80,22 @@ include("ns-begin.inc");
      });
 
 </script>
-   
-<p class="pgtitle"><?=join(": ", $pgtitle);?></p>  
-   
-<div class="demo">  
-    <div id="systabs">  
-        <ul>
-        <li><a href="stats.php?stat=top">TOP</a></li>  
-        <li><a href="stats.php?stat=df">Disk Usage</a></li>  
-        <li><a href="stats.php?stat=routes">Route Table</a></li>  
-        <li><a href="stats.php?stat=dhcp">DHCP Leases</a></li>
-        <li><a href="stats.php?stat=arp">ARP Table</a></li>
-        <li><a href="stats.php?stat=interfaces">Interfaces</a></li>  
-        <li><a href="stats.php?stat=xmlconf">XML Config</a></li>
-        <li><a href="stats.php?stat=dmesg">dmesg</a></li>
-        <li><a href="stats.php?stat=tcpdump">tcpdump</a></li>
-        </ul>  
-        <div id="livediag" class="livediagdiv"></div>
-    </div>
+
+<p class="pgtitle"><?=join(": ", $pgtitle);?></p>
+
+<div class="demo">
+<div id="systabs">
+<ul>
+	<li><a href="stats.php?stat=top">TOP</a></li>
+	<li><a href="stats.php?stat=df">Disk Usage</a></li>
+	<li><a href="stats.php?stat=routes">Route Table</a></li>
+	<li><a href="stats.php?stat=dhcp">DHCP Leases</a></li>
+	<li><a href="stats.php?stat=arp">ARP Table</a></li>
+	<li><a href="stats.php?stat=interfaces">Interfaces</a></li>
+	<li><a href="stats.php?stat=xmlconf">XML Config</a></li>
+	<li><a href="stats.php?stat=dmesg">dmesg</a></li>
+	<li><a href="stats.php?stat=tcpdump">tcpdump</a></li>
+</ul>
+<div id="livediag" class="livediagdiv"></div>
+</div>
 </div>

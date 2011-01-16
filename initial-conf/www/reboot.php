@@ -26,16 +26,15 @@ $(document).ready(function() {
 </script>
 
 <div id="wrapper">
-    <div class="form-container ui-tabs ui-widget ui-corner-all">
-        <form action="forms/system_form_submit.php" method="post" name="rebootform" id="rebootform">
-        <input name="formname" type="hidden" value="system_reboot">
-    <fieldset>
-    <legend><?=join(": ", $pgtitle);?></legend>
-        <div>
-            <label for="name">Reboot</label>
-            <input name="rebootbutton" id="rebootbutton" type="submit" class="buttonrow" value=" Yes ">
-        </div>
-    </fieldset>
-    </form>
-    </div><!-- /form-container -->
-</div><!-- /wrapper -->
+<div class="form-container ui-tabs ui-widget ui-corner-all">
+<form action="forms/system_form_submit.php" method="post"
+	name="rebootform" id="rebootform"><input name="formname" type="hidden"
+	value="system_reboot">
+<fieldset><legend><?=join(": ", $pgtitle);?></legend>
+<div><label for="name">Reboot</label> <input name="rebootbutton"
+	id="rebootbutton" type="submit" class="buttonrow" value=" Yes "></div>
+</fieldset>
+</form>
+</div>
+<!-- /form-container --></div>
+<!-- /wrapper -->
