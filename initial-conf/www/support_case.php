@@ -43,16 +43,18 @@ $("#support_submit_button").click(function () {
 <p class="note">If you have a case number enter it here, leave blank to
 create a new case</p>
 </div>
-<div><label for="classify1">Category</label> <select id="classify1"
-	name="classify1">
-	<option value="system">System</option>
-	<option value="interfaces">Interfaces</option>
-	<option value="services">Services</option>
-	<option value="firewall">Firewall</option>
-	<option value="vpn">VPN</option>
-</select
-                             <p class="note">Select a Category that relates to your issue</p>   
-               </div>
+<div>
+    <label for="classify1">Category</label> 
+	<select id="classify1" name="classify1">
+		<option value="system">System</option>
+		<option value="interfaces">Interfaces</option>
+		<option value="services">Services</option>
+		<option value="firewall">Firewall</option>
+		<option value="vpn">VPN</option>
+	</select>
+    <p class="note">Select a Category that relates to your issue</p>   
+</div>
+
 <div><label for="title">Summary</label> <input id="title" size="40"
 	type="text" name="title" value="" />
 <p class="note">Enter a summary of the issue here</p>
