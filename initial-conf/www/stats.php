@@ -165,7 +165,7 @@ function dump_tcpdump($capfile) {
 		}
 		closedir($handle);
 	}
-	 
+
 	$routes .= '</select></p>';
 	$routes .= "\n<pre>\n";
 	if(!$capfile) {

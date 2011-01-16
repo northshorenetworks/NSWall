@@ -198,7 +198,7 @@ iframe {
 }
 
 #modal .overlay {
-	filter: alpha(opacity = 75);
+	filter: alpha(opacity =   75);
 }
 
 #modal .content {
@@ -224,8 +224,10 @@ iframe {
 
 * html #modal {
 	position: absolute;
-	height: expression(document.body.scrollHeight >   document.body.offsetHeight ?  
-		document.body.scrollHeight :   document.body.offsetHeight +   'px');
+	height: expression(document.body.scrollHeight >     document.body.offsetHeight ?
+		  
+		 document.body.scrollHeight :     document.body.offsetHeight +    
+		'px');
 }
 
 * html #modal .overlay {
@@ -234,8 +236,9 @@ iframe {
 
 * html #modal .content {
 	position: absolute;
-	top: expression(( document.documentElement.clientHeight/ 2) -   100 +  
-		'px' );
+	top: expression((   document.documentElement.clientHeight/ 2) -     100
+		+   
+		 'px' );
 	margin-top: 0;
 }
 </STYLE>

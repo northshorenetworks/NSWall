@@ -41,39 +41,62 @@ $ifsaveneworder = '"#' . $if . 'saveneworder"';
 <?=
 $
 ifsortable
+
+
 ;
- 
 ?>
 {
 list-style-type
+
+
 :
+
  
+
 none
+
+
 ;
- 
 margin
+
+
 :
+
  
+
 auto
+
  
+
 auto
+
  
+
 1
 em
+
+
 ;
- 
 padding
+
+
 :
+
  
+
 0;
 width
+
+
 :
+
  
+
 95%;
 }
 <?=
 $
-ifsortable ;  ?> li {
+ifsortable  ; ?> li {
 	padding: 0.1em;
 	margin-left: 0;
 	padding-left: 1;
@@ -85,7 +108,7 @@ ifsortable ;  ?> li {
 
 <?=
 $
-ifsortable ;  ?> li span.col1 {
+ifsortable  ; ?> li span.col1 {
 	position: relative;
 	float: left;
 	width: 5em;
@@ -93,7 +116,7 @@ ifsortable ;  ?> li span.col1 {
 
 <?=
 $
-ifsortable ;  ?> li span.col2 {
+ifsortable  ; ?> li span.col2 {
 	position: relative;
 	float: left;
 	width: 5em;
@@ -101,7 +124,7 @@ ifsortable ;  ?> li span.col2 {
 
 <?=
 $
-ifsortable ;  ?> li span.col3 {
+ifsortable  ; ?> li span.col3 {
 	position: relative;
 	float: left;
 	width: 5em;
@@ -109,7 +132,7 @@ ifsortable ;  ?> li span.col3 {
 
 <?=
 $
-ifsortable ;  ?> li span.col4 {
+ifsortable  ; ?> li span.col4 {
 	position: relative;
 	float: left;
 	width: 7.5em;
@@ -117,7 +140,7 @@ ifsortable ;  ?> li span.col4 {
 
 <?=
 $
-ifsortable ;  ?> li span.col5 {
+ifsortable  ; ?> li span.col5 {
 	position: relative;
 	float: left;
 	width: 12.5em;
@@ -125,7 +148,7 @@ ifsortable ;  ?> li span.col5 {
 
 <?=
 $
-ifsortable ;  ?> li span.col6 {
+ifsortable  ; ?> li span.col6 {
 	position: relative;
 	float: left;
 	width: 30em;

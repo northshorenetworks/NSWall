@@ -63,7 +63,7 @@ function getAdminPageList() {
 					else {
 						$tmp[$file] = '';
 					}
-					 
+
 				}
 			}
 		}

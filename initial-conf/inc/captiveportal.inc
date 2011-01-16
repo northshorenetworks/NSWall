@@ -862,7 +862,7 @@ function captiveportal_read_db() {
 
 /* write captive portal DB */
 function captiveportal_write_db($cpdb) {
-	 
+
 	global $g;
 
 	$fd = @fopen("{$g['vardb_path']}/captiveportal.db", "w");

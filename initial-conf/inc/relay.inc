@@ -41,7 +41,7 @@ function relay_print_relaydconf() {
 
 function relay_relayd_configure() {
 	global $config, $g;
-	 
+
 	if ($g['booting'])
 	echo "Configuring Relays... ";
 
@@ -50,7 +50,7 @@ function relay_relayd_configure() {
 
 	/* generate relayd.conf */
 	$relaydconf = relay_relaydconf_generate();
-	 
+
 	/* create appropriate relayd.conf file */
 	$fd = fopen("{$g['varetc_path']}/relayd.conf", "w");
 	fwrite($fd, $relaydconf);
@@ -60,7 +60,7 @@ function relay_relayd_configure() {
 	mwexec("/usr/sbin/relayd");
 	if ($g['booting'])
 	echo "done\n";
-	 
+
 	return 0;
 }
 
@@ -94,7 +94,7 @@ function relay_relayd_reload() {
 
 	/* generate relayd.conf*/
 	$relaydconf = relay_relaydconf_generate();
-	 
+
 	/* create appropriate relayd.conf file */
 	$fd = fopen("{$g['varetc_path']}/relayd.conf", "w");
 	fwrite($fd, $relaydconf);
@@ -103,7 +103,7 @@ function relay_relayd_reload() {
 	/* reload config */
 	mwexec("/usr/bin/pkill relayd");
 	mwexec("/usr/sbin/relayd");
-	 
+
 	return 0;
 }
 

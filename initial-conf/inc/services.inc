@@ -54,7 +54,7 @@ function services_dhcpd_configure() {
 
 function services_dhcpd_configure_rtable($rtable) {
 	global $config, $g;
-	 
+
 	mwexec('/usr/bin/pkill -f \'dhcpd -c /etc/' . $rtable . '_dhcpd.conf\'');
 	$rtableid = get_route_table_id_by_name($rtable);
 
@@ -159,49 +159,49 @@ function services_generate_dhcpd_subnet($ifcfg) {
 	$dhcpdconf .= <<<EOD
     range {$dhcpifconf['range']['from']} {$dhcpifconf['range']['to']};
     option routers {$routers};
-	$dnscfg
+    $dnscfg
 
 EOD;
 
-	if ($dhcpifconf['defaultleasetime'])
-	$dhcpdconf .= " default-lease-time {$dhcpifconf['defaultleasetime']};\n";
-	if ($dhcpifconf['maxleasetime'])
-	$dhcpdconf .= " max-lease-time {$dhcpifconf['maxleasetime']};\n";
+    if ($dhcpifconf['defaultleasetime'])
+    $dhcpdconf .= " default-lease-time {$dhcpifconf['defaultleasetime']};\n";
+    if ($dhcpifconf['maxleasetime'])
+    $dhcpdconf .= " max-lease-time {$dhcpifconf['maxleasetime']};\n";
 
-	if (is_array($dhcpifconf['winsserver']) && $dhcpifconf['winsserver'][0]) {
-		$dhcpdconf .= " option netbios-name-servers " . join(",", $dhcpifconf['winsserver']) . ";\n";
-		$dhcpdconf .= " option netbios-node-type 8;\n";
-	}
+    if (is_array($dhcpifconf['winsserver']) && $dhcpifconf['winsserver'][0]) {
+    	$dhcpdconf .= " option netbios-name-servers " . join(",", $dhcpifconf['winsserver']) . ";\n";
+    	$dhcpdconf .= " option netbios-node-type 8;\n";
+    }
 
-	if ($dhcpifconf['next-server'])
-	$dhcpdconf .= " next-server {$dhcpifconf['next-server']};\n";
-	if ($dhcpifconf['filename'])
-	$dhcpdconf .= " filename \"{$dhcpifconf['filename']}\";\n";
+    if ($dhcpifconf['next-server'])
+    $dhcpdconf .= " next-server {$dhcpifconf['next-server']};\n";
+    if ($dhcpifconf['filename'])
+    $dhcpdconf .= " filename \"{$dhcpifconf['filename']}\";\n";
 
-	$dhcpdconf .= <<<EOD
+    $dhcpdconf .= <<<EOD
 }
 
 EOD;
 
-	/* add static mappings */
-	if (is_array($dhcpifconf['staticmap'])) {
+    /* add static mappings */
+    if (is_array($dhcpifconf['staticmap'])) {
 
-		$i = 0;
-		foreach ($dhcpifconf['staticmap'] as $sm) {
-			$dhcpdconf .= <<<EOD
+    	$i = 0;
+    	foreach ($dhcpifconf['staticmap'] as $sm) {
+    		$dhcpdconf .= <<<EOD
 host s_{$dhcpif}_{$i} {
     hardware ethernet {$sm['mac']};
 
 EOD;
-			if ($sm['ipaddr'])
-			$dhcpdconf .= " fixed-address {$sm['ipaddr']};\n";
+    		if ($sm['ipaddr'])
+    		$dhcpdconf .= " fixed-address {$sm['ipaddr']};\n";
 
-			$dhcpdconf .= "}\n";
-			$i++;
-		}
-	}
+    		$dhcpdconf .= "}\n";
+    		$i++;
+    	}
+    }
 
-	return $dhcpdconf;
+    return $dhcpdconf;
 }
 
 function services_dhcrelay_configure() {
@@ -797,7 +797,7 @@ EOD;
 		$bgpdconf .= ' }';
 
 		$bgpdconf .= ' prefix ' . $rule['prefix'];
-		 
+			
 		if ($rule['prefixlen'] != '')
 		$bgpdconf .= ' prefixlen ' . $rule['prefixlenop'] . ' ' . $rule['prefixlen'];
 

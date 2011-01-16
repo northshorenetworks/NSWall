@@ -213,7 +213,7 @@ function interfaces_vlan_configure() {
 					mwexec("/sbin/ifconfig " . $vlanif . " delete " . $ip);
 				}
 			}
-			 
+
 
 			$i++;
 		}
@@ -616,7 +616,7 @@ function interfaces_wan_configure() {
 		default:
 
 			$wanif = $wancfg['if'];
-			 
+
 			if (isset($wancfg['ispointtopoint']) && $wancfg['pointtopoint']) {
 				mwexec("/sbin/ifconfig " . escapeshellarg($wancfg['if']) . " " .
 				escapeshellarg($wancfg['ipaddr'] . "/" . $wancfg['subnet']) .

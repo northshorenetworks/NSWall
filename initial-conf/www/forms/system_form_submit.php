@@ -367,7 +367,7 @@ if ($_POST) {
 				$postdata['customerid'] = $retval;
 				$url    = 'http://www.northshoresoftware.com/register_new_appliance.php';
 				$retval = decode_array(http_request( '', '', $url, $postdata, 'POST' ));
-				 
+					
 				if (preg_match('/This is not a text file./', $retval['license'])) {
 					conf_mount_rw();
 					/* write the newly recived license file */
@@ -534,7 +534,7 @@ if ($_POST) {
 
 			if (isset($_POST['id']))
 			$id = $_POST['id'];
-			 
+
 			if (!is_array($config['system']['accounts']['user']))
 			$config['system']['accounts']['user'] = array();
 

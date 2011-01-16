@@ -85,7 +85,7 @@ function get_wireless_info($ifdescr) {
 if (is_array($config['interfaces']['wan']['wireless']) &&
 (strstr($config['interfaces']['wan']['if'], "wi") || strstr($config['interfaces']['wan']['if'], "ath")))
 $ifdescrs['wan'] = 'WAN';
-	
+
 if (is_array($config['interfaces']['lan']['wireless']) &&
 (strstr($config['interfaces']['lan']['if'], "wi") || strstr($config['interfaces']['lan']['if'], "ath")))
 $ifdescrs['lan'] = 'LAN';

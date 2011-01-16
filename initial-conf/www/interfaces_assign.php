@@ -86,7 +86,7 @@ if ($_POST) {
 
 			foreach ($portifmap[$portname] as $ifn)
 			$errstr .= " " . $ifn;
-				
+
 			$input_errors[] = $errstr;
 		}
 	}

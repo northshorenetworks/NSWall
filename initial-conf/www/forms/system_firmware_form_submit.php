@@ -12,7 +12,7 @@ if ($_POST) {
 
 	switch($form) {
 		case "system_firmware":
-				
+
 			if (stristr($_POST['Submit'], "Upgrade") || $_POST['sig_override'])
 			$mode = "upgrade";
 
@@ -52,7 +52,7 @@ if ($_POST) {
 						echo '<center>File Upload Failed<br>$input_errors<INPUT TYPE="button" value="OK" onClick="hidediv(\'upload_firmware\')"></center>';
 						return 0;
 					}
-						
+
 					/* If we have an invalid or missing signature, present the user with a dialog to continue or not */
 					if ($sig_warning && !$input_errors) {
 						$sig_warning = "<strong>" . $sig_warning . "</strong><br>This means that the image you uploaded " .

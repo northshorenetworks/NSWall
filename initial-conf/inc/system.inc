@@ -252,19 +252,19 @@ function system_hosts_generate() {
 
 	$hosts = <<<EOD
 127.0.0.1	localhost localhost.{$syscfg['domain']}
-	{$lancfg['ipaddr']}	{$config['system']['hostname']} {$config['system']['hostname']}.{$syscfg['domain']}
+{$lancfg['ipaddr']}	{$config['system']['hostname']} {$config['system']['hostname']}.{$syscfg['domain']}
 
 EOD;
-	foreach ($hostscfg as $host) {
-		if ($host['host'])
-		$hosts .= "{$host['ip']} 	{$host['host']} {$host['host']}.{$host['domain']}\n";
-		else
-		$hosts .= "{$host['ip']} 	{$host['domain']}\n";
-	}
-	fwrite($fd, $hosts);
-	fclose($fd);
+foreach ($hostscfg as $host) {
+	if ($host['host'])
+	$hosts .= "{$host['ip']} 	{$host['host']} {$host['host']}.{$host['domain']}\n";
+	else
+	$hosts .= "{$host['ip']} 	{$host['domain']}\n";
+}
+fwrite($fd, $hosts);
+fclose($fd);
 
-	return 0;
+return 0;
 }
 
 function system_hostname_configure() {

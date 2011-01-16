@@ -399,7 +399,7 @@ if ($_POST) {
 				$prop = preg_replace("/ /", "", $memberslist[$i]);
 				$a_blockedsites['memberlist'][$member] = $prop;
 			}
-			 
+
 			$nonmemberslist = explode(' ', $_POST['nonmemberslist']);
 			for($i=0;$i<sizeof($nonmemberslist); $i++) {
 				$nonmember = 'nonmember'."$i";
@@ -666,7 +666,7 @@ if ($_POST) {
 			$a_configsynchost[$id] = $configsynchost;
 			else
 			$a_configsynchost[] = $configsynchost;
-			 
+
 			if (!$input_errors) {
 				write_config();
 			}

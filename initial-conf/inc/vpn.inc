@@ -120,7 +120,7 @@ function vpn_ipsec_configure() {
 	if ($g['booting']) {
 		echo "Configuring IPSEC VPN... ";
 	}
-	 
+
 	$hostkey = '/conf/isakmpd/local.key';
 	$pubkey  = '/conf/isakmpd/local.pub';
 	if ( file_exists( $hostkey ) && file_exists( $pubkey )) {
@@ -294,7 +294,7 @@ function vpn_pptp_client_disconnect() {
 
 function vpn_pptp_configure() {
 	global $config, $g;
-	 
+
 	$curwanip = get_current_wan_address();
 
 	if(isset($config['pptp']['client']['enable'])) {

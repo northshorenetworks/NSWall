@@ -150,7 +150,7 @@ if ($_POST) {
 					break;
 				}
 			}
-			 
+
 			if (!$input_errors) {
 				$vlanent = array();
 				$vlanent['descr'] = $_POST['descr'];
@@ -250,7 +250,7 @@ if ($_POST) {
 
 				unset($vlanent['oldif']);
 				unset($vlanent['oldtag']);
-				 
+					
 				if (isset($id) && $a_vlan[$id]) {
 					$a_vlan[$id] = $vlanent;
 				} else {
@@ -284,7 +284,7 @@ if ($_POST) {
 			$config['vlans']['vlan'] = array();
 
 			$a_vlan = &$config['vlans']['vlan'];
-			 
+
 			// go through all the firewall rules and make sure none use this if
 			foreach($config['filter']['rule'] as $rule) {
 
@@ -552,7 +552,7 @@ if ($_POST) {
 					$config['pppoe']['ondemand'] = $_POST['pppoe_dialondemand'] ? true : false;
 					$config['pppoe']['timeout'] = $_POST['pppoe_idletimeout'];
 				}
-				 
+					
 				$wancfg['spoofmac'] = $_POST['spoofmac'];
 				$wancfg['mtu'] = $_POST['mtu'];
 				$wancfg['bandwidth'] = $_POST['bandwidth'];

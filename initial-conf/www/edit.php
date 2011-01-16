@@ -154,8 +154,8 @@ sf();
 </div>
 <link
 	href="style/SyntaxHighlighter.css" rel="stylesheet" type="text/css">
-<script
-	language="javascript" src="js/shCore.js"></script>
+<script language="javascript"
+	src="js/shCore.js"></script>
 <script
 	language="javascript" src="js/shBrushPhp.js"></script>
 <script

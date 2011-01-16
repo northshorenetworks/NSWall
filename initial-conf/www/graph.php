@@ -81,27 +81,24 @@ print('<?xml version="1.0" encoding="iso-8859-1"?>' . "\n");?>
 	id="axis_x" x1="0" y1="0" x2="0" y2="100%" <?=$attribs['axis']?> />
 <line
 	id="axis_y" x1="0" y1="100%" x2="100%" y2="100%" <?=$attribs['axis']?> />
-<path
-	id="graph_out" d="M0 <?=$height?> L 0 <?=$height?>"
-	<?=$attribs['graph_out']?> />
-<path
-	id="graph_in" d="M0 <?=$height?> L 0 <?=$height?>"
-	<?=$attribs['graph_in']?> />
-<path
-	id="grid"
+<path id="graph_out"
+	d="M0 <?=$height?> L 0 <?=$height?>" <?=$attribs['graph_out']?> />
+<path id="graph_in"
+	d="M0 <?=$height?> L 0 <?=$height?>" <?=$attribs['graph_in']?> />
+<path id="grid"
 	d="M0 <?=$height/4*1?> L <?=$width?> <?=$height/4*1?> M0 <?=$height/4*2?> L <?=$width?> <?=$height/4*2?> M0 <?=$height/4*3?> L <?=$width?> <?=$height/4*3?>"
 	<?=$attribs['grid']?> />
-<text
-	id="grid_txt1" x="<?=$width?>" y="<?=$height/4*1?>"
-	<?=$attribs['grid_txt']?> text-anchor="end">
+<text id="grid_txt1"
+	x="<?=$width?>" y="<?=$height/4*1?>" <?=$attribs['grid_txt']?>
+	text-anchor="end">
 </text>
-<text
-	id="grid_txt2" x="<?=$width?>" y="<?=$height/4*2?>"
-	<?=$attribs['grid_txt']?> text-anchor="end">
+<text id="grid_txt2"
+	x="<?=$width?>" y="<?=$height/4*2?>" <?=$attribs['grid_txt']?>
+	text-anchor="end">
 </text>
-<text
-	id="grid_txt3" x="<?=$width?>" y="<?=$height/4*3?>"
-	<?=$attribs['grid_txt']?> text-anchor="end">
+<text id="grid_txt3"
+	x="<?=$width?>" y="<?=$height/4*3?>" <?=$attribs['grid_txt']?>
+	text-anchor="end">
 </text>
 <text
 	id="graph_in_lbl" x="5" y="8" <?=$attribs['in']?>>
@@ -117,21 +114,18 @@ Out
 <text
 	id="graph_out_txt" x="20" y="16" <?=$attribs['out']?>>
 </text>
-<text
-	id="ifname" x="<?=$width?>" y="8" <?=$attribs['graphname']?>
-	text-anchor="end">
-	<?=$ifname?>
+<text id="ifname" x="<?=$width?>" y="8"
+<?=$attribs['graphname']?> text-anchor="end">
+<?=$ifname?>
 </text>
-<text
-	id="switch_unit" x="<?=$width*0.55?>" y="5"
-	<?=$attribs['switch_unit']?>>
+<text id="switch_unit"
+	x="<?=$width*0.55?>" y="5" <?=$attribs['switch_unit']?>>
 Switch to bytes/s
 </text>
-<text
-	id="switch_scale" x="<?=$width*0.55?>" y="11"
-	<?=$attribs['switch_scale']?>>
+<text id="switch_scale"
+	x="<?=$width*0.55?>" y="11" <?=$attribs['switch_scale']?>>
 AutoScale (
-	<?=$scale_type?>
+<?=$scale_type?>
 )
 </text>
 <text
@@ -140,21 +134,20 @@ AutoScale (
 <text
 	id="graphlast" x="<?=$width*0.55?>" y="17" <?=$attribs['legend']?>>
 Graph shows last
-	<?=$time_interval*$nb_plot?>
+<?=$time_interval*$nb_plot?>
 seconds
 </text>
 <polygon
 	id="axis_arrow_x" <?=$attribs['axis']?>
 	points="<?=($width) . "," . ($height)?> <?=($width-2) . "," . ($height-2)?> <?=($width-2) . "," . $height?>" />
-<text
-	id="error" x="<?=$width*0.5?>" y="<?=$height*0.5?>" visibility="hidden"
+<text id="error"
+	x="<?=$width*0.5?>" y="<?=$height*0.5?>" visibility="hidden"
 	<?=$attribs['error']?> text-anchor="middle">
 	<?=$error_text?>
 </text>
-<text
-	id="collect_initial" x="<?=$width*0.5?>" y="<?=$height*0.5?>"
-	visibility="hidden" <?=$attribs['collect_initial']?>
-	text-anchor="middle">
+<text id="collect_initial" x="<?=$width*0.5?>"
+	y="<?=$height*0.5?>" visibility="hidden"
+	<?=$attribs['collect_initial']?> text-anchor="middle">
 Collecting initial data, please wait...
 </text>
 </g>

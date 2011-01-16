@@ -99,7 +99,7 @@ if ($_POST) {
 			/* make sure that the DHCP server isn't enabled on this interface */
 			if (isset($config['dhcpd'][$if]['enable']))
 			$input_errors[] = "You must disable the DHCP server on the {$iflist[$if]} interface before enabling the DHCP Relay.";
-				
+
 			/* make sure that the DHCP server isn't running on any of the implied interfaces */
 			foreach ($config['interfaces'] as $ifname => $ifcfg) {
 				$subnet = $ifcfg['ipaddr'] . "/" . $ifcfg['subnet'];

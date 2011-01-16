@@ -258,8 +258,8 @@ EOD;
 			}
 			/* destination address */
 			if($rule['dstlist']['dst0'] != 'any') {
-				 
-				 
+					
+					
 				if (isset($rule['dstlist'])) {
 					unset($rdrset);
 					$line .= "\ntable <" . $rule['name'] . "_dst> { ";
@@ -342,7 +342,7 @@ function filter_static_blocked_sites_generate() {
 				$mem = "member" . "$i";
 			}
 			$line .= 'table <static_abusive_sites>' .  ' { ';
-			 
+
 			for($i=0;$i<sizeof($memberlist); $i++) {
 				$mem = "member" . "$i";
 				$line .= "$memberlist[$mem], ";
@@ -357,7 +357,7 @@ function filter_static_blocked_sites_generate() {
 		 $mem = "nonmember" . "$i";
 		 }
 		 $line .= 'table <dynamic_blocked_sites>' .  ' { ';
-		  
+
 		 for($i=0;$i<sizeof($nonmemberlist); $i++) {
 		 $mem = "nonmember" . "$i";
 		 $line .= "!$nonmemberlist[$mem], ";
@@ -587,7 +587,7 @@ function filter_options_generate() {
 	system_determine_hwplatform();
 
 	$hwplatformconfig = parse_nonconfig_xml("{$g['etc_path']}/hwplatformconfig.xml");
-	 
+
 	#$pfglobals .= 'set loginterface '.$g['hwplatformconfig'][INTERFACES][LAN]."\n";
 	$pfglobals .= 'set loginterface '.$g['hwplatformconfig'][INTERFACES][WAN]."\n";;
 

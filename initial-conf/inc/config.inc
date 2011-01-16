@@ -105,9 +105,9 @@ if ($g['booting']) {
 						$cfgfstype = "ffs";
 						echo "Found configuration on $cfgdevice.\n";
 					}
-						
+
 					mwexec("/sbin/umount -f {$g['cf_path']}");
-						
+
 					if ($cfgdevice)
 					break;
 				}
@@ -172,7 +172,7 @@ if (!$noparseconfig) {
 				if (strstr($g['platform'], "cdrom")) {
 					/* try copying the default config. to the floppy */
 					reset_factory_defaults();
-						
+
 					echo "No XML configuration file found - using factory defaults.\n";
 					echo "Make sure that the configuration floppy disk with the conf/config.xml\n";
 					echo "file is inserted. If it isn't, your configuration changes will be lost\n";
@@ -264,9 +264,9 @@ function convert_config() {
 
 		/* convert DMZ to optional, if necessary */
 		if (isset($config['interfaces']['dmz'])) {
-				
+
 			$dmzcfg = &$config['interfaces']['dmz'];
-				
+
 			if ($dmzcfg['if']) {
 				$config['interfaces']['opt' . $opti] = array();
 				$optcfg = &$config['interfaces']['opt' . $opti];
@@ -280,37 +280,37 @@ function convert_config() {
 				$ifmap['dmz'] = "opt" . $opti;
 				$opti++;
 			}
-				
+
 			unset($config['interfaces']['dmz']);
 		}
 
 		/* convert WLAN1/2 to optional, if necessary */
 		for ($i = 1; isset($config['interfaces']['wlan' . $i]); $i++) {
-				
+
 			if (!$config['interfaces']['wlan' . $i]['if']) {
 				unset($config['interfaces']['wlan' . $i]);
 				continue;
 			}
-				
+
 			$wlancfg = &$config['interfaces']['wlan' . $i];
 			$config['interfaces']['opt' . $opti] = array();
 			$optcfg = &$config['interfaces']['opt' . $opti];
-				
+
 			$optcfg['enable'] = $wlancfg['enable'];
 			$optcfg['descr'] = "WLAN" . $i;
 			$optcfg['if'] = $wlancfg['if'];
 			$optcfg['ipaddr'] = $wlancfg['ipaddr'];
 			$optcfg['subnet'] = $wlancfg['subnet'];
 			$optcfg['bridge'] = $wlancfg['bridge'];
-				
+
 			$optcfg['wireless'] = array();
 			$optcfg['wireless']['mode'] = $wlancfg['mode'];
 			$optcfg['wireless']['ssid'] = $wlancfg['ssid'];
 			$optcfg['wireless']['channel'] = $wlancfg['channel'];
 			$optcfg['wireless']['wep'] = $wlancfg['wep'];
-				
+
 			$ifmap['wlan' . $i] = "opt" . $opti;
-				
+
 			unset($config['interfaces']['wlan' . $i]);
 			$opti++;
 		}
@@ -320,7 +320,7 @@ function convert_config() {
 		for ($i = 0; $i < $n; $i++) {
 
 			$fr = &$config['filter']['rule'][$i];
-				
+
 			/* remap interface */
 			if (array_key_exists($fr['interface'], $ifmap))
 			$fr['interface'] = $ifmap[$fr['interface']];
@@ -331,7 +331,7 @@ function convert_config() {
 				unset($config['filter']['rule'][$i]);
 				continue;
 			}
-				
+
 			/* remap source network */
 			if (isset($fr['source']['network'])) {
 				if (array_key_exists($fr['source']['network'], $ifmap))
@@ -344,7 +344,7 @@ function convert_config() {
 					continue;
 				}
 			}
-				
+
 			/* remap destination network */
 			if (isset($fr['destination']['network'])) {
 				if (array_key_exists($fr['destination']['network'], $ifmap))
@@ -365,7 +365,7 @@ function convert_config() {
 		for ($i = 0; $i < $n; $i++) {
 
 			$fr = &$config['shaper']['rule'][$i];
-				
+
 			/* remap interface */
 			if (array_key_exists($fr['interface'], $ifmap))
 			$fr['interface'] = $ifmap[$fr['interface']];
@@ -376,7 +376,7 @@ function convert_config() {
 				unset($config['shaper']['rule'][$i]);
 				continue;
 			}
-				
+
 			/* remap source network */
 			if (isset($fr['source']['network'])) {
 				if (array_key_exists($fr['source']['network'], $ifmap))
@@ -389,7 +389,7 @@ function convert_config() {
 					continue;
 				}
 			}
-				
+
 			/* remap destination network */
 			if (isset($fr['destination']['network'])) {
 				if (array_key_exists($fr['destination']['network'], $ifmap))
@@ -445,7 +445,7 @@ function convert_config() {
 		/* convert shaper rules (make pipes) */
 		if (is_array($config['shaper']['rule'])) {
 			$config['shaper']['pipe'] = array();
-				
+
 			for ($i = 0; isset($config['shaper']['rule'][$i]); $i++) {
 				$curent = &$config['shaper']['rule'][$i];
 
@@ -584,10 +584,10 @@ function convert_config() {
 				while (is_array($config['interfaces']['opt' . $j])) {
 					$config['interfaces']['opt' . ($j - 1)] =
 					$config['interfaces']['opt' . $j];
-						
+
 					if ($config['interfaces']['opt' . ($j - 1)]['descr'] == "OPT" . $j)
 					$config['interfaces']['opt' . ($j - 1)]['descr'] = "OPT" . ($j - 1);
-						
+
 					unset($config['interfaces']['opt' . $j]);
 					$j++;
 				}

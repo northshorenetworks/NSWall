@@ -65,7 +65,7 @@ if ($_POST) {
 			reset_carp();
 			interfaces_carp_configure();
 			interfaces_carp_bring_up_final();
-				
+
 		}
 		$savemsg = get_std_save_message($retval);
 		unlink_if_exists($d_vipconfdirty_path);

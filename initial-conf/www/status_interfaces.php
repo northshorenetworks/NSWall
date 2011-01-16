@@ -187,7 +187,7 @@ function get_interface_info($ifdescr) {
 			/* try to determine IP address and netmask with ifconfig */
 			unset($ifconfiginfo);
 			exec("/sbin/ifconfig " . $ifinfo['if'], $ifconfiginfo);
-				
+
 			foreach ($ifconfiginfo as $ici) {
 				if (preg_match("/inet (\S+)/", $ici, $matches)) {
 					$ifinfo['ipaddr'] = $matches[1];
@@ -197,7 +197,7 @@ function get_interface_info($ifdescr) {
 					$ifinfo['subnet'] = long2ip(hexdec($matches[1]));
 				}
 			}
-				
+
 			if ($ifdescr == "wan") {
 				/* run netstat to determine the default gateway */
 				unset($netstatrninfo);

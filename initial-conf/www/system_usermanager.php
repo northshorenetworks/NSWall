@@ -43,7 +43,7 @@ $pgtitle = array("System", "User manager");
 $id = $_GET['id'];
 if (isset($_POST['id']))
 $id = $_POST['id'];
- 
+
 if (!is_array($config['system']['accounts']['user'])) {
 	$config['system']['accounts']['user'] = array();
 }
@@ -62,7 +62,7 @@ if ($_GET['act'] == "del") {
 }
 
 if ($_POST) {
-	 
+
 	unset($input_errors);
 	$pconfig = $_POST;
 
@@ -74,9 +74,9 @@ if ($_POST) {
 		$reqdfields = explode(" ", "username password");
 		$reqdfieldsn = explode(",", "Username,Password");
 	}
-	 
+
 	do_input_validation($_POST, $reqdfields, $reqdfieldsn, &$input_errors);
-	 
+
 	if (preg_match("/[^a-zA-Z0-9\.\-_]/", $_POST['username']))
 	$input_errors[] = "The username contains invalid characters.";
 
@@ -98,7 +98,7 @@ if ($_POST) {
 	}
 
 	if (!$input_errors) {
-		 
+			
 		if (isset($id) && $a_user[$id])
 		$userent = $a_user[$id];
 
