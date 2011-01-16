@@ -182,13 +182,14 @@ $(document).ready(function() {
 <center>Capture Files</center>
 <br>
 <br>
-<ul id="capturesortable"<li id="list" class="connectedSortable ui-state-disabled">
-<span class="col1">Filename</span>
-<span class="col2">Download</span>
-<span class="col3">Delete</span>
-<!--<span class="col4">Support</span>-->
-</li>
-<?php echo $output ?>       
+<ul id="capturesortable">
+	<li id="list" class="connectedSortable ui-state-disabled">
+		<span class="col1">Filename</span>
+		<span class="col2">Download</span>
+		<span class="col3">Delete</span>
+		<span class="col4">Support</span>
+	</li>
+	<?php echo $output ?>       
 </ul>
 
 </div>

@@ -43,7 +43,7 @@ if ($_GET['action'] == 'getconfig') {
 		echo encode_array(sync_config_area('relays', 'get', ''));
 		exit;
 	} elseif ($_GET['type'] == 'nat') {
-		echo encode_array(sync_config_area('nats, 'get', ''));
+		echo encode_array(sync_config_area('nats', 'get', ''));
 		exit;
 	 } elseif ($_GET['type'] == 'pfoptions') {
 		echo encode_array(sync_config_area('pfoptions', 'get', ''));

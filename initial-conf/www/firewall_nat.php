@@ -32,13 +32,7 @@ $ifsaveneworder = '#' . $if . 'saveneworder';
 ?>
 
 <style type="text/css">
-<?=
-$
-ifsortable
-
-
-;
-?>
+<?=$ifsortable;?>
 {
 list-style-type
 
@@ -88,9 +82,7 @@ width
 
 95%;
 }
-<?=
-$
-ifsortable  ; ?> li {
+<?=$ifsortable  ; ?> li {
 	padding: 0.1em;
 	margin-left: 0;
 	padding-left: 1em;
@@ -100,49 +92,41 @@ ifsortable  ; ?> li {
 	font-size: 1em;
 }
 
-<?=
-$
-ifsortable  ; ?> li span.col1 {
+<?=$ifsortable  ; ?> 
+	li span.col1 {
 	position: relative;
 	float: left;
 	width: 5em;
 }
 
-<?=
-$
-ifsortable  ; ?> li span.col2 {
+<?=$ifsortable  ; ?> li span.col2 {
 	position: relative;
 	float: left;
 	width: 5em;
 }
 
-<?=
-$
-ifsortable  ; ?> li span.col3 {
+<?=$ifsortable  ; ?>
+	 li span.col3 {
 	position: relative;
 	float: left;
 	width: 5em;
 }
 
-<?=
-$
-ifsortable  ; ?> li span.col4 {
+<?=$ifsortable  ; ?>
+	li span.col4 {
 	position: relative;
 	float: left;
 	width: 10em;
 }
 
-<?=
-$
-ifsortable  ; ?> li span.col5 {
+<?=$ifsortable  ; ?> li span.col5 {
 	position: relative;
 	float: left;
 	width: 10em;
 }
 
-<?=
-$
-ifsortable  ; ?> li span.col6 {
+<?=$ifsortable  ; ?> 
+	li span.col6 {
 	position: relative;
 	float: left;
 	width: 30em;

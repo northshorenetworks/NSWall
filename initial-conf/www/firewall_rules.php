@@ -38,13 +38,7 @@ $ifsaveneworder = '"#' . $if . 'saveneworder"';
 ?>
 
 <style type="text/css">
-<?=
-$
-ifsortable
-
-
-;
-?>
+<?=$ifsortable;?>
 {
 list-style-type
 
@@ -94,65 +88,58 @@ width
 
 95%;
 }
-<?=
-$
-ifsortable  ; ?> li {
-	padding: 0.1em;
-	margin-left: 0;
-	padding-left: 1;
-	font-size: 1.4em;
-	height: 18px;
-	border: 1px solid #E4E4E4;
-	font-size: 1em;
-}
+<?=$ifsortable  ; ?>
+	 li {
+		padding: 0.1em;
+		margin-left: 0;
+		padding-left: 1;
+		font-size: 1.4em;
+		height: 18px;
+		border: 1px solid #E4E4E4;
+		font-size: 1em;
+	}
 
-<?=
-$
-ifsortable  ; ?> li span.col1 {
-	position: relative;
-	float: left;
-	width: 5em;
-}
+<?=$ifsortable  ; ?>
+	li span.col1 {
+		position: relative;
+		float: left;
+		width: 5em;
+	}
 
-<?=
-$
-ifsortable  ; ?> li span.col2 {
-	position: relative;
-	float: left;
-	width: 5em;
-}
+<?=$ifsortable  ; ?>
+	li span.col2 {
+		position: relative;
+		float: left;
+		width: 5em;
+	}
 
-<?=
-$
-ifsortable  ; ?> li span.col3 {
-	position: relative;
-	float: left;
-	width: 5em;
-}
+<?=$ifsortable  ; ?>
+	li span.col3 {
+		position: relative;
+		float: left;
+		width: 5em;
+	}
 
-<?=
-$
-ifsortable  ; ?> li span.col4 {
-	position: relative;
-	float: left;
-	width: 7.5em;
-}
+<?=$ifsortable  ; ?>
+	li span.col4 {
+		position: relative;
+		float: left;
+		width: 7.5em;
+	}
 
-<?=
-$
-ifsortable  ; ?> li span.col5 {
-	position: relative;
-	float: left;
-	width: 12.5em;
-}
+<?=$ifsortable  ; ?>
+	li span.col5 {
+		position: relative;
+		float: left;
+		width: 12.5em;
+	}
 
-<?=
-$
-ifsortable  ; ?> li span.col6 {
-	position: relative;
-	float: left;
-	width: 30em;
-}
+<?=$ifsortable  ; ?>
+	li span.col6 {
+		position: relative;
+		float: left;
+		width: 30em;
+	}
 </style>
 
 <script type="text/javascript">
