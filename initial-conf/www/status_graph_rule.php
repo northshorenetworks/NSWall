@@ -1,12 +1,12 @@
 #!/bin/php
-<?php 
+<?php
 
 $pgtitle = array("Status", "PF Traffic graph");
 require("guiconfig.inc");
 include("ns-begin.inc");
 $currule = $config['filter']['rule']['0']['name'];
 if ($_GET['rulename'])
-        $currule = $_GET['rulename'];
+$currule = $_GET['rulename'];
 
 ?>
 
@@ -22,11 +22,9 @@ foreach ($config['filter']['rule'] as $rule) {
 ?>
 </select>
 
-<div id="container" style="height:450px;">
-    <div id="placeholder" style="height:450px;"></div>
-<div>
-
-<script id="source" language="javascript" type="text/javascript">
+<div id="container" style="height: 450px;">
+<div id="placeholder" style="height: 450px;"></div>
+<div><script id="source" language="javascript" type="text/javascript">
 
 function bytes2bits(val) {
     if (val < 125000)

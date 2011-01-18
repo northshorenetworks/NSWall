@@ -1,21 +1,55 @@
-#!/bin/php  
-<?php   
-$pgtitle = array("IPSec", "Gateways");      
-require("guiconfig.inc");      
-include("ns-begin.inc");       
-if (!is_array($config['ipsec']['gw'])) {      
-    $config['ipsec']['gw'] = array();      
-}      
-$a_gw = &$config['ipsec']['gw'];      
+#!/bin/php
+<?php
+$pgtitle = array("IPSec", "Gateways");
+require("guiconfig.inc");
+include("ns-begin.inc");
+if (!is_array($config['ipsec']['gw'])) {
+	$config['ipsec']['gw'] = array();
+}
+$a_gw = &$config['ipsec']['gw'];
 ?>
 
 <style type="text/css">
-    #ipsecsortable { list-style-type: none; margin: auto auto 1em; padding: 0; width: 95%; }
-    #ipsecsortable li { padding: 0.1em; margin-left: 0; padding-left: 1em; font-size: 1.4em; height: 18px; border:1px solid #E4E4E4;  font-size:1em; }
-    #ipsecsortable li span.col1 { position:relative; float:left; width:5%; }
-    #ipsecsortable li span.col2 { position:relative; float:left; width:5%; }
-    #ipsecsortable li span.col3 { position:relative; float:left; width:15%; }
-    #ipsecsortable li span.col4 { position:relative; float:left; width:50%; }
+#ipsecsortable {
+	list-style-type: none;
+	margin: auto auto 1em;
+	padding: 0;
+	width: 95%;
+}
+
+#ipsecsortable li {
+	padding: 0.1em;
+	margin-left: 0;
+	padding-left: 1em;
+	font-size: 1.4em;
+	height: 18px;
+	border: 1px solid #E4E4E4;
+	font-size: 1em;
+}
+
+#ipsecsortable li span.col1 {
+	position: relative;
+	float: left;
+	width: 5%;
+}
+
+#ipsecsortable li span.col2 {
+	position: relative;
+	float: left;
+	width: 5%;
+}
+
+#ipsecsortable li span.col3 {
+	position: relative;
+	float: left;
+	width: 15%;
+}
+
+#ipsecsortable li span.col4 {
+	position: relative;
+	float: left;
+	width: 50%;
+}
 </style>
 
 <script type="text/javascript">
@@ -74,30 +108,27 @@ $(".col2 a").click(function () {
 
 <div class="demo">
 <ul id="ipsecsortable">
-<li id="element_<?=$i;?>" class="connectedSortable ui-state-disabled">
-<span class="col1">Edit</span>
-<span class="col2">Delete</span>
-<span class="col3">Name</span>
-<span class="col4">Description</span>
-</li>
-<?php $nrules = 0; for ($i = 0; isset($a_gw[$i]); $i++):
-$ipsecent = $a_gw[$i]; ?>
-<li id="listItem_<?=$i;?>">
-<span class="col1">
-<a href="vpn_ipsec_edit.php?id=<?=$i;?>">
-<span title="edit this ipsec gateway" class="ui-icon ui-icon-circle-zoomin"></span>
-</a>
-</span>
-<span class="col2">
-<a href="forms/vpn_form_submit.php?id=<?=$i;?>&action=delete&type=ipsec_gw">
-<span title="delete this gateway" class="ui-icon ui-icon-circle-close"></span>
-</a>
-</span>
-<span class="col3"><?php if (isset($ipsecent['name'])) echo strtoupper($ipsecent['name']); else echo "*"; ?><?=$textse;?></span>
-<span class="col4"><?php if (isset($ipsecent['descr'])) echo $ipsecent['descr'];?></span>
-</li>
-<?php $nrules++; endfor; ?>
+	<li id="element_<?=$i;?>" class="connectedSortable ui-state-disabled">
+	<span class="col1">Edit</span> <span class="col2">Delete</span> <span
+		class="col3">Name</span> <span class="col4">Description</span></li>
+		<?php $nrules = 0; for ($i = 0; isset($a_gw[$i]); $i++):
+		$ipsecent = $a_gw[$i]; ?>
+	<li id="listItem_<?=$i;?>"><span class="col1"> <a
+		href="vpn_ipsec_edit.php?id=<?=$i;?>"> <span
+		title="edit this ipsec gateway" class="ui-icon ui-icon-circle-zoomin"></span>
+	</a> </span> <span class="col2"> <a
+		href="forms/vpn_form_submit.php?id=<?=$i;?>&action=delete&type=ipsec_gw">
+	<span title="delete this gateway" class="ui-icon ui-icon-circle-close"></span>
+	</a> </span> <span class="col3"><?php if (isset($ipsecent['name'])) echo strtoupper($ipsecent['name']); else echo "*"; ?><?=$textse;?></span>
+	<span class="col4"><?php if (isset($ipsecent['descr'])) echo $ipsecent['descr'];?></span>
+	</li>
+	<?php $nrules++; endfor; ?>
 </ul>
-<div id="newrule"><center><a href="vpn_ipsec_edit.php"><span title="add a new ipsec gateway" class="ui-icon ui-icon-circle-plus"></span></a></center></div>
-<div id="<?=$if . 'saveneworder';?>"><center>SAVE NEW ORDER LINK</center></div>
+<div id="newrule">
+<center><a href="vpn_ipsec_edit.php"><span
+	title="add a new ipsec gateway" class="ui-icon ui-icon-circle-plus"></span></a></center>
+</div>
+<div id="<?=$if . 'saveneworder';?>">
+<center>SAVE NEW ORDER LINK</center>
+</div>
 </div>

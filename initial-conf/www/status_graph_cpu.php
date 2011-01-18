@@ -1,5 +1,5 @@
 #!/bin/php
-<?php 
+<?php
 
 $pgtitle = array("Status", "CPU load");
 require("guiconfig.inc");
@@ -7,11 +7,9 @@ include("ns-begin.inc");
 ?>
 <p class="pgtitle"><?=join(": ", $pgtitle);?></p>
 
-<div id="container" style="height:450px;">
-    <div id="placeholder" style="height:450px;"></div>
-<div>
-
-<script id="source" language="javascript" type="text/javascript"> 
+<div id="container" style="height: 450px;">
+<div id="placeholder" style="height: 450px;"></div>
+<div><script id="source" language="javascript" type="text/javascript"> 
 
 $(function () {
     d1 = [];
@@ -54,4 +52,4 @@ $(function() {
     });
 });
 
-</script> 
+</script>

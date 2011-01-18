@@ -8,58 +8,58 @@
 				<if>ne2</if>
 				<descr>DMZ</descr>
 			</opt1>
-		</interfaces>	
+		</interfaces>
 	</qemu>
 	<vmware>
-        <interfaces>
-            <wan>em0</wan>
-            <lan>em1</lan>
-       		<opt1>
-                <if>em2</if>
-                <descr>DMZ</descr>
-            </opt1> 
+		<interfaces>
+			<wan>em0</wan>
+			<lan>em1</lan>
+			<opt1>
+				<if>em2</if>
+				<descr>DMZ</descr>
+			</opt1>
 		</interfaces>
-    </vmware>
+	</vmware>
 	<alix>
 		<interfaces>
-            <wan>vr0</wan>
-            <lan>vr1</lan>
-            <opt1>
-                <if>vr2</if>
-                <descr>DMZ</descr>
-            </opt1>
-        	<opt2>
-                <if>ral0</if>
-                <descr>Wireless</descr>
-            </opt2>
-		</interfaces>	
-	</alix>	
-	<jetway>	
-        <interfaces>
-            <wan>re0</wan>
-            <lan>re1</lan>
-        	<opt1>
-                <if>re2</if>
-                <descr>DMZ</descr>
-            </opt1>
+			<wan>vr0</wan>
+			<lan>vr1</lan>
+			<opt1>
+				<if>vr2</if>
+				<descr>DMZ</descr>
+			</opt1>
 			<opt2>
-                <if>re3</if>
-                <descr>DMZ2</descr>
-            </opt2>
+				<if>ral0</if>
+				<descr>Wireless</descr>
+			</opt2>
 		</interfaces>
-    </jetway>
-    <nick>
-        <interfaces>
-            <wan>xl0</wan>
-            <lan>fxp0</lan>
-            <opt1>
-                <if>xl1</if>
-                <descr>WAN_2</descr>
-            </opt1>
-            <opt2>
-                <if>xl2</if>
-                <descr>LAN_2</descr>
-            </opt2>
-        </interfaces>
-    </nick> 
+	</alix>
+	<jetway>
+		<interfaces>
+			<wan>re0</wan>
+			<lan>re1</lan>
+			<opt1>
+				<if>re2</if>
+				<descr>DMZ</descr>
+			</opt1>
+			<opt2>
+				<if>re3</if>
+				<descr>DMZ2</descr>
+			</opt2>
+		</interfaces>
+	</jetway>
+	<nick>
+		<interfaces>
+			<wan>xl0</wan>
+			<lan>fxp0</lan>
+			<opt1>
+				<if>xl1</if>
+				<descr>WAN_2</descr>
+			</opt1>
+			<opt2>
+				<if>xl2</if>
+				<descr>LAN_2</descr>
+			</opt2>
+		</interfaces>
+	</nick>
 </nswall>

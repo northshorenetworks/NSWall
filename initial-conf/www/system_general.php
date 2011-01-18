@@ -1,5 +1,5 @@
 #!/bin/php
-<?php 
+<?php
 
 $pgtitle = array("System", "General setup");
 require("guiconfig.inc");
@@ -12,22 +12,22 @@ list($pconfig['dns1'],$pconfig['dns2'],$pconfig['dns3']) = $config['system']['ge
 $pconfig['dnsallowoverride'] = isset($config['system']['general']['dnsallowoverride']);
 $pconfig['username'] = $config['system']['username'];
 if (!$pconfig['username'])
-	$pconfig['username'] = "admin";
+$pconfig['username'] = "admin";
 $pconfig['webguiproto'] = $config['system']['general']['webgui']['protocol'];
 if (!$pconfig['webguiproto'])
-	$pconfig['webguiproto'] = "http";
+$pconfig['webguiproto'] = "http";
 $pconfig['webguiport'] = $config['system']['general']['webgui']['port'];
 $pconfig['timezone'] = $config['system']['general']['timezone'];
 $pconfig['timeupdateinterval'] = $config['system']['general']['time-update-interval'];
 $pconfig['timeservers'] = $config['system']['general']['timeservers'];
 
 if (!isset($pconfig['timeupdateinterval']))
-	$pconfig['timeupdateinterval'] = 300;
+$pconfig['timeupdateinterval'] = 300;
 if (!$pconfig['timezone'])
-	$pconfig['timezone'] = "Etc/UTC";
+$pconfig['timezone'] = "Etc/UTC";
 if (!$pconfig['timeservers'])
-	$pconfig['timeservers'] = "pool.ntp.org";
-	
+$pconfig['timeservers'] = "pool.ntp.org";
+
 function is_timezone($elt) {
 	return !preg_match("/\/$/", $elt);
 }
@@ -59,41 +59,40 @@ $(document).ready(function() {
 <?php if ($savemsg) print_info_box($savemsg); ?>
 
 <div id="wrapper">
-        <div class="form-container ui-tabs ui-widget ui-corner-all">
+<div class="form-container ui-tabs ui-widget ui-corner-all">
 
-	<form action="forms/system_form_submit.php" method="post" name="iform" id="iform">
-        <input name="formname" type="hidden" value="system_general">
+<form action="forms/system_form_submit.php" method="post" name="iform"
+	id="iform"><input name="formname" type="hidden" value="system_general">
 
-	<fieldset>
-		<legend><?=join(": ", $pgtitle);?></legend>
-			<div>
-                             <label for="hostname">Hostname</label>
-                             <input id="hostname" type="text" name="hostname" value="<?=htmlspecialchars($pconfig['hostname']);?>" />
-                             <p class="note">Name of the firewall host without the domain part</p>
-                        </div>
-			<div>
-                             <label for="email">Domain</label>
-                             <input id="domain" type="text" name="domain" value="<?=htmlspecialchars($pconfig['domain']);?>" />
-			     <p class="note">e.g. <em>mycorp.com</em> </p>
-			</div>
-			<div>
-                             <label for="dns1 dns2 dns3">DNS Servers</label>
-                             <input id="dns1" type="text" name="dns1" value="<?=htmlspecialchars($pconfig['dns1']);?>" size="20" />
-                             <input id="dns2" type="text" name="dns2" value="<?=htmlspecialchars($pconfig['dns2']);?>" size="20" />
-                             <input id="dns3" type="text" name="dns3" value="<?=htmlspecialchars($pconfig['dns3']);?>" size="20" />
-                        </div>
-			<div>
-                             <label for="username">Username</label>
-                             <input id="username" type="text" name="username" value="<?=$pconfig['username'];?>" />
-			     <p class="note">If you want to change the username for accessing the WebUI do it here.</p>
-			</div>
-                        <div>
-                             <label for="password">Password</label>
-                             <input id="password" type="password" name="password" value="" />
-                             <input id="password2" type="password" name="password2" value="" />
-                             &nbsp;(confirmation) <br> <p class="note">If you want to change the password for accessing the webGUI, enter it here twice.</p>
-			</div>
-			<!--
+<fieldset><legend><?=join(": ", $pgtitle);?></legend>
+<div><label for="hostname">Hostname</label> <input id="hostname"
+	type="text" name="hostname"
+	value="<?=htmlspecialchars($pconfig['hostname']);?>" />
+<p class="note">Name of the firewall host without the domain part</p>
+</div>
+<div><label for="email">Domain</label> <input id="domain" type="text"
+	name="domain" value="<?=htmlspecialchars($pconfig['domain']);?>" />
+<p class="note">e.g. <em>mycorp.com</em></p>
+</div>
+<div><label for="dns1 dns2 dns3">DNS Servers</label> <input id="dns1"
+	type="text" name="dns1"
+	value="<?=htmlspecialchars($pconfig['dns1']);?>" size="20" /> <input
+	id="dns2" type="text" name="dns2"
+	value="<?=htmlspecialchars($pconfig['dns2']);?>" size="20" /> <input
+	id="dns3" type="text" name="dns3"
+	value="<?=htmlspecialchars($pconfig['dns3']);?>" size="20" /></div>
+<div><label for="username">Username</label> <input id="username"
+	type="text" name="username" value="<?=$pconfig['username'];?>" />
+<p class="note">If you want to change the username for accessing the
+WebUI do it here.</p>
+</div>
+<div><label for="password">Password</label> <input id="password"
+	type="password" name="password" value="" /> <input id="password2"
+	type="password" name="password2" value="" /> &nbsp;(confirmation) <br>
+<p class="note">If you want to change the password for accessing the
+webGUI, enter it here twice.</p>
+</div>
+<!--
             <div>
                              <label for="webguiport">WebGUI Port</label>
             				 <input id="webguiport" type="text" name="webguiport" value="<?=htmlspecialchars($pconfig['webguiport']);?>" />
@@ -112,26 +111,22 @@ $(document).ready(function() {
                              </select>
 			</div>
 			-->
-			<div>
-                             <label for="timezone">Timezone</label>
-                             <select name="timezone" id="timezone">
-                             <?php foreach ($timezonelist as $value): ?>
-                                  <option value="<?=htmlspecialchars($value);?>" 
-                                  <?php if ($value == $pconfig['timezone']) echo "selected"; ?>>
-                                  <?=htmlspecialchars($value);?>
-                                  </option>
-                                  <?php endforeach; ?>
-                             </select>
-			</div>
-	</fieldset>
-	
-	<div class="buttonrow">
-		<input type="submit" id="submitbutton" value="Save" class="button" />
-	</div>
+<div><label for="timezone">Timezone</label> <select name="timezone"
+	id="timezone">
+	<?php foreach ($timezonelist as $value): ?>
+	<option value="<?=htmlspecialchars($value);?>"
+	<?php if ($value == $pconfig['timezone']) echo "selected"; ?>><?=htmlspecialchars($value);?>
+	</option>
+	<?php endforeach; ?>
+</select></div>
+</fieldset>
 
-	</form>
-	
-	</div><!-- /form-container -->
-	
-</div><!-- /wrapper -->
+<div class="buttonrow"><input type="submit" id="submitbutton"
+	value="Save" class="button" /></div>
+
+</form>
+
+</div>
+<!-- /form-container --></div>
+<!-- /wrapper -->
 

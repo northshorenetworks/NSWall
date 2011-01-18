@@ -1,34 +1,34 @@
 #!/bin/php -f
 <?php
 /*
-	$Id: graph_rule.php,v 1.5 2009/03/15 03:18:09 jrecords Exp $
-	part of m0n0wall (http://m0n0.ch/wall)
-	
-	Copyright (C) 2004-2006 T. Lechat <dev@lechat.org>, Manuel Kasper <mk@neon1.net>
-	and Jonathan Watt <jwatt@jwatt.org>.
-	All rights reserved.
-	
-	Redistribution and use in source and binary forms, with or without
-	modification, are permitted provided that the following conditions are met:
-	
-	1. Redistributions of source code must retain the above copyright notice,
-	   this list of conditions and the following disclaimer.
-	
-	2. Redistributions in binary form must reproduce the above copyright
-	   notice, this list of conditions and the following disclaimer in the
-	   documentation and/or other materials provided with the distribution.
-	
-	THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
-	INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
-	AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
-	AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
-	OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
-	SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-	INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
-	CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-	ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-	POSSIBILITY OF SUCH DAMAGE.
-*/
+ $Id: graph_rule.php,v 1.5 2009/03/15 03:18:09 jrecords Exp $
+ part of m0n0wall (http://m0n0.ch/wall)
+
+ Copyright (C) 2004-2006 T. Lechat <dev@lechat.org>, Manuel Kasper <mk@neon1.net>
+ and Jonathan Watt <jwatt@jwatt.org>.
+ All rights reserved.
+
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions are met:
+
+ 1. Redistributions of source code must retain the above copyright notice,
+ this list of conditions and the following disclaimer.
+
+ 2. Redistributions in binary form must reproduce the above copyright
+ notice, this list of conditions and the following disclaimer in the
+ documentation and/or other materials provided with the distribution.
+
+ THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
+ INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
+ AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+ AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
+ OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ POSSIBILITY OF SUCH DAMAGE.
+ */
 
 header("Content-type: image/svg+xml");
 
@@ -63,28 +63,80 @@ $width=200;             //SVG internal width : do not modify
 
 /********* Graph DATA **************/
 print('<?xml version="1.0" encoding="iso-8859-1"?>' . "\n");?>
-<svg width="100%" height="100%" viewBox="0 0 <?=$width?> <?=$height?>" preserveAspectRatio="none" xml:space="preserve" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" onload="init(evt)">
-  <g id="graph">
-    <rect id="bg" x1="0" y1="0" width="100%" height="100%" fill="white"/>
-    <line id="axis_x" x1="0" y1="0" x2="0" y2="100%" <?=$attribs['axis']?>/>
-    <line id="axis_y" x1="0" y1="100%" x2="100%" y2="100%" <?=$attribs['axis']?>/>
-    <path id="graph_in"  d="M0 <?=$height?> L 0 <?=$height?>" <?=$attribs['graph_in']?>/>
-    <path id="grid"  d="M0 <?=$height/4*1?> L <?=$width?> <?=$height/4*1?> M0 <?=$height/4*2?> L <?=$width?> <?=$height/4*2?> M0 <?=$height/4*3?> L <?=$width?> <?=$height/4*3?>" <?=$attribs['grid']?>/>
-    <text id="grid_txt1" x="<?=$width?>" y="<?=$height/4*1?>" <?=$attribs['grid_txt']?> text-anchor="end"> </text>
-    <text id="grid_txt2" x="<?=$width?>" y="<?=$height/4*2?>" <?=$attribs['grid_txt']?> text-anchor="end"> </text>
-    <text id="grid_txt3" x="<?=$width?>" y="<?=$height/4*3?>" <?=$attribs['grid_txt']?> text-anchor="end"> </text>
-    <text id="graph_in_lbl" x="5" y="8" <?=$attribs['in']?>>Traffic:</text>
-    <text id="graph_in_txt" x="28" y="8" <?=$attribs['in']?>> </text>    
-    <text id="ifname" x="<?=$width?>" y="8" <?=$attribs['graphname']?> text-anchor="end"><?=$rulename?></text>
-    <text id="switch_unit" x="<?=$width*0.55?>" y="5" <?=$attribs['switch_unit']?>>Switch to bytes/s</text>
-    <text id="switch_scale" x="<?=$width*0.55?>" y="11" <?=$attribs['switch_scale']?>>AutoScale (<?=$scale_type?>)</text>
-    <text id="datetime" x="<?=$width*0.33?>" y="5" <?=$attribs['legend']?>> </text>
-    <text id="graphlast" x="<?=$width*0.55?>" y="17" <?=$attribs['legend']?>>Graph shows last <?=$time_interval*$nb_plot?> seconds</text>
-    <polygon id="axis_arrow_x" <?=$attribs['axis']?> points="<?=($width) . "," . ($height)?> <?=($width-2) . "," . ($height-2)?> <?=($width-2) . "," . $height?>"/>
-    <text id="error" x="<?=$width*0.5?>" y="<?=$height*0.5?>"  visibility="hidden" <?=$attribs['error']?> text-anchor="middle"><?=$error_text?></text>
-    <text id="collect_initial" x="<?=$width*0.5?>" y="<?=$height*0.5?>"  visibility="hidden" <?=$attribs['collect_initial']?> text-anchor="middle">Collecting initial data, please wait...</text>
-  </g>
-  <script type="text/ecmascript">
+<svg
+	width="100%" height="100%" viewBox="0 0 <?=$width?> <?=$height?>"
+	preserveAspectRatio="none" xml:space="preserve"
+	xmlns="http://www.w3.org/2000/svg"
+	xmlns:xlink="http://www.w3.org/1999/xlink" onload="init(evt)">
+<g id="graph">
+<rect
+	id="bg" x1="0" y1="0" width="100%" height="100%" fill="white" />
+<line
+	id="axis_x" x1="0" y1="0" x2="0" y2="100%" <?=$attribs['axis']?> />
+<line
+	id="axis_y" x1="0" y1="100%" x2="100%" y2="100%" <?=$attribs['axis']?> />
+<path id="graph_in"
+	d="M0 <?=$height?> L 0 <?=$height?>" <?=$attribs['graph_in']?> />
+<path id="grid"
+	d="M0 <?=$height/4*1?> L <?=$width?> <?=$height/4*1?> M0 <?=$height/4*2?> L <?=$width?> <?=$height/4*2?> M0 <?=$height/4*3?> L <?=$width?> <?=$height/4*3?>"
+	<?=$attribs['grid']?> />
+<text id="grid_txt1"
+	x="<?=$width?>" y="<?=$height/4*1?>" <?=$attribs['grid_txt']?>
+	text-anchor="end">
+</text>
+<text id="grid_txt2"
+	x="<?=$width?>" y="<?=$height/4*2?>" <?=$attribs['grid_txt']?>
+	text-anchor="end">
+</text>
+<text id="grid_txt3"
+	x="<?=$width?>" y="<?=$height/4*3?>" <?=$attribs['grid_txt']?>
+	text-anchor="end">
+</text>
+<text
+	id="graph_in_lbl" x="5" y="8" <?=$attribs['in']?>>
+Traffic:
+</text>
+<text
+	id="graph_in_txt" x="28" y="8" <?=$attribs['in']?>>
+</text>
+<text id="ifname" x="<?=$width?>" y="8"
+<?=$attribs['graphname']?> text-anchor="end">
+<?=$rulename?>
+</text>
+<text id="switch_unit"
+	x="<?=$width*0.55?>" y="5" <?=$attribs['switch_unit']?>>
+Switch to bytes/s
+</text>
+<text id="switch_scale"
+	x="<?=$width*0.55?>" y="11" <?=$attribs['switch_scale']?>>
+AutoScale (
+<?=$scale_type?>
+)
+</text>
+<text
+	id="datetime" x="<?=$width*0.33?>" y="5" <?=$attribs['legend']?>>
+</text>
+<text
+	id="graphlast" x="<?=$width*0.55?>" y="17" <?=$attribs['legend']?>>
+Graph shows last
+<?=$time_interval*$nb_plot?>
+seconds
+</text>
+<polygon
+	id="axis_arrow_x" <?=$attribs['axis']?>
+	points="<?=($width) . "," . ($height)?> <?=($width-2) . "," . ($height-2)?> <?=($width-2) . "," . $height?>" />
+<text id="error"
+	x="<?=$width*0.5?>" y="<?=$height*0.5?>" visibility="hidden"
+	<?=$attribs['error']?> text-anchor="middle">
+	<?=$error_text?>
+</text>
+<text id="collect_initial" x="<?=$width*0.5?>"
+	y="<?=$height*0.5?>" visibility="hidden"
+	<?=$attribs['collect_initial']?> text-anchor="middle">
+Collecting initial data, please wait...
+</text>
+</g>
+<script type="text/ecmascript">
     <![CDATA[
 
 /**

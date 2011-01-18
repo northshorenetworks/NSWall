@@ -1,34 +1,34 @@
 #!/bin/php -f
 <?php
 /*
-	$Id: graph_cpu.php,v 1.1.1.1 2008/08/01 07:56:20 root Exp $
-	part of m0n0wall (http://m0n0.ch/wall)
-	
-	Copyright (C) 2004-2005 T. Lechat <dev@lechat.org>, Manuel Kasper <mk@neon1.net>
-	and Jonathan Watt <jwatt@jwatt.org>.
-	All rights reserved.
-	
-	Redistribution and use in source and binary forms, with or without
-	modification, are permitted provided that the following conditions are met:
-	
-	1. Redistributions of source code must retain the above copyright notice,
-	   this list of conditions and the following disclaimer.
-	
-	2. Redistributions in binary form must reproduce the above copyright
-	   notice, this list of conditions and the following disclaimer in the
-	   documentation and/or other materials provided with the distribution.
-	
-	THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
-	INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
-	AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
-	AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
-	OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
-	SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-	INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
-	CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-	ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-	POSSIBILITY OF SUCH DAMAGE.
-*/
+ $Id: graph_cpu.php,v 1.1.1.1 2008/08/01 07:56:20 root Exp $
+ part of m0n0wall (http://m0n0.ch/wall)
+
+ Copyright (C) 2004-2005 T. Lechat <dev@lechat.org>, Manuel Kasper <mk@neon1.net>
+ and Jonathan Watt <jwatt@jwatt.org>.
+ All rights reserved.
+
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions are met:
+
+ 1. Redistributions of source code must retain the above copyright notice,
+ this list of conditions and the following disclaimer.
+
+ 2. Redistributions in binary form must reproduce the above copyright
+ notice, this list of conditions and the following disclaimer in the
+ documentation and/or other materials provided with the distribution.
+
+ THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
+ INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
+ AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+ AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
+ OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ POSSIBILITY OF SUCH DAMAGE.
+ */
 
 header("Content-type: image/svg+xml");
 
@@ -52,22 +52,52 @@ $width=200;   // SVG internal width  : do not modify
 
 /********* Graph DATA **************/
 print('<?xml version="1.0" encoding="iso-8859-1"?>' . "\n");?>
-<svg width="100%" height="100%" viewBox="0 0 <?=$width?> <?=$height?>" preserveAspectRatio="none" xml:space="preserve" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" onload="init(evt);">
-  <g id="graph">
-    <rect id="bg" x1="0" y1="0" width="100%" height="100%" fill="white"/>
-    <line id="axis_x" x1="0" y1="0" x2="0" y2="100%" <?=$attribs['axis']?>/>
-    <line id="axis_y" x1="0" y1="100%" x2="100%" y2="100%" <?=$attribs['axis']?>/>
-    <polygon id="axis_arrow_x" <?=$attribs['axis']?> points="<?=($width) . "," . ($height)?> <?=($width-2) . "," . ($height-2)?> <?=($width-2) . "," . $height?>"/>
-    <path id="graph_cpu" d="" <?=$attribs['graph_cpu']?>/>
-    <path id="grid" d="M0 <?=$height/4*1?> L <?=$width?> <?=$height/4*1?> M0 <?=$height/4*2?> L <?=$width?> <?=$height/4*2?> M0 <?=$height/4*3?> L <?=$width?> <?=$height/4*3?>" <?=$attribs['grid']?>/>
-    <text id="grid_txt1" x="100%" y="25%" <?=$attribs['grid_txt']?> text-anchor="end">75%</text>
-    <text id="grid_txt2" x="100%" y="50%" <?=$attribs['grid_txt']?> text-anchor="end">50%</text>
-    <text id="grid_txt3" x="100%" y="75%" <?=$attribs['grid_txt']?> text-anchor="end">25%</text>
-    <text id="graph_cpu_txt" x="4" y="8" <?=$attribs['cpu']?>> </text>
-    <text id="error" x="50%" y="50%"  visibility="hidden" <?=$attribs['error']?> text-anchor="middle">Cannot get CPU load</text>
-    <text id="collect_initial" x="50%" y="50%"  visibility="hidden" <?=$attribs['collect_initial']?> text-anchor="middle">Collecting initial data, please wait...</text>
-  </g>
-  <script type="text/ecmascript">
+<svg
+	width="100%" height="100%" viewBox="0 0 <?=$width?> <?=$height?>"
+	preserveAspectRatio="none" xml:space="preserve"
+	xmlns="http://www.w3.org/2000/svg"
+	xmlns:xlink="http://www.w3.org/1999/xlink" onload="init(evt);">
+<g id="graph">
+<rect
+	id="bg" x1="0" y1="0" width="100%" height="100%" fill="white" />
+<line
+	id="axis_x" x1="0" y1="0" x2="0" y2="100%" <?=$attribs['axis']?> />
+<line
+	id="axis_y" x1="0" y1="100%" x2="100%" y2="100%" <?=$attribs['axis']?> />
+<polygon
+	id="axis_arrow_x" <?=$attribs['axis']?>
+	points="<?=($width) . "," . ($height)?> <?=($width-2) . "," . ($height-2)?> <?=($width-2) . "," . $height?>" />
+<path id="graph_cpu"
+	d="" <?=$attribs['graph_cpu']?> />
+<path id="grid"
+	d="M0 <?=$height/4*1?> L <?=$width?> <?=$height/4*1?> M0 <?=$height/4*2?> L <?=$width?> <?=$height/4*2?> M0 <?=$height/4*3?> L <?=$width?> <?=$height/4*3?>"
+	<?=$attribs['grid']?> />
+<text id="grid_txt1" x="100%" y="25%"
+<?=$attribs['grid_txt']?> text-anchor="end">
+75%
+</text>
+<text id="grid_txt2" x="100%" y="50%"
+<?=$attribs['grid_txt']?> text-anchor="end">
+50%
+</text>
+<text id="grid_txt3" x="100%" y="75%"
+<?=$attribs['grid_txt']?> text-anchor="end">
+25%
+</text>
+<text
+	id="graph_cpu_txt" x="4" y="8" <?=$attribs['cpu']?>>
+</text>
+<text id="error" x="50%" y="50%"
+	visibility="hidden" <?=$attribs['error']?> text-anchor="middle">
+Cannot get CPU load
+</text>
+<text
+	id="collect_initial" x="50%" y="50%" visibility="hidden"
+	<?=$attribs['collect_initial']?> text-anchor="middle">
+Collecting initial data, please wait...
+</text>
+</g>
+<script type="text/ecmascript">
     <![CDATA[
 
 /**

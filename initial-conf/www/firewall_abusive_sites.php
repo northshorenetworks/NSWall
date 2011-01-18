@@ -1,7 +1,7 @@
 #!/bin/php
 <?php
 $pgtitle = array("Firewall", "Abusive Sites");
- 
+
 require("guiconfig.inc");
 include("ns-begin.inc");
 
@@ -10,7 +10,7 @@ $a_blockedsites = &$config['filter']['blockedsites'];
 $pconfig['memberlist'] = $a_blockedsites['memberlist'];
 $pconfig['nonmemberlist'] = $a_blockedsites['nonmemberlist'];
 $pconfig['dynamictimeout'] = $a_blockedsites['dynamictimeout'];
-?> 
+?>
 
 <script type="text/javascript">
 // when a user changes the type of memeber, change the related div to sytle = display: block and hide all others
@@ -141,81 +141,67 @@ $(document).ready(function() {
      });
   
 });
-</script> 
+</script>
 
 <div id="wrapper">
-        <div class="form-container ui-tabs ui-widget ui-corner-all">
+<div class="form-container ui-tabs ui-widget ui-corner-all">
 
-    <form action="forms/firewall_form_submit.php" method="post" name="iform" id="iform">
-        <input name="formname" type="hidden" value="firewall_blockedsites">
-    <input name="id" type="hidden" value="<?=$id;?>">
-    <fieldset>
-        <legend><?=join(": ", $pgtitle);?></legend>
-                      <div>
-                             <label for="members">Blocked Sites</label>
-                             <select name="MEMBERS" style="width: 160px; height: 100px" id="MEMBERS" multiple>
-        <?php for ($i = 0; $i<sizeof($pconfig['memberlist']); $i++): ?>
-                <option value="<?=$pconfig['memberlist']["member$i"];?>">
-                <?=$pconfig['memberlist']["member$i"];?>
-                </option>
-                <?php endfor; ?>
-        </select>
-                <input type=button id='remove' value='Remove Selected'><br><br>
-                  <label for="members">Type</label>
-                    <select name="srctype" class="formfld" id="srctype">
-                      <option value="srchostdiv" selected>Host</option>
-                      <option value="srcnetdiv" >Network</option>
-                      <option value="srcblockedsitesdiv" >Alias</option>
-                      <option value="srcuserdiv" >User</option>
-                    </select>
-                </div>
-                <div id='srchostdiv' style="display:block;">
-                 <label for="srchost">Address</label>
-                  <input name="srchost" type="text" class="formfld" id="srchost" size="16" value="<?=htmlspecialchars($pconfig['address']);?>">
-                <input type=button id='hostaddbutton' value='Add'>
-                </div>
-                <div id='srcnetdiv' style="display:none;">
-                 <label for="srcnet">Address</label>
-                  <input name="srcnet" type="text" class="formfld" id="srcnet" size="16" value="<?=htmlspecialchars($pconfig['address']);?>">
-                   <strong>/</strong>
-                    <select name="srcmask" class="formfld" id="srcmask">
-                      <?php for ($i = 30; $i >= 1; $i--): ?>
-                      <option value="<?=$i;?>" <?php if ($i == $pconfig['address_subnet']) echo "selected"; ?>>
-                      <?=$i;?>
-                      </option>
-                      <?php endfor; ?>
-                    </select>
-                <input type=button id='netaddbutton' value='Add'>
-                </div>
-                <div id='srcblockedsitesdiv' style="display:none;">
-                 <label for="srcblockedsites">Table</label>
-                    <select name="srcblockedsites" class="formfld" id="srcblockedsites">
-                      <?php foreach($config['blockedsiteses']['blockedsites'] as $i): ?>
-                      <option value="<?='$' . $i['name'];?>" <?php if ($i == $pconfig['address_subnet']) echo "selected"; ?>>
-                        <?=$i['name'];?>
-                      </option>
-                      <?php endforeach; ?>
-                    </select>
-                <input type=button value='Add'>
-                </div>
-                <div id='srcuser' style="display:none;">
-                <strong>User</strong>
-                    <select name="srcuser" class="formfld" id="srcuser">
-                      <?php foreach($config['system']['accounts']['user'] as $i): ?>
-                      <option value="<?=$i['name'];?>">
-                        <?=$i['name'];?>
-                      </option>
-                      <?php endforeach; ?>
-                    </select>
-                <input type=button value='Add'>
-                </div>
-    </fieldset>
-    
-    <div class="buttonrow">
-        <input type="submit" id="submitbutton" value="Save" class="button" />
-    </div>
+<form action="forms/firewall_form_submit.php" method="post" name="iform"
+	id="iform"><input name="formname" type="hidden"
+	value="firewall_blockedsites"> <input name="id" type="hidden"
+	value="<?=$id;?>">
+<fieldset><legend><?=join(": ", $pgtitle);?></legend>
+<div><label for="members">Blocked Sites</label> <select name="MEMBERS"
+	style="width: 160px; height: 100px" id="MEMBERS" multiple>
+	<?php for ($i = 0; $i<sizeof($pconfig['memberlist']); $i++): ?>
+	<option value="<?=$pconfig['memberlist']["member$i"];?>"><?=$pconfig['memberlist']["member$i"];?>
+	</option>
+	<?php endfor; ?>
+</select> <input type=button id='remove' value='Remove Selected'><br>
+<br>
+<label for="members">Type</label> <select name="srctype" class="formfld"
+	id="srctype">
+	<option value="srchostdiv" selected>Host</option>
+	<option value="srcnetdiv">Network</option>
+	<option value="srcblockedsitesdiv">Alias</option>
+	<option value="srcuserdiv">User</option>
+</select></div>
+<div id='srchostdiv' style="display: block;"><label for="srchost">Address</label>
+<input name="srchost" type="text" class="formfld" id="srchost" size="16"
+	value="<?=htmlspecialchars($pconfig['address']);?>"> <input type=button
+	id='hostaddbutton' value='Add'></div>
+<div id='srcnetdiv' style="display: none;"><label for="srcnet">Address</label>
+<input name="srcnet" type="text" class="formfld" id="srcnet" size="16"
+	value="<?=htmlspecialchars($pconfig['address']);?>"> <strong>/</strong>
+<select name="srcmask" class="formfld" id="srcmask">
+<?php for ($i = 30; $i >= 1; $i--): ?>
+	<option value="<?=$i;?>"
+	<?php if ($i == $pconfig['address_subnet']) echo "selected"; ?>><?=$i;?>
+	</option>
+	<?php endfor; ?>
+</select> <input type=button id='netaddbutton' value='Add'></div>
+<div id='srcblockedsitesdiv' style="display: none;"><label
+	for="srcblockedsites">Table</label> <select name="srcblockedsites"
+	class="formfld" id="srcblockedsites">
+	<?php foreach($config['blockedsiteses']['blockedsites'] as $i): ?>
+	<option value="<?='$' . $i['name'];?>"
+	<?php if ($i == $pconfig['address_subnet']) echo "selected"; ?>><?=$i['name'];?>
+	</option>
+	<?php endforeach; ?>
+</select> <input type=button value='Add'></div>
+<div id='srcuser' style="display: none;"><strong>User</strong> <select
+	name="srcuser" class="formfld" id="srcuser">
+	<?php foreach($config['system']['accounts']['user'] as $i): ?>
+	<option value="<?=$i['name'];?>"><?=$i['name'];?></option>
+	<?php endforeach; ?>
+</select> <input type=button value='Add'></div>
+</fieldset>
 
-    </form>
-    
-    </div><!-- /form-container -->
-</div><!-- /wrapper -->
+<div class="buttonrow"><input type="submit" id="submitbutton"
+	value="Save" class="button" /></div>
+
+</form>
+
+</div>
+<!-- /form-container --></div>
+<!-- /wrapper -->

@@ -1,22 +1,56 @@
-#!/bin/php  
-<?php   
-$pgtitle = array("Firewall", "Aliases");      
-require("guiconfig.inc");      
-include("ns-begin.inc");       
-if (!is_array($config['aliases']['alias'])) {      
-    $config['aliases']['alias'] = array();      
-}      
-$a_alias = &$config['aliases']['alias'];      
-aliases_sort();   
+#!/bin/php
+<?php
+$pgtitle = array("Firewall", "Aliases");
+require("guiconfig.inc");
+include("ns-begin.inc");
+if (!is_array($config['aliases']['alias'])) {
+	$config['aliases']['alias'] = array();
+}
+$a_alias = &$config['aliases']['alias'];
+aliases_sort();
 ?>
 
 <style type="text/css">
-    #aliassortable { list-style-type: none; margin: auto auto 1em; padding: 0; width: 95%; }
-    #aliassortable li { padding: 0.1em; margin-left: 0; padding-left: 1em; font-size: 1.4em; height: 18px; border:1px solid #E4E4E4;  font-size:1em; }
-    #aliassortable li span.col1 { position:relative; float:left; width:5%; }
-    #aliassortable li span.col2 { position:relative; float:left; width:5%; }
-    #aliassortable li span.col3 { position:relative; float:left; width:15%; }
-    #aliassortable li span.col4 { position:relative; float:left; width:50%; }
+#aliassortable {
+	list-style-type: none;
+	margin: auto auto 1em;
+	padding: 0;
+	width: 95%;
+}
+
+#aliassortable li {
+	padding: 0.1em;
+	margin-left: 0;
+	padding-left: 1em;
+	font-size: 1.4em;
+	height: 18px;
+	border: 1px solid #E4E4E4;
+	font-size: 1em;
+}
+
+#aliassortable li span.col1 {
+	position: relative;
+	float: left;
+	width: 5%;
+}
+
+#aliassortable li span.col2 {
+	position: relative;
+	float: left;
+	width: 5%;
+}
+
+#aliassortable li span.col3 {
+	position: relative;
+	float: left;
+	width: 15%;
+}
+
+#aliassortable li span.col4 {
+	position: relative;
+	float: left;
+	width: 50%;
+}
 </style>
 
 <script type="text/javascript">
@@ -58,29 +92,24 @@ $(".col2 a").click(function () {
 
 <div class="demo">
 <ul id="aliassortable">
-<li id="element_<?=$i;?>" class="connectedSortable ui-state-disabled">
-<span class="col1">Edit</span>
-<span class="col2">Delete</span>
-<span class="col3">Name</span>
-<span class="col4">Description</span>
-</li>
-<?php $nrules = 0; for ($i = 0; isset($a_alias[$i]); $i++):
-$aliasent = $a_alias[$i]; ?>
-<li id="listItem_<?=$i;?>">
-<n class="col1">
-<a href="firewall_aliases_edit.php?id=<?=$i;?>">
-<span title="edit this rule" class="ui-icon ui-icon-circle-zoomin"></span>
-</a>
-</span>/span>
-<span class="col2">
-<a href="forms/firewall_form_submit.php?id=<?=$i;?>&action=delete&type=alias">
-<span title="delete this rule" class="ui-icon ui-icon-circle-close"></span>
-</a>
-</span>
-<span class="col3"><?php if (isset($aliasent['name'])) echo strtoupper($aliasent['name']); else echo "*"; ?><?=$textse;?></span>
-<span class="col4"><?php if (isset($aliasent['descr'])) echo $aliasent['descr'];?></span>
-</li>
-<?php $nrules++; endfor; ?>
+	<li id="element_<?=$i;?>" class="connectedSortable ui-state-disabled">
+	<span class="col1">Edit</span> <span class="col2">Delete</span> <span
+		class="col3">Name</span> <span class="col4">Description</span></li>
+		<?php $nrules = 0; for ($i = 0; isset($a_alias[$i]); $i++):
+		$aliasent = $a_alias[$i]; ?>
+	<li id="listItem_<?=$i;?>"><n class="col1"> <a
+		href="firewall_aliases_edit.php?id=<?=$i;?>"> <span
+		title="edit this rule" class="ui-icon ui-icon-circle-zoomin"></span> </a>
+	</span>/span> <span class="col2"> <a
+		href="forms/firewall_form_submit.php?id=<?=$i;?>&action=delete&type=alias">
+	<span title="delete this rule" class="ui-icon ui-icon-circle-close"></span>
+	</a> </span> <span class="col3"><?php if (isset($aliasent['name'])) echo strtoupper($aliasent['name']); else echo "*"; ?><?=$textse;?></span>
+	<span class="col4"><?php if (isset($aliasent['descr'])) echo $aliasent['descr'];?></span>
+	</li>
+	<?php $nrules++; endfor; ?>
 </ul>
-<div id="newrule"><center><a href="firewall_carp_sync_hosts_edit.php"><span title="add a new alias" class="ui-icon ui-icon-circle-plus"></span></a></center></div>
+<div id="newrule">
+<center><a href="firewall_carp_sync_hosts_edit.php"><span
+	title="add a new alias" class="ui-icon ui-icon-circle-plus"></span></a></center>
+</div>
 </div>

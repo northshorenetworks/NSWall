@@ -14,24 +14,24 @@
 		<lan>
 			<ipaddr>192.168.254.1</ipaddr>
 			<subnet>24</subnet>
-			<media/>
-			<mediaopt/>
+			<media />
+			<mediaopt />
 		</lan>
 		<wan>
-			<mtu/>
+			<mtu />
 			<ipaddr>dhcp</ipaddr>
-			<subnet/>
-			<gateway/>
-			<dhcphostname/>
-			<media/>
-			<mediaopt/>
+			<subnet />
+			<gateway />
+			<dhcphostname />
+			<media />
+			<mediaopt />
 		</wan>
 	</interfaces>
 	<pptp>
 		<client>
-			<server/>
-			<username/>
-			<password/>
+			<server />
+			<username />
+			<password />
 			<routelist>
 				<route0>192.168.0.0/24</route0>
 				<route1>10.0.0.0/8</route1>
@@ -41,61 +41,61 @@
 	</pptp>
 	<dhcpd>
 		<lan>
-			<gateway/>
+			<gateway />
 			<range>
 				<from>192.168.254.100</from>
 				<to>192.168.254.199</to>
 			</range>
-			<defaultleasetime/>
-			<maxleasetime/>
-			<enable/>
+			<defaultleasetime />
+			<maxleasetime />
+			<enable />
 		</lan>
 	</dhcpd>
 	<dnsmasq>
-		<enable/>
+		<enable />
 	</dnsmasq>
-	<syslog/>
+	<syslog />
 	<nat>
 		<advancedoutbound>
 			<rule>
 				<source>
 					<network>192.168.0.0/16</network>
 				</source>
-				<descr/>
-				<target/>
+				<descr />
+				<target />
 				<interface>wan</interface>
 				<destination>
-					<any/>
+					<any />
 				</destination>
 			</rule>
 			<rule>
-                                <source>
-                                        <network>172.16.0.0/12</network>
-                                </source>
-                                <descr/>
-                                <target/>
-                                <interface>wan</interface>
-                                <destination>
-                                        <any/>
-                                </destination>
-                        </rule>
+				<source>
+					<network>172.16.0.0/12</network>
+				</source>
+				<descr />
+				<target />
+				<interface>wan</interface>
+				<destination>
+					<any />
+				</destination>
+			</rule>
 			<rule>
-                                <source>
-                                        <network>10.0.0.0/8</network>
-                                </source>
-                                <descr/>
-                                <target/>
-                                <interface>wan</interface>
-                                <destination>
-                                        <any/>
-                                </destination>
-                        </rule>
+				<source>
+					<network>10.0.0.0/8</network>
+				</source>
+				<descr />
+				<target />
+				<interface>wan</interface>
+				<destination>
+					<any />
+				</destination>
+			</rule>
 		</advancedoutbound>
 	</nat>
 	<filter>
 		<rule>
 			<name>Default-Out</name>
-			<descr/>
+			<descr />
 			<type>pass</type>
 			<interface>lan</interface>
 			<srclist>
@@ -104,7 +104,7 @@
 			<dstlist>
 				<dst0>any</dst0>
 			</dstlist>
-			<log/>
+			<log />
 			<options>
 				<altqbucket>low</altqbucket>
 				<state>none</state>
@@ -113,7 +113,7 @@
 		</rule>
 		<rule>
 			<name>FTP-OUT</name>
-			<descr/>
+			<descr />
 			<type>pass</type>
 			<interface>lan</interface>
 			<srclist>
@@ -125,7 +125,7 @@
 			<tcplist>
 				<tcp0>21</tcp0>
 			</tcplist>
-			<log/>
+			<log />
 			<options>
 				<altqbucket>highest</altqbucket>
 				<state>keep state</state>
