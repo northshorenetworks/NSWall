@@ -428,8 +428,7 @@ function enablehttp(){
 </script>
 <?php if ($input_errors) print_input_errors($input_errors); ?>
 <center><id="Address">
-<form action="firewall_proxyaction_edit.php"
-	onSubmit="return prepareSubmit()" method="post" name="iform" id="iform">
+<form action="firewall_proxyaction_edit.php" onSubmit="return prepareSubmit()" method="post" name="iform" id="iform">
 <table width="175%" border="0" cellpadding="6" cellspacing="0">
 	<tr>
 		<td width="22%" valign="top" class="vncellreq">Name</td>
