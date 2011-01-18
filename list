@@ -111,7 +111,6 @@ COPY ${CURDIR}/initial-conf/license.lic conf/license.lic
 
 #SPECIAL mkdir usr/www/js
 SPECIAL mkdir ftmp
-SPECIAL cp -R -p ${CURDIR}/initial-conf/captiveportal	usr/captiveportal/
 SPECIAL chmod 633 etc/php.ini
 SPECIAL cat ${CURDIR}/initial-conf/VERSION_STAMP > 	etc/version
 SPECIAL date >						                etc/version.buildtime
