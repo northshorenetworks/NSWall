@@ -48,7 +48,7 @@ mv -f $DISTNAME.update ../../public_html/$MODULE-$DISTNAME.update.$DATETIME
 mv -f $DISTNAME.gz ../../public_html/$MODULE-$DISTNAME.image.$DATETIME
 
 # SCP and load this to a dut if we want to
-echo "scp ../../public_html/$MODULE-$DISTNAME.update.$DATETIME root@192.168.254.1:/ftmp"
-scp ../../public_html/$MODULE-$DISTNAME.update.$DATETIME root@192.168.254.1:/ftmp
-echo "ssh root@192.168.254.1 cd /ftmp; gzcat $MODULE-$DISTNAME.update.$DATETIME > /dev/sd0a; reboot"
-ssh root@192.168.254.1 "cd /ftmp; gzcat $MODULE-$DISTNAME.update.$DATETIME > /dev/sd0a; reboot"
+#echo "scp ../../public_html/$MODULE-$DISTNAME.update.$DATETIME root@192.168.254.1:/ftmp"
+#scp ../../public_html/$MODULE-$DISTNAME.update.$DATETIME root@192.168.254.1:/ftmp
+#echo "ssh root@192.168.254.1 cd /ftmp; gzcat $MODULE-$DISTNAME.update.$DATETIME > /dev/sd0a; reboot"
+#ssh root@192.168.254.1 "cd /ftmp; gzcat $MODULE-$DISTNAME.update.$DATETIME > /dev/sd0a; reboot"
