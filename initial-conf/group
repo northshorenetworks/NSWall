@@ -56,3 +56,5 @@ dialer:*:117:
 nogroup:*:32766:
 nobody:*:32767:
 _dnsmasq:*:631:
+_dansguardian:*:588:
+_squid:*:515:

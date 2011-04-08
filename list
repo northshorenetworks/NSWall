@@ -84,10 +84,12 @@ COPY    ${CURDIR}/initial-conf/boot.conf        etc/boot.conf
 
 # Monowall specifc stuff
 
+COPY    ${CURDIR}/initial-conf/php.ini                                  etc/php.ini
 COPY	${CURDIR}/initial-conf/id_rsa.pub				etc/id_rsa.pub
 COPY    ${CURDIR}/initial-conf/rc.banner				etc/rc.banner
 COPY    ${CURDIR}/initial-conf/rc.bootup				etc/rc.bootup
 COPY    ${CURDIR}/initial-conf/rc.cleanreboot			etc/rc.cleanreboot
+COPY    ${CURDIR}/initial-conf/rc.component_upgrade             etc/rc.component_upgrade
 COPY    ${CURDIR}/initial-conf/rc.dyndns.storecache     etc/rc.dyndns.storecache
 COPY    ${CURDIR}/initial-conf/rc.firmware				etc/rc.firmware
 COPY    ${CURDIR}/initial-conf/rc.initial.defaults      etc/rc.initial.defaults
@@ -99,7 +101,6 @@ COPY    ${CURDIR}/initial-conf/rc.initial.setports		etc/rc.initial.setports
 COPY    ${CURDIR}/initial-conf/rc.newwanip				etc/rc.newwanip
 COPY    ${CURDIR}/initial-conf/rc.queryconfigserver     etc/rc.queryconfigserver
 COPY    ${CURDIR}/initial-conf/rc.reboot                etc/rc.reboot
-COPY    ${CURDIR}/initial-conf/php.ini					etc/php.ini
 COPY    ${CURDIR}/initial-conf/config.xml               conf.default/config.xml
 COPY    ${CURDIR}/initial-conf/hwplatformconfig.xml     etc/hwplatformconfig.xml
 COPY	${BINDIR}/zoneinfo.tgz							usr/share/zoneinfo.tgz
@@ -109,9 +110,10 @@ COPY    ${DESTDIR}/usr/bin/nohup						usr/bin/nohup
 # directory, which has the actual license file we use to lookup values, tricky/tricky
 COPY ${CURDIR}/initial-conf/license.lic conf/license.lic
 
+
+SPECIAL chmod 633 etc/php.ini
 #SPECIAL mkdir usr/www/js
 SPECIAL mkdir ftmp
-SPECIAL chmod 633 etc/php.ini
 SPECIAL cat ${CURDIR}/initial-conf/VERSION_STAMP > 	etc/version
 SPECIAL date >						                etc/version.buildtime
 SPECIAL cat ${CURDIR}/initial-conf/BUILD_STAMP >    etc/version.build
@@ -139,7 +141,7 @@ SPECIAL mv etc/ttys.speed etc/ttys
 # Copy all the inc files, for now these will be common amoungst modules
 SPECIAL cp -R -p ${CURDIR}/initial-conf/inc             etc/inc/
 # Copy all the common www files shared between modules
-SPECIAL sh ${CURDIR}/tools/runlist.sh ${CURDIR}/list.common
+# SPECIAL sh ${CURDIR}/tools/runlist.sh ${CURDIR}/list.common
 # Additonal tools added to debug builds
 SPECIAL sh ${CURDIR}/tools/runlist.sh ${CURDIR}/list.debug
 #SPECIAL cp -R -p ${CURDIR}/initial-conf/www             usr/www/
@@ -164,8 +166,7 @@ COPY ${DESTDIR}/bin/df				bin/df
 COPY ${DESTDIR}/bin/echo			bin/echo
 COPY ${DESTDIR}/bin/ed				bin/ed
 COPY ${DESTDIR}/bin/expr			bin/expr
-COPY ${DESTDIR}/bin/hostname		bin/hostname
-COPY ${BINDIR}/ez-ipupdate          bin/ez-ipupdate
+COPY ${DESTDIR}/bin/hostname			bin/hostname
 COPY ${DESTDIR}/bin/kill			bin/kill
 COPY ${DESTDIR}/bin/ksh				bin/ksh
 COPY ${DESTDIR}/bin/ln				bin/ln
@@ -174,7 +175,7 @@ COPY ${DESTDIR}/bin/md5				bin/md5
 COPY ${DESTDIR}/bin/mkdir			bin/mkdir
 COPY ${DESTDIR}/bin/mv				bin/mv
 COPY ${DESTDIR}/bin/pax				bin/pax
-COPY ${BINDIR}/php					bin/php
+COPY ${BINDIR}/php    	                        bin/php
 COPY ${DESTDIR}/bin/ps				bin/ps
 COPY ${DESTDIR}/bin/pwd				bin/pwd
 COPY ${DESTDIR}/bin/rm				bin/rm
@@ -185,7 +186,6 @@ COPY ${DESTDIR}/bin/sync			bin/sync
 COPY ${DESTDIR}/bin/systrace			bin/systrace
 COPY ${DESTDIR}/bin/test			bin/test
 COPY ${DESTDIR}/sbin/ldconfig			sbin/ldconfig
-COPY ${DESTDIR}/sbin/dhclient			sbin/dhclient
 COPY ${DESTDIR}/sbin/dhclient-script		sbin/dhclient-script
 COPY ${DESTDIR}/sbin/dmesg			sbin/dmesg
 COPY ${DESTDIR}/sbin/fsck			sbin/fsck
@@ -209,9 +209,6 @@ COPY ${DESTDIR}/sbin/ttyflags			sbin/ttyflags
 COPY ${DESTDIR}/sbin/umount			sbin/umount
 COPY ${DESTDIR}/sbin/wpa-psk			sbin/wpa-psk
 COPY ${BINDIR}/mini_httpd			sbin/mini_httpd
-COPY ${BINDIR}/pptp				sbin/pptp
-COPY ${BINDIR}/pptpd                            usr/sbin/pptpd
-COPY ${BINDIR}/pptpctrl                         usr/local/sbin/pptpctrl
 COPY ${DESTDIR}/usr/bin/awk			usr/bin/awk
 COPY ${DESTDIR}/usr/bin/basename		usr/bin/basename
 COPY ${DESTDIR}/usr/bin/crontab			usr/bin/crontab
@@ -268,7 +265,6 @@ COPY ${DESTDIR}/usr/sbin/cron			usr/sbin/cron
 COPY ${DESTDIR}/usr/sbin/dev_mkdb		usr/sbin/dev_mkdb
 COPY ${DESTDIR}/usr/sbin/dhcpd			usr/sbin/dhcpd
 COPY ${DESTDIR}/usr/sbin/dhcrelay		usr/sbin/dhcrelay
-COPY ${BINDIR}/dnsmasq                          usr/sbin/dnsmasq
 COPY ${DESTDIR}/usr/sbin/ftp-proxy		usr/sbin/ftp-proxy
 COPY ${DESTDIR}/usr/sbin/gpioctl		usr/sbin/gpioctl
 COPY ${DESTDIR}/usr/sbin/hostapd		usr/sbin/hostapd
@@ -347,6 +343,7 @@ SPECIAL ${CURDIR}/tools/libcopy.sh ${DESTDIR} ./usr/lib bin/*
 SPECIAL ${CURDIR}/tools/libcopy.sh ${DESTDIR} ./usr/lib sbin/* 
 SPECIAL ${CURDIR}/tools/libcopy.sh ${DESTDIR} ./usr/lib usr/bin/* 
 SPECIAL ${CURDIR}/tools/libcopy.sh ${DESTDIR} ./usr/lib usr/sbin/* 
+SPECIAL ${CURDIR}/tools/libcopy.sh ${DESTDIR} ./usr/lib usr/local/sbin/*
 SPECIAL ${CURDIR}/tools/libcopy.sh ${DESTDIR} ./usr/lib usr/libexec/*
 
 # Set special permissions on some binaries

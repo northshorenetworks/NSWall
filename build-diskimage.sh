@@ -82,8 +82,6 @@ echo "16 partitions:" >> $TEMPFILE
 echo "a:        31715   $sectorstrack   4.2BSD  2048    16384   16" >> $TEMPFILE
 echo "c:        $totalsize      0       unused  0       0" >> $TEMPFILE
 echo "d:        11000   32000           4.2BSD  2048    16384   16" >> $TEMPFILE
-echo "e:        17200   43500           4.2BSD  2048    16384   16" >> $TEMPFILE
-#echo "f:        430000  52500           4.2BSD  2048    16384   16" >> $TEMPFILE
 echo ""
 echo "Installing disklabel..."
 ${SUDO} disklabel -v -R $DEVICE $TEMPFILE
@@ -93,7 +91,6 @@ echo ""
 echo "Creating new filesystem..."
 ${SUDO} newfs -q /dev/r${DEVICE}a
 ${SUDO} newfs -q /dev/r${DEVICE}d
-${SUDO} newfs -q /dev/r${DEVICE}e
 
 echo ""
 echo "Mounting destination to ${MOUNTPOINT}..."
@@ -106,12 +103,14 @@ echo "Copying bsd kernel, and boot blocks..."
 ${SUDO} cp ${DESTDIR}/usr/mdec/boot ${MOUNTPOINT}/boot
 ${SUDO} cp ${KERNELFILE} ${MOUNTPOINT}/bsd
 ${SUDO} mkdir ${MOUNTPOINT}/etc
+${SUDO} mkdir ${MOUNTPOINT}/packages
 
-#if [ ! $1 = "VMWARE" ]; then
-#${SUDO} chmod 777 /mnt/etc/ 
-#${SUDO} echo "stty com0 9600" >> ${MOUNTPOINT}/etc/boot.conf
-#${SUDO} echo "set tty com0" >> ${MOUNTPOINT}/etc/boot.conf
-#fi
+${SUDO} cp ${BASE}/packages/* ${MOUNTPOINT}/packages/
+
+${SUDO} chmod 777 /mnt/etc/ 
+${SUDO} echo "stty com0 9600" >> ${MOUNTPOINT}/etc/boot.conf
+${SUDO} echo "set tty com0" >> ${MOUNTPOINT}/etc/boot.conf
+
 echo ""
 echo "Installing boot blocks..."
 ${SUDO} /usr/mdec/installboot ${MOUNTPOINT}/boot ${DESTDIR}/usr/mdec/biosboot ${DEVICE}
@@ -140,8 +139,6 @@ ${SUDO} cp ${BASE}/initial-conf/config.xml ${MOUNTPOINT}/config.xml
 ${SUDO} cp ${BASE}/initial-conf/license.lic ${MOUNTPOINT}/license.lic
 #${SUDO} mkdir ${MOUNTPOINT}/ssh
 
-echo ""
-echo "Unmounting and Config Partition..."
 ${SUDO} umount $MOUNTPOINT
 ${SUDO} vnconfig -u $DEVICE
 

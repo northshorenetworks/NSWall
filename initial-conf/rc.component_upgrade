@@ -1,0 +1,34 @@
+#!/bin/sh
+
+# $Id: rc.pkg,v 1.1.1.1 2008/08/01 07:56:18 root Exp $
+#
+# rc.component_upgrades for handling rebootless component_upgrades
+
+	disk=`cat /etc/cfdevice` 
+
+        /sbin/mount /dev/${disk}a /flash
+        export PATH=/sbin:/usr/sbin:/bin:/usr/bin:/usr/local/bin:/usr/local/sbin:/usr/X11R6/bin:/usr/games
+
+
+        cd /
+        for pkg in /ftmp/*.tgz ; do
+                if [ -r $pkg ]; then
+                        /bin/md5 -q $pkg > /tmp/components/${pkg##*/}
+                        /bin/ls -lT $pkg | /usr/bin/awk '{ print $6, $7, $8, $9}' >> /tmp/components/${pkg##*/}
+                        logger "Unpacking package ${pkg} from flash... "
+                        /bin/cpio -iduz -H tar -f \
+                                "share/examples/*" \
+                                "share/doc/*" \
+                                "include/*" \
+                                "man/*" \
+                                "+*" \
+                                < $pkg 2>/dev/null
+                        logger "Saving package update file ${pkg} to flash... "
+                        /bin/mv ${pkg} /flash/packages/
+                fi
+        done
+
+        /sbin/umount /flash
+        /sbin/ldconfig /usr/local/lib
+
+

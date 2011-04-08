@@ -142,9 +142,10 @@ scsibus* at mpi?
 sd* at scsibus?     # SCSI disk drives
 
 # Networking devices
-vr*	at pci?				# VIA Rhine ethernet
+vr* at pci?				# VIA Rhine ethernet
 ne* at pci?             # RealTek 81[23]9 ethernet (for qemu tests)
 re* at pci?				# Realtek driver for Gbe nics
+rl* at pci?                         # RealTek 81[23]9 ethernet
 vic*    at pci?         # VMWARE VMNET Ethernet
 em* at pci?             # Intel Pro/1000 ethernet
 # Wireless network cards

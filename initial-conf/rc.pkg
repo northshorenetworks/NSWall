@@ -2,29 +2,35 @@
 #
 # rc.pkg for handling packages
 
-if [ X"${usrlocal_size}" != X"NO" ]; then
-	echo "Creating /usr/local filesystem..."
-	mkdir -p /usr/local
-	if ! mount_mfs -s ${usrlocal_size} swap /usr/local ; then
-		echo "Mount /usr/local failed"
-		exit 1
-	fi
+        export PATH=/sbin:/usr/sbin:/bin:/usr/bin:/usr/local/bin:/usr/local/sbin:/usr/X11R6/bin:/usr/games
 
-	echo "Unpacking packages..."
-	cd /usr/local
-	for pkg in /flash/pkg/*.tgz ; do
-		if [ -r $pkg ]; then
-			echo -n "Unpacking package ${pkg} from flash... "
-			cpio -idz -H tar -f \
-				"share/examples/*" \
-				"share/doc/*" \
-				"include/*" \
-				"man/*" \
-				"+*" \
-				< $pkg 2>/dev/null
-			echo "done"
-		fi
-	done
+        /bin/mkdir -p /usr/local
+        /bin/mkdir -p /tmp/components
 
-	/sbin/ldconfig /usr/local/lib
-fi
+        if ! /sbin/mount_mfs -s 21000 -T rdroot -b 8192 -f 1024 dummy /usr/local ; then
+                echo "Mount /usr/local failed"
+                #exit 1
+        fi
+
+        echo "Unpacking packages..."
+        cd /
+        for pkg in /flash/packages/*.tgz ; do
+                if [ -r $pkg ]; then
+                        /bin/md5 -q $pkg >> /tmp/components/${pkg##*/}
+                        /bin/ls -lT $pkg | /usr/bin/awk '{ print $6, $7, $8, $9}' >> /tmp/components/${pkg##*/}
+                        echo -n "Unpacking package ${pkg} from flash... "
+                        /bin/cpio -idz -H tar -f \
+                                "share/examples/*" \
+                                "share/doc/*" \
+                                "include/*" \
+                                "man/*" \
+                                "+*" \
+                                < $pkg 2>/dev/null
+                        echo "done"
+                fi
+        done
+
+        /sbin/ldconfig /usr/local/lib
+
+        /sbin/umount /flash
+

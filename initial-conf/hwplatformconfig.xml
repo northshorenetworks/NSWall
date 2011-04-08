@@ -48,18 +48,32 @@
 			</opt2>
 		</interfaces>
 	</jetway>
-	<nick>
+	<wj200>
+                <interfaces>
+                        <wan>rl1</wan>
+                        <lan>rl0</lan>
+                        <opt1>
+                                <if>rl2</if>
+                                <descr>PEER</descr>
+                        </opt1>
+                        <opt2>
+                                <if>rl3</if>
+                                <descr>MGMT</descr>
+                        </opt2>
+                </interfaces>
+        </wj200>
+	<portwell>
 		<interfaces>
-			<wan>xl0</wan>
-			<lan>fxp0</lan>
+			<wan>em2/wan>
+			<lan>em3</lan>
 			<opt1>
-				<if>xl1</if>
-				<descr>WAN_2</descr>
+				<if>em1</if>
+				<descr>PEER</descr>
 			</opt1>
 			<opt2>
-				<if>xl2</if>
-				<descr>LAN_2</descr>
+				<if>em0</if>
+				<descr>MGMT</descr>
 			</opt2>
 		</interfaces>
-	</nick>
+	</portwell>
 </nswall>

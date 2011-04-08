@@ -38,7 +38,6 @@ require_once("filter.inc");
 require_once("vpn.inc");
 require_once("relay.inc");
 require_once("config_sync.inc");
-require_once("captiveportal.inc");
 require_once("util.inc");
 require_once("certs.inc");
 ?>

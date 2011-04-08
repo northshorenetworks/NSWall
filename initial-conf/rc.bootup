@@ -23,7 +23,7 @@ CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 */
- 
+
 require_once("globals.inc");
 require_once("util.inc");
  
@@ -32,10 +32,14 @@ mwexec("/sbin/mount /dev/rd0a /");
 /* let the other functions know we're booting */
 $g['booting'] = TRUE;
 touch("{$g['varrun_path']}/booting");
- 
+
 require_once("config.inc");
+
+/* expand all packages */
+exec("/bin/sh /etc/rc.pkg");
+
 require_once("functions.inc");
- 
+
 /* tell us what module we are running */
 echo "Configuring System for Module: " . $g['module'] . "\n";
  
@@ -158,6 +162,8 @@ services_dhcrelay_configure();
 /* start BGPD service */
 services_bgpd_configure();
 
+/* start Squid Service */
+services_squid_configure();
 }
  
 /* start SNMP service */
@@ -181,9 +187,7 @@ vpn_pptpd_configure();
  
 /* start IPsec tunnels */
 vpn_ipsec_configure();
- 
-/* start the captive portal */
-captiveportal_configure();
+
 }
  
 /* start the cron service */

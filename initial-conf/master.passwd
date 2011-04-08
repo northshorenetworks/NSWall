@@ -36,4 +36,6 @@ _relayd:*:89:89::0:0:Relay Daemon:/var/empty:/sbin/nologin
 _symon:*************:1000:10:daemon:0:0:symon Account:/var/empty:/sbin/nologin
 _dnsmasq:*************:631:631:daemon:0:0:dnsmasq Account:/nonexistent:/sbin/nologin
 _iked:*:101:101::0:0:IKEv2 Daemon:/var/empty:/sbin/nologin
+_dansguardian:*************:588:588:daemon:0:0:DansGuardian:/nonexistent:/sbin/nologin
+_squid:*************:515:515:daemon:0:0:Squid Account:/nonexistent:/sbin/nologin
 nobody:*:32767:32767::0:0:Unprivileged user:/nonexistent:/sbin/nologin

@@ -257,7 +257,7 @@ int main(int argc, char *argv[]) {
 	char				*cl, *rm;
 
 	printf("%s\n",cl);	
-	printf("Content-Type: text/plain\n\n");
+	//printf("Content-Type: text/plain\n\n");
 	
 	rm = getenv("REQUEST_METHOD");
 	if (rm == NULL)

@@ -449,7 +449,7 @@ function system_webgui_start() {
 
 	if ($g['booting']) {
 		echo "Starting webGUI... ";
-		mwexec("/bin/ln -s /tmp/debug/ /usr/www/debug");
+		mwexec("/bin/ln -s /tmp/debug/ /usr/local/var/www/debug");
 	}
 
 	/* kill any running mini_httpd */

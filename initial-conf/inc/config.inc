@@ -57,10 +57,14 @@ if ($cpufeature[0] == 'machdep.cpufeature=125938685') {
 	$fh = fopen('/etc/hwplatform', 'w+');
 	fwrite($fh, 'ALIX');
 	fclose($fh);
-} elseif ($cpufeature[0] == 'machdep.cpufeature=58980863') {
-	$fh = fopen('/etc/hwplatform', 'w+');
-	fwrite($fh, 'NICK');
-	fclose($fh);
+} elseif ($cpufeature[0] == 'machdep.cpufeature=-1075053569') {
+        $fh = fopen('/etc/hwplatform', 'w+');
+        fwrite($fh, 'PORTWELL');
+        fclose($fh);
+} elseif ($cpufeature[0] == 'machdep.cpufeature=58832959') {
+        $fh = fopen('/etc/hwplatform', 'w+');
+        fwrite($fh, 'WJ200');
+        fclose($fh);
 } else {
 	$fh = fopen('/etc/hwplatform', 'w+');
 	fwrite($fh, 'VMWARE');
@@ -140,6 +144,7 @@ EOD;
 		$fd = fopen("{$g['etc_path']}/fstab", "w");
 
 		$fstab = "/dev/{$cfgpartition} {$g['cf_path']} {$cfgfstype} ro,sync,noatime 0 1\n";
+	 	$fstab .= "/dev/$cfgdevice" . "a /flash {$cfgfstype} ro,sync,noatime 0 1\n";	
 		$fstab .= "/dev/rd0a / {$cfgfstype}  rw 0 0\n";
 
 		fwrite($fd, $fstab);
