@@ -254,16 +254,27 @@ if ($_POST) {
 				$config['syslog']['enable'] = $_POST['syslogenabled'] ? true : false;
 
 				write_config();
-
-				$retval = 0;
-				if (!file_exists($d_sysrebootreqd_path)) {
-					config_lock();
-					$retval = system_syslogd_start();
-					config_unlock();
-				}
-				$savemsg = get_std_save_message($retval);
 			}
-			return $retval;
+			$retval = 0;
+			if (!file_exists($d_sysrebootreqd_path)) {
+				config_lock();
+				$retval = system_syslogd_start();
+				config_unlock();
+			}
+			$savemsg = get_std_save_message($retval);
+		 	if ($retval == 0) {
+                                sleep(2);
+                                echo '<!-- SUBMITSUCCESS --><center>Configuration saved successfully</center>';
+                        } else {
+                                print_input_errors($input_errors);
+                                echo '<script type="text/javascript">
+                                        $("#okbtn").click(function () {
+                                            $("#save_config").dialog("close");
+                                        });
+                                        </script>';
+                                echo '<INPUT TYPE="button" value="OK" id="okbtn"></center>';
+                        }
+                        return $retval;	
 		case "system_route_table":
 			unset($input_errors);
 
