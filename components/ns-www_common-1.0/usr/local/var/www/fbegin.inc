@@ -95,7 +95,10 @@ $menu['Firewall']['Rules'] = array('#firewall_rules_tabs');
 
 if ($g['module'] == 'FIREWALL') {
 	$menu['Services']['DNS forwarder'] = array('#services_dnsmasq');
-	$menu['Services']['Dynamic DNS'] = array('3services_dyndns');
+	$menu['Services']['Dynamic DNS'] = array('#services_dyndns');
+}
+if (file_exists('/usr/local/var/www/services_snmp.php')) {
+	$menu['Services']['SNMP Daemon'] = array('#services_snmp');
 }
 $menu['Services']['CARP'] = array('#services_carp');
 $menu['Services']['OpenBGPd'] = array('#services_bgpd');
