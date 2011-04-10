@@ -36,9 +36,9 @@ $(document).ready(function() {
 	id="iform"><input name="formname" type="hidden" value="system_syslog">
 
 <fieldset><legend><?=join(": ", $pgtitle);?></legend>
-<div><label for="syslogenabled">Enable Remote Syslog</label> <input
-	id="syslogenabled" type="checkbox" name="syslogenabled"
-	value="<?php if ($pconfig['syslogenabled']) echo "checked"; ?>" />
+<div><label for="syslogenabled">Enable remote Syslog</label> <input name="syslogenabled"
+        type="checkbox" id="syslogenabled" value="Yes"
+        <?php if ($pconfig['enable']) echo "checked"; ?>>
 <p class="note">Enable sending syslog messages to remote server.</p>
 </div>
 <div><label for="remoteserver">Syslog Server</label> <input
@@ -54,4 +54,3 @@ $(document).ready(function() {
 </div>
 <!-- /form-container --></div>
 <!-- /wrapper -->
-
