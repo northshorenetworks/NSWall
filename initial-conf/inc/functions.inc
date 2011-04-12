@@ -29,15 +29,11 @@
  */
 
 /* include all configuration functions */
-require_once("globals.inc");
-require_once("config.inc");
-require_once("system.inc");
-require_once("interfaces.inc");
-require_once("services.inc");
-require_once("filter.inc");
-require_once("vpn.inc");
-require_once("relay.inc");
-require_once("config_sync.inc");
-require_once("util.inc");
-require_once("certs.inc");
+$dir = opendir ("/etc/inc/");
+while (false !== ($file = readdir($dir))) {
+    if (preg_match('/.inc$/', $file) && ($file != 'functions.inc') ) {
+         require_once($file);
+    }
+}
+
 ?>
