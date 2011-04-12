@@ -51,7 +51,7 @@ function services_snmpd_configure() {
 
 		$snmpdconf = <<<EOD
 
-listen_addr="127.0.0.1"
+listen_addr="0.0.0.0"
 
 # Restrict daemon to listen on localhost only
 listen on \$listen_addr
