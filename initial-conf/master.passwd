@@ -33,6 +33,7 @@ _ntp:*:83:83::0:0:NTP Daemon:/var/empty:/sbin/nologin
 _ftp:*:84:84::0:0:FTP Daemon:/var/empty:/sbin/nologin
 _ospfd:*:85:85::0:0:OSPF Daemon:/var/empty:/sbin/nologin
 _relayd:*:89:89::0:0:Relay Daemon:/var/empty:/sbin/nologin
+_snmpd:*:91:91::0:0:SNMP Daemon:/var/empty:/sbin/nologin
 _symon:*************:1000:10:daemon:0:0:symon Account:/var/empty:/sbin/nologin
 _dnsmasq:*************:631:631:daemon:0:0:dnsmasq Account:/nonexistent:/sbin/nologin
 _iked:*:101:101::0:0:IKEv2 Daemon:/var/empty:/sbin/nologin

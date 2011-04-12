@@ -76,6 +76,7 @@ function filter_print_pfconf() {
 function filter_generate_multiwan_interfaces() {
 	global $config, $g;
 	system_determine_hwplatform();
+	if (isset($config['system']['advanced']['multiwansupport']) && sg_get_const("ENTERPRISE_ROUTING") == 'ENABLED') {
 		$wanifs = array();
 		array_push($wanifs, get_real_wan_interface());
 		for ($i = 1; isset($config['interfaces']['opt' . $i]); $i++) {
@@ -86,6 +87,7 @@ function filter_generate_multiwan_interfaces() {
 				}
 			}
 		}
+	}
 	return $wanifs;
 }
 
@@ -613,7 +615,7 @@ function filter_options_generate() {
 	if (isset($config['filter']['options']['timeouts']['udpsingle']))
 	$pfglobals .= "set timeout udp.single " . $config['filter']['options']['timeouts']['udpsingle'] . "\n";
 	if (isset($config['filter']['options']['timeouts']['udpmultiple']))
-        $pfglobals .= "set timeout udp.multiple " . $config['filter']['options']['timeouts']['udpmultiple'] . "\n";
+	$pfglobals .= "set timeout udp.multiple " . $config['filter']['options']['timeouts']['udpmultiple'] . "\n";
         if (isset($config['filter']['options']['timeouts']['icmpfirst']))
 	$pfglobals .= "set timeout icmp.first " . $config['filter']['options']['timeouts']['icmpfirst'] . "\n";
 	if (isset($config['filter']['options']['timeouts']['icmperror']))
@@ -849,7 +851,7 @@ anchor "default" {
 EOD;
 
 	/* If multiwan is enabled do this */
-	
+	if (isset($config['system']['advanced']['multiwansupport']) && sg_get_const("ENTERPRISE_ROUTING") == 'ENABLED') {
 		$wanifs = filter_generate_multiwan_interfaces();
 		foreach($wanifs as $if) {
 			$otherwanifs = array();
@@ -864,6 +866,7 @@ EOD;
 				$ipfrules .= "\tpass out on $if route-to ($otherif $gw) from $otherif to any\n";
 			}
 		}
+	}
 
 
 	if($config['interfaces']['opt2']['wireless']['ifmode'] == 'lanbridge' || $config['interfaces']['opt2']['wireless']['ifmode'] == 'dmzbridge') {
@@ -1264,23 +1267,25 @@ EOD;
 				}
 
 				### Load Balancing code goes here.
+				if (isset($config['system']['advanced']['multiwansupport']) && sg_get_const("ENTERPRISE_ROUTING") == 'ENABLED') {
 					if(!in_array($interface, $wanifs)) {
 						$line .= "route-to \\\n\t{ ";
 						if (!isset($rule['options']['multiwan']) || $rule['options']['multiwan'] == 'roundrobin') {
 							foreach($wanifs as $if) {
 								$gw = get_interface_gw($if);
-								//if (is_ipaddr($gw))
+								if (is_ipaddr($gw))
 								$line .= "($if $gw), ";
 							}
 						} else {
 							$if = get_interface_name_by_descr($rule['options']['multiwan']);
 							$gw = get_interface_gw($if);
-							//if (is_ipaddr($gw))
+							if (is_ipaddr($gw))
 							$line .= "($if $gw) ";
 						}
 						$line = preg_replace("/\, $/", "", $line);
 						$line .= " } round-robin \\\n\t";
 					}
+				}
 				$line .= "inet ";
 
 				if($proto != 'none') {
@@ -1419,7 +1424,7 @@ EOD;
 						$optionsline = preg_replace("/ $/", ')', $optionsline);
 						$line .= $optionsline;
 					}
-					if(isset($config['interfaces']['wan']['altqenable'])) {
+					if(isset($config['altq']['enable'])) {
 						if (isset($rule['options']['altqbucket'])) {
 							$line .= "\\\n\tqueue ( " .  "{$rule['options']['altqbucket']}";
 							if (isset($rule['options']['altqlowdelay'])) {

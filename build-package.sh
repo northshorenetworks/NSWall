@@ -6,4 +6,4 @@ tar -czf ../../packages/$1.tgz *;
 
 cd ../..
 
-#cp packages/$1.tgz ../../public_html
+cp packages/$1.tgz ../../public_html
