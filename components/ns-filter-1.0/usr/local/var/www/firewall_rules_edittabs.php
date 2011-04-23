@@ -187,6 +187,20 @@ $(function(){
      });
 }); 
 
+// When a user changes the address family, clear all current addresses
+$(function(){
+     $("#addressfamily").change(function() {
+          var val = $(this).val();
+          var answer = confirm ("Are you sure you want to change the address family, doing so will remove all currently configured source and destination addresses?")
+          if (answer){
+              $("#SRCADDR option").remove();
+              $("#DSTADDR option").remove();
+              $('#SRCADDR').append('<option value="any">any</option>');
+              $('#DSTADDR').append('<option value="any">any</option>');
+          }
+     });
+}); 
+
 // When a user changes the interface to something other than WAN, hide the SNAT destination option
 $(function(){
      $("#interface").change(function() {
@@ -218,15 +232,27 @@ $(document).ready(function() {
      // When a user clicks on the src host add button, validate and add the host.
      $("#srchostaddbutton").click(function () {
           var ip = $("#srchost");
-          if(verifyIP(ip.val()) == 0) {
-                        var firstitem = $("#SRCADDR option:first").text();
-                        if(firstitem == "any") {
-                            $("#SRCADDR option:first").remove();
-                        } 
-            $('#SRCADDR').append("<option value='" + ip.val() + "'>"+ip.val() + '</option>');
-                    ip.val("");
-                     return false;
-                  }
+          if($("#addressfamily").val() == 'inet6') {
+              if(test_ipv6(ip.val()) == true) {
+                  var firstitem = $("#SRCADDR option:first").text();
+                  if(firstitem == "any") {
+                      $("#SRCADDR option:first").remove();
+                  } 
+                  $('#SRCADDR').append("<option value='" + ip.val() + "'>"+ip.val() + '</option>');
+                  ip.val("");
+                  return false;
+              }
+          } else {
+              if(verifyIP(ip.val()) == 0) {
+                  var firstitem = $("#SRCADDR option:first").text();
+                  if(firstitem == "any") {
+                      $("#SRCADDR option:first").remove();
+                  } 
+                  $('#SRCADDR').append("<option value='" + ip.val() + "'>"+ip.val() + '</option>');
+                  ip.val("");
+                  return false;
+              }
+          }
      });
 
      // When a user clicks on the src net add button, validate and add the host.
@@ -258,15 +284,27 @@ $(document).ready(function() {
       // When a user clicks on the dst host add button, validate and add the host.
      $("#dsthostaddbutton").click(function () {
           var ip = $("#dsthost");
-          if(verifyIP(ip.val()) == 0) {
-                        var firstitem = $("#DSTADDR option:first").text();
-                        if(firstitem == "any") {
-                            $("#DSTADDR option:first").remove();
-                        } 
-            $('#DSTADDR').append("<option value='" + ip.val() + "'>"+ip.val() + '</option>');
-            ip.val("");
-            return false;
-          } 
+          if($("#addressfamily").val() == 'inet6') {
+              if(test_ipv6(ip.val()) == true) {
+                  var firstitem = $("#DSTADDR option:first").text();
+                  if(firstitem == "any") {
+                      $("#DSTADDR option:first").remove();
+                  } 
+                  $('#DSTADDR').append("<option value='" + ip.val() + "'>"+ip.val() + '</option>');
+                  ip.val("");
+                  return false;
+              }
+          } else {
+              if(verifyIP(ip.val()) == 0) {
+                  var firstitem = $("#DSTADDR option:first").text();
+                  if(firstitem == "any") {
+                      $("#DSTADDR option:first").remove();
+                  } 
+                  $('#DSTADDR').append("<option value='" + ip.val() + "'>"+ip.val() + '</option>');
+                  ip.val("");
+                  return false;
+              }
+          }
      });
 
      // When a user clicks on the dst net add button, validate and add the host.
@@ -396,17 +434,30 @@ $(document).ready(function() {
 
       $("#srchost, #srcnet, #dsthost, #dstnet").blur(function() {
          value = $(this).val();
-         if (verifyIP(value) == 0)
-             $(this).css({"background-color": "#FFFFFF"});
-         else
-             $(this).css({"background-color": "#FFAEAE"});
+         if($("#addressfamily").val() == 'inet6') {
+             if (test_ipv6(value) == true)
+                 $(this).css({"background-color": "#FFFFFF"});
+             else
+                 $(this).css({"background-color": "#FFAEAE"});
+         } else {
+             if (verifyIP(value) == 0)
+                 $(this).css({"background-color": "#FFFFFF"});
+             else
+                 $(this).css({"background-color": "#FFAEAE"});
+         }
      });
 
       $("#srchost, #srcnet, #dsthost, #dstnet").keyup(function() {
          value = $(this).val();
          $(this).css({"background-color": "#FFAEAE"});
-         if (verifyIP(value) == 0)
-            $(this).css({"background-color": "#CDFECD"});
+         if($("#addressfamily").val() == 'inet6') {
+             if (test_ipv6(value) == true)
+                $(this).css({"background-color": "#CDFECD"});
+         } else {
+             if (verifyIP(value) == 0)
+                $(this).css({"background-color": "#CDFECD"});
+         }
+
      });
 
      // When a user clicks on the submit button, post the form.
@@ -533,6 +584,16 @@ this rule.</p>
 	<?php $types = explode(" ", "Pass Block Reject"); foreach ($types as $type): ?>
 	<option value="<?=strtolower($type);?>"
 	<?php if (strtolower($type) == strtolower($pconfig['type'])) echo "selected"; ?>>
+		<?=htmlspecialchars($type);?></option>
+		<?php endforeach; ?>
+</select>
+<p class="note"></p>
+</div>
+<div><label for="addressfamily">Address Family</label> <select name="addressfamily" id="addressfamily"
+	class="formfld">
+	<?php $types = explode(" ", "inet inet6"); foreach ($types as $type): ?>
+	<option value="<?=strtolower($type);?>"
+	<?php if (strtolower($type) == strtolower($pconfig['addressfamily'])) echo "selected"; ?>>
 		<?=htmlspecialchars($type);?></option>
 		<?php endforeach; ?>
 </select>

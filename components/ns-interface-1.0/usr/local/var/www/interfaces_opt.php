@@ -279,10 +279,12 @@ $(document).ready(function() {
                       <?php endfor; ?>
                     </select>
             </div>
+            <?php if (isset($config['system']['advanced']['multiwansupport'])): ?>
             <div id='gatewaydiv'>
                              <label for="gateway">Gateway</label>
                              <input name="gateway" type="text" class="formfld" id="gateway" size="20" value="<?=htmlspecialchars($pconfig['gateway']);?>">
             </div>
+            <?php endif; ?>
             <div id='aliasdiv'>
                              <label for="members">Alias IP's</label>
                              <select name="MEMBERS" style="width: 160px; height: 100px" id="MEMBERS" multiple>
@@ -387,7 +389,7 @@ $(document).ready(function() {
                              <p class="note">This is the maximum lease time for clients that ask for a specific expiration time.  The default is 86400 seconds.</p>
             </div>
             </div>
-                <?php if (isset($config['system']['advanced']['multiwansupport']) && sg_get_const("ENTERPRISE_ROUTING") == 'ENABLED'): ?>
+                <?php if (isset($config['system']['advanced']['multiwansupport'])): ?>
                 <div id='altqdiv'>
                 <div>
                     <label for="altqenable">Enable ALTQ</label>

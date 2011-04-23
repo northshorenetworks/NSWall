@@ -76,7 +76,7 @@ function filter_print_pfconf() {
 function filter_generate_multiwan_interfaces() {
 	global $config, $g;
 	system_determine_hwplatform();
-	if (isset($config['system']['advanced']['multiwansupport']) && sg_get_const("ENTERPRISE_ROUTING") == 'ENABLED') {
+	if (isset($config['system']['advanced']['multiwansupport'])) {
 		$wanifs = array();
 		array_push($wanifs, get_real_wan_interface());
 		for ($i = 1; isset($config['interfaces']['opt' . $i]); $i++) {
@@ -851,7 +851,15 @@ anchor "default" {
 EOD;
 
 	/* If multiwan is enabled do this */
-	if (isset($config['system']['advanced']['multiwansupport']) && sg_get_const("ENTERPRISE_ROUTING") == 'ENABLED') {
+	if (isset($config['system']['advanced']['multiwansupport'])) {
+            $ipfrules .= <<<EOD
+
+    ##################################
+    ### Ensure Correct WAN routing ###
+    ##################################
+
+EOD;
+
 		$wanifs = filter_generate_multiwan_interfaces();
 		foreach($wanifs as $if) {
 			$otherwanifs = array();
@@ -863,7 +871,7 @@ EOD;
 			foreach($otherwanifs as $otherif) {
 				$gw = get_interface_gw($otherif);
 				if (is_ipaddr($gw))
-				$ipfrules .= "\tpass out on $if route-to ($otherif $gw) from $otherif to any\n";
+				    $ipfrules .= "    pass out on $if from $otherif route-to ($otherif $gw)\n";
 			}
 		}
 	}
@@ -1266,27 +1274,11 @@ EOD;
 					$line .= "on $interface ";
 				}
 
-				### Load Balancing code goes here.
-				if (isset($config['system']['advanced']['multiwansupport']) && sg_get_const("ENTERPRISE_ROUTING") == 'ENABLED') {
-					if(!in_array($interface, $wanifs)) {
-						$line .= "route-to \\\n\t{ ";
-						if (!isset($rule['options']['multiwan']) || $rule['options']['multiwan'] == 'roundrobin') {
-							foreach($wanifs as $if) {
-								$gw = get_interface_gw($if);
-								if (is_ipaddr($gw))
-								$line .= "($if $gw), ";
-							}
-						} else {
-							$if = get_interface_name_by_descr($rule['options']['multiwan']);
-							$gw = get_interface_gw($if);
-							if (is_ipaddr($gw))
-							$line .= "($if $gw) ";
-						}
-						$line = preg_replace("/\, $/", "", $line);
-						$line .= " } round-robin \\\n\t";
-					}
-				}
-				$line .= "inet ";
+                                if (isset($rule['addressfamily'])) {
+                                   $line .= $rule['addressfamily'] . ' ';
+                                } else {
+				    $line .= "inet ";
+                                }
 
 				if($proto != 'none') {
 					$line .= "proto $proto \\\n\t";
@@ -1388,11 +1380,11 @@ EOD;
 
 					if (isset($rule['options']['state'])) {
 						if($rule['options']['state'] != 'none') {
-							$line .= " {$rule['options']['state']}";
+							$line .= "{$rule['options']['state']} ";
 						}
 					}
 					$line = preg_replace("/,$/", '', $line);
-					$optionsline = " \\\n\t(";
+					$optionsline = "\\\n\t(";
 					if (isset($rule['options']['maxstates'])) {
 						$optionsline .= "max {$rule['options']['maxstates']}, ";
 					}
@@ -1422,9 +1414,29 @@ EOD;
 					if(!preg_match("/\($/", $optionsline)) {
 						$optionsline = preg_replace("/, $/", ')', $optionsline);
 						$optionsline = preg_replace("/ $/", ')', $optionsline);
-						$line .= $optionsline;
+						$line .= $optionsline . ' ';
 					}
-					if(isset($config['altq']['enable'])) {
+                                        ### Load Balancing code goes here.
+				        if (isset($config['system']['advanced']['multiwansupport'])) {
+					    if(!in_array($interface, $wanifs)) {
+						$line .= "\\\n\troute-to { ";
+						if (!isset($rule['options']['multiwan']) || $rule['options']['multiwan'] == 'roundrobin') {
+							foreach($wanifs as $if) {
+								$gw = get_interface_gw($if);
+								if (is_ipaddr($gw))
+								$line .= "($if $gw), ";
+							}
+						} else {
+							$if = get_interface_name_by_descr($rule['options']['multiwan']);
+							$gw = get_interface_gw($if);
+							if (is_ipaddr($gw))
+							$line .= "($if $gw)";
+						}
+						$line = preg_replace("/\, $/", "", $line);
+						$line .= " } round-robin ";
+					    }
+				        }
+                                        if(isset($config['altq']['enable'])) {
 						if (isset($rule['options']['altqbucket'])) {
 							$line .= "\\\n\tqueue ( " .  "{$rule['options']['altqbucket']}";
 							if (isset($rule['options']['altqlowdelay'])) {

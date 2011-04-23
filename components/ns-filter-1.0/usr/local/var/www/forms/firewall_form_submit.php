@@ -47,6 +47,7 @@ if ($_POST) {
 			$filterent['descr'] = $_POST['descr'];
 			$filterent['type'] = $_POST['type'];
 			$filterent['interface'] = $_POST['interface'];
+                        $filterent['addressfamily'] = $_POST['addressfamily'];
 			if ($_POST['rdrlist']) {
 				$filterent['rdrlist'] = $_POST['rdrlist'];
 			}

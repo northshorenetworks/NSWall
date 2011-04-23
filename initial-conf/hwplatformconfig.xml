@@ -76,4 +76,14 @@
 			</opt2>
 		</interfaces>
 	</portwell>
+	<shupe>
+                <interfaces>
+                        <wan>em0</wan>
+                        <lan>em2</lan>
+                        <opt1>
+                                <if>em1</if>
+                                <descr>VOIP-DMZ</descr>
+                        </opt1>
+                </interfaces>
+        </shupe>
 </nswall>

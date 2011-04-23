@@ -120,7 +120,7 @@ COPY ${CURDIR}/initial-conf/www/support_case.php				usr/www/support_case.php
 COPY ${CURDIR}/initial-conf/www/support_registration.php			usr/www/support_registration.php
 COPY ${CURDIR}/initial-conf/www/system_accounts_tabs.php			usr/www/system_accounts_tabs.php
 COPY ${CURDIR}/initial-conf/www/system_general.php				usr/www/system_general.php
-COPY ${CURDIR}/initial-conf/www/system_advanced.php				usr/www/system_advanced.php
+#COPY ${CURDIR}/initial-conf/www/system_advanced.php				usr/www/system_advanced.php
 COPY ${CURDIR}/initial-conf/www/system_advanced_create_certs.php		usr/www/system_advanced_create_certs.php
 COPY ${CURDIR}/initial-conf/www/system_cacert_tabs.php				usr/www/system_cacert_tabs.php
 COPY ${CURDIR}/initial-conf/www/system_camanager.php				usr/www/system_camanager.php

@@ -50,13 +50,11 @@ $(document).ready(function() {
 versions when the <a href="system_firmware.php">System: Firmware</a>
 page is viewed.</p>
 </div>
-	<?php if (sg_get_const("ENTERPRISE_ROUTING") == 'ENABLED'): ?>
 <div><label for=="multiwansupport">Enable MultiWAN Support</label> <input
 	id="multiwansupport" type="checkbox" name="multiwansupport" value="Yes"
 	<?php if ($pconfig['multiwansupport']) echo "checked"; ?> />
 <p class="note">Enable MultiWAN support for optional interfaces</p>
 </div>
-	<?php endif; ?>
 <div><label for="bypassstaticroutes">Static route filtering</label> <input
 	id="bypassstaticroutes" type="checkbox" name="bypassstaticroutes"
 	value="Yes"
