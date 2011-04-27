@@ -61,16 +61,11 @@ listen on \$listen_addr
 
 # Adjust the local system information
 system contact "{$config['snmpd']['syscontact']}"
-#system description "Powered by OpenBSD"
+#system description "Powered by NSWall"
 system location "{$config['snmpd']['syslocation']}"
 system services 74
 
-# Provide static user-defined SNMP OIDs
-oid 1.3.6.1.4.1.30155.42.3.1 name testStringValue read-only string "Test"
-oid 1.3.6.1.4.1.30155.42.3.4 name testIntValue read-write integer 1
-
-
-# rocommunity "{$config['snmpd']['rocommunity']}"
+read-only community {$config['snmpd']['rocommunity']}
 
 EOD;
 
