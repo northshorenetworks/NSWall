@@ -207,7 +207,6 @@ COPY ${DESTDIR}/sbin/route			sbin/route
 COPY ${DESTDIR}/sbin/sysctl			sbin/sysctl
 COPY ${DESTDIR}/sbin/ttyflags			sbin/ttyflags
 COPY ${DESTDIR}/sbin/umount			sbin/umount
-COPY ${DESTDIR}/sbin/wpa-psk			sbin/wpa-psk
 COPY ${BINDIR}/mini_httpd			sbin/mini_httpd
 COPY ${DESTDIR}/usr/bin/awk			usr/bin/awk
 COPY ${DESTDIR}/usr/bin/basename		usr/bin/basename
