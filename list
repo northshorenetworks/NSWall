@@ -80,7 +80,7 @@ COPY    ${CURDIR}/initial-conf/rc.initial	etc/rc.initial
 COPY	${CURDIR}/initial-conf/rc.pkg		etc/rc.pkg
 COPY	${CURDIR}/initial-conf/moduli		etc/moduli
 COPY	${CURDIR}/initial-conf/ttys		etc/ttys
-COPY    ${CURDIR}/initial-conf/boot.conf        etc/boot.conf
+#COPY    ${CURDIR}/initial-conf/boot.conf        etc/boot.conf
 
 # Monowall specifc stuff
 

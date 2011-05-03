@@ -105,7 +105,7 @@ parsed).</p>
 </div>
 <div><label for="type">Trunk Protocol</label> <select name="type"
 	class="formfld">
-	<?php $types = explode(" ", "roundrobin failover loadbalance broadcast none"); foreach ($types as $type): ?>
+	<?php $types = explode(" ", "roundrobin failover lacp loadbalance broadcast none"); foreach ($types as $type): ?>
 	<option value="<?=strtolower($type);?>"
 	<?php if (strtolower($type) == strtolower($pconfig['type'])) echo "selected"; ?>>
 		<?=htmlspecialchars($type);?></option>

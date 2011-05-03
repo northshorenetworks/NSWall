@@ -528,8 +528,7 @@ timestamps, since a blind attacker would have to guess the timestamp as
 well.</p>
 </div>
 </fieldset>
-<div><input type="submit" id="#submitbutton4" value="Save"
-	class="button" /></div>
+<div><input type="submit" id="submitbutton4" value="Save" class="button" /></div>
 </div>
 <div id="tabLogging">
 <fieldset><legend><?=join(": ", $pgtitle);?></legend>

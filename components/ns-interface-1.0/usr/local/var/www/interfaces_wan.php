@@ -8,12 +8,16 @@ $wancfg = &$config['interfaces']['wan'];
 
 if ($wancfg['ipaddr'] == "dhcp") {
 	$pconfig['type'] = "DHCP";
+} elseif ($wancfg['ipaddr'] == "pppoe") {
+	$pconfig['type'] = "PPPOE";
+        $pconfig['pppoeuser'] = $wancfg['pppoe']['username'];
+        $pconfig['pppoepass'] = $wancfg['pppoe']['password'];
+        $pconfig['pppoedev'] = $wancfg['pppoe']['dev'];
 } else {
 	$pconfig['type'] = "Static";
 	$pconfig['ipaddr'] = $wancfg['ipaddr'];
 	$pconfig['subnet'] = $wancfg['subnet'];
 	$pconfig['gateway'] = $wancfg['gateway'];
-	$pconfig['pointtopoint'] = $wancfg['pointtopoint'];
 }
 
 $pconfig['blockpriv'] = isset($wancfg['blockpriv']);
@@ -51,10 +55,17 @@ $(document).ready(function() {
         case 'Static':
             $("#dhcpdiv").hide();
             $("#staticdiv").show();
+            $("#pppoediv").hide();
             break;
         case 'DHCP':
             $("#staticdiv").hide();
             $("#dhcpdiv").show();
+            $("#pppoediv").hide();
+            break;
+        case 'PPPOE':
+            $("#staticdiv").hide();
+            $("#dhcpdiv").hide();
+            $("#pppoediv").show();
             break;
      }
 
@@ -65,10 +76,17 @@ $(document).ready(function() {
         case 'Static':
             $("#dhcpdiv").hide();
             $("#staticdiv").show();
+            $("#pppoediv").hide();
             break;
         case 'DHCP':
             $("#staticdiv").hide();
             $("#dhcpdiv").show();
+            $("#pppoediv").hide();
+            break;
+        case 'PPPOE':
+            $("#staticdiv").hide();
+            $("#dhcpdiv").hide();
+            $("#pppoediv").show();
             break;
         }
      });
@@ -115,8 +133,8 @@ $(document).ready(function() {
 <div><label for="type">Connection Type</label> <select name="type"
 	class="formfld" id="type">
 	<option value="Static">Static IP</option>
-	<option value="DHCP"
-	<?php if ('DHCP' == $pconfig['type']) echo "selected"; ?>>DHCP</option>
+	<option value="DHCP" <?php if ('DHCP' == $pconfig['type']) echo "selected"; ?>>DHCP</option>
+        <option value="PPPOE" <?php if ('PPPOE' == $pconfig['type']) echo "selected"; ?>>PPPOE</option>
 </select></div>
 <div id='staticdiv'>
 <div><label for="ipaddr">IP address</label> <input name="ipaddr"
@@ -153,6 +171,26 @@ identifier and hostname when requesting a DHCP lease. Some ISPs may
 require this (for client identification).</p>
 
 </div>
+</div>
+<div style='display: none;' id='pppoediv'>
+<div><label for="pppoeuser">Username</label> <input
+	name="pppoeuser" type="text" class="formfld" id="pppoeuser"
+	size="20" value="<?=htmlspecialchars($pconfig['pppoeuser']);?>">
+<p class="note">Enter your pppoe username</p>
+</div>
+<div><label for="pppoepass">Password</label> <input
+	name="pppoepass" type="text" class="formfld" id="pppoepass"
+	size="20" value="<?=htmlspecialchars($pconfig['pppoepass']);?>">
+<p class="note">Enter your pppoe password</p>
+</div>
+<div><label for="ipaddr">PPPOE Device</label> 
+    <select
+	name="pppoedev" class="formfld" id="pppoedev">
+	<?php for ($i = 0; $i < 10; $i++): ?>
+	<option value="<?='pppoe'.$i;?>"
+	<?php if ('pppoe'.$i == $pconfig['pppoedev']) echo "selected"; ?>><?='pppoe'.$i;?></option>
+	<?php endfor; ?>
+    </select>
 </div>
 <div><label for="spoofmac">MAC Address Override</label> <input
 	name="spoofmac" type="text" class="formfld" id="spoofmac" size="30"

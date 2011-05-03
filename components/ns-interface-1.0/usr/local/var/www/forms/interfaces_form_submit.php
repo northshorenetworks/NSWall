@@ -437,15 +437,10 @@ if ($_POST) {
 				$reqdfields = explode(" ", "ipaddr subnet gateway");
 				$reqdfieldsn = explode(",", "IP address,Subnet bit count,Gateway");
 				do_input_validation($_POST, $reqdfields, $reqdfieldsn, &$input_errors);
-			} else if ($_POST['type'] == "PPPoE") {
-				if ($_POST['pppoe_dialondemand']) {
-					$reqdfields = explode(" ", "username password pppoe_dialondemand pppoe_idletimeout");
-					$reqdfieldsn = explode(",", "PPPoE username,PPPoE password,Dial on demand,Idle timeout value");
-				} else {
-					$reqdfields = explode(" ", "username password");
-					$reqdfieldsn = explode(",", "PPPoE username,PPPoE password");
-				}
-				do_input_validation($_POST, $reqdfields, $reqdfieldsn, &$input_errors);
+			} else if ($_POST['type'] == "PPPOE") {
+				$reqdfields = explode(" ", "username password");
+				$reqdfieldsn = explode(",", "PPPoE username,PPPoE password");
+				//do_input_validation($_POST, $reqdfields, $reqdfieldsn, &$input_errors);
 			} else if ($_POST['type'] == "PPTP") {
 				if ($_POST['pptp_dialondemand']) {
 					$reqdfields = explode(" ", "pptp_username pptp_password pptp_local pptp_subnet pptp_remote pptp_dialondemand pptp_idletimeout");
@@ -544,14 +539,16 @@ if ($_POST) {
 				} else if ($_POST['type'] == "DHCP") {
 					$wancfg['ipaddr'] = "dhcp";
 					$wancfg['dhcphostname'] = $_POST['dhcphostname'];
-				} else if ($_POST['type'] == "PPPoE") {
-					$wancfg['ipaddr'] = "pppoe";
-					$config['pppoe']['username'] = $_POST['username'];
-					$config['pppoe']['password'] = $_POST['password'];
-					$config['pppoe']['provider'] = $_POST['provider'];
-					$config['pppoe']['ondemand'] = $_POST['pppoe_dialondemand'] ? true : false;
-					$config['pppoe']['timeout'] = $_POST['pppoe_idletimeout'];
-				}
+				} else if ($_POST['type'] == "PPPOE") {
+					$wancfg['ipaddr']              = "pppoe";
+					$wancfg['pppoe']['username']   = $_POST['pppoeuser'];
+					$wancfg['pppoe']['password']   = $_POST['pppoepass'];
+                                        $wancfg['pppoe']['dev']        = $_POST['pppoedev'];
+					//$wancfg['pppoe']['provider'] = $_POST['provider'];
+					//$wancfg['pppoe']['ondemand'] = $_POST['pppoe_dialondemand'] ? true : false;
+					//$wancfg['pppoe']['timeout']  = $_POST['pppoe_idletimeout'];
+				
+                                }
 					
 				$wancfg['spoofmac'] = $_POST['spoofmac'];
 				$wancfg['mtu'] = $_POST['mtu'];
@@ -559,13 +556,10 @@ if ($_POST) {
 				$wancfg['altqenable'] = $_POST['altqenable'] ? true : false;
 
 				write_config();
-
 				$retval = 0;
-
 				config_lock();
 				$retval = interfaces_wan_configure();
 				config_unlock();
-
 
 				$savemsg = get_std_save_message($retval);
 			}
