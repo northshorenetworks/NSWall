@@ -440,8 +440,12 @@ function filter_nat_rules_generate() {
 	$pptpdcfg = $config['pptpd'];
 
 	$lanif = $lancfg['if'];
-	$wanif = get_real_wan_interface();
-	$curwanip = get_current_wan_address();
+	if ($wancfg['ipaddr'] == 'pppoe') {
+            $wanif = $wancfg['pppoe']['dev'];
+        } else {
+            $wanif = get_real_wan_interface();
+	}
+        $curwanip = get_current_wan_address();
 
 	$lansa = gen_subnet($lancfg['ipaddr'], $lancfg['subnet']);
 
@@ -588,13 +592,17 @@ function filter_options_generate() {
 
 	$hwplatformconfig = parse_nonconfig_xml("{$g['etc_path']}/hwplatformconfig.xml");
 
-	#$pfglobals .= 'set loginterface '.$g['hwplatformconfig'][INTERFACES][LAN]."\n";
-	$pfglobals .= 'set loginterface '.$g['hwplatformconfig'][INTERFACES][WAN]."\n";;
+        if ($config['interfaces']['wan']['ipaddr'] == 'pppoe') {
+            $pfglobals .= 'set loginterface '.$config['interfaces']['wan']['pppoe']['dev']."\n";
+            $pfglobals .= 'match on '.$config['interfaces']['wan']['pppoe']['dev'].' scrub (max-mss 1440)'."\n";
+        } else {
+            $pfglobals .= 'set loginterface '.$g['hwplatformconfig'][INTERFACES][WAN]."\n";
+	}
 
 	/* $ifcount = sizeof($g['hwplatformconfig'][INTERFACES]) - 2;
 
 	for ($i = 1; $i<=$ifcount; $i++) {
-	$pfglobals .= 'set loginterface '.$g['hwplatformconfig'][INTERFACES]['OPT' . $i]['IF']."\n";
+	    $pfglobals .= 'set loginterface '.$g['hwplatformconfig'][INTERFACES]['OPT' . $i]['IF']."\n";
 	}
 	*/
 
@@ -779,7 +787,11 @@ function filter_rules_generate() {
 	$pptpdcfg = $config['pptpd'];
 
 	$lanif = $lancfg['if'];
-	$wanif = get_real_wan_interface();
+	if ($wancfg['ipaddr'] == 'pppoe') {
+            $wanif = $wancfg['pppoe']['dev'];
+        } else {
+            $wanif = get_real_wan_interface();
+	}
 	$curwanip = get_current_wan_address();
 
 	/* rule groups (optional interfaces: see below) */
@@ -1193,9 +1205,12 @@ EOD;
 		for ($iif = 0; $iif < $nif; $iif++) {
 
 			if (!$ispptp) {
-
-				if (!strstr($rule['interface'], "vlan")) {
-					$interface = get_interface_name($rule['interface']);
+                                if (!strstr($rule['interface'], "vlan")) {
+                                        if ($rule['interface'] == 'wan' && $wancfg['ipaddr'] == 'pppoe') {
+                                                $interface = $wancfg['pppoe']['dev'];
+                                        } else {
+					        $interface = get_interface_name($rule['interface']);
+                                        }
 				} else {
 					$interface = $rule['interface'];
 				}
@@ -1445,6 +1460,9 @@ EOD;
 							$line .= " )";
 						}
 					}
+                                        if (isset($rule['options']['tos']))
+                                               $line .= " tos " .  $rule['options']['tos'];
+       
 				}
 
 				$line .= "\n";
@@ -1481,7 +1499,11 @@ function filter_rdrrules_generate() {
 	$pptpdcfg = $config['pptpd'];
 
 	$lanif = $lancfg['if'];
-	$wanif = get_real_wan_interface();
+	if ($wancfg['ipaddr'] == 'pppoe') {
+            $wanif = $wancfg['pppoe']['dev'];
+        } else {
+            $wanif = get_real_wan_interface();
+	}
 	$curwanip = get_current_wan_address();
 
 	/* rule groups (optional interfaces: see below) */
@@ -1635,7 +1657,11 @@ function filter_rdrrules_generate() {
 
 				if (!$ispptp) {
 					if (!strstr($rule['interface'], "vlan")) {
-						$interface = get_interface_name($rule['interface']);
+                                                if ($rule['interface'] == 'wan' && $wancfg['ipaddr'] == 'pppoe') {
+                                                    $interface = $wancfg['pppoe']['dev'];
+                                                } else {
+						    $interface = get_interface_name($rule['interface']);
+                                                }
 					} else {
 						$interface = $rule['interface'];
 					}

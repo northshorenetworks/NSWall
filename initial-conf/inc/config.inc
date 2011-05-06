@@ -100,7 +100,7 @@ if ($g['booting']) {
 			$cfgfstype = "msdos";
 		} else {
 			/* probe kernel known disks until we find one with config.xml */
-			$disks = explode(",", trim(preg_replace("/hw.disknames=/", "", exec("/sbin/sysctl hw.disknames"))));
+			$disks = explode(",", trim(preg_replace("/:.*/", ",", exec("/sbin/sysctl -n hw.disknames"))));
 			foreach ($disks as $mountdisk) {
 				/* skip mfs mounted filesystems */
 				if (strstr($mountdisk, "rd"))
