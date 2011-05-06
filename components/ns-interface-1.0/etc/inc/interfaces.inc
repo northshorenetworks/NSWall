@@ -539,7 +539,6 @@ function interfaces_wireless_configure($if, $wlcfg) {
 
 function interfaces_wan_configure() {
 	global $config, $g;
-
 	system_determine_hwplatform();
 
 	$wancfg = $config['interfaces']['wan'];
@@ -593,7 +592,7 @@ function interfaces_wan_configure() {
 
 	if ($wancfg['mtu'])
 	$addflags .= " mtu " . $wancfg['mtu'];
-
+        //mwexec("/usr/bin/logger -p local0.info -t debug: ipaddr ".$wancfg['ipaddr']);
 	switch ($wancfg['ipaddr']) {
 
 		case 'dhcp':
@@ -757,109 +756,26 @@ function interfaces_wan_dhcp_up() {
 function interfaces_wan_pppoe_configure() {
 	global $config, $g;
 
-	$wancfg = $config['interfaces']['wan'];
-	$pppoecfg = $config['pppoe'];
+	system_determine_hwplatform();
 
-	/* generate mpd.conf */
-	$fd = fopen("{$g['varetc_path']}/mpd.conf", "w");
-	if (!$fd) {
-		printf("Error: cannot open mpd.conf in interfaces_wan_pppoe_configure().\n");
-		return 1;
-	}
+        $wancfg = $config['interfaces']['wan'];
+        $wancfg['if'] = $g['hwplatformconfig'][INTERFACES][WAN];
+	$pppoecfg = $wancfg['pppoe'];
+	$wanif = $wancfg['if'];
+	
+	$addflags = ' -inet6 description "WAN"';
+        $cmd = "/sbin/ifconfig pppoe0 inet 0.0.0.0 0.0.0.1 netmask 255.255.255.0 ";
+        $cmd .= "pppoedev " . $wanif;
+        $cmd .= " authproto " . 'pap';
+        $cmd .= " authname " . $pppoecfg['username'];
+        $cmd .= " authkey " . $pppoecfg['password'];
 
-	$idle = 0;
-
-	if (isset($pppoecfg['ondemand'])) {
-		$ondemand = "enable";
-		if ($pppoecfg['timeout'])
-		$idle = $pppoecfg['timeout'];
-	} else {
-		$ondemand = "disable";
-	}
-
-	$mpdconf = <<<EOD
-pppoe:
-    new -i ng0 pppoe pppoe
-    set iface route default
-    set iface {$ondemand} on-demand
-    set iface idle {$idle}
-    set iface up-script /usr/local/sbin/ppp-linkup
-
-EOD;
-
-	if (isset($pppoecfg['ondemand'])) {
-		if (isset($pppoecfg['local-ip']) && isset($pppoecfg['remote-ip'])) {
-			$mpdconf .= <<<EOD
-    set iface addrs {$pppoecfg['local-ip']} {$pppoecfg['remote-ip']}
-
-EOD;
-		} else {
-			$mpdconf .= <<<EOD
-    set iface addrs 192.0.2.112 192.0.2.113
-
-EOD;
-		}
-	}
-
-	$mpdconf .= <<<EOD
-    set bundle disable multilink
-    set bundle authname "{$pppoecfg['username']}"
-    set bundle password "{$pppoecfg['password']}"
-    set link keep-alive 10 60
-    set link max-redial 0
-    set link no acfcomp protocomp
-    set link disable pap chap
-    set link accept chap
-    set link mtu 1492
-    set ipcp yes vjcomp
-    set ipcp ranges 0.0.0.0/0 0.0.0.0/0
-
-EOD;
-
-	if (isset($config['system']['general']['dnsallowoverride'])) {
-		$mpdconf .= <<<EOD
-    set ipcp enable req-pri-dns
-
-EOD;
-		if (!isset($config['pppoe']['dnsnosec'])) {
-			$mpdconf .= <<<EOD
-    set ipcp enable req-sec-dns
-
-EOD;
-		}
-	}
-
-	$mpdconf .= <<<EOD
-    open iface
-
-EOD;
-
-	fwrite($fd, $mpdconf);
-	fclose($fd);
-
-	/* generate mpd.links */
-	$fd = fopen("{$g['varetc_path']}/mpd.links", "w");
-	if (!$fd) {
-		printf("Error: cannot open mpd.links in interfaces_wan_pppoe_configure().\n");
-		return 1;
-	}
-
-	$mpdconf = <<<EOD
-pppoe:
-    set link type pppoe
-    set pppoe iface {$wancfg['if']}
-    set pppoe service "{$pppoecfg['provider']}"
-    set pppoe enable originate
-    set pppoe disable incoming
-
-EOD;
-
-	fwrite($fd, $mpdconf);
-	fclose($fd);
-
-	/* fire up mpd */
-	mwexec("/usr/local/sbin/mpd -b -d {$g['varetc_path']} -p {$g['varrun_path']}/mpd.pid pppoe");
-
+        mwexec("/sbin/ifconfig " . $wanif . " up");
+        mwexec("/sbin/ifconfig pppoe0 create");
+	mwexec($cmd);
+        mwexec("/sbin/route delete default");
+	mwexec("/sbin/route add default -ifp pppoe0 0.0.0.1");
+	
 	return 0;
 }
 

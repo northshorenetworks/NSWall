@@ -1,5 +1,5 @@
 #	$OpenBSD: GENERIC-RD,v 1.22 2008/08/20 15:16:11 stevesk Exp $
-#
+
 # For further information on compiling OpenBSD kernels, see the config(8)
 # man page.
 #
