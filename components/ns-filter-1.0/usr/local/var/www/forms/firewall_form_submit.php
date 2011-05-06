@@ -47,7 +47,6 @@ if ($_POST) {
 			$filterent['descr'] = $_POST['descr'];
 			$filterent['type'] = $_POST['type'];
 			$filterent['interface'] = $_POST['interface'];
-                        $filterent['addressfamily'] = $_POST['addressfamily'];
 			if ($_POST['rdrlist']) {
 				$filterent['rdrlist'] = $_POST['rdrlist'];
 			}
@@ -88,12 +87,16 @@ if ($_POST) {
 					$filterent['ipprotolist'][$member] = $ip;
 				}
 			}
+                        if ($_POST['tos'] && $_POST['tos'] != '')
+			    $filterent['options']['tos'] = $_POST['tos'];
 			$filterent['disabled'] = $_POST['disabled'] ? true : false;
 			if ($_POST['portforward']) {
 				$filterent['portforward'] = $_POST['portforward'] ? true : false;
 				$filterent['dstrelay'] = $_POST['dstrelay'];
 			}
 			$filterent['log'] = $_POST['log'] ? true : false;
+
+                    
 
 			/* options stuff */
 			if ($_POST['multiwan'])

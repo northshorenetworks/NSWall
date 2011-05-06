@@ -1460,6 +1460,9 @@ EOD;
 							$line .= " )";
 						}
 					}
+                                        if (isset($rule['options']['tos']))
+                                               $line .= " tos " .  $rule['options']['tos'];
+       
 				}
 
 				$line .= "\n";
