@@ -18,6 +18,8 @@ done
 cp ${BASE}/initial-conf/BUILD_STAMP ${BASE}/obj/${PLATFORM}/version
 ./incbuild.sh
 
+for i in `ls components`; do sh build-package.sh ${i}; echo "building ${i}"; done
+
 DISTNAME=$PLATFORM
 KERNCONF=PLATFORM/$DISTNAME/$DISTNAME
 export TTYSPEED=19200
