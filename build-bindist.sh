@@ -1,5 +1,7 @@
 #!/bin/sh
 
+## ex. sudo sh build-bindist.sh -d -m FIREWALL -p NSWALL
+
 BASE=`pwd`
 PROG_NAME=$(basename $0)
 DEBUG_FLAG=FALSE
