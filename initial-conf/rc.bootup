@@ -178,6 +178,11 @@ system_ntp_configure();
 /* start dyndns service */
 services_dyndns_configure();
 
+/* start other services in /etc/onboot */
+foreach (glob("/etc/onboot/*") as $file) {
+    include $file;
+}
+
 if ($g['module'] == 'FIREWALL') {
 /* start pptpd */
 vpn_pptp_configure();
