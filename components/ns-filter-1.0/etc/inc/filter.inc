@@ -587,6 +587,7 @@ function filter_options_generate() {
 	$pfglobals .= "### Global PF Options ###\n";
 	$pfglobals .= "#########################\n";
 	$pfglobals .= "set skip on lo0\n";
+	$pfglobals .= "set skip on tun0\n";
 
 	system_determine_hwplatform();
 
