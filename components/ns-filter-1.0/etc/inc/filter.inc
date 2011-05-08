@@ -587,7 +587,6 @@ function filter_options_generate() {
 	$pfglobals .= "### Global PF Options ###\n";
 	$pfglobals .= "#########################\n";
 	$pfglobals .= "set skip on lo0\n";
-	$pfglobals .= "set skip on tun0\n";
 
 	system_determine_hwplatform();
 
@@ -860,7 +859,7 @@ anchor "Abusive_Sites" {
 anchor "default" {
     block in $defaultlog 
     pass out all
-
+    pass quick log on tun0
 EOD;
 
 	/* If multiwan is enabled do this */
