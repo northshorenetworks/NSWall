@@ -859,7 +859,7 @@ anchor "Abusive_Sites" {
 anchor "default" {
     block in $defaultlog 
     pass out all
-
+    pass quick log on tun0
 EOD;
 
 	/* If multiwan is enabled do this */

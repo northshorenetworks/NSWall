@@ -1,0 +1,71 @@
+Certificate:
+    Data:
+        Version: 3 (0x2)
+        Serial Number: 2 (0x2)
+        Signature Algorithm: sha1WithRSAEncryption
+        Issuer: C=US, ST=WA, L=Seattle, O=NSS, CN=NSS CA/emailAddress=admin@northshoresoftware.com
+        Validity
+            Not Before: May  8 00:24:14 2011 GMT
+            Not After : May  5 00:24:14 2021 GMT
+        Subject: C=US, ST=WA, L=Seattle, O=NSS, CN=nsw/emailAddress=admin@northshoresoftware.com
+        Subject Public Key Info:
+            Public Key Algorithm: rsaEncryption
+            RSA Public Key: (1024 bit)
+                Modulus (1024 bit):
+                    00:a3:9c:d3:91:36:de:c9:54:9b:b6:13:d3:e3:9e:
+                    bc:45:6f:1b:e1:75:17:df:4e:39:09:b5:42:bf:be:
+                    46:b6:5c:51:77:97:be:c8:5f:0f:f7:20:c5:12:e7:
+                    1a:95:36:99:2e:5c:90:9a:13:ab:7a:ae:3f:17:d7:
+                    20:67:97:68:fc:98:14:39:6b:da:7a:bb:97:02:e2:
+                    e3:7d:8d:17:ae:6e:5f:0e:fb:bc:05:84:75:41:0d:
+                    36:11:3a:ce:1f:c3:f1:86:c4:98:02:9d:1d:90:52:
+                    ac:b8:48:65:b4:09:38:06:09:3a:a3:eb:41:a7:35:
+                    97:4d:be:ae:34:35:0e:e4:4b
+                Exponent: 65537 (0x10001)
+        X509v3 extensions:
+            X509v3 Basic Constraints: 
+                CA:FALSE
+            Netscape Comment: 
+                Easy-RSA Generated Certificate
+            X509v3 Subject Key Identifier: 
+                46:3B:99:95:C8:C7:CB:DF:74:3A:42:C4:29:2B:9F:04:48:59:C9:67
+            X509v3 Authority Key Identifier: 
+                keyid:87:89:C2:28:4C:A8:EF:A4:BB:AF:F0:95:4D:DA:AE:39:32:8C:1C:B5
+                DirName:/C=US/ST=WA/L=Seattle/O=NSS/CN=NSS CA/emailAddress=admin@northshoresoftware.com
+                serial:9F:77:F2:8A:45:03:34:C7
+
+            X509v3 Extended Key Usage: 
+                TLS Web Client Authentication
+            X509v3 Key Usage: 
+                Digital Signature
+    Signature Algorithm: sha1WithRSAEncryption
+        7a:38:9d:bc:92:dd:1a:a5:46:c5:ba:8a:d6:f9:ad:c7:74:52:
+        a7:66:f5:8e:74:fa:90:9b:a4:0d:31:93:09:d1:fb:2f:a6:e3:
+        67:a0:1a:c2:4d:51:58:d3:54:8b:7a:45:68:18:27:a1:35:d5:
+        71:6c:eb:4a:c1:55:5b:da:27:59:0c:33:12:73:14:6a:7c:9e:
+        f3:80:7a:1e:1f:09:1f:e4:8e:a9:63:a3:dc:81:07:73:61:a4:
+        e4:5c:06:0c:57:0e:c5:dd:f9:a8:f5:0d:7b:a0:4d:d0:61:c0:
+        44:3f:ed:c0:a6:67:ed:cd:11:19:77:1c:e8:c4:b8:a7:8c:59:
+        0a:bb
+-----BEGIN CERTIFICATE-----
+MIIDkTCCAvqgAwIBAgIBAjANBgkqhkiG9w0BAQUFADB4MQswCQYDVQQGEwJVUzEL
+MAkGA1UECBMCV0ExEDAOBgNVBAcTB1NlYXR0bGUxDDAKBgNVBAoTA05TUzEPMA0G
+A1UEAxMGTlNTIENBMSswKQYJKoZIhvcNAQkBFhxhZG1pbkBub3J0aHNob3Jlc29m
+dHdhcmUuY29tMB4XDTExMDUwODAwMjQxNFoXDTIxMDUwNTAwMjQxNFowdTELMAkG
+A1UEBhMCVVMxCzAJBgNVBAgTAldBMRAwDgYDVQQHEwdTZWF0dGxlMQwwCgYDVQQK
+EwNOU1MxDDAKBgNVBAMTA25zdzErMCkGCSqGSIb3DQEJARYcYWRtaW5Abm9ydGhz
+aG9yZXNvZnR3YXJlLmNvbTCBnzANBgkqhkiG9w0BAQEFAAOBjQAwgYkCgYEAo5zT
+kTbeyVSbthPT4568RW8b4XUX3045CbVCv75GtlxRd5e+yF8P9yDFEucalTaZLlyQ
+mhOreq4/F9cgZ5do/JgUOWvaeruXAuLjfY0Xrm5fDvu8BYR1QQ02ETrOH8PxhsSY
+Ap0dkFKsuEhltAk4Bgk6o+tBpzWXTb6uNDUO5EsCAwEAAaOCASwwggEoMAkGA1Ud
+EwQCMAAwLQYJYIZIAYb4QgENBCAWHkVhc3ktUlNBIEdlbmVyYXRlZCBDZXJ0aWZp
+Y2F0ZTAdBgNVHQ4EFgQURjuZlcjHy990OkLEKSufBEhZyWcwgaoGA1UdIwSBojCB
+n4AUh4nCKEyo76S7r/CVTdquOTKMHLWhfKR6MHgxCzAJBgNVBAYTAlVTMQswCQYD
+VQQIEwJXQTEQMA4GA1UEBxMHU2VhdHRsZTEMMAoGA1UEChMDTlNTMQ8wDQYDVQQD
+EwZOU1MgQ0ExKzApBgkqhkiG9w0BCQEWHGFkbWluQG5vcnRoc2hvcmVzb2Z0d2Fy
+ZS5jb22CCQCfd/KKRQM0xzATBgNVHSUEDDAKBggrBgEFBQcDAjALBgNVHQ8EBAMC
+B4AwDQYJKoZIhvcNAQEFBQADgYEAejidvJLdGqVGxbqK1vmtx3RSp2b1jnT6kJuk
+DTGTCdH7L6bjZ6Aawk1RWNNUi3pFaBgnoTXVcWzrSsFVW9onWQwzEnMUanye84B6
+Hh8JH+SOqWOj3IEHc2Gk5FwGDFcOxd35qPUNe6BN0GHARD/twKZn7c0RGXcc6MS4
+p4xZCrs=
+-----END CERTIFICATE-----

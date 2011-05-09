@@ -34,7 +34,7 @@ B<?php readfile("/etc/version.build"); ?> built on <?php readfile("/etc/version.
 <div><label for="platform">Platform</label> <?php readfile("/etc/hwplatform"); ?>
 </div>
 <div><label for="cpuusage">CPU Usage</label> <a
-	href="status_graph_cpu.php">view graph</a></div>
+	href="#status_graph_cpu">view graph</a></div>
 <?php /* <div><label for="serial_no">Serial Number</label> <?php echo sg_get_const("SERIAL")?> */ ?>
 </div>
 <div><label for="cpuusage">System Notes</label> <textarea name="notes"
