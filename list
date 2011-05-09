@@ -6,6 +6,15 @@ SPECIAL chmod 700 dev/MAKEDEV
 SPECIAL cd dev; ./MAKEDEV ramdisk pty systrace tty00 tty01 pci wdt0 
 SPECIAL cd dev; ./MAKEDEV ttyU0 ttyU1 gpio0 
 SPECIAL cd dev; ./MAKEDEV tun0 tun1 tun2 tun3 tun4 tun5 tun6 tun7 tun8 tun9 tun10
+SPECIAL cd dev; ./MAKEDEV tun11 tun12 tun13 tun14 tun15 tun16 tun17 tun18 tun19 tun20
+SPECIAL cd dev; ./MAKEDEV tun21 tun22 tun23 tun24 tun25 tun26 tun27 tun28 tun29 tun30
+SPECIAL cd dev; ./MAKEDEV tun31 tun32 tun33 tun34 tun35 tun36 tun37 tun38 tun39 tun40
+SPECIAL cd dev; ./MAKEDEV tun41 tun42 tun43 tun44 tun45 tun46 tun47 tun48 tun49 tun50
+SPECIAL cd dev; ./MAKEDEV tun51 tun52 tun53 tun54 tun55 tun56 tun57 tun58 tun59 tun60
+SPECIAL cd dev; ./MAKEDEV tun61 tun62 tun63 tun64 tun65 tun66 tun67 tun68 tun69 tun70
+SPECIAL cd dev; ./MAKEDEV tun71 tun72 tun73 tun74 tun75 tun76 tun77 tun78 tun79 tun80
+SPECIAL cd dev; ./MAKEDEV tun81 tun82 tun83 tun84 tun85 tun86 tun87 tun88 tun89 tun90
+SPECIAL cd dev; ./MAKEDEV tun91 tun92 tun93 tun94 tun95 tun96 tun97 tun98 tun99 tun100
 SPECIAL cd dev; ./MAKEDEV bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9 bpf10
 SPECIAL cd dev; ./MAKEDEV bpf11 bpf12 bpf13 bpf14 bpf15 bpf16 bpf17 bpf18 bpf19 bpf20
 SPECIAL cd dev; ./MAKEDEV bpf21 bpf22 bpf23 bpf24 bpf25 bpf26 bpf27 bpf28 bpf29 bpf30
