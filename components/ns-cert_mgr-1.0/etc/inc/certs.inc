@@ -53,7 +53,7 @@ function lookup_cert($refid) {
 }
 
 function ca_import($ca, $str) {
-
+        global $ca;
 	$ca['crt'] = base64_encode($str);
 
 	return true;

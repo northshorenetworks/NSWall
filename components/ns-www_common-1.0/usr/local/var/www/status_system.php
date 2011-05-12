@@ -35,8 +35,7 @@ B<?php readfile("/etc/version.build"); ?> built on <?php readfile("/etc/version.
 </div>
 <div><label for="cpuusage">CPU Usage</label> <a
 	href="#status_graph_cpu">view graph</a></div>
-<?php /* <div><label for="serial_no">Serial Number</label> <?php echo sg_get_const("SERIAL")?> */ ?>
-</div>
+<?php /* <div><label for="serial_no">Serial Number</label> <?php echo sg_get_const("SERIAL")?> </div>*/ ?>
 <div><label for="cpuusage">System Notes</label> <textarea name="notes"
 	cols="75" rows="7" id="notes" class="notes"><?=htmlspecialchars(base64_decode($config['system']['notes']));?></textarea>
 </div>
@@ -50,4 +49,3 @@ B<?php readfile("/etc/version.build"); ?> built on <?php readfile("/etc/version.
 </div>
 <!-- /form-container --></div>
 <!-- /wrapper -->
-

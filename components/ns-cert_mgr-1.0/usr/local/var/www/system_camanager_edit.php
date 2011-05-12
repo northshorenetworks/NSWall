@@ -54,7 +54,7 @@ $(document).ready(function() {
     $("#submitbutton").click(function () {
         displayProcessingDiv();
         var QueryString = $("#iform").serialize();
-        $.post("forms/system_form_submit.php", QueryString, function(output) {
+        $.post("forms/certmgr_form_submit.php", QueryString, function(output) {
             $("#save_config").html(output);
             if(output.match(/SUBMITSUCCESS/))
                 setTimeout(function(){ $('#save_config').dialog('close'); }, 1000);
@@ -62,6 +62,7 @@ $(document).ready(function() {
 		});
     return false;
     });
+    $("#internaldiv").hide();
     $("#method").change(function() {
           var val = $(this).val();
           switch(val){
@@ -101,8 +102,8 @@ $(document).ready(function() {
 <div id="wrapper">
         <div class="form-container ui-tabs ui-widget ui-corner-all">
 
-	<form action="forms/system_form_submit.php" method="post" name="iform" id="iform">
-              <input name="formname" type="hidden" value="system_camanager">
+	<form action="forms/certmgr_form_submit.php" method="post" name="iform" id="iform">
+              <input name="formname" type="hidden" value="system_camgr">
 			  <input name="id" type="hidden" value="<?=$id;?>">
 	<fieldset>
 		<legend><?=join(": ", $pgtitle);?></legend>

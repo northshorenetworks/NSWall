@@ -94,13 +94,13 @@ $(".col4 a, #newcert a").click(function () {
         if (confirm('Are you sure you want to delete this cert?')){
 		displayProcessingDiv();
 		var id = $(this).attr('href');
-        	$.post("forms/system_form_submit.php", id, function(output) {
-            	$("#save_config").html(output);
-            	if(output.match(/SUBMITSUCCESS/))
-                	setTimeout(function(){ $('#save_config').dialog('close'); }, 1000);
-                	setTimeout(function(){ $('#content').load('interfaces_cert_tabs.php'); }, 1250);
-        	});
-    		return false;
+    		$.post("forms/certmgr_form_submit.php", id, function(output) {
+                $("#save_config").html(output);
+                if(output.match(/SUBMITSUCCESS/))
+                        setTimeout(function(){ $('#save_config').dialog('close'); }, 1000);
+                        setTimeout(function(){ $('#content').load('system_cacert_tabs.php'); }, 1250);
+                });	
+		return false;
 		}    
 });
 

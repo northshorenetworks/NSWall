@@ -99,11 +99,11 @@ $("#newca a").click(function () {
         if (confirm('Are you sure you want to delete this ca?')){
 		displayProcessingDiv();
 		var id = $(this).attr('href');
-        	$.post("forms/system_form_submit.php", id, function(output) {
+        	$.post("forms/certmgr_form_submit.php", id, function(output) {
             	$("#save_config").html(output);
             	if(output.match(/SUBMITSUCCESS/))
                 	setTimeout(function(){ $('#save_config').dialog('close'); }, 1000);
-                	setTimeout(function(){ $('#content').load('interfaces_ca_tabs.php'); }, 1250);
+                	setTimeout(function(){ $('#content').load('system_cacert_tabs.php'); }, 1250);
         	});
     		return false;
 		}    
@@ -118,15 +118,15 @@ $("#newca a").click(function () {
 		class="col2">Export</span> <span class="col3">Delete</span> <span
 		class="col4">Internal</span> <span class="col5">Certificates</span> <span
 		class="col6">Common Name</span></li>
-		<?php $nrules = 0; for ($i = 0; isset($a_ca[$i]); $i++):
-		$caent = $a_ca[$i];
-		?>
-	<li id="listItem_<?=$i;?>"><span class="col1"><span class="col4"><?php echo $caent['name'];?></span></span>
+		<?php for ($t = 0; isset($a_ca[$t]); $t++):
+		$caent = $a_ca[$t]; ?>
+		
+	<li id="listItem_<?=$t;?>"><span class="col1"><span class="col4"><?php echo $caent['name'];?></span></span>
 	<span class="col2"> <a
-		href="system_camanager_edit.php?act=exp&id=<?=$i;?>"> <span
+		href="system_camanager_edit.php?act=exp&id=<?=$t;?>"> <span
 		title="export this CA" class="ui-icon ui-icon-circle-arrow-s"></span>
 	</a> </span> <span class="col3"> <a
-		href="id=<?=$i;?>&formname=system_ca_delete"> <span
+		href="id=<?=$t;?>&formname=system_ca_delete"> <span
 		title="delete this ca" class="ui-icon ui-icon-circle-close"></span> </a>
 	</span> <?php
 	$i = 0;
@@ -155,7 +155,7 @@ $("#newca a").click(function () {
 	split(",", htmlspecialchars(cert_get_subject($caent['crt'])));
 	?> <span class="col6"><?php if (isset($caent['crt'])) echo "$CN,<br> $email,<br> $org,<br> $city,<br> $state,<br> $country<br>";?></span>
 	</li>
-	<?php $nrules++; endfor; ?>
+	<?php endfor; ?>
 </ul>
 <div id="newca">
 <center><a href="system_camanager_edit.php"><span title="add a new ca"

@@ -90,6 +90,8 @@ $(document).ready(function() {
 		});
     return false;
     });
+    $("#internaldiv").hide();
+    $("#externaldiv").hide();
     $("#method").change(function() {
           var val = $(this).val();
           switch(val){
@@ -167,7 +169,7 @@ $(document).ready(function() {
 		    </div>
                     <div>
                         <label for="key">Private Key Data</label>
-            		<textarea name="cert" id="key" cols="65" rows="7" class="formfld_cert"><?=$pconfig['cert'];?></textarea>	
+            		<textarea name="key" id="key" cols="65" rows="7" class="formfld_cert"><?=$pconfig['key'];?></textarea>	
 			<p class="note">Paste a private key in X.509 PEM format here.</p>
 		    </div>
                 </div>         

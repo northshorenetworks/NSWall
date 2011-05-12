@@ -918,36 +918,6 @@ if ($_POST) {
 			}
 
 			return $retval;
-		case "system_ca_delete":
-			$id = $_POST['id'];
-			if (!is_array($config['system']['certmgr']['ca']))
-			$config['system']['certmgr']['ca'] = array();
-
-			$a_ca = &$config['system']['certmgr']['ca'];
-
-			// go through all the firewall rules and make sure none use this if
-			foreach($config['filter']['rule'] as $rule) {
-				if ($rule['interface'] == vlan . $a_ca[$id]['tag']) {
-					$input_errors[] = "A firewall rule is referenced by this VLAN";
-					$input_errors[] = "You must delete all firewall rules used by this interface";
-				}
-			}
-
-			if ($retval == 0 && !$input_errors) {
-				unset($a_ca[$id]);
-				write_config();
-				sleep(2);
-				echo '<!-- SUBMITSUCCESS --><center>Configuration saved successfully</center>';
-			} else {
-				print_input_errors($input_errors);
-				echo '<script type="text/javascript">
-                        $("#okbtn").click(function () {
-                            $("#save_config").dialog("close");
-                        });
-                        </script>';
-				echo '<center><INPUT TYPE="button" value="OK" id="okbtn"></center>';
-			}
-			return $retval;
 		case "system_route_table_delete":
 			$id = $_POST['id'];
 			if (!is_array($config['system']['routetables']['routetable']))
@@ -975,34 +945,6 @@ if ($_POST) {
                         $("#save_config").dialog("close");
                     });
                       </script>';
-				echo '<center><INPUT TYPE="button" value="OK" id="okbtn"></center>';
-			}
-			return $retval;
-		case "system_cert_delete":
-			$id = $_POST['id'];
-			if (!is_array($config['system']['certmgr']['cert']))
-			$config['system']['certmgr']['cert'] = array();
-
-			$a_cert = &$config['system']['certmgr']['cert'];
-
-			// go through all the firewall rules and make sure none use this if
-			if ($config['system']['general']['webgui']['certificate'] == $a_cert[$id]['name']) {
-				$input_errors[] = "This certificate is in use by the WebUI.";
-				$input_errors[] = "You must change the WebUI certificate before deleting this certificate";
-			}
-
-			if ($retval == 0 && !$input_errors) {
-				unset($a_cert[$id]);
-				write_config();
-				sleep(2);
-				echo '<!-- SUBMITSUCCESS --><center>Configuration saved successfully</center>';
-			} else {
-				print_input_errors($input_errors);
-				echo '<script type="text/javascript">
-                        $("#okbtn").click(function () {
-                            $("#save_config").dialog("close");
-                        });
-                        </script>';
 				echo '<center><INPUT TYPE="button" value="OK" id="okbtn"></center>';
 			}
 			return $retval;

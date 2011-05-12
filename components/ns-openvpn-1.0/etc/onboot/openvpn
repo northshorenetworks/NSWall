@@ -1,1 +1,1 @@
-<?php services_openvpn_configure(); ?>
+<?php openvpn_monitor_configure(); ?>
