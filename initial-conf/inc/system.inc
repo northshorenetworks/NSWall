@@ -128,7 +128,7 @@ function system_cronconf_generate() {
 	if($config['system']['configserver']['checkint']) {
 		$confcheck = $config['system']['configserver']['checkint'];
 	} else {
-		$confcheck = '60';
+		$confcheck = '1';
 	}
 	$crontab .= "*/$confcheck * * * * php -q /etc/rc.queryconfigserver\n";
 	fwrite($fd, $crontab);

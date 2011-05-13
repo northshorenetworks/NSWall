@@ -32,6 +32,13 @@
         require_once("functions.inc");
 	global $config, $g;
 
+	// Tell the config server our current ip so that snmp will continue to work
+	$authdata['hostname'] = $config['system']['configserver']['identifier'];
+       	if ($g['debug']) 
+		$authdata['debug'] = 1; 
+	$url    = 'http://172.19.40.1/cacti-update.php';
+        $retval = http_request( '', '', $url, $authdata, 'POST' );
+
 	/* Get an array of config area md5sums from the config server */
 	$remotemd5s = decode_array(config_sync_policy_server_request('getmd5', ''));
 

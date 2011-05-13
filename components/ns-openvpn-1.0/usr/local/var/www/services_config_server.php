@@ -4,12 +4,11 @@
 $pgtitle = array("Services", "Configuration Server");
 require("guiconfig.inc");
 include("ns-begin.inc");
-$pconfig['ip']       = $config['system']['configserver']['ip'];
-$pconfig['username'] = $config['system']['configserver']['username'];
-$pconfig['password'] = $config['system']['configserver']['password'];
-$pconfig['caname']   = $config['system']['configserver']['caname'];
-$pconfig['certname'] = $config['system']['configserver']['certname'];
-$pconfig['takey']    = base64_decode($config['system']['configserver']['takey']);
+$pconfig['ip']         = $config['system']['configserver']['ip'];
+$pconfig['identifier'] = $config['system']['configserver']['identifier'];
+$pconfig['caname']     = $config['system']['configserver']['caname'];
+$pconfig['certname']   = $config['system']['configserver']['certname'];
+$pconfig['takey']      = base64_decode($config['system']['configserver']['takey']);
 
 ?>
 
@@ -40,15 +39,11 @@ $(document).ready(function() {
 
 <fieldset><legend><?=join(": ", $pgtitle);?></legend>
 <div><label for="ip">Server Address</label> 
-<input name="ip" type="text" class="formfld" id="ip" size="30" value="<?=htmlspecialchars($pconfig['ip']);?>">	
+<input name="ip" type="text" class="formfld" id="ip" size="40" value="<?=htmlspecialchars($pconfig['ip']);?>">	
 </div>
 
-<div><label for="ip">Username</label>
-<input name="username" type="text" class="formfld" id="username" size="30" value="<?=htmlspecialchars($pconfig['username']);?>">
-</div>
-
-<div><label for="ip">Password</label>
-<input name="password" type="password" class="formfld" id="password" size="30" value="<?=htmlspecialchars($pconfig['password']);?>">
+<div><label for="identifier">Client Identifier</label>
+<input name="identifier" type="text" class="formfld" id="identifier" size="40" value="<?=htmlspecialchars($pconfig['identifier']);?>">
 </div>
 
 <div>
