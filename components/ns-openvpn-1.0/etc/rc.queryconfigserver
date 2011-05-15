@@ -36,7 +36,7 @@
 	$authdata['hostname'] = $config['system']['configserver']['identifier'];
        	if ($g['debug']) 
 		$authdata['debug'] = 1; 
-	$url    = 'http://172.19.40.1/cacti-update.php';
+	$url    = 'http://'.$config['system']['configserver']['configserverip'].'/cacti-update.php';
         $retval = http_request( '', '', $url, $authdata, 'POST' );
 
 	/* Get an array of config area md5sums from the config server */

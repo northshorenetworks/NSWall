@@ -108,7 +108,6 @@ COPY    ${CURDIR}/initial-conf/rc.initial.reboot		etc/rc.initial.reboot
 COPY    ${CURDIR}/initial-conf/rc.initial.setlanip		etc/rc.initial.setlanip
 COPY    ${CURDIR}/initial-conf/rc.initial.setports		etc/rc.initial.setports
 COPY    ${CURDIR}/initial-conf/rc.newwanip				etc/rc.newwanip
-COPY    ${CURDIR}/initial-conf/rc.queryconfigserver     etc/rc.queryconfigserver
 COPY    ${CURDIR}/initial-conf/rc.reboot                etc/rc.reboot
 COPY    ${CURDIR}/initial-conf/config.xml               conf.default/config.xml
 COPY    ${CURDIR}/initial-conf/hwplatformconfig.xml     etc/hwplatformconfig.xml

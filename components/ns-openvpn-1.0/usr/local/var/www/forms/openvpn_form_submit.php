@@ -25,11 +25,12 @@ if ($_POST) {
 
 	if (!$input_errors) {
 		unset($config['system']['configserver']);
-		$config['system']['configserver']['ip']         = $_POST['ip'];
-		$config['system']['configserver']['identifier'] = $_POST['identifier'];
-		$config['system']['configserver']['caname']     = $_POST['caname'];
-		$config['system']['configserver']['certname']   = $_POST['certname'];
-		$config['system']['configserver']['takey']      = base64_encode($_POST['takey']);
+		$config['system']['configserver']['ip']             = $_POST['ip'];
+		$config['system']['configserver']['configserverip'] = $_POST['configserverip'];
+		$config['system']['configserver']['identifier']     = $_POST['identifier'];
+		$config['system']['configserver']['caname']         = $_POST['caname'];
+		$config['system']['configserver']['certname']       = $_POST['certname'];
+		$config['system']['configserver']['takey']          = base64_encode($_POST['takey']);
 
 		write_config();
 

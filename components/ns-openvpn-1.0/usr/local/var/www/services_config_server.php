@@ -4,11 +4,12 @@
 $pgtitle = array("Services", "Configuration Server");
 require("guiconfig.inc");
 include("ns-begin.inc");
-$pconfig['ip']         = $config['system']['configserver']['ip'];
-$pconfig['identifier'] = $config['system']['configserver']['identifier'];
-$pconfig['caname']     = $config['system']['configserver']['caname'];
-$pconfig['certname']   = $config['system']['configserver']['certname'];
-$pconfig['takey']      = base64_decode($config['system']['configserver']['takey']);
+$pconfig['ip']             = $config['system']['configserver']['ip'];
+$pconfig['configserverip'] = $config['system']['configserver']['configserverip'];
+$pconfig['identifier']     = $config['system']['configserver']['identifier'];
+$pconfig['caname']         = $config['system']['configserver']['caname'];
+$pconfig['certname']       = $config['system']['configserver']['certname'];
+$pconfig['takey']          = base64_decode($config['system']['configserver']['takey']);
 
 ?>
 
@@ -38,8 +39,12 @@ $(document).ready(function() {
 	value="openvpn_config_server">
 
 <fieldset><legend><?=join(": ", $pgtitle);?></legend>
-<div><label for="ip">Server Address</label> 
+<div><label for="ip">Tunnel Endpoint</label> 
 <input name="ip" type="text" class="formfld" id="ip" size="40" value="<?=htmlspecialchars($pconfig['ip']);?>">	
+</div>
+
+<div><label for="configserverip">Config Server</label>
+<input name="configserverip" type="text" class="formfld" id="configserverip" size="40" value="<?=htmlspecialchars($pconfig['configserverip']);?>">
 </div>
 
 <div><label for="identifier">Client Identifier</label>
