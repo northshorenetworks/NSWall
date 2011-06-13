@@ -35,7 +35,7 @@ foreach ($a_ca as $ca)
     if ($ca['prv'])    
         $internal_ca_count++;
 
-if ($act == "exp") {
+if ($act == "exp_cert") {
 
     if (!$a_cert[$id]) {
         header("system_camanager.php");
@@ -44,6 +44,24 @@ if ($act == "exp") {
 
     $exp_name = urlencode("{$a_cert[$id]['name']}.crt");
     $exp_data = base64_decode($a_cert[$id]['crt']);
+    $exp_size = strlen($exp_data);
+
+    header("Content-Type: application/octet-stream");
+    header("Content-Disposition: attachment; filename={$exp_name}");
+    header("Content-Length: $exp_size");
+    echo $exp_data;
+    exit;
+} 
+
+if ($act == "exp_pkey") {
+
+    if (!$a_cert[$id]) {
+        header("system_camanager.php");
+        exit;
+    }
+
+    $exp_name = urlencode("{$a_cert[$id]['name']}.key");
+    $exp_data = base64_decode($a_cert[$id]['pkey']);
     $exp_size = strlen($exp_data);
 
     header("Content-Type: application/octet-stream");
@@ -86,8 +104,8 @@ $(document).ready(function() {
             $("#save_config").html(output);
             if(output.match(/SUBMITSUCCESS/))
                 setTimeout(function(){ $('#save_config').dialog('close'); }, 1000);
-        		setTimeout(function(){ $('#content').load('system_cacert_tabs.php'); }, 1250);
-		});
+            setTimeout(function(){ $('#content').load('system_cacert_tabs.php'); }, 1250);
+      });
     return false;
     });
     $("#internaldiv").hide();
@@ -137,20 +155,20 @@ $(document).ready(function() {
 
 <div id="wrapper">
     <div class="form-container ui-tabs ui-widget ui-corner-all">
-	<form action="forms/system_form_submit.php" method="post" name="iform" id="iform">
+   <form action="forms/system_form_submit.php" method="post" name="iform" id="iform">
               <input name="formname" type="hidden" value="system_certmanager">
-			  <input name="id" type="hidden" value="<?=$id;?>">
-	<fieldset>
-		<legend><?=join(": ", $pgtitle);?></legend>
-		<div>
-			     <label for="name">Descriptive Name</label>
+           <input name="id" type="hidden" value="<?=$id;?>">
+   <fieldset>
+      <legend><?=join(": ", $pgtitle);?></legend>
+      <div>
+              <label for="name">Descriptive Name</label>
                  <input name="name" type="text" class="formfld" id="name" size="30" value="<?=htmlspecialchars($pconfig['name']);?>">
                  <p class="note">The name of the CA (not parsed)</p>
         </div>
         <?php if ($act == "new"): ?>
         <div>
                  <label for "method">Method</label>
-				 <select name='method' id='method' class="formselect" onchange='method_change()'>
+             <select name='method' id='method' class="formselect" onchange='method_change()'>
                                 <?php
                                     foreach($cert_methods as $method => $desc):
                                     $selected = "";
@@ -159,28 +177,28 @@ $(document).ready(function() {
                                     ?>
                                 <option value="<?=$method;?>"<?=$selected;?>><?=$desc;?></option>
                                     <?php endforeach; ?>
-                               </select>        		
-		</div>         
+                               </select>            
+      </div>         
                 <div id='existingdiv'>
                     <div>
                         <label for="cert">Certificate Data</label>
-            		<textarea name="cert" id="cert" cols="65" rows="7" class="formfld_cert"><?=$pconfig['cert'];?></textarea>	
-			<p class="note">Paste a certificate in X.509 PEM format here.</p>
-		    </div>
+                  <textarea name="cert" id="cert" cols="65" rows="7" class="formfld_cert"><?=$pconfig['cert'];?></textarea> 
+         <p class="note">Paste a certificate in X.509 PEM format here.</p>
+          </div>
                     <div>
                         <label for="key">Private Key Data</label>
-            		<textarea name="key" id="key" cols="65" rows="7" class="formfld_cert"><?=$pconfig['key'];?></textarea>	
-			<p class="note">Paste a private key in X.509 PEM format here.</p>
-		    </div>
+                  <textarea name="key" id="key" cols="65" rows="7" class="formfld_cert"><?=$pconfig['key'];?></textarea>  
+         <p class="note">Paste a private key in X.509 PEM format here.</p>
+          </div>
                 </div>         
                 <div id='internaldiv'>
                     <?php if (!$internal_ca_count): ?>
                         <div>
-                            <label for="noca"></label>	
-			    <p class="note"><strong>No internal Certificate Authorities have been defined. You must
+                            <label for="noca"></label>  
+             <p class="note"><strong>No internal Certificate Authorities have been defined. You must
                             <a href="system_camanager.php?act=new&method=internal">create</a>
                             an internal CA before creating an internal certificate.</strong></p>
-		        </div>
+              </div>
                         <?php else: ?>
                             <div>
                                      <label for="keylen">Certificate Authority</label>
@@ -197,7 +215,7 @@ $(document).ready(function() {
                                             <?php endforeach; ?>
                                      </select>
                            </div>
-		 <div>
+       <div>
                                      <label for="keylen">Key Length</label>
                                      <select name='keylen' id='keylen'>
                                      <?php
@@ -209,42 +227,42 @@ $(document).ready(function() {
                                          <option value="<?=$len;?>"<?=$selected;?>><?=$len;?></option>
                                      <?php endforeach; ?>
                                      </select> bits
-			             <p class="note"> </p>
-            	 </div>	
-		 <div>
-					 <label for="lifetime">Lifetime</label>
-					 <input name="lifetime" type="text" id="lifetime" size="5" value="<?=htmlspecialchars($pconfig['lifetime']);?>"/> days
-				 	 <p class="note"> </p>
-		 </div>
-		 <div>
-					 <label for="dn_country">Country Code</label>
-					 <input name="dn_country" type="text"  size="2" value="<?=htmlspecialchars($pconfig['dn_country']);?>"/>
-					 <p class="note">Example: US (two letters)</p>
-		 </div>
-		 <div>
+                      <p class="note"> </p>
+                </div>  
+       <div>
+                <label for="lifetime">Lifetime</label>
+                <input name="lifetime" type="text" id="lifetime" size="5" value="<?=htmlspecialchars($pconfig['lifetime']);?>"/> days
+                <p class="note"> </p>
+       </div>
+       <div>
+                <label for="dn_country">Country Code</label>
+                <input name="dn_country" type="text"  size="2" value="<?=htmlspecialchars($pconfig['dn_country']);?>"/>
+                <p class="note">Example: US (two letters)</p>
+       </div>
+       <div>
                      <label for="dn_state">State/Province</label>
                      <input name="dn_state" type="text" class="formfld unknown" size="40" value="<?=htmlspecialchars($pconfig['dn_state']);?>"/>
-		     <p class="note">Example: Texas</p>
+           <p class="note">Example: Texas</p>
                  </div>
-		 <div>
+       <div>
                      <label for="dn_city">City</label>
                      <input name="dn_city" type="text" class="formfld unknown" size="40" value="<?=htmlspecialchars($pconfig['dn_city']);?>"/>
-		     <p class="note">Example: Austin</p>
+           <p class="note">Example: Austin</p>
                  </div>
-		 <div>
+       <div>
                      <label for="dn_organization">Organization</label>
                      <input name="dn_organization" type="text" class="formfld unknown" size="40" value="<?=htmlspecialchars($pconfig['dn_organization']);?>"/>
-		     <p class="note">Example: My Company Inc.</p>
+           <p class="note">Example: My Company Inc.</p>
                  </div>
-		 <div>
+       <div>
                      <label for="dn_email">Email Address</label>
                      <input name="dn_email" type="text" class="formfld unknown" size="25" value="<?=htmlspecialchars($pconfig['dn_email']);?>"/>
-		     <p class="note">Example: admin@mycompany.com</p>
+           <p class="note">Example: admin@mycompany.com</p>
                  </div>
-		 <div>
+       <div>
                      <label for="dn_commonname">Common Name</label>
                      <input name="dn_commonname" type="text" class="formfld unknown" size="25" value="<?=htmlspecialchars($pconfig['dn_commonname']);?>"/>
-		     <p class="note">Example: internal-ca</p>
+           <p class="note">Example: internal-ca</p>
                  </div>
                  <?php endif; ?>
                  </div>
@@ -261,58 +279,58 @@ $(document).ready(function() {
                                          <option value="<?=$len;?>"<?=$selected;?>><?=$len;?></option>
                                      <?php endforeach; ?>
                                      </select> bits
-			             <p class="note"> </p>
-            	 </div>	
-		 <div>
-		      <label for="csr_dn_country">Country Code</label>
-	              <input name="csr_dn_country" type="text"  size="2" value="<?=htmlspecialchars($pconfig['dn_country']);?>"/>
-		      <p class="note">Example: US (two letters)</p>
-		 </div>
-		 <div>
+                      <p class="note"> </p>
+                </div>  
+       <div>
+            <label for="csr_dn_country">Country Code</label>
+                 <input name="csr_dn_country" type="text"  size="2" value="<?=htmlspecialchars($pconfig['dn_country']);?>"/>
+            <p class="note">Example: US (two letters)</p>
+       </div>
+       <div>
                      <label for="csr_dn_state">State/Province</label>
                      <input name="csr_dn_state" type="text" class="formfld unknown" size="40" value="<?=htmlspecialchars($pconfig['dn_state']);?>"/>
-		     <p class="note">Example: Texas</p>
+           <p class="note">Example: Texas</p>
                  </div>
-		 <div>
+       <div>
                      <label for="csr_dn_city">City</label>
                      <input name="csr_dn_city" type="text" class="formfld unknown" size="40" value="<?=htmlspecialchars($pconfig['dn_city']);?>"/>
-		     <p class="note">Example: Austin</p>
+           <p class="note">Example: Austin</p>
                  </div>
-		 <div>
+       <div>
                      <label for="csr_dn_organization">Organization</label>
                      <input name="csr_dn_organization" type="text" class="formfld unknown" size="40" value="<?=htmlspecialchars($pconfig['dn_organization']);?>"/>
-		     <p class="note">Example: My Company Inc.</p>
+           <p class="note">Example: My Company Inc.</p>
                  </div>
-		 <div>
+       <div>
                      <label for="csr_dn_email">Email Address</label>
                      <input name="csr_dn_email" type="text" class="formfld unknown" size="25" value="<?=htmlspecialchars($pconfig['dn_email']);?>"/>
-		     <p class="note">Example: admin@mycompany.com</p>
+           <p class="note">Example: admin@mycompany.com</p>
                  </div>
-		 <div>
+       <div>
                      <label for="csr_dn_commonname">Common Name</label>
                      <input name="csr_dn_commonname" type="text" class="formfld unknown" size="25" value="<?=htmlspecialchars($pconfig['dn_commonname']);?>"/>
-		     <p class="note">Example: internal-ca</p>
+           <p class="note">Example: internal-ca</p>
                  </div>
-		</div>
+      </div>
         <?php elseif ($act == "csr"):?>
             <div>
                 <label for="csr">Signing Request data</label>
-            	<textarea name="csr" id="csr" cols="65" rows="7" class="formfld_cert" readonly><?=$pconfig['csr'];?></textarea>	
-	        <p class="note">Copy the certificate signing data from here and forward it to your certificate authority for singing.</p>
+               <textarea name="csr" id="csr" cols="65" rows="7" class="formfld_cert" readonly><?=$pconfig['csr'];?></textarea>  
+           <p class="note">Copy the certificate signing data from here and forward it to your certificate authority for singing.</p>
             </div>
             <div>
                 <label for="cert">Final Certificate data</label>
-         	<textarea name="cert" id="cert" cols="65" rows="7" class="formfld_cert"><?=$pconfig['cert'];?></textarea>	
-		<p class="note">Paste the certificate received from your cerificate authority here.</p>
-	    </div>
+            <textarea name="cert" id="cert" cols="65" rows="7" class="formfld_cert"><?=$pconfig['cert'];?></textarea> 
+      <p class="note">Paste the certificate received from your cerificate authority here.</p>
+       </div>
         <?php endif; ?>
                 
-	</fieldset>
-	
-	<div class="buttonrow">
-		<input type="submit" id="submitbutton" value="Save" class="button" />
-	</div>
+   </fieldset>
+   
+   <div class="buttonrow">
+      <input type="submit" id="submitbutton" value="Save" class="button" />
+   </div>
 
-	</form>
-	</div><!-- /form-container -->
+   </form>
+   </div><!-- /form-container -->
 </div><!-- /wrapper -->

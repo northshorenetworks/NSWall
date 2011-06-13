@@ -328,6 +328,27 @@ function vpn_ipsec_gateway_sort() {
 	unset($config['ipsec']['gw'][$i]['seq']);
 }
 
+/* sort by interface only, retain the original order of rules that apply to
+ the same interface */
+function openvpn_gateway_sort() {
+        global $g, $config;
+
+        /* mark each rule with the sequence number (to retain the order while sorting) */
+        for ($i = 0; isset($config['openvpn']['gw'][$i]); $i++)
+        $config['openvpn']['gw'][$i]['seq'] = $i;
+
+        function openvpngatewaycmp($a, $b) {
+                return -strcmp($a['name'], $b['name']);
+        }
+
+        usort($config['openvpn']['gw'], "openvpngatewaycmp");
+
+        /* strip the sequence numbers again */
+        for ($i = 0; isset($config['openvpn']['gw'][$i]); $i++)
+        unset($config['openvpn']['gw'][$i]['seq']);
+}
+
+
 
 /* sort by interface only, retain the original order of rules that apply to
  the same interface */

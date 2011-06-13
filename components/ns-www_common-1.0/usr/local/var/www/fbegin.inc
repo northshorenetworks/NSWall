@@ -107,8 +107,9 @@ $menu['Services']['Config Server'] = array('#services_config_server');
 
 if ($g['module'] == 'FIREWALL') {
 	$menu['VPN']['IPSec'] = array('#vpn_ipsec_tabs');
-	$menu['VPN']['PPTP Client'] = array('#vpn_pptp_client');
-	$menu['VPN']['PPTP Server'] = array('#vpn_pptp_server');
+	$menu['VPN']['OpenVPN'] = array('#openvpn_gateways_tabs');
+	//$menu['VPN']['PPTP Client'] = array('#vpn_pptp_client');
+	//$menu['VPN']['PPTP Server'] = array('#vpn_pptp_server');
 }
 
 $menu['Status']['System'] = array('#status_system');

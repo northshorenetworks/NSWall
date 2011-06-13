@@ -97,7 +97,7 @@ if ($_POST) {
 					 echo '<INPUT TYPE="button" value="OK" id="okbtn"></center>';
 				}
 				return $retval;
-                        case "system_ca_delete":
+                case "system_ca_delete":
                         $id = $_POST['id'];
                         if (!is_array($config['system']['certmgr']['ca']))
                         $config['system']['certmgr']['ca'] = array();
@@ -119,7 +119,7 @@ if ($_POST) {
                                 echo '<center><INPUT TYPE="button" value="OK" id="okbtn"></center>';
                         }
                         return $retval;
-			case "system_cert_delete":
+		case "system_cert_delete":
                         $id = $_POST['id'];
                         if (!is_array($config['system']['certmgr']['cert']))
                         $config['system']['certmgr']['cert'] = array();

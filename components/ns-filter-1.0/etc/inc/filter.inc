@@ -859,8 +859,11 @@ anchor "Abusive_Sites" {
 anchor "default" {
     block in $defaultlog 
     pass out all
-    pass quick log on tun0
+   
 EOD;
+
+        // We may want to change this to allow for firewalling of individual tunnels in the future
+        $ipfrules .= " pass in on tun\n";
 
 	/* If multiwan is enabled do this */
 	if (isset($config['system']['advanced']['multiwansupport'])) {
