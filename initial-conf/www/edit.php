@@ -30,6 +30,7 @@
 
 
 require("guiconfig.inc");
+require("ns-begin.inc");
 
 if (($_POST['submit'] == "Load") && file_exists($_POST['savetopath'])) {
 	$fd = fopen($_POST['savetopath'], "r");
