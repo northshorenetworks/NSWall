@@ -684,7 +684,7 @@ if ($_POST) {
 				echo '<script type="text/javascript">
                                 setTimeout(function(){ $("#save_config").dialog("close"); }, 2000);
                                 setTimeout(function(){ $("#reboot_nswall").dialog("open"); }, 2250);
-                                setTimeout(function(){ $("#reboot_nswall").dialog("close"); window.location = "/login.htm"; }, 75000);
+                                setTimeout(function(){ $("#reboot_nswall").dialog("close"); window.location = "/login.php"; }, 75000);
                         </script>'; 
 				echo "<center>The device will now reboot!</center>";
 				system_reboot();

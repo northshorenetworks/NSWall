@@ -40,7 +40,7 @@ if($formuser != ADMINUSER) {
 } else {
 	if($formpassword != ADMINPASSWORD ) {
 		echo '<script type="text/javascript">
-                                        setTimeout(function(){ window.location = "/login.htm"; }, 1000);
+                                        setTimeout(function(){ window.location = "/login.php"; }, 1000);
                                         </script>';
 	}
 }

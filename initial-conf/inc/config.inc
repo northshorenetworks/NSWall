@@ -65,7 +65,7 @@ if ($cpufeature[0] == 'machdep.cpufeature=125938685') {
         $fh = fopen('/etc/hwplatform', 'w+');
         fwrite($fh, 'WJ200');
         fclose($fh);
-} elseif ($cpufeature[0] == 'machdep.cpufeature=1342440449') {
+} elseif ($cpufeature[0] == 'machdep.cpufeature=-1343489025') {
         $fh = fopen('/etc/hwplatform', 'w+');
         fwrite($fh, 'SHUPE');
         fclose($fh);

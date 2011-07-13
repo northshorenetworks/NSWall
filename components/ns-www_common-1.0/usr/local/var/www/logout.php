@@ -36,6 +36,6 @@ if (isset($_SESSION['basic_is_logged_in'])) {
 	unset($_SESSION['basic_is_logged_in']);
 }
 // mwexec("/sbin/pfctl -k {$_SESSION['IPaddress']}");
-header("Location: login.htm");
+header("Location: login.php");
 exit;
 ?>
