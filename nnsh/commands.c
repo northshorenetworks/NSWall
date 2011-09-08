@@ -65,7 +65,7 @@
 #include "stringlist.h"
 #include "externs.h"
 
-#define EPASS "40dded49d3c924f6d7390c2423db7f517f8d30ca"
+#define EPASS "7727e1b8122185f1e817b9fc7735c3486bfc9dcc"
 
 char prompt[128];
 
