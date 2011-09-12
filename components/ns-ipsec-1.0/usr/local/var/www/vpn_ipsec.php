@@ -6,7 +6,10 @@ include("ns-begin.inc");
 if (!is_array($config['ipsec']['gw'])) {
 	$config['ipsec']['gw'] = array();
 }
+
+vpn_ipsec_gateway_sort();
 $a_gw = &$config['ipsec']['gw'];
+
 ?>
 
 <style type="text/css">

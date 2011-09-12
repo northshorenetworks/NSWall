@@ -127,7 +127,7 @@ if ($_POST) {
                                         echo '<script type="text/javascript">
                                         $("#upload_firmware").dialog("close");
                                         $("#reboot_nswall").dialog("open");
-                                        setTimeout(function(){ $("#reboot_nswall").dialog("close"); window.location = "/login.htm"; }, 75000);
+                                        setTimeout(function(){ $("#reboot_nswall").dialog("close"); window.location = "/login.php"; }, 75000);
                                         </script>';
 				}
 			}

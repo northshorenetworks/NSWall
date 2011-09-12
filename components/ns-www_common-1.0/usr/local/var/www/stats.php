@@ -206,6 +206,13 @@ function dump_dhcp() {
 	echo $leases;
 }
 
+function dump_isakmpdtrace() {
+  global $g, $config;
+  printf("<pre>");
+  $trace = `/usr/sbin/tcpdump -avs 1440 -r /var/run/isakmpd.pcap`;
+  echo $trace;
+}
+
 function get_bgplg($tabname) {
 	$divstring = '#' . $tabname . 'tabs';
 	$output = <<<EOD
@@ -373,6 +380,9 @@ switch ($stat) {
 	case 'isakmpdconf':
 		get_php_stat('isakmpdconf_content', 'vpn');
 		break;
+  case 'isakmpdtrace':
+    get_php_stat('isakmpdtrace_content', 'vpn');
+    break;
 	case 'ipsecconf_content':
 		dump_ipsecconf();
 		break;
@@ -385,6 +395,9 @@ switch ($stat) {
 	case 'isakmpdconf_content':
 		dump_isakmpdconf();
 		break;
+  case 'isakmpdtrace_content':
+    dump_isakmpdtrace();
+    break;
 	case 'ipsec_flows':
 		get_php_stat('ipsecflows_content', 'vpn');
 		break;

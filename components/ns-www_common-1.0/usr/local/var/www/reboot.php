@@ -15,7 +15,7 @@ $(document).ready(function() {
      // When a user clicks on the submit button, post the form.
      $("#rebootbutton").click(function () {
      $("#reboot_nswall").dialog("open");
-     setTimeout(function(){ $("#reboot_nswall").dialog("close"); window.location = "/login.htm"; }, 75000); 
+     setTimeout(function(){ $("#reboot_nswall").dialog("close"); window.location = "/login.php"; }, 75000); 
 	  var QueryString = $("#rebootform").serialize()+'&reboot=yes';
       $.post("forms/system_form_submit.php", QueryString, function(output) {
       });
