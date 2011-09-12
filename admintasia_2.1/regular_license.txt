@@ -1,0 +1,23 @@
+Regular License
+
+The Regular License grants you, the Purchaser a non-exclusive, non-transferrable right to make use of the product that you acquire (Product).
+
+Your use of the Product, under the Regular License, is subject to the following conditions:
+
+(a) You may use the Product alone or you may incorporate the Product into another work you are creating.
+
+(b) Unless you have our prior written consent, you must not directly or indirectly license, sub-license, sell or resell the Product or offer to do any of these things. All of these things are referred to as Resale.
+
+(c) You may reproduce the Product in a printed format or display the Product on a website you are creating.
+
+(d) Your use of the Product is limited to a single application.
+
+(e) You may use the Product in a work which you are creating for your own purposes or for your client who has asked you to create it.
+
+(f) You must not incorporate the Product in a work which is created for Resale by you or your client.
+
+(g) If the Product is used or incorporated in a work there is no restriction on the number of copies of that work that can be reproduced and distributed (provided the use/incorporation remains a single application and the copies are not for Resale).
+
+(h) Notwithstanding the restriction on Resale, if you acquire the Product on behalf of your client you may recoup from your client the cost of acquiring the Product.
+
+For example, you could use Admintasia with a regular license in a website, application or administration UI. For most buyers the regular license is sufficient.
