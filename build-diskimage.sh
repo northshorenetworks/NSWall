@@ -108,8 +108,8 @@ ${SUDO} mkdir ${MOUNTPOINT}/packages
 ${SUDO} cp ${BASE}/packages/* ${MOUNTPOINT}/packages/
 
 ${SUDO} chmod 777 /mnt/etc/ 
-${SUDO} echo "stty com0 9600" >> ${MOUNTPOINT}/etc/boot.conf
-${SUDO} echo "set tty com0" >> ${MOUNTPOINT}/etc/boot.conf
+#${SUDO} echo "stty com0 9600" >> ${MOUNTPOINT}/etc/boot.conf
+#${SUDO} echo "set tty com0" >> ${MOUNTPOINT}/etc/boot.conf
 
 echo ""
 echo "Installing boot blocks..."

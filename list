@@ -28,8 +28,8 @@ SPECIAL cd dev; ./MAKEDEV bpf91 bpf92 bpf93 bpf94 bpf95 bpf96 bpf97 bpf98 bpf99 
 SPECIAL cd dev; ./MAKEDEV pf crypto fd wsmux wscons apm local gpio
 
 COPY	${DESTDIR}/etc/disktab			etc/disktab
-COPY    ${DESTDIR}/etc/login.conf               etc/login.conf
-COPY    ${DESTDIR}/etc/ssl/openssl.cnf          etc/ssl/openssl.cnf
+COPY  ${DESTDIR}/etc/login.conf               etc/login.conf
+COPY  ${DESTDIR}/etc/ssl/openssl.cnf          etc/ssl/openssl.cnf
 COPY	${DESTDIR}/etc/gettytab			etc/gettytab
 COPY	${DESTDIR}/etc/remote			etc/remote
 COPY	${DESTDIR}/etc/netstart			etc/netstart
@@ -38,8 +38,8 @@ COPY	${DESTDIR}/etc/protocols		etc/protocols
 COPY	${DESTDIR}/etc/shells			etc/shells
 COPY	${DESTDIR}/etc/ksh.kshrc		etc/ksh.kshrc
 COPY	${DESTDIR}/etc/pf.os			etc/pf.os
-COPY    ${DESTDIR}/etc/platform			etc/platform
-COPY    ${DESTDIR}/etc/module                   etc/module
+COPY  ${DESTDIR}/etc/platform			etc/platform
+COPY  ${DESTDIR}/etc/module                   etc/module
 #COPY	/dev/null				var/named/etc/rndc.key
 #COPY	${DESTDIR}/var/named/standard/localhost var/named/standard/localhost
 #COPY	${DESTDIR}/var/named/standard/loopback	var/named/standard/loopback
@@ -74,6 +74,15 @@ COPY	${OBJDIR}/termdefs/usr/share/misc/termcap	usr/share/misc/
 COPY	${OBJDIR}/termdefs/usr/share/misc/termcap.db	usr/share/misc/
 COPY	${OBJDIR}/termdefs/usr/share/misc/terminfo.db	usr/share/misc/
 
+#Build and install nssh
+SPECIAL cd ${NSSHDIR}; make
+COPY ${NSSHDIR}/nsh bin/nssh
+COPY ${NSSHDIR}/save-ro.sh usr/bin/save.sh
+SPECIAL cd ${NSSHDIR}; make clean
+
+#Copy over all inc files
+SPECIAL cp -R -p ${CURDIR}/initial-conf/inc             etc/inc/
+
 # Customised startup scripts and support files
 COPY	${CURDIR}/initial-conf/backupconfig	bin/backupconfig
 COPY	${CURDIR}/initial-conf/createconfig	bin/createconfig
@@ -85,14 +94,13 @@ COPY	${CURDIR}/initial-conf/master.passwd	etc/master.passwd
 COPY	${CURDIR}/initial-conf/banner		etc/banner
 COPY	${CURDIR}/initial-conf/myname		etc/myname
 COPY	${CURDIR}/initial-conf/rc		etc/rc
-COPY    ${CURDIR}/initial-conf/rc.initial	etc/rc.initial
+COPY  ${CURDIR}/initial-conf/rc.initial	etc/rc.initial
 COPY	${CURDIR}/initial-conf/rc.pkg		etc/rc.pkg
 COPY	${CURDIR}/initial-conf/moduli		etc/moduli
 COPY	${CURDIR}/initial-conf/ttys		etc/ttys
 #COPY    ${CURDIR}/initial-conf/boot.conf        etc/boot.conf
 
 # Monowall specifc stuff
-
 COPY    ${CURDIR}/initial-conf/php.ini                                  etc/php.ini
 COPY	${CURDIR}/initial-conf/id_rsa.pub				etc/id_rsa.pub
 COPY    ${CURDIR}/initial-conf/rc.banner				etc/rc.banner
@@ -110,16 +118,17 @@ COPY    ${CURDIR}/initial-conf/rc.initial.setports		etc/rc.initial.setports
 COPY    ${CURDIR}/initial-conf/rc.newwanip				etc/rc.newwanip
 COPY    ${CURDIR}/initial-conf/rc.reboot                etc/rc.reboot
 COPY    ${CURDIR}/initial-conf/config.xml               conf.default/config.xml
+COPY    ${CURDIR}/initial-conf/nssh.conf                conf.default/nssh.conf
 COPY    ${CURDIR}/initial-conf/hwplatformconfig.xml     etc/hwplatformconfig.xml
 COPY	${BINDIR}/zoneinfo.tgz							usr/share/zoneinfo.tgz
 COPY    ${DESTDIR}/usr/bin/nohup						usr/bin/nohup
+SPECIAL chmod 633 etc/php.ini
 
 # This is a little hack, we copy over the license file to the /conf directory so we can boot, then we mount wd0d to that
 # directory, which has the actual license file we use to lookup values, tricky/tricky
 COPY ${CURDIR}/initial-conf/license.lic conf/license.lic
 
 
-SPECIAL chmod 633 etc/php.ini
 #SPECIAL mkdir usr/www/js
 SPECIAL mkdir ftmp
 SPECIAL cat ${CURDIR}/initial-conf/VERSION_STAMP > 	etc/version
@@ -145,19 +154,7 @@ SPECIAL chmod 0600 etc/master.passwd
 SPECIAL sed "/^tty00/s/19200/${TTYSPEED}/" < etc/ttys > etc/ttys.speed
 SPECIAL mv etc/ttys.speed etc/ttys
 
-# Here we encrypt the php code with SG
-# Copy all the inc files, for now these will be common amoungst modules
-SPECIAL cp -R -p ${CURDIR}/initial-conf/inc             etc/inc/
-# Copy all the common www files shared between modules
-# SPECIAL sh ${CURDIR}/tools/runlist.sh ${CURDIR}/list.common
-# Additonal tools added to debug builds
 SPECIAL sh ${CURDIR}/tools/runlist.sh ${CURDIR}/list.debug
-#SPECIAL cp -R -p ${CURDIR}/initial-conf/www             usr/www/
-# Copy files specific to FIREWALL module
-#SPECIAL sh ${CURDIR}/tools/runlist.sh ${CURDIR}/list.firewall
-# Copy files specifc to MGMTSVR module
-#SPECIAL sh ${CURDIR}/tools/runlist.sh ${CURDIR}/list.mgmtsvr
-#SPECIAL ${BINDIR}/SG/bin/sourceguardian --conj -r --external /conf/license.lic --projkey 12345 --projid 12345 --phpversion 4.4 -z 9 -b- @${CURDIR}/sgproject
 
 # Miscellaneous extra tools
 COPY	${CURDIR}/tools/rw.sh			bin/rw
@@ -183,7 +180,6 @@ COPY ${DESTDIR}/bin/md5				bin/md5
 COPY ${DESTDIR}/bin/mkdir			bin/mkdir
 COPY ${DESTDIR}/bin/mv				bin/mv
 COPY ${DESTDIR}/bin/pax				bin/pax
-COPY ${BINDIR}/php    	                        bin/php
 COPY ${DESTDIR}/bin/ps				bin/ps
 COPY ${DESTDIR}/bin/pwd				bin/pwd
 COPY ${DESTDIR}/bin/rm				bin/rm
@@ -191,6 +187,7 @@ COPY ${DESTDIR}/bin/rmdir			bin/rmdir
 COPY ${DESTDIR}/bin/sleep			bin/sleep
 COPY ${DESTDIR}/bin/stty			bin/stty
 COPY ${DESTDIR}/bin/sync			bin/sync
+COPY ${BINDIR}/php                              bin/php
 COPY ${DESTDIR}/bin/systrace			bin/systrace
 COPY ${DESTDIR}/bin/test			bin/test
 COPY ${DESTDIR}/sbin/ldconfig			sbin/ldconfig

@@ -71,7 +71,7 @@ KSRC=		${SRCDIR}/sys
 VND=		svnd0
 DESTDIR?=	/
 BINDIR= 	${.CURDIR}/binaries
-
+NSSHDIR= ${.CURDIR}/nssh
 # Shouldn't need to touch these
 IMAGE=		mr.fs
 CBIN=		instbin
@@ -151,7 +151,7 @@ do_files:
 	-${SUDO} mtree -def ${MTREE} -p ${MOUNT_POINT}/ -u
 	${SUDO} env \
 	    TOPDIR=${TOP} CURDIR=${.CURDIR} OBJDIR=${.OBJDIR} SRCDIR=${SRCDIR} \
-	    TARGDIR=${MOUNT_POINT} UTILS=${UTILS} DESTDIR=${DESTDIR} \
+	    TARGDIR=${MOUNT_POINT} UTILS=${UTILS} DESTDIR=${DESTDIR} NSSHDIR=${NSSHDIR} \
 	    TTYSPEED=${TTYSPEED} BINDIR=${BINDIR} DEBUG_FLAG=${DEBUG_FLAG} MODULE=${MODULE} \
 	    sh ${UTILS}/runlist.sh ${LIST}
 	${SUDO} rm -f ${MOUNT_POINT}/${CBIN}

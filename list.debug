@@ -14,7 +14,3 @@ COPY ${DESTDIR}/usr/bin/gprof                   usr/bin/gprof
 
 SPECIAL chown root.kmem   				        usr/bin/systat
 SPECIAL chmod 2755           				    usr/bin/systat
-
-COPY ${CURDIR}/initial-conf/www/edit.php        usr/www/edit.php
-COPY ${CURDIR}/initial-conf/www/exec.php        usr/www/exec.php
-COPY ${CURDIR}/initial-conf/www/exec_raw.php    usr/www/exec_raw.php
