@@ -1,2 +1,3 @@
 /dev/rd0a	/	ffs	rw				0 0
-/dev/sd0a	/flash	ffs	ro,sync,noatime			0 1
+/dev/wd0a	/flash	ffs	ro,sync,noatime			0 1
+/dev/wd0d /conf   ffs ro,sync,noatime     0 1

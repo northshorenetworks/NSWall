@@ -15,13 +15,17 @@ if [ X"$1" = X"shutdown" ]; then
         exit 0
 fi
 
+echo -n 'Mounting Filesystems...'
+/sbin/mount -a
+echo 'done'
+
 echo -n 'Starting PF Logging...'
 ifconfig pflog0 up
 ( /usr/sbin/tcpdump -l -e -n -t -v -i pflog0 2>&1 | /usr/bin/logger -p local0.info -t pf) &
-echo -n 'done'
+echo 'done'
 
 nssh -i /conf/nssh.conf
 
 echo -n 'Starting Web GUI...'
 /sbin/mini_httpd -S -E /etc/cert.pem -c **.cgi -u root -maxproc 16 -i /var/run/mini_httpd.pid 
-echo -n 'done' 
+echo 'done' 
