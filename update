@@ -1,0 +1,137 @@
+#!/bin/sh
+
+##
+## global variables 
+default_mirror="https://www.osre.org/ns-update"
+filename="latest.tgz"
+default_download="$default_mirror/$filename"
+##
+##
+
+usage() {
+    echo "Usage: `basename $0` [arguments]"
+    echo
+    echo "Valid arguments:"
+    echo "  -m https://sub.yourdomain.tld/path/to/images"
+    echo "     Allows you to override the default download location."
+    echo "  -f filename.ext"
+    echo "     Allows you to specify a specific file to fetch. Default is latest.tgz"
+    echo "  -d gpg -d md5 -d sha1"
+    echo "     Disables checks for GPG, MD5, or SHA1. Must be specified for each exclusion."
+    echo "  -h"
+    echo "     Displays this output."
+    exit 1
+}
+
+verify_gpg () {
+    echo "Verifying signature and extracting $filename.gpg..."
+    gpg $filename.gpg
+
+    if [ $? != 0 ]; then
+        echo
+        echo "GPG verification failed! Please make sure you have key D2521F70 in your local trustdb."
+        exit 1
+    fi
+}
+
+verify_md5 () {
+    echo "Verifying MD5 checksum..."
+    md5 $filename > $filename.md5.$$
+    diff $filename.md5 $filename.md5.$$
+
+    if [ $? != 0 ]; then
+        echo
+        echo "MD5 checksum mismatch! Aborting."
+        exit 1
+    else
+        echo "MD5 checksum matches."
+    fi
+}
+
+verify_sha1 () {
+    echo "Verifying SHA1 checksum..."
+    md5 $filename > $filename.sha1.$$
+    diff $filename.md5 $filename.sha1.$$
+
+    if [ $? != 0 ]; then
+        echo
+        echo "SHA1 checksum mismatch! Aborting."
+        exit 1
+    else
+        echo "SHA1 checksum matches."
+    fi
+}
+
+while getopts m:f:d:h arg
+do
+    case "$arg" in
+        m)
+            mirror=$OPTARG
+        ;;
+
+        f)
+            filename=$OPTARG
+        ;;
+
+        d)
+            if [ "$OPTARG" = "gpg" ]; then
+                nogpg="nogpg"
+            fi
+            if [ "$OPTARG" = "md5" ]; then
+                nomd5="nomd5"
+            fi
+            if [ "$OPTARG" = "sha1" ]; then
+                nosha1="nomd5"
+            fi
+        ;;
+
+        *)
+            usage
+        ;;
+    esac
+done
+
+if [ $mirror ]; then
+    if [ $filename ]; then
+        download="$mirror/$filename"
+    else
+        download="$mirror/latest.tgz"
+    fi
+elif [ $filename ]; then
+        download="$default_mirror/$filename"
+else
+    download=$default_download
+fi
+
+echo "Cleaning current working directory..."
+rm -f $filename
+rm -f $filename.gpg
+rm -f $filename.md5
+rm -f $filename.md5.*
+rm -f $filename.sha1
+rm -f $filename.sha1.*
+
+if [ ! $nogpg ]; then
+    echo "Downloading binary update..."
+    ftp $download.gpg
+    verify_gpg
+else
+    echo "Downloading binary update... (GPG disabled!)"
+    ftp $download
+fi
+
+if [ ! $nomd5 ]; then
+    echo "Downloading md5 checksum..."
+    ftp $download.md5
+    verify_md5
+else 
+    echo "MD5 checking disabled!"
+fi
+
+if [ ! $nosha1 ]; then
+    echo "Downloading sha1 checksum..."
+    ftp $download.sha1
+    verify_sha1
+else
+    echo "SHA1 checking disabled!"
+fi
