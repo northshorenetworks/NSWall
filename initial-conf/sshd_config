@@ -1,6 +1,6 @@
 Port				22
 Protocol			2
-HostKey				/etc/ssh/ssh_host_rsa_key
+HostKey				/conf/ssh/ssh_host_rsa_key
 LoginGraceTime			1m
 ChallengeResponseAuthentication	no
 ClientAliveInterval		60

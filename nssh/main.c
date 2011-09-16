@@ -78,7 +78,7 @@ main(int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 
-	printf("%% NNSH v%s\n", vers);
+	printf("%% NSSH v%s\n", vers);
 
 	if (argc > 0)
 		usage();

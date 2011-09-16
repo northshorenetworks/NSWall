@@ -85,7 +85,7 @@ version(int argc, char **argv)
 	gettimeofday(&tv, (struct timezone *)0);
 	c = difftime(tv.tv_sec, boottime.tv_sec);
 
-	printf("%% NNSH v%s\n", vers);
+	printf("%% NSSH v%s\n", vers);
 	printf("Compiled %s by %s@%s\n", compiled, compiledby, compilehost);
 	printf("uptime: ");
 	pntd = 0;

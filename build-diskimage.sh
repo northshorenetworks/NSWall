@@ -103,9 +103,9 @@ echo "Copying bsd kernel, and boot blocks..."
 ${SUDO} cp ${DESTDIR}/usr/mdec/boot ${MOUNTPOINT}/boot
 ${SUDO} cp ${KERNELFILE} ${MOUNTPOINT}/bsd
 ${SUDO} mkdir ${MOUNTPOINT}/etc
-${SUDO} mkdir ${MOUNTPOINT}/packages
+#${SUDO} mkdir ${MOUNTPOINT}/packages
 
-${SUDO} cp ${BASE}/packages/* ${MOUNTPOINT}/packages/
+#${SUDO} cp ${BASE}/packages/* ${MOUNTPOINT}/packages/
 
 ${SUDO} chmod 777 /mnt/etc/ 
 #${SUDO} echo "stty com0 9600" >> ${MOUNTPOINT}/etc/boot.conf
@@ -135,8 +135,8 @@ echo "Copying default config from platform to conf partition..."
 # Here is where you add your own packages and configuration to the flash...
 ${SUDO} touch ${MOUNTPOINT}/set_wizard_initial
 ${SUDO} touch ${MOUNTPOINT}/unregistered
-${SUDO} cp ${BASE}/initial-conf/config.xml ${MOUNTPOINT}/config.xml
-${SUDO} cp ${BASE}/initial-conf/license.lic ${MOUNTPOINT}/license.lic
+${SUDO} cp ${BASE}/initial-conf/nssh.conf ${MOUNTPOINT}/nssh.conf
+#${SUDO} cp ${BASE}/initial-conf/license.lic ${MOUNTPOINT}/license.lic
 #${SUDO} mkdir ${MOUNTPOINT}/ssh
 
 ${SUDO} umount $MOUNTPOINT

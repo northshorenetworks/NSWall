@@ -102,7 +102,6 @@ COPY	${CURDIR}/initial-conf/ttys		etc/ttys
 #COPY    ${CURDIR}/initial-conf/boot.conf        etc/boot.conf
 
 # Monowall specifc stuff
-COPY    ${CURDIR}/initial-conf/php.ini                                  etc/php.ini
 COPY	${CURDIR}/initial-conf/id_rsa.pub				etc/id_rsa.pub
 COPY    ${CURDIR}/initial-conf/rc.banner				etc/rc.banner
 COPY    ${CURDIR}/initial-conf/rc.bootup				etc/rc.bootup
@@ -123,7 +122,6 @@ COPY    ${CURDIR}/initial-conf/nssh.conf                conf.default/nssh.conf
 COPY    ${CURDIR}/initial-conf/hwplatformconfig.xml     etc/hwplatformconfig.xml
 COPY	${BINDIR}/zoneinfo.tgz							usr/share/zoneinfo.tgz
 COPY    ${DESTDIR}/usr/bin/nohup						usr/bin/nohup
-SPECIAL chmod 633 etc/php.ini
 
 # This is a little hack, we copy over the license file to the /conf directory so we can boot, then we mount wd0d to that
 # directory, which has the actual license file we use to lookup values, tricky/tricky
@@ -188,7 +186,6 @@ COPY ${DESTDIR}/bin/rmdir			bin/rmdir
 COPY ${DESTDIR}/bin/sleep			bin/sleep
 COPY ${DESTDIR}/bin/stty			bin/stty
 COPY ${DESTDIR}/bin/sync			bin/sync
-COPY ${BINDIR}/php                              bin/php
 COPY ${DESTDIR}/bin/systrace			bin/systrace
 COPY ${DESTDIR}/bin/test			bin/test
 COPY ${DESTDIR}/sbin/ldconfig			sbin/ldconfig
