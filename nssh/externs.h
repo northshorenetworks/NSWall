@@ -173,7 +173,7 @@ void flag_x(char *, int *, char *);
 #define NOPTFILL	7
 #define DEFAULT_EDITOR	"/usr/bin/vi"
 #define NSHRC_TEMP	"/var/run/nsshrc"
-#define NSHRC		"/config/nsshrc"
+#define NSHRC		"/conf/nssh.conf"
 #define PING		"/sbin/ping"
 #define PING6		"/sbin/ping6"
 #define TRACERT		"/usr/sbin/traceroute"

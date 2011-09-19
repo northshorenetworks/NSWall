@@ -189,6 +189,7 @@ COPY ${DESTDIR}/bin/sync			bin/sync
 COPY ${DESTDIR}/bin/systrace			bin/systrace
 COPY ${DESTDIR}/bin/test			bin/test
 COPY ${DESTDIR}/sbin/ldconfig			sbin/ldconfig
+COPY ${DESTDIR}/sbin/dhclient                   sbin/dhclient
 COPY ${DESTDIR}/sbin/dhclient-script		sbin/dhclient-script
 COPY ${DESTDIR}/sbin/dmesg			sbin/dmesg
 COPY ${DESTDIR}/sbin/fsck			sbin/fsck

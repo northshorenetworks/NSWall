@@ -1221,7 +1221,7 @@ cmdargs(char *cmd, char *arg[])
 			char *shellp = cmd;
 
 			execv(shellp, arg);
-			printf("%% execv failed: %s\n", strerror(errno));
+			printf("%% execv failed: %s -- %s\n", strerror(errno), shellp);
 			exit(0);
 		}
 		default:
