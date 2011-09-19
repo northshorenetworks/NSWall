@@ -2,7 +2,6 @@ COPY ${DESTDIR}/usr/bin/vi                      usr/bin/vi
 COPY ${DESTDIR}/usr/bin/ssh-keygen              usr/bin/ssh-keygen
 COPY ${DESTDIR}/usr/sbin/sshd                   usr/sbin/sshd
 COPY ${DESTDIR}/usr/bin/ssh                     usr/bin/ssh
-COPY ${CURDIR}/initial-conf/sshd_config         var/run/sshd.conf
 COPY ${DESTDIR}/usr/bin/scp                     usr/bin/scp
 COPY ${DESTDIR}/usr/libexec/sftp-server         usr/libexec/sftp-server
 COPY ${DESTDIR}/usr/libexec/tftpd               usr/libexec/tftpd
@@ -12,5 +11,5 @@ COPY ${BINDIR}/iperf	                        usr/bin/iperf
 COPY ${DESTDIR}/usr/sbin/kgmon                  usr/sbin/kgmon
 COPY ${DESTDIR}/usr/bin/gprof                   usr/bin/gprof
 
-SPECIAL chown root.kmem   				        usr/bin/systat
-SPECIAL chmod 2755           				    usr/bin/systat
+SPECIAL chown root.kmem   		        usr/bin/systat
+SPECIAL chmod 2755           			usr/bin/systat
