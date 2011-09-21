@@ -36,7 +36,7 @@ add_pfrule() {
             if [[ $i == $checknum || $i == "N" ]]; then 
                 nsrule="$nsrule $i"
             else
-                echo "Invalid order number. Exiting."
+                echo "Invalid order. Exiting."
                 exit 1
             fi
         else
