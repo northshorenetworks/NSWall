@@ -1,4 +1,6 @@
-#!/bin/sh
+# pf.subr
+# this file contains subroutines for PF processing
+# $Id$
 
 add_pfrule() {
 
