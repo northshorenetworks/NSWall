@@ -1,6 +1,5 @@
 # pf.subr
 # this file contains subroutines for PF processing
-# $Id$
 
 add_pfrule() {
 
@@ -58,4 +57,10 @@ add_pfrule() {
         echo "$nsrule $pfrule" >> /var/run/nssh_pf.conf
     fi
     rm -f /tmp/$$.pfconf
+}
+
+del_pfrule() {
+}
+
+gen_pffile() {
 }
