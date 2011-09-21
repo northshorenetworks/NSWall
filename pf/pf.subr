@@ -4,7 +4,7 @@
 add_pfrule() {
 
     # example:
-    # add_pfrule action N pass in on em0 proto tcp from \ 
+    # add_pfrule filter N pass in on em0 proto tcp from \ 
     #     10.0.0.0/8 to any port 80
 
     count=0
@@ -19,7 +19,7 @@ add_pfrule() {
     #    * skip - skip rules
     #    * binat - binat rules
     #    * nat - nat rules, including port forwards and global
-    #    * action - pass/ block rules
+    #    * filter - pass/ block rules
     #
     # the order number is a figure for ordering within types
     # the order number must be numeric or "N", where N means
@@ -63,4 +63,58 @@ del_pfrule() {
 }
 
 gen_pffile() {
+    # break nssh_pf.conf into sections based on the type field
+    # and drop those into temp files
+    while read line; do
+        type=`echo $line | cut -d " " -f 1`
+        if [ "$type" = "defaults" ]; then
+            line=`echo $line | sed 's/^defaults\ //'`
+            echo "$line" >> /tmp/1-$$-defaults.out
+        elif [ "$type" = "skip" ]; then
+            line=`echo $line | sed 's/^skip\ //'`
+            echo "$line" >> /tmp/2-$$-skip.out
+        elif [ "$type" = "binat" ]; then
+            line=`echo $line | sed 's/^binat\ //'`
+            echo "$line" >> /tmp/3-$$-binat.out
+        elif [ "$type" = "nat" ]; then
+            line=`echo $line | sed 's/^nat\ //'`
+            echo "$line" >> /tmp/4-$$-nat.out
+        elif [ "$type" = "filter" ]; then
+            line=`echo $line | sed 's/^filter\ //'`
+            echo "$line" >> /tmp/5-$$-filter.out
+        else
+            echo "Discarding \"$line\"" > /dev/stderr
+        fi
+    done < /var/run/nssh_pf.conf | sort
+
+    # break apart the rules and drop them into temp files
+    for i in $(ls /tmp/*-$$-*.out); do
+        while read line; do
+            num=`echo $line | cut -d " " -f 1`
+            checknum=`echo $num | tr -dc '[:digit:]'`
+            if [[ $num == $checknum || $num = "X" ]]; then 
+                echo $line >> $i.ol
+            elif [ "$num" == "N" ]; then
+                echo $line >> $i.ul
+            else
+                echo "Discarding $line" > /dev/stderr
+            fi
+        done < $i | sort -k1n
+    done
+
+    # concatenate those temp files back together to form the
+    # actual ruleset
+    rm -f /var/run/pf.conf
+    for i in $(ls /tmp/*-$$-*.out.*); do
+        # we must read these in line by line to sort again
+        # and might as well strip off the # while doing so
+        while read line; do
+            line=`echo $line | cut -d ' ' -f 2-999`
+            echo $line >> /var/run/pf.conf
+        done < $i | sort -k1n
+    done
+
+    # remove the temp files
+    rm -f /tmp/*-$$-*.out
+    rm -f /tmp/*-$$-*.out.*
 }
