@@ -1,159 +1,59 @@
 #!/bin/sh
 
-######
-##
-## I want to rework this, after thinking a little more about it.
-## These checks should be called as individual functions, so...
-## we need to do something like...
-##
-## if test "x$TYPE" == "x"; then
-##     echo "Type not specified. Exiting."
-##     exit 1
-## else
-##     RULE="$RULE`process_type $TYPE`
-## fi
-##
-## and then have the next part in its own function, process_type:
-##
-## process_type() {
-##     if [ "$TYPE" = "pass" ]; then
-##         echo " pass"
-##     elif [ "$TYPE" = "block" ]; then
-##         echo " block"
-##     else
-##         echo "Rule type unknown. Exiting." > /dev/stderr
-##         exit 1
-##     fi
-##     return 0
-## }
-##
-## of course, the following is untested and may need modification
-## in order to work
-##
-######
+add_pfrule() {
 
-add_passblock() {
-    TYPE=$1
-    DIRECTION=$2
-    LOG=$3
-    QUICK=$4
-    INTERFACE=$5
-    IPVER=$6
-    PROTO=$7
-    SRC=$8
-    DST=$9
-    PORT=$10
+    # example:
+    # add_pfrule action N pass in on em0 proto tcp from \ 
+    #     10.0.0.0/8 to any port 80
 
-    if test "x$TYPE" == "x"; then
-        echo "Type not specified. Exiting."
-        exit 1
-    else
-        if [ "$TYPE" = "pass" ]; then
-            RULE="pass"
-        elif [ "$TYPE" = "block" ]; then
-            RULE="block"
-        else
-            echo "Rule type unknown. Exiting."
-            exit 1
-        fi
-    fi
+    count=0
 
-    if test "x$DIRECTION" == "x"; then
-        echo "Direction not specified. Exiting."
-        exit 1
-    else
-        if [ "$DIRECTION" = "in" ]; then
-            RULE="$RULE in"
-        elif [ "$DIRECTION" = "out" ]; then
-            RULE="$RULE out"
-        elif [ "$DIRECTION" = "both" ]; then
-            # we don't need to add anything here
-            # but ksh demands something be here
-            test 1-1
-        else
-            echo "Rule type unknown. Exiting."
-            exit 1
-        fi
-    fi
-
-    if test "x$LOG" == "x"; then
-        echo "Log bit not specified. Exiting."
-        exit 1
-    else
-        if [ $LOG == 1 ]; then
-            RULE="$RULE log"
-        elif [ $LOG == 0 ]; then
-            test 1-1
-        else
-            echo "Log bit malformed. Exiting."
-            exit 1
-        fi
-    fi
-
-    if test "x$QUICK" == "x"; then
-        echo "Quick bit not specified. Exiting."
-        exit 1
-    else
-        if [ $QUICK == 1 ]; then
-            RULE="$RULE quick"
-        elif [ $QUICK == 0 ]; then
-            test 1-1
-        else
-            echo "Quick bit malformed. Exiting."
-            exit 1
-        fi
-    fi
-
-    if test "x$INTERFACE" == "x"; then
-        echo "Interface not specified. Exiting."
-        exit 1
-    else
-        # we need to check if the interface is set to any
-        if [ "$INTERFACE" = "any" ]; then
-            test 1-1
-        else
-            # we need to test if the interface actually exists
-            /sbin/ifconfig $INTERFACE > /dev/null
-            if [ $? == 0 ]; then
-                RULE="$RULE on $INTERFACE"
-            else 
-                echo "Invalid interface specified. Exiting."
+    #
+    # iterate through the arguments, assume $0 is the type
+    # and $1 the order number
+    #
+    # type, in this case, is a generalization of what it is
+    # for bigger-picture ordering
+    #    * defaults - state options, scrub, etc
+    #    * skip - skip rules
+    #    * binat - binat rules
+    #    * nat - nat rules, including port forwards and global
+    #    * action - pass/ block rules
+    #
+    # the order number is a figure for ordering within types
+    # the order number must be numeric or "N", where N means
+    # that order does not matter
+    #
+    # multiple numbers with the same order number will be
+    # grouped together in the order that they occur in 
+    # nssh_pf.conf
+    #
+    for i in "$@"; do
+        if [ $count == 0 ]; then
+            nsrule="$i"
+        elif [ $count == 1 ]; then
+            checknum=`echo $i | tr -dc '[:digit:]'`
+            if [[ $i == $checknum || $i == "N" ]]; then 
+                nsrule="$nsrule $i"
+            else
+                echo "Invalid order number. Exiting."
                 exit 1
             fi
-        fi
-    fi
-
-    if test "x$IPVER" == "x"; then
-        echo "IP version not specified. Exiting."
-        exit 1
-    else
-        if [ $IPVER == 4 ]; then
-            RULE="$RULE inet"
-        elif [ $QUICK == 6 ]; then
-            RULE="$RULE inet6"
         else
-            echo "IP version invalid. Exiting."
-            exit 1
+            pfrule="$pfrule $i"
         fi
+        count=`expr "$count" + 1`
+    done
+
+    # strip $pfrule of the leading space then echo to a tmpfile
+    pfrule=`echo $pfrule | sed 's/^\ //'`
+    echo $pfrule > /tmp/$$.pfconf
+
+    # check the syntax of the rule and add it to nssh_pf.conf
+    # if it's valid
+    /sbin/pfctl -nf /tmp/$$.pfconf
+    if [ $? == 0 ]; then
+        echo "$nsrule $pfrule" >> /var/run/nssh_pf.conf
     fi
-
-    if test "x$PROTO" == "x"; then
-        echo "Protocol not specified. Exiting."
-        exit 1
-    else
-        if [ "$PROTO" == "tcp" ]; then
-            RULE="$RULE proto tcp"
-        elif [ "$PROTO" == "udp" ]; then
-            RULE="$RULE proto udp"
-        else
-            echo "Protocol must be tcp or udp. Exiting."
-            exit 1
-        fi
-    fi
-
-
-    echo $RULE
-    return 0
+    rm -f /tmp/$$.pfconf
 }
-
-add_passblock pass in 1 1 any 4 tcp 10.0.0.0/8 any 80
