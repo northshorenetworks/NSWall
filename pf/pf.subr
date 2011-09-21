@@ -15,7 +15,7 @@ add_pfrule() {
     #
     # type, in this case, is a generalization of what it is
     # for bigger-picture ordering
-    #    * defaults - state options, scrub, etc
+    #    * global - state options, scrub, macros, tables, etc
     #    * skip - skip rules
     #    * binat - binat rules
     #    * nat - nat rules, including port forwards and global
@@ -29,9 +29,21 @@ add_pfrule() {
     # grouped together in the order that they occur in 
     # nssh_pf.conf
     #
+    if [ "$#" -lt "3" ]; then
+        echo "Invalid number of arguments to add_pfrule()"
+        exit 1
+    fi
+
     for i in "$@"; do
         if [ $count == 0 ]; then
-            nsrule="$i"
+            if [[ "$i" = "global" || "$i" = "skip" || "$i" = "binat" || "$i" = "nat" || "$i" = "filter" ]]
+            then
+                nsrule="$i"
+            else
+                echo "Invalid type, $i, specified. Valid types are: global,"
+                echo " skip, binat, nat, and filter."
+                exit 1
+            fi
         elif [ $count == 1 ]; then
             checknum=`echo $i | tr -dc '[:digit:]'`
             if [[ $i == $checknum || $i == "N" ]]; then 
@@ -67,9 +79,9 @@ gen_pffile() {
     # and drop those into temp files
     while read line; do
         type=`echo $line | cut -d " " -f 1`
-        if [ "$type" = "defaults" ]; then
-            line=`echo $line | sed 's/^defaults\ //'`
-            echo "$line" >> /tmp/1-$$-defaults.out
+        if [ "$type" = "global" ]; then
+            line=`echo $line | sed 's/^global\ //'`
+            echo "$line" >> /tmp/1-$$-global.out
         elif [ "$type" = "skip" ]; then
             line=`echo $line | sed 's/^skip\ //'`
             echo "$line" >> /tmp/2-$$-skip.out
@@ -102,10 +114,16 @@ gen_pffile() {
         done < $i | sort -k1n
     done
 
+    # remove duplicate rules in those rulesets
+    for i in $(ls /tmp/*-$$-*.out.*); do
+        file_name=`echo $i | sed 's/out/out-clean/'`
+        cat $i | sort -k1n | uniq >> $file_name
+    done
+
     # concatenate those temp files back together to form the
     # actual ruleset
     rm -f /var/run/pf.conf
-    for i in $(ls /tmp/*-$$-*.out.*); do
+    for i in $(ls /tmp/*-$$-*.out-clean.*); do
         # we must read these in line by line to sort again
         # and might as well strip off the # while doing so
         while read line; do
@@ -117,4 +135,19 @@ gen_pffile() {
     # remove the temp files
     rm -f /tmp/*-$$-*.out
     rm -f /tmp/*-$$-*.out.*
+    rm -f /tmp/*-$$-*.out-clean.*
+}
+
+chk_pffile() {
+    pfctl -nf /var/run/pf.conf
+    exit="$?"
+    if [ $exit == 0 ]; then
+        pfctl -f /var/run/pf.conf
+    else
+        echo
+        echo "PF syntax checking returned exit code $exit"
+        echo " something is wrong - not committing changes."
+        echo " please see above for individual errors."
+        exit 1
+    fi
 }

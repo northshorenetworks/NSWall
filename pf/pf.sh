@@ -19,3 +19,4 @@
 #   filter 2 pass out log on $int inet6 proto tcp from any to <ssh_servers> port 22
 
 gen_pffile
+chk_pffile
