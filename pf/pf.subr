@@ -1,0 +1,153 @@
+# pf.subr
+# this file contains subroutines for PF processing
+
+add_pfrule() {
+
+    # example:
+    # add_pfrule filter N pass in on em0 proto tcp from \ 
+    #     10.0.0.0/8 to any port 80
+
+    count=0
+
+    #
+    # iterate through the arguments, assume $0 is the type
+    # and $1 the order number
+    #
+    # type, in this case, is a generalization of what it is
+    # for bigger-picture ordering
+    #    * global - state options, scrub, macros, tables, etc
+    #    * skip - skip rules
+    #    * binat - binat rules
+    #    * nat - nat rules, including port forwards and global
+    #    * filter - pass/ block rules
+    #
+    # the order number is a figure for ordering within types
+    # the order number must be numeric or "N", where N means
+    # that order does not matter
+    #
+    # multiple numbers with the same order number will be
+    # grouped together in the order that they occur in 
+    # nssh_pf.conf
+    #
+    if [ "$#" -lt "3" ]; then
+        echo "Invalid number of arguments to add_pfrule()"
+        exit 1
+    fi
+
+    for i in "$@"; do
+        if [ $count == 0 ]; then
+            if [[ "$i" = "global" || "$i" = "skip" || "$i" = "binat" || "$i" = "nat" || "$i" = "filter" ]]
+            then
+                nsrule="$i"
+            else
+                echo "Invalid type, $i, specified. Valid types are: global,"
+                echo " skip, binat, nat, and filter."
+                exit 1
+            fi
+        elif [ $count == 1 ]; then
+            checknum=`echo $i | tr -dc '[:digit:]'`
+            if [[ $i == $checknum || $i == "N" ]]; then 
+                nsrule="$nsrule $i"
+            else
+                echo "Invalid order. Exiting."
+                exit 1
+            fi
+        else
+            pfrule="$pfrule $i"
+        fi
+        count=`expr "$count" + 1`
+    done
+
+    # strip $pfrule of the leading space then echo to a tmpfile
+    pfrule=`echo $pfrule | sed 's/^\ //'`
+    echo $pfrule > /tmp/$$.pfconf
+
+    # check the syntax of the rule and add it to nssh_pf.conf
+    # if it's valid
+    /sbin/pfctl -nf /tmp/$$.pfconf
+    if [ $? == 0 ]; then
+        echo "$nsrule $pfrule" >> /var/run/nssh_pf.conf
+    fi
+    rm -f /tmp/$$.pfconf
+}
+
+del_pfrule() {
+}
+
+gen_pffile() {
+    # break nssh_pf.conf into sections based on the type field
+    # and drop those into temp files
+    while read line; do
+        type=`echo $line | cut -d " " -f 1`
+        if [ "$type" = "global" ]; then
+            line=`echo $line | sed 's/^global\ //'`
+            echo "$line" >> /tmp/1-$$-global.out
+        elif [ "$type" = "skip" ]; then
+            line=`echo $line | sed 's/^skip\ //'`
+            echo "$line" >> /tmp/2-$$-skip.out
+        elif [ "$type" = "binat" ]; then
+            line=`echo $line | sed 's/^binat\ //'`
+            echo "$line" >> /tmp/3-$$-binat.out
+        elif [ "$type" = "nat" ]; then
+            line=`echo $line | sed 's/^nat\ //'`
+            echo "$line" >> /tmp/4-$$-nat.out
+        elif [ "$type" = "filter" ]; then
+            line=`echo $line | sed 's/^filter\ //'`
+            echo "$line" >> /tmp/5-$$-filter.out
+        else
+            echo "Discarding \"$line\"" > /dev/stderr
+        fi
+    done < /var/run/nssh_pf.conf | sort
+
+    # break apart the rules and drop them into temp files
+    for i in $(ls /tmp/*-$$-*.out); do
+        while read line; do
+            num=`echo $line | cut -d " " -f 1`
+            checknum=`echo $num | tr -dc '[:digit:]'`
+            if [[ $num == $checknum || $num = "X" ]]; then 
+                echo $line >> $i.ol
+            elif [ "$num" == "N" ]; then
+                echo $line >> $i.ul
+            else
+                echo "Discarding $line" > /dev/stderr
+            fi
+        done < $i | sort -k1n
+    done
+
+    # remove duplicate rules in those rulesets
+    for i in $(ls /tmp/*-$$-*.out.*); do
+        file_name=`echo $i | sed 's/out/out-clean/'`
+        cat $i | sort -k1n | uniq >> $file_name
+    done
+
+    # concatenate those temp files back together to form the
+    # actual ruleset
+    rm -f /var/run/pf.conf
+    for i in $(ls /tmp/*-$$-*.out-clean.*); do
+        # we must read these in line by line to sort again
+        # and might as well strip off the # while doing so
+        while read line; do
+            line=`echo $line | cut -d ' ' -f 2-999`
+            echo $line >> /var/run/pf.conf
+        done < $i | sort -k1n
+    done
+
+    # remove the temp files
+    rm -f /tmp/*-$$-*.out
+    rm -f /tmp/*-$$-*.out.*
+    rm -f /tmp/*-$$-*.out-clean.*
+}
+
+chk_pffile() {
+    pfctl -nf /var/run/pf.conf
+    exit="$?"
+    if [ $exit == 0 ]; then
+        pfctl -f /var/run/pf.conf
+    else
+        echo
+        echo "PF syntax checking returned exit code $exit"
+        echo " something is wrong - not committing changes."
+        echo " please see above for individual errors."
+        exit 1
+    fi
+}
