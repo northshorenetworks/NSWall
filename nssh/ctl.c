@@ -40,6 +40,7 @@
 #define FTPPROXY	"/usr/sbin/ftp-proxy"
 #define INETD		"/usr/sbin/inetd"
 #define SSHD		"/usr/sbin/sshd"
+#define NSPFSH          "/usr/bin/nspf"
 
 void call_editor(char *, char **, char *);
 void ctl_symlink(char *, char **, char *);
@@ -53,10 +54,10 @@ struct ctl ctl_pf[] = {
 	    { PFCTL, "-e", NULL }, NULL, X_ENABLE },
 	{ "disable",	"disable service",
 	    { PFCTL, "-d", NULL }, NULL, X_DISABLE },
-	{ "edit",	"edit configuration",
-	    { "pf", (char *)ctl_pf_test, NULL }, call_editor, NULL },
+        { "add",   "add global/filter/nat/binat",
+            { NSPFSH, "pf_add", OPT, OPT, NULL }, NULL, NULL },
 	{ "reload",	"reload service",
-	    { PFCTL, "-f", PFCONF_TEMP, NULL }, NULL, NULL },
+	     { PFCTL, "-f", PFCONF_TEMP, NULL }, NULL, NULL },	
 	{ 0, 0, { 0 }, 0, 0 }
 };
 
