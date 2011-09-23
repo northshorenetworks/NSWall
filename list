@@ -248,6 +248,7 @@ COPY ${DESTDIR}/usr/bin/tip			usr/bin/tip
 COPY ${DESTDIR}/usr/bin/top			usr/bin/top
 COPY ${DESTDIR}/usr/bin/touch			usr/bin/touch
 COPY ${DESTDIR}/usr/bin/tput			usr/bin/tput
+COPY ${DESTDIR}/usr/bin/tr                      usr/bin/tr
 COPY ${DESTDIR}/usr/bin/true			usr/bin/true
 COPY ${DESTDIR}/usr/bin/tset			usr/bin/tset
 COPY ${DESTDIR}/usr/bin/tty			usr/bin/tty
