@@ -54,8 +54,10 @@ struct ctl ctl_pf[] = {
 	    { PFCTL, "-e", NULL }, NULL, X_ENABLE },
 	{ "disable",	"disable service",
 	    { PFCTL, "-d", NULL }, NULL, X_DISABLE },
-        { "add",   "add global/filter/nat/binat",
+        { "add",   "global/filter/nat/binat",
             { NSPFSH, REQ, OPT, OPT, OPT, NULL }, NULL, NULL },
+	{ "show",   "queue/rules/states/info/all",
+            { PFCTL, "-s", REQ, NULL }, NULL, NULL },	
 	{ "reload",	"reload service",
 	     { PFCTL, "-f", PFCONF_TEMP, NULL }, NULL, NULL },	
 	{ 0, 0, { 0 }, 0, 0 }
