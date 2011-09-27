@@ -4,4 +4,4 @@
 
 add_pfrule $@
 
-gen_pffile
+/usr/bin/pfreload

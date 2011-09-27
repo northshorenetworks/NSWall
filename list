@@ -75,6 +75,7 @@ COPY	${OBJDIR}/termdefs/usr/share/misc/terminfo.db	usr/share/misc/
 SPECIAL cd ${NSSHDIR}; make
 COPY ${NSSHDIR}/nsh bin/nssh
 COPY ${NSSHDIR}/pf/addrule.sh usr/bin/nspf
+COPY ${NSSHDIR}/pf/pfreload.sh usr/bin/pfreload
 COPY ${NSSHDIR}/pf/pf.subr usr/bin/pf.subr
 COPY ${NSSHDIR}/save-ro.sh usr/bin/save.sh
 SPECIAL cd ${NSSHDIR}; make clean

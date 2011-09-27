@@ -98,7 +98,8 @@ extern char metricnames[];
 
 /* ctl.c */
 /* tmp config locations */
-#define PFCONF_TEMP	"/var/run/pf.conf"
+#define PFCONF_TEMP	"/var/run/nssh_pf.conf"
+#define PFCONF          "/var/run/pf.conf"
 #define OSPFCONF_TEMP	"/var/run/ospfd.conf"
 #define BGPCONF_TEMP	"/var/run/bgpd.conf"
 #define RIPCONF_TEMP	"/var/run/ripd.conf"

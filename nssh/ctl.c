@@ -41,6 +41,7 @@
 #define INETD		"/usr/sbin/inetd"
 #define SSHD		"/usr/sbin/sshd"
 #define NSPFSH          "/usr/bin/nspf"
+#define PFRELOAD        "/usr/bin/pfreload"
 
 void call_editor(char *, char **, char *);
 void ctl_symlink(char *, char **, char *);
@@ -59,7 +60,7 @@ struct ctl ctl_pf[] = {
 	{ "show",   "queue/rules/states/info/all",
             { PFCTL, "-s", REQ, NULL }, NULL, NULL },	
 	{ "reload",	"reload service",
-	     { PFCTL, "-f", PFCONF_TEMP, NULL }, NULL, NULL },	
+	     { PFRELOAD, NULL, NULL }, NULL, NULL },	
 	{ 0, 0, { 0 }, 0, 0 }
 };
 
