@@ -253,6 +253,7 @@ COPY ${DESTDIR}/usr/bin/true			usr/bin/true
 COPY ${DESTDIR}/usr/bin/tset			usr/bin/tset
 COPY ${DESTDIR}/usr/bin/tty			usr/bin/tty
 COPY ${DESTDIR}/usr/bin/uname			usr/bin/uname
+COPY ${DESTDIR}/usr/bin/uniq			usr/bin/uniq
 COPY ${DESTDIR}/usr/bin/uptime			usr/bin/uptime
 COPY ${DESTDIR}/usr/bin/vmstat			usr/bin/vmstat
 COPY ${DESTDIR}/usr/libexec/auth/login_passwd	usr/libexec/auth/login_passwd
