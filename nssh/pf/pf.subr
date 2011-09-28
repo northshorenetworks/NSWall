@@ -66,12 +66,29 @@ add_pfrule() {
     # if it's valid
     /sbin/pfctl -nf /tmp/$$.pfconf
     if [ $? == 0 ]; then
-        echo "$nsrule $pfrule" >> /var/run/nssh_pf.conf
+        # make sure it's not already been added
+        # at some point we may want to extend this to check $pfrule itself
+        grep -E "^$nsrule $pfrule\$" /var/run/nssh_pf.conf > /dev/null
+        if [ $? == 1 ]; then
+            echo "$nsrule $pfrule" >> /var/run/nssh_pf.conf
+        else
+            echo "The rule you are attempting to create already exists."
+            exit 1
+        fi
     fi
     rm -f /tmp/$$.pfconf
 }
 
 del_pfrule() {
+    del=$@
+    grep -vE "^$del\$" /var/run/nssh_pf.conf > /var/run/nssh_pf.conf.$$
+    lc=`wc /var/run/nssh_pf.conf.$$ | awk '{ print $1 }'`
+    if [ $lc == 0 ]; then
+        echo "filter 1 pass log all" > /var/run/nssh_pf.conf
+        rm -f /var/run/nssh_pf.conf.$$
+    else
+        mv /var/run/nssh_pf.conf.$$ /var/run/nssh_pf.conf
+    fi
 }
 
 gen_pffile() {
