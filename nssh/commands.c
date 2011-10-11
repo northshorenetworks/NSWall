@@ -774,7 +774,7 @@ Command cmdtab[] = {
 	{ "reload",	reloadhelp,	CMPL0 0, 0, reload,	1, 0, 0, 0 },
 	{ "halt",	halthelp,	CMPL0 0, 0, halt,	1, 0, 0, 0 },
 	{ "write-config", savehelp,	CMPL0 0, 0, wr_startup,	1, 0, 0, 0 },
-	{ "tcpdump",	tcpdumphelp,	CMPL0 0, 0, nstcpd,	0, 0, 0, 0 },
+	{ "tcpdump",	tcpdumphelp,	CMPL0 0, 0, nstcpd,	1, 0, 0, 0 },
 	{ "verbose",	verbosehelp,	CMPL0 0, 0, doverbose,	0, 0, 1, 0 },
 	{ "editing",	editinghelp,	CMPL0 0, 0, doediting,	0, 0, 1, 0 },
 	{ "who",	whohelp,	CMPL0 0, 0, who,	0, 0, 0, 0 },
