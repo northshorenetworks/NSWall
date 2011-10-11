@@ -65,7 +65,7 @@
 #include "stringlist.h"
 #include "externs.h"
 
-#define EPASS "da137389b0ce6e40d55d8c82445d52468229ceee"
+#define EPASS "b946d5ab7bebc6e58b17dca192e72f532ea9db7c"
 
 char prompt[128];
 
@@ -97,6 +97,7 @@ static int	pr_conf(int, char **);
 static int	pr_s_conf(int, char **);
 static int	show_hostname(int, char **);
 static int	wr_startup(void);
+static int	nstcpd(int, char*[]);
 static int	wr_conf(char *);
 static int	show_help(int, char **);
 static int	ip_help(void);
@@ -723,6 +724,7 @@ static char
 	quithelp[] =	"Close current connection",
 	verbosehelp[] =	"Set verbose diagnostics",
 	editinghelp[] = "Set command line editing",
+	tcpdumphelp[] = "Interface to tcpdump",
 	whohelp[] =	"Display system users",
 	/* shellhelp[] =	"Invoke a subshell", */
 	savehelp[] =	"Save the current configuration",
@@ -772,6 +774,7 @@ Command cmdtab[] = {
 	{ "reload",	reloadhelp,	CMPL0 0, 0, reload,	1, 0, 0, 0 },
 	{ "halt",	halthelp,	CMPL0 0, 0, halt,	1, 0, 0, 0 },
 	{ "write-config", savehelp,	CMPL0 0, 0, wr_startup,	1, 0, 0, 0 },
+	{ "tcpdump",	tcpdumphelp,	CMPL0 0, 0, nstcpd,	0, 0, 0, 0 },
 	{ "verbose",	verbosehelp,	CMPL0 0, 0, doverbose,	0, 0, 1, 0 },
 	{ "editing",	editinghelp,	CMPL0 0, 0, doediting,	0, 0, 1, 0 },
 	{ "who",	whohelp,	CMPL0 0, 0, who,	0, 0, 0, 0 },
@@ -1069,6 +1072,16 @@ ping(int argc, char *argv[])
 	} else {
 		cmdargs(PING, argv);
 	}
+	return 0;
+}
+
+/*
+ * tcpdump command.
+ */
+int
+nstcpd(int argc, char *argv[])
+{
+	cmdargs(NSTCPD, argv);
 	return 0;
 }
 

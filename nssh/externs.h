@@ -177,6 +177,7 @@ void flag_x(char *, int *, char *);
 #define NSHRC		"/conf/nssh.conf"
 #define PING		"/sbin/ping"
 #define PING6		"/sbin/ping6"
+#define	NSTCPD		"/usr/bin/nstcpd"
 #define TRACERT		"/usr/sbin/traceroute"
 #define TRACERT6	"/usr/sbin/traceroute6"
 #define TELNET		"/usr/bin/telnet"

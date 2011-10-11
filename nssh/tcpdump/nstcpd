@@ -1,0 +1,14 @@
+#!/bin/sh
+
+function tcpdump_help {
+    echo "This uses the tcpdump filter syntax."
+    echo "For your options, see the \"Allowable primitives\" section of http://www.openbsd.org/cgi-bin/man.cgi?query=tcpdump&apropos=0&sektion=0&manpath=OpenBSD+Current&arch=i386&format=html"
+}
+
+args=$@
+if [ "$args" = "?" ]; then
+   tcpdump_help;
+   exit 1
+fi
+
+tcpdump -netttvi pflog0 $@
