@@ -1,5 +1,11 @@
 #!/bin/sh
 
+## THIS SCRIPT CREATES PORTS FOR PACKAGES IN $NS_PKG_PATH
+## AND THEN CREATES OPENBSD PACKAGES FROM THOSE, AND PUTS THEM
+## IN /usr/packages
+
+## James Shupe <jshupe@hermetek.com>
+
 NS_PKG_PATH="/home/jrecords/projects/NSWall/packages/"
 
 for i in `ls $NS_PKG_PATH`; do
@@ -46,7 +52,7 @@ DISTNAME=		$NS_PKG_F_NAME
 REVISON=		$NS_PKG_VER
 CATEGORIES=		nss
 HOMEPAGE=		http://www.northshoresoftware.com
-MAINTAINER=		James Shupe <j@jamesshupe.com>
+MAINTAINER=		James Shupe <jshupe@hermetek.com>
 
 PREFIX=			
 
