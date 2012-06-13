@@ -1,0 +1,17 @@
+/* Overlay */
+#simplemodal-overlay {
+	background-color: #aaaaaa;
+}
+
+/* Container */
+#simplemodal-container {
+	height: 270px;
+	width: 450px;
+	background-color: #fff;
+	border: 1px solid #000000;
+	-moz-border-radius: 5px;
+}
+
+#simplemodal-container #basicModalContent {
+	padding: 8px;
+}
