@@ -1,3 +1,4 @@
+p
 #!/bin/sh
 
 ## ex. sudo sh build-bindist.sh -d -m FIREWALL -p NSWALL
@@ -24,7 +25,7 @@ for i in `ls components`; do sh build-package.sh ${i}; echo "building ${i}"; don
 
 DISTNAME=$PLATFORM
 KERNCONF=PLATFORM/$DISTNAME/$DISTNAME
-export TTYSPEED=19200
+export TTYSPEED=9600
 sudo chmod 777 flash-dist/etc/
 sudo echo $DISTNAME > flash-dist/etc/platform
 sudo echo $MODULE > flash-dist/etc/module

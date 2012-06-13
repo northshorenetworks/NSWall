@@ -27,7 +27,7 @@ POSSIBILITY OF SUCH DAMAGE.
 require_once("globals.inc");
 require_once("util.inc");
  
-mwexec("/sbin/mount /dev/rd0a /");
+#mwexec("/sbin/mount /dev/rd0a /");
  
 /* let the other functions know we're booting */
 $g['booting'] = TRUE;
@@ -36,7 +36,19 @@ touch("{$g['varrun_path']}/booting");
 require_once("config.inc");
 
 /* expand all packages */
-exec("/bin/sh /etc/rc.pkg");
+#exec("/bin/sh /etc/rc.pkg");
+
+#system("mkfifo pipeout"); 
+#   $pipe = popen("/bin/sh /etc/rc.pkg > pipeout","w"); 
+#   $pipeout = fopen("pipeout", "r"); 
+#   while ($s = fgets($pipeout,1024)) { 
+#    echo $s; 
+#   } 
+
+
+
+
+
 
 require_once("functions.inc");
 

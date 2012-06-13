@@ -1,5 +1,3 @@
-# $Id: Makefile,v 1.4 2008/11/28 07:28:07 jrecords Exp $
-
 # Adapted from distrib/i386/common/Makefile.inc:
 #	$OpenBSD: Makefile.inc,v 1.8 2002/09/23 18:31:03 markus Exp $
 
@@ -7,7 +5,7 @@
 #     ${NBLKS} and the MINIROOTSIZE in the kernel config (${KERNEL}) must 
 #     *ALL* match
 
-ALL_KCONF=	WRAP12 COMMELL-LE564 SOEKRIS4501 SOEKRIS4801 GENERIC-RD
+ALL_KCONF=	WRAP12 COMMELL-LE564 SOEKRIS4501 SOEKRIS4801 SOEKRIS5501 GENERIC-RD
 
 KCONF=		COMMELL-LE564
 TTYSPEED=	19200
@@ -17,18 +15,8 @@ TTYSPEED=	19200
 TTYSPEED=	38400
 .endif
 
-# WRAP has an even sillier default console speed than Soekris :)
-.if ${KCONF} == "WRAP12.LARGE"
-TTYSPEED=	38400
-.endif
-
 # Change the default conspeed of Generic to 9600
 .if ${KCONF} == "GENERIC-RD"
-TTYSPEED=	9600
-.endif
-
-# Change the default conspeed of Generic to 9600
-.if ${KCONF} == "GENERIC-RD.LARGE"
 TTYSPEED=	9600
 .endif
 
@@ -40,12 +28,12 @@ TTYSPEED=	9600
 #NBLKS=		20480		# disktab.10mb
 #NBLKS=		24576		# disktab.12mb
 #NBLKS=		30720		# disktab.15mb
-#NBLKS=		40960		# disktab.20mb
-NBLKS= 		51200		# disktab.25mb
+NBLKS=		98304		# disktab.48mb
 NEWFSARGS=	-m 0 -o space
 KOPTS=		#-Os
 
-TERMTYPES=	dumb unknown vt100 vt100-nav vt220 xterm xterm-new cygwin gnome vt102 ansi
+TERMTYPES=	dumb unknown vt100 vt100-nav vt220 xterm xterm-new \
+		xterm-xfree86 cygwin gnome vt102 ansi
 
 .PATH:		${.CURDIR}
 TOP=		${.CURDIR}
@@ -58,9 +46,8 @@ EXTRACONF=	${.CURDIR}/conf
 #DISKPROTO=	${.CURDIR}/disktabs/disktab.9.5mb
 #DISKPROTO=	${.CURDIR}/disktabs/disktab.10mb
 #DISKPROTO=	${.CURDIR}/disktabs/disktab.12mb
-#DISKPROTO=     ${.CURDIR}/disktabs/disktab.15mb
-#DISKPROTO=	${.CURDIR}/disktabs/disktab.20mb
-DISKPROTO=     ${.CURDIR}/disktabs/disktab.25mb
+#DISKPROTO=	${.CURDIR}/disktabs/disktab.15mb
+DISKPROTO=      ${.CURDIR}/disktabs/disktab.48mb
 MTREE=		${DESTDIR}/etc/mtree/4.4BSD.dist
 MTREE_CUST=	${.CURDIR}/mtree.conf
 
@@ -68,7 +55,7 @@ MTREE_CUST=	${.CURDIR}/mtree.conf
 MOUNT_POINT=	/mnt
 SRCDIR?=	/usr/src
 KSRC=		${SRCDIR}/sys
-VND=		svnd0
+VND=		vnd0
 DESTDIR?=	/
 BINDIR= 	${.CURDIR}/binaries
 

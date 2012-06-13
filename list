@@ -93,7 +93,6 @@ COPY	${CURDIR}/initial-conf/ttys		etc/ttys
 
 # Monowall specifc stuff
 
-COPY    ${CURDIR}/initial-conf/php.ini                                  etc/php.ini
 COPY	${CURDIR}/initial-conf/id_rsa.pub				etc/id_rsa.pub
 COPY    ${CURDIR}/initial-conf/rc.banner				etc/rc.banner
 COPY    ${CURDIR}/initial-conf/rc.bootup				etc/rc.bootup
@@ -111,7 +110,7 @@ COPY    ${CURDIR}/initial-conf/rc.newwanip				etc/rc.newwanip
 COPY    ${CURDIR}/initial-conf/rc.reboot                etc/rc.reboot
 COPY    ${CURDIR}/initial-conf/config.xml               conf.default/config.xml
 COPY    ${CURDIR}/initial-conf/hwplatformconfig.xml     etc/hwplatformconfig.xml
-COPY	${BINDIR}/zoneinfo.tgz							usr/share/zoneinfo.tgz
+#COPY	${BINDIR}/zoneinfo.tgz							usr/share/zoneinfo.tgz
 COPY    ${DESTDIR}/usr/bin/nohup						usr/bin/nohup
 
 # This is a little hack, we copy over the license file to the /conf directory so we can boot, then we mount wd0d to that
@@ -119,7 +118,6 @@ COPY    ${DESTDIR}/usr/bin/nohup						usr/bin/nohup
 COPY ${CURDIR}/initial-conf/license.lic conf/license.lic
 
 
-SPECIAL chmod 633 etc/php.ini
 #SPECIAL mkdir usr/www/js
 SPECIAL mkdir ftmp
 SPECIAL cat ${CURDIR}/initial-conf/VERSION_STAMP > 	etc/version
@@ -142,13 +140,10 @@ SPECIAL chmod 755 etc/rc
 SPECIAL chmod 755 etc/rc.pkg
 SPECIAL chown root.wheel etc/master.passwd
 SPECIAL chmod 0600 etc/master.passwd
-SPECIAL sed "/^tty00/s/19200/${TTYSPEED}/" < etc/ttys > etc/ttys.speed
+SPECIAL sed "/^tty00/s/9600/${TTYSPEED}/" < etc/ttys > etc/ttys.speed
 SPECIAL mv etc/ttys.speed etc/ttys
 
 # Here we encrypt the php code with SG
-# Copy all the inc files, for now these will be common amoungst modules
-SPECIAL cp -R -p ${CURDIR}/initial-conf/inc             etc/inc/
-# Copy all the common www files shared between modules
 # SPECIAL sh ${CURDIR}/tools/runlist.sh ${CURDIR}/list.common
 # Additonal tools added to debug builds
 SPECIAL sh ${CURDIR}/tools/runlist.sh ${CURDIR}/list.debug
@@ -183,7 +178,6 @@ COPY ${DESTDIR}/bin/md5				bin/md5
 COPY ${DESTDIR}/bin/mkdir			bin/mkdir
 COPY ${DESTDIR}/bin/mv				bin/mv
 COPY ${DESTDIR}/bin/pax				bin/pax
-COPY ${BINDIR}/php    	                        bin/php
 COPY ${DESTDIR}/bin/ps				bin/ps
 COPY ${DESTDIR}/bin/pwd				bin/pwd
 COPY ${DESTDIR}/bin/rm				bin/rm
@@ -215,7 +209,7 @@ COPY ${DESTDIR}/sbin/route			sbin/route
 COPY ${DESTDIR}/sbin/sysctl			sbin/sysctl
 COPY ${DESTDIR}/sbin/ttyflags			sbin/ttyflags
 COPY ${DESTDIR}/sbin/umount			sbin/umount
-COPY ${BINDIR}/mini_httpd			sbin/mini_httpd
+#COPY ${BINDIR}/mini_httpd			sbin/mini_httpd
 COPY ${DESTDIR}/usr/bin/awk			usr/bin/awk
 COPY ${DESTDIR}/usr/bin/basename		usr/bin/basename
 COPY ${DESTDIR}/usr/bin/crontab			usr/bin/crontab
@@ -262,7 +256,7 @@ COPY ${DESTDIR}/usr/libexec/identd		usr/libexec/identd
 COPY ${DESTDIR}/usr/libexec/ld.so		usr/libexec/ld.so
 #COPY ${DESTDIR}/usr/libexec/spamd		usr/libexec/spamd
 #COPY ${DESTDIR}/usr/libexec/spamd-setup	usr/libexec/spamd-setup
-COPY ${BINDIR}/symon  		             	usr/libexec/symon
+#COPY ${BINDIR}/symon  		             	usr/libexec/symon
 COPY ${DESTDIR}/usr/sbin/arp			usr/sbin/arp
 COPY ${DESTDIR}/usr/sbin/bgpd			usr/sbin/bgpd
 COPY ${DESTDIR}/usr/sbin/bgpctl			usr/sbin/bgpctl
@@ -352,6 +346,8 @@ SPECIAL ${CURDIR}/tools/libcopy.sh ${DESTDIR} ./usr/lib usr/bin/*
 SPECIAL ${CURDIR}/tools/libcopy.sh ${DESTDIR} ./usr/lib usr/sbin/* 
 SPECIAL ${CURDIR}/tools/libcopy.sh ${DESTDIR} ./usr/lib usr/local/sbin/*
 SPECIAL ${CURDIR}/tools/libcopy.sh ${DESTDIR} ./usr/lib usr/libexec/*
+COPY ${DESTDIR}/usr/lib/libpthread.so.13.3    usr/lib/libpthread.so.13.3
+COPY ${DESTDIR}/usr/lib/libgssapi.so.5.0      usr/lib/libgssapi.so.5.0
 
 # Set special permissions on some binaries
 SPECIAL chown root.auth		usr/libexec/auth usr/libexec/auth/login_passwd

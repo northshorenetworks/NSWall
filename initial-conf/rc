@@ -15,7 +15,15 @@ if [ X"$1" = X"shutdown" ]; then
         exit 0
 fi
 
-php -q /etc/rc.bootup
+/sbin/mount /dev/rd0a /
+
+/sbin/mount /dev/wd0a /flash
+
+/bin/sh /etc/rc.pkg
+
+ln -s /usr/local/bin/php-5.3 /bin/php
+
+/bin/php -q /etc/rc.bootup
 
 echo -n 'Starting PF Logging...'
 ifconfig pflog0 up

@@ -7,19 +7,20 @@ SRCDIR=${BSDSRCDIR:-/usr/src}
 DESTDIR=${DESTDIR:-${BASE}/flash-dist}
 KERNELFILE=${KERNELFILE:-${BASE}/obj/bsd.gz}
 SUDO=sudo
-DEVICE=svnd0
+DEVICE=vnd0
 MOUNTPOINT=/mnt
 TEMPFILE=/tmp/build-diskimage.tmp.$$
 
 # drive geometry information -- get the right one for your flash!!
 
-# 128 MB cards
-totalsize=250880       # "total sectors:"
+# 256 MB cards
+totalsize=501760       # "total sectors:"
 bytessec=512           # "bytes/sector:"
 sectorstrack=32        # "sectors/track:"
-sectorscylinder=256    # "sectors/cylinder:"
-trackscylinder=16       # "tracks/cylinder:"
+sectorscylinder=512    # "sectors/cylinder:"
+trackscylinder=16      # "tracks/cylinder:"
 cylinders=980          # "cylinders:"
+
 
 # Don't start without a imagefile as a parameter
 if [ "$1" = "" ]; then
@@ -79,9 +80,9 @@ echo "track-to-track seek: 0  " >> $TEMPFILE
 echo "drivedata: 0 " >> $TEMPFILE
 echo "" >> $TEMPFILE
 echo "16 partitions:" >> $TEMPFILE
-echo "a:        31715   $sectorstrack   4.2BSD  2048    16384   16" >> $TEMPFILE
+echo "a:        98304   $sectorstrack   4.2BSD  2048    16384   16" >> $TEMPFILE
 echo "c:        $totalsize      0       unused  0       0" >> $TEMPFILE
-echo "d:        11000   32000           4.2BSD  2048    16384   16" >> $TEMPFILE
+echo "d:        11000   99000           4.2BSD  2048    16384   16" >> $TEMPFILE
 echo ""
 echo "Installing disklabel..."
 ${SUDO} disklabel -v -R $DEVICE $TEMPFILE

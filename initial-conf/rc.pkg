@@ -7,13 +7,14 @@
         /bin/mkdir -p /usr/local
         /bin/mkdir -p /tmp/components
 
-        if ! /sbin/mount_mfs -s 21000 -T rdroot -b 8192 -f 1024 dummy /usr/local ; then
+        if ! /sbin/mount_mfs -s 131072 -T rdroot -b 8192 -f 1024 dummy /usr/local ; then
                 echo "Mount /usr/local failed"
                 #exit 1
         fi
 
+	sleep 3;
         echo "Unpacking packages..."
-        cd /
+        cd /usr/local
         for pkg in /flash/packages/*.tgz ; do
                 if [ -r $pkg ]; then
                         /bin/md5 -q $pkg >> /tmp/components/${pkg##*/}

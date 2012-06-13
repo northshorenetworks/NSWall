@@ -1,17 +1,16 @@
 #!/bin/sh
 #
-# $Id: build-kernel.sh,v 1.4 2009/03/02 21:36:54 jrecords Exp $
+# Builds a 48MB kernel
 
-BASE=`pwd`
+CWD=`pwd`
+WORKDIR=flash-dist
+DISKTAB=disktab.48mb
+NBLKS=98304
 SRCDIR=${BSDSRCDIR:-/usr/src}
-DESTDIR=${DESTDIR:-${BASE}/flash-dist}
-SUDO=sudo
-DISKTAB=disktab.25mb
-NBLKS=51200
-export DEBUG_FLAG=$2
-export MODULE=$3
+DESTDIR=${DESTDIR:-${CWD}/${WORKDIR}}
+BINDIR=${BINDIR:-${BASE}/bindir}
 
-export SRCDIR DESTDIR BINDIR SUDO DEBUG_FLAG MODULE
+export BINDIR SRCDIR DESTDIR CWD WORKDIR DISKTAB NBLKS
 
 # Don't start without a kernel as a parameter
 if [ "$1" = "" ]; then
@@ -25,21 +24,74 @@ if [ ! -r $1 ]; then
   exit 1
 fi
 
-# Create dir if not there
-mkdir -p obj
+# Quick test to see if sandbox exist
+if ! [ -d ${CWD}/${WORKDIR}/dev  ]; then
+  echo "You must build your release first. Run sudo ./build-release.sh"
+  exit
+fi
 
 # Which kernel to use?
 export KERNEL=$1
 
 # Create the kernelfile (with increased MINIROOTSIZE)
+grep -v MINIROOTSIZE $1 > ${CWD}/${WORKDIR}/${KERNEL}
+echo "option MINIROOTSIZE=${NBLKS}" >> ${CWD}/${WORKDIR}/${KERNEL}
 
-# Cleanup just in case the previous build failed
-${SUDO} umount /mnt/ 
-${SUDO} vnconfig -u vnd0
-#make KCONF=${KERNEL} clean
+echo "Setting up environment.."
 
-# Make kernel
-make KCONF=${KERNEL} DEBUG_FLAG=${DEBUG_FLAG} MODULE=${MODULE} $4
+umount ${CWD}/${WORKDIR}/dev
+mount_mfs -o nosuid -s 32768 swap ${CWD}/${WORKDIR}/dev
+cp -p ${CWD}/${WORKDIR}/dev-orig/MAKEDEV ${CWD}/${WORKDIR}/dev/MAKEDEV
+cd ${CWD}/${WORKDIR}/dev
+./MAKEDEV all
+cp -p ${CWD}/PLATFORM/$1/$1 ${CWD}/${WORKDIR}/
+cp -p ${CWD}/Makefile ${CWD}/${WORKDIR}/
+cp -p ${CWD}/build-kernel-injail.sh ${CWD}/${WORKDIR}/
+cp -p ${CWD}/list ${CWD}/${WORKDIR}/
+cp -p ${CWD}/list.recovery ${CWD}/${WORKDIR}/
+# Include custom list if exist
+if [ -r ${CWD}/list.custom ]; then
+        cp -p ${CWD}/list.custom ${CWD}/${WORKDIR}/
+fi
+cp -p ${CWD}/conf ${CWD}/${WORKDIR}/
+cp -p ${CWD}/mtree.conf ${CWD}/${WORKDIR}/
+cp -pR ${CWD}/disktabs ${CWD}/${WORKDIR}/
+cp -pR ${CWD}/tools ${CWD}/${WORKDIR}/
+cp -pR ${CWD}/initial-conf ${CWD}/${WORKDIR}/
+rm -r ${CWD}/${WORKDIR}/obj
+mkdir -p ${CWD}/${WORKDIR}/obj
+mkdir -p ${CWD}/obj
+# Don't want anything mounted to /mnt when we starts
+umount /mnt
+
+echo "Going into chroot to build kernel"
+/usr/sbin/chroot ${CWD}/${WORKDIR} ./build-kernel-injail.sh
+
+echo "Comming back from chroot"
+
+# Clean up /dev for the creation of file system
+rm -rf ${CWD}/${WORKDIR}/dev/*
+cd ${CWD}/${WORKDIR}
+umount ${CWD}/${WORKDIR}/dev
+cp -p ${CWD}/${WORKDIR}/dev-orig/MAKEDEV ${CWD}/${WORKDIR}/dev/MAKEDEV
+
+echo "Building file system"
+cd ${CWD}/${WORKDIR}/
+
+# From Makefile that could not run in a chroot
+make KCONF=${KERNEL} DEBUG_FLAG=${DEBUG_FLAG} MODULE=${MODULE} LIST=${CWD}/${WORKDIR}/list.temp NBLKS=${NBLKS} DISKPROTO=${CWD}/${WORKDIR}/disktabs/${DISKTAB}
+cp ${CWD}/${WORKDIR}/obj/bsd ${CWD}/${WORKDIR}/obj/bsd.rd
+${CWD}/${WORKDIR}/obj/rdsetroot ${CWD}/${WORKDIR}/obj/bsd.rd < ${CWD}/${WORKDIR}/obj/mr.fs
+gzip -c9 ${CWD}/${WORKDIR}/obj/bsd.rd > ${CWD}/${WORKDIR}/obj/bsd.gz
+
+# Clean up
+rm -rf ${CWD}/${WORKDIR}/dev/*
+rm -r ${CWD}/obj/*
+rm -f $KERNEL
+
+# Move kernel files from sandbox to the "old" location as before chroot
+mv ${CWD}/${WORKDIR}/obj/* ${CWD}/obj/
 
 # Done
-echo "Your kernel is stored here ${BASE}/obj/"
+echo "Your kernel is stored here ${CWD}/obj/"
+
