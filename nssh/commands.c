@@ -1830,7 +1830,7 @@ step_optreq(char **xargs, char **args, int argc, char **argv, int skip)
 	/* copy xargs to args, replace OPT/REQ args with argv past skip */
 	for (i = 0; i < NOPTFILL - 2; i++) {
 		if (xargs[i] == NULL) {
-			args[i] = '\0';
+			args[i] = NULL;
 			if (i > 1)
 			/*
 			 * all **args passed must have at least two arguments
@@ -1849,7 +1849,7 @@ step_optreq(char **xargs, char **args, int argc, char **argv, int skip)
 				printf("%% Missing required argument\n");
 				return NULL;
 			} else {
-				args[i] = '\0';
+				args[i] = NULL;
 				break;
 			}
 		} else {
