@@ -1,0 +1,154 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (e.g., 2.0.0)'
+        required: true
+        type: string
+
+jobs:
+  build-packages:
+    name: Build ${{ matrix.arch }} Package
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - arch: x86_64
+            release: '7.8'
+          - arch: aarch64
+            release: '7.8'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Determine version
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" = "push" ]; then
+            VERSION="${GITHUB_REF#refs/tags/v}"
+          else
+            VERSION="${{ github.event.inputs.version }}"
+          fi
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "Building version: ${VERSION}"
+
+      - name: Build package on OpenBSD
+        uses: vmactions/openbsd-vm@v1
+        with:
+          release: ${{ matrix.release }}
+          arch: ${{ matrix.arch }}
+          usesh: true
+          run: |
+            set -e
+            VERSION="${{ steps.version.outputs.version }}"
+            ARCH=$(uname -m)
+
+            echo "==> Building NSWall ${VERSION} for ${ARCH}..."
+
+            # Build
+            cd nssh
+            sh misc-precompile.sh || true
+            sh compile.sh
+            make clean || true
+            make CFLAGS="-O2 -pipe -Wall"
+
+            # Create package
+            cd ..
+            PKGDIR="/tmp/nswall-pkg"
+            mkdir -p ${PKGDIR}/usr/local/bin
+            mkdir -p ${PKGDIR}/usr/local/share/nswall/pf
+            mkdir -p ${PKGDIR}/usr/local/share/examples/nswall
+            mkdir -p ${PKGDIR}/etc/nswall
+
+            cp nssh/nsh ${PKGDIR}/usr/local/bin/nswall
+            chmod 555 ${PKGDIR}/usr/local/bin/nswall
+            cp nssh/tcpdump/nstcpd ${PKGDIR}/usr/local/bin/
+            chmod 555 ${PKGDIR}/usr/local/bin/nstcpd
+            cp nssh/save-rw.sh ${PKGDIR}/usr/local/bin/nswall-save
+            chmod 555 ${PKGDIR}/usr/local/bin/nswall-save
+            cp nssh/pf/pf.subr ${PKGDIR}/usr/local/share/nswall/pf/
+            cp nssh/pf/*.sh ${PKGDIR}/usr/local/share/nswall/pf/
+            cp pkg/files/nswall.conf.sample ${PKGDIR}/usr/local/share/examples/nswall/
+            cp pkg/files/nswall.conf.sample ${PKGDIR}/etc/nswall/nswall.conf
+
+            cd ${PKGDIR}
+            TARBALL="nswall-${VERSION}-openbsd-${ARCH}.tgz"
+            tar czf /tmp/${TARBALL} .
+            cp /tmp/${TARBALL} ~/work/NSWall/NSWall/
+
+            echo "==> Package created: ${TARBALL}"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: nswall-${{ steps.version.outputs.version }}-openbsd-${{ matrix.arch }}
+          path: "*.tgz"
+
+  create-release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+    needs: build-packages
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: packages
+          merge-multiple: true
+
+      - name: Determine version
+        id: version
+        run: |
+          VERSION="${GITHUB_REF#refs/tags/v}"
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          name: NSWall v${{ steps.version.outputs.version }}
+          body: |
+            ## NSWall v${{ steps.version.outputs.version }}
+
+            Network Appliance Framework for OpenBSD
+
+            ### Installation
+
+            ```bash
+            # Download the package for your architecture
+            curl -LO https://github.com/${{ github.repository }}/releases/download/v${{ steps.version.outputs.version }}/nswall-${{ steps.version.outputs.version }}-openbsd-x86_64.tgz
+
+            # Install
+            doas tar xzf nswall-${{ steps.version.outputs.version }}-openbsd-x86_64.tgz -C /
+
+            # Add to shells and set as login shell
+            doas sh -c 'echo /usr/local/bin/nswall >> /etc/shells'
+            chsh -s /usr/local/bin/nswall
+            ```
+
+            ### Requirements
+
+            - OpenBSD 7.6 or later (7.8 recommended)
+            - amd64 or arm64 architecture
+
+            ### Packages
+
+            | File | Architecture |
+            |------|--------------|
+            | `nswall-${{ steps.version.outputs.version }}-openbsd-x86_64.tgz` | amd64/x86_64 |
+            | `nswall-${{ steps.version.outputs.version }}-openbsd-aarch64.tgz` | arm64/aarch64 |
+
+          files: packages/*.tgz
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
