@@ -1,0 +1,45 @@
++-----------------------------------------------------------------------+
+| NSWall - Network Appliance Framework for OpenBSD                      |
++-----------------------------------------------------------------------+
+
+Thank you for installing NSWall!
+
+QUICK START
+-----------
+
+1. Set nswall as the login shell for your admin user:
+   # chsh -s /usr/local/bin/nswall admin
+
+2. Or run nswall directly:
+   $ nswall
+
+3. Enter privileged mode:
+   nswall> enable
+   Password: [default: nswall]
+
+4. Configure your system:
+   nswall# configure terminal
+   nswall(config)# hostname myrouter
+   nswall(config)# interface em0
+   nswall(config-if)# ip 10.0.0.1/24
+   nswall(config-if)# exit
+   nswall(config)# write-config
+
+CONFIGURATION FILES
+-------------------
+
+  /etc/nswall/nswall.conf     - Main configuration file
+  /var/run/nswall/            - Runtime state
+  /usr/local/share/nswall/    - Support files
+
+DOCUMENTATION
+-------------
+
+  nswall> help                - Show available commands
+  nswall> show ?              - Show command options
+  nswall# configure ?         - Configuration options
+
+For more information, visit:
+  https://github.com/northshorenetworks/NSWall
+
++-----------------------------------------------------------------------+

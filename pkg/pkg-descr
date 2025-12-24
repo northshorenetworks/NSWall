@@ -1,0 +1,13 @@
+NSWall is a network appliance framework that transforms OpenBSD into
+a Junos/IOS-like network device with a familiar CLI interface.
+
+Features:
+- Cisco IOS / Juniper Junos style command line interface
+- Unified configuration for interfaces, routing, and firewall
+- Integration with OpenBSD's bgpd, ospfd, pf, and other daemons
+- High availability support via CARP and pfsync
+- Candidate configuration with commit/rollback model
+
+NSWall leverages OpenBSD's native networking stack while providing
+an accessible CLI for network engineers familiar with traditional
+network equipment.

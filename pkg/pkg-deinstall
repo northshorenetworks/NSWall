@@ -1,0 +1,29 @@
+#!/bin/sh
+#
+# NSWall pre-deinstallation script
+#
+
+set -e
+
+PREFIX=${PKG_PREFIX:-/usr/local}
+
+case $2 in
+DEINSTALL)
+    # Remove nswall from /etc/shells
+    if grep -q "^${PREFIX}/bin/nswall$" /etc/shells 2>/dev/null; then
+        grep -v "^${PREFIX}/bin/nswall$" /etc/shells > /etc/shells.tmp
+        mv /etc/shells.tmp /etc/shells
+        echo "===> Removed ${PREFIX}/bin/nswall from /etc/shells"
+    fi
+
+    # Check if any users have nswall as their shell
+    if getent passwd | grep -q ":${PREFIX}/bin/nswall$"; then
+        echo ""
+        echo "WARNING: Some users still have nswall as their login shell."
+        echo "         Please change their shells before completing removal."
+        echo ""
+    fi
+    ;;
+esac
+
+exit 0

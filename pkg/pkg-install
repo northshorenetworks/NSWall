@@ -1,0 +1,45 @@
+#!/bin/sh
+#
+# NSWall post-installation script
+#
+
+set -e
+
+PREFIX=${PKG_PREFIX:-/usr/local}
+SYSCONFDIR=${SYSCONFDIR:-/etc}
+
+case $2 in
+POST-INSTALL)
+    # Add nswall to /etc/shells if not present
+    if ! grep -q "^${PREFIX}/bin/nswall$" /etc/shells 2>/dev/null; then
+        echo "${PREFIX}/bin/nswall" >> /etc/shells
+        echo "===> Added ${PREFIX}/bin/nswall to /etc/shells"
+    fi
+
+    # Create nswall config directory
+    mkdir -p ${SYSCONFDIR}/nswall
+
+    # Create runtime directories
+    mkdir -p /var/run/nswall
+    mkdir -p /var/db/nswall
+
+    # Create nswall user/group if they don't exist
+    if ! getent group _nswall >/dev/null 2>&1; then
+        groupadd -g 899 _nswall
+    fi
+    if ! getent passwd _nswall >/dev/null 2>&1; then
+        useradd -g _nswall -u 899 -d /var/empty -s /sbin/nologin \
+            -c "NSWall Daemon" _nswall
+    fi
+
+    # Set permissions on config directory
+    chown root:_nswall ${SYSCONFDIR}/nswall
+    chmod 750 ${SYSCONFDIR}/nswall
+
+    echo ""
+    echo "===> NSWall has been installed successfully!"
+    echo ""
+    ;;
+esac
+
+exit 0
