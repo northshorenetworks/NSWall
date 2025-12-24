@@ -1,50 +1,37 @@
 // NSWall API Server
-// REST API for NSWall/NSH network appliance automation
+// Comprehensive REST API for NSWall/NSH network appliance automation
 package main
 
 import (
 	"context"
-	"encoding/json"
 	"flag"
-	"fmt"
 	"log"
 	"net/http"
 	"os"
-	"os/exec"
 	"os/signal"
-	"strings"
 	"syscall"
 	"time"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
+	chimw "github.com/go-chi/chi/v5/middleware"
+
+	"github.com/northshorenetworks/nswall/api/internal/handlers"
+	"github.com/northshorenetworks/nswall/api/internal/middleware"
+	"github.com/northshorenetworks/nswall/api/internal/services"
 )
 
 var (
-	listenAddr = flag.String("listen", "127.0.0.1:8080", "API listen address")
-	nshPath    = flag.String("nsh", "/usr/local/bin/nsh", "Path to nsh binary")
-	apiKey     = flag.String("apikey", "", "API key for authentication (optional)")
-	version    = "2.0.0"
+	listenAddr     = flag.String("listen", "127.0.0.1:8080", "API listen address")
+	nshPath        = flag.String("nsh", "/usr/local/bin/nsh", "Path to nsh binary")
+	dataDir        = flag.String("data", "/var/db/nswall-api", "Data directory for API state")
+	apiKey         = flag.String("apikey", "", "Static API key for authentication (optional)")
+	enableAuth     = flag.Bool("auth", false, "Enable authentication (default: false)")
+	corsOrigins    = flag.String("cors", "", "Allowed CORS origins (comma-separated)")
+	rateLimit      = flag.Int("rate-limit", 100, "Rate limit per minute (0 to disable)")
+	readTimeout    = flag.Duration("read-timeout", 10*time.Second, "HTTP read timeout")
+	writeTimeout   = flag.Duration("write-timeout", 30*time.Second, "HTTP write timeout")
+	version        = "2.0.0"
 )
-
-// Response is a standard API response
-type Response struct {
-	Success bool        `json:"success"`
-	Data    interface{} `json:"data,omitempty"`
-	Error   string      `json:"error,omitempty"`
-}
-
-// CommandRequest is a request to execute an nsh command
-type CommandRequest struct {
-	Command string `json:"command"`
-}
-
-// CommandResponse is the response from an nsh command
-type CommandResponse struct {
-	Command string `json:"command"`
-	Output  string `json:"output"`
-	Exit    int    `json:"exit_code"`
-}
 
 func main() {
 	flag.Parse()
@@ -52,57 +39,219 @@ func main() {
 	log.Printf("NSWall API Server v%s starting...", version)
 	log.Printf("Listening on %s", *listenAddr)
 
-	r := chi.NewRouter()
-
-	// Middleware
-	r.Use(middleware.Logger)
-	r.Use(middleware.Recoverer)
-	r.Use(middleware.Timeout(30 * time.Second))
-	r.Use(jsonContentType)
-
-	// API key authentication if configured
-	if *apiKey != "" {
-		r.Use(apiKeyAuth)
+	// Create data directory
+	if err := os.MkdirAll(*dataDir, 0700); err != nil {
+		log.Printf("Warning: failed to create data directory: %v", err)
 	}
 
-	// Routes
-	r.Get("/", handleRoot)
-	r.Get("/health", handleHealth)
+	// Create handler with all services
+	h := handlers.NewHandler(*nshPath, *dataDir, version)
 
+	// Create router
+	r := chi.NewRouter()
+
+	// Base middleware
+	r.Use(chimw.RequestID)
+	r.Use(chimw.RealIP)
+	r.Use(chimw.Logger)
+	r.Use(chimw.Recoverer)
+	r.Use(chimw.Timeout(60 * time.Second))
+	r.Use(middleware.JSONContentType)
+
+	// CORS if configured
+	if *corsOrigins != "" {
+		origins := splitAndTrim(*corsOrigins, ",")
+		r.Use(middleware.CORS(origins))
+	}
+
+	// Rate limiting if enabled
+	if *rateLimit > 0 {
+		rl := middleware.NewRateLimiter(*rateLimit, time.Minute)
+		r.Use(rl.Middleware)
+	}
+
+	// Public routes (no auth required)
+	r.Get("/", h.Root)
+	r.Get("/health", h.Health)
+	r.Get("/api/v1", h.Root)
+
+	// Auth routes (login doesn't require auth)
+	r.Post("/api/v1/auth/login", h.Login)
+
+	// API v1 routes
 	r.Route("/api/v1", func(r chi.Router) {
-		r.Get("/status", handleStatus)
-		r.Get("/version", handleVersion)
+		// Apply authentication if enabled
+		if *enableAuth {
+			r.Use(middleware.APIKeyAuth(h.Auth, *apiKey))
+		} else if *apiKey != "" {
+			// Simple API key auth only
+			r.Use(simpleAPIKeyAuth(*apiKey))
+		}
 
-		// Network information
-		r.Get("/interfaces", handleInterfaces)
-		r.Get("/interfaces/{name}", handleInterface)
-		r.Get("/routes", handleRoutes)
-		r.Get("/arp", handleArp)
-
-		// Configuration
-		r.Get("/config", handleGetConfig)
-		r.Get("/config/running", handleGetConfig)
+		// System endpoints
+		r.Route("/system", func(r chi.Router) {
+			r.Get("/", h.GetSystemInfo)
+			r.Get("/info", h.GetSystemInfo)
+			r.Get("/version", h.GetVersion)
+			r.Get("/memory", h.GetMemory)
+			r.Get("/disks", h.GetDisks)
+			r.Get("/logs", h.GetLogs)
+		})
 
 		// Command execution
-		r.Post("/command", handleCommand)
+		r.Post("/command", h.RunCommand)
 
-		// Firewall
-		r.Get("/pf/rules", handlePfRules)
-		r.Get("/pf/states", handlePfStates)
-		r.Get("/pf/info", handlePfInfo)
+		// Interface endpoints
+		r.Route("/interfaces", func(r chi.Router) {
+			r.Get("/", h.GetInterfaces)
+			r.Get("/{name}", h.GetInterface)
+			r.Put("/{name}", h.ConfigureInterface)
+			r.Patch("/{name}", h.ConfigureInterface)
+		})
+
+		// Routing endpoints
+		r.Route("/routes", func(r chi.Router) {
+			r.Get("/", h.GetRoutes)
+			r.Post("/", h.AddRoute)
+			r.Delete("/{destination}", h.DeleteRoute)
+		})
+
+		// ARP endpoints
+		r.Route("/arp", func(r chi.Router) {
+			r.Get("/", h.GetArpTable)
+			r.Delete("/{ip}", h.DeleteArpEntry)
+			r.Post("/flush", h.FlushArpTable)
+		})
+
+		// Firewall (PF) endpoints
+		r.Route("/pf", func(r chi.Router) {
+			r.Get("/", h.GetPFInfo)
+			r.Get("/info", h.GetPFInfo)
+			r.Get("/stats", h.GetPFStats)
+			r.Get("/rules", h.GetPFRules)
+			r.Get("/states", h.GetPFStates)
+			r.Delete("/states", h.KillPFStates)
+			r.Post("/enable", h.EnablePF)
+			r.Post("/disable", h.DisablePF)
+			r.Post("/reload", h.ReloadPF)
+
+			// Tables
+			r.Route("/tables", func(r chi.Router) {
+				r.Get("/", h.GetPFTables)
+				r.Get("/{name}", h.GetPFTable)
+				r.Post("/{name}", h.AddPFTableAddress)
+				r.Delete("/{name}/{address}", h.DeletePFTableAddress)
+				r.Post("/{name}/flush", h.FlushPFTable)
+			})
+		})
+
+		// VPN endpoints
+		r.Route("/vpn", func(r chi.Router) {
+			// WireGuard
+			r.Route("/wireguard", func(r chi.Router) {
+				r.Get("/", h.GetWireGuardInterfaces)
+				r.Post("/", h.CreateWireGuardInterface)
+				r.Get("/{name}", h.GetWireGuardInterface)
+				r.Put("/{name}", h.ConfigureWireGuard)
+				r.Post("/{name}/peers", h.AddWireGuardPeer)
+				r.Delete("/{name}/peers/{publicKey}", h.DeleteWireGuardPeer)
+				r.Post("/keygen", h.GenerateWireGuardKey)
+			})
+
+			// IKE/IPsec
+			r.Get("/ike/sas", h.GetIKESAs)
+			r.Get("/ipsec/sas", h.GetIPSecSAs)
+		})
+
+		// High Availability endpoints
+		r.Route("/ha", func(r chi.Router) {
+			// CARP
+			r.Route("/carp", func(r chi.Router) {
+				r.Get("/", h.GetCARPStatus)
+				r.Get("/{name}", h.GetCARPInterface)
+				r.Put("/{name}", h.ConfigureCARPInterface)
+			})
+
+			// pfsync
+			r.Get("/pfsync", h.GetPFSync)
+		})
+
+		// DHCP endpoints
+		r.Route("/dhcp", func(r chi.Router) {
+			r.Get("/leases", h.GetDHCPLeases)
+			r.Get("/subnets", h.GetDHCPSubnets)
+		})
+
+		// DNS endpoints
+		r.Route("/dns", func(r chi.Router) {
+			r.Get("/", h.GetDNSConfig)
+			r.Get("/config", h.GetDNSConfig)
+			r.Post("/flush", h.FlushDNSCache)
+		})
+
+		// Service management endpoints
+		r.Route("/services", func(r chi.Router) {
+			r.Get("/", h.GetServices)
+			r.Get("/{name}", h.GetService)
+			r.Post("/{name}", h.ServiceAction)
+		})
+
+		// Configuration endpoints
+		r.Route("/config", func(r chi.Router) {
+			r.Get("/", h.GetRunningConfig)
+			r.Get("/running", h.GetRunningConfig)
+			r.Get("/startup", h.GetStartupConfig)
+			r.Get("/diff", h.GetConfigDiff)
+			r.Post("/save", h.SaveConfig)
+			r.Post("/validate", h.ValidateConfig)
+			r.Post("/apply", h.ApplyConfig)
+
+			// Backups
+			r.Route("/backups", func(r chi.Router) {
+				r.Get("/", h.ListBackups)
+				r.Post("/", h.BackupConfig)
+				r.Post("/{name}/restore", h.RestoreBackup)
+				r.Delete("/{name}", h.DeleteBackup)
+			})
+		})
+
+		// Auth management endpoints (only when auth is enabled)
+		if *enableAuth {
+			r.Route("/auth", func(r chi.Router) {
+				r.Post("/logout", h.Logout)
+
+				// User management (admin only)
+				r.Route("/users", func(r chi.Router) {
+					r.Use(middleware.RequireRole(h.Auth, "users:read"))
+					r.Get("/", h.GetUsers)
+
+					r.Group(func(r chi.Router) {
+						r.Use(middleware.RequireRole(h.Auth, "users:write"))
+						r.Post("/", h.CreateUser)
+						r.Delete("/{username}", h.DeleteUser)
+						r.Post("/{username}/apikey", h.CreateAPIKey)
+					})
+				})
+			})
+		}
 	})
+
+	// Legacy routes for backwards compatibility
+	r.Get("/api/v1/status", h.GetSystemInfo)
+	r.Get("/api/v1/version", h.GetVersion)
 
 	// Server with graceful shutdown
 	srv := &http.Server{
 		Addr:         *listenAddr,
 		Handler:      r,
-		ReadTimeout:  10 * time.Second,
-		WriteTimeout: 30 * time.Second,
+		ReadTimeout:  *readTimeout,
+		WriteTimeout: *writeTimeout,
 		IdleTimeout:  60 * time.Second,
 	}
 
 	// Start server in goroutine
 	go func() {
+		log.Printf("API server ready")
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.Fatalf("Server error: %v", err)
 		}
@@ -114,7 +263,7 @@ func main() {
 	<-quit
 
 	log.Println("Shutting down server...")
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	if err := srv.Shutdown(ctx); err != nil {
@@ -123,205 +272,72 @@ func main() {
 	log.Println("Server stopped")
 }
 
-// Middleware
+// simpleAPIKeyAuth is a simple API key middleware for when full auth is disabled
+func simpleAPIKeyAuth(key string) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			apiKey := r.Header.Get("X-API-Key")
+			if apiKey == "" {
+				apiKey = r.URL.Query().Get("api_key")
+			}
 
-func jsonContentType(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		next.ServeHTTP(w, r)
-	})
-}
+			if apiKey != key {
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(http.StatusUnauthorized)
+				w.Write([]byte(`{"success":false,"error":"Invalid or missing API key"}`))
+				return
+			}
 
-func apiKeyAuth(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		key := r.Header.Get("X-API-Key")
-		if key == "" {
-			key = r.URL.Query().Get("api_key")
-		}
-		if key != *apiKey {
-			writeError(w, http.StatusUnauthorized, "Invalid or missing API key")
-			return
-		}
-		next.ServeHTTP(w, r)
-	})
-}
-
-// Handlers
-
-func handleRoot(w http.ResponseWriter, r *http.Request) {
-	writeJSON(w, map[string]interface{}{
-		"name":    "NSWall API",
-		"version": version,
-		"docs":    "/api/v1",
-	})
-}
-
-func handleHealth(w http.ResponseWriter, r *http.Request) {
-	writeJSON(w, map[string]string{"status": "ok"})
-}
-
-func handleVersion(w http.ResponseWriter, r *http.Request) {
-	// Get nsh version
-	output, _ := runNshCommand("show version")
-	writeJSON(w, map[string]interface{}{
-		"api_version": version,
-		"nsh_version": strings.TrimSpace(output),
-	})
-}
-
-func handleStatus(w http.ResponseWriter, r *http.Request) {
-	hostname, _ := os.Hostname()
-
-	// Get uptime via sysctl
-	uptime, _ := exec.Command("sysctl", "-n", "kern.boottime").Output()
-
-	writeJSON(w, map[string]interface{}{
-		"hostname": hostname,
-		"uptime":   strings.TrimSpace(string(uptime)),
-		"time":     time.Now().UTC().Format(time.RFC3339),
-	})
-}
-
-func handleInterfaces(w http.ResponseWriter, r *http.Request) {
-	output, err := runNshCommand("show interface")
-	if err != nil {
-		writeError(w, http.StatusInternalServerError, err.Error())
-		return
+			next.ServeHTTP(w, r)
+		})
 	}
-	writeJSON(w, CommandResponse{
-		Command: "show interface",
-		Output:  output,
-		Exit:    0,
-	})
 }
 
-func handleInterface(w http.ResponseWriter, r *http.Request) {
-	name := chi.URLParam(r, "name")
-	output, err := runNshCommand(fmt.Sprintf("show interface %s", name))
-	if err != nil {
-		writeError(w, http.StatusInternalServerError, err.Error())
-		return
+func splitAndTrim(s, sep string) []string {
+	if s == "" {
+		return nil
 	}
-	writeJSON(w, CommandResponse{
-		Command: fmt.Sprintf("show interface %s", name),
-		Output:  output,
-		Exit:    0,
-	})
-}
-
-func handleRoutes(w http.ResponseWriter, r *http.Request) {
-	output, err := runNshCommand("show route")
-	if err != nil {
-		writeError(w, http.StatusInternalServerError, err.Error())
-		return
-	}
-	writeJSON(w, CommandResponse{
-		Command: "show route",
-		Output:  output,
-		Exit:    0,
-	})
-}
-
-func handleArp(w http.ResponseWriter, r *http.Request) {
-	output, err := runNshCommand("show arp")
-	if err != nil {
-		writeError(w, http.StatusInternalServerError, err.Error())
-		return
-	}
-	writeJSON(w, CommandResponse{
-		Command: "show arp",
-		Output:  output,
-		Exit:    0,
-	})
-}
-
-func handleGetConfig(w http.ResponseWriter, r *http.Request) {
-	output, err := runNshCommand("show running-config")
-	if err != nil {
-		writeError(w, http.StatusInternalServerError, err.Error())
-		return
-	}
-	writeJSON(w, CommandResponse{
-		Command: "show running-config",
-		Output:  output,
-		Exit:    0,
-	})
-}
-
-func handleCommand(w http.ResponseWriter, r *http.Request) {
-	var req CommandRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeError(w, http.StatusBadRequest, "Invalid JSON request")
-		return
-	}
-
-	if req.Command == "" {
-		writeError(w, http.StatusBadRequest, "Command is required")
-		return
-	}
-
-	// Security: Block dangerous commands
-	dangerous := []string{"reload", "halt", "!", "shell"}
-	cmdLower := strings.ToLower(req.Command)
-	for _, d := range dangerous {
-		if strings.HasPrefix(cmdLower, d) {
-			writeError(w, http.StatusForbidden, "Command not allowed via API")
-			return
+	parts := make([]string, 0)
+	for _, p := range splitString(s, sep) {
+		p = trimString(p)
+		if p != "" {
+			parts = append(parts, p)
 		}
 	}
+	return parts
+}
 
-	output, err := runNshCommand(req.Command)
-	exitCode := 0
-	if err != nil {
-		exitCode = 1
+func splitString(s, sep string) []string {
+	var result []string
+	for len(s) > 0 {
+		idx := indexString(s, sep)
+		if idx < 0 {
+			result = append(result, s)
+			break
+		}
+		result = append(result, s[:idx])
+		s = s[idx+len(sep):]
 	}
-
-	writeJSON(w, CommandResponse{
-		Command: req.Command,
-		Output:  output,
-		Exit:    exitCode,
-	})
+	return result
 }
 
-func handlePfRules(w http.ResponseWriter, r *http.Request) {
-	output, _ := exec.Command("pfctl", "-sr").Output()
-	writeJSON(w, map[string]string{
-		"rules": string(output),
-	})
+func indexString(s, sep string) int {
+	for i := 0; i <= len(s)-len(sep); i++ {
+		if s[i:i+len(sep)] == sep {
+			return i
+		}
+	}
+	return -1
 }
 
-func handlePfStates(w http.ResponseWriter, r *http.Request) {
-	output, _ := exec.Command("pfctl", "-ss").Output()
-	writeJSON(w, map[string]string{
-		"states": string(output),
-	})
-}
-
-func handlePfInfo(w http.ResponseWriter, r *http.Request) {
-	output, _ := exec.Command("pfctl", "-si").Output()
-	writeJSON(w, map[string]string{
-		"info": string(output),
-	})
-}
-
-// Helpers
-
-func runNshCommand(command string) (string, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
-	cmd := exec.CommandContext(ctx, *nshPath, "-c", command)
-	output, err := cmd.CombinedOutput()
-	return string(output), err
-}
-
-func writeJSON(w http.ResponseWriter, data interface{}) {
-	resp := Response{Success: true, Data: data}
-	json.NewEncoder(w).Encode(resp)
-}
-
-func writeError(w http.ResponseWriter, status int, message string) {
-	w.WriteHeader(status)
-	resp := Response{Success: false, Error: message}
-	json.NewEncoder(w).Encode(resp)
+func trimString(s string) string {
+	start := 0
+	end := len(s)
+	for start < end && (s[start] == ' ' || s[start] == '\t') {
+		start++
+	}
+	for end > start && (s[end-1] == ' ' || s[end-1] == '\t') {
+		end--
+	}
+	return s[start:end]
 }
