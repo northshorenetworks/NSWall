@@ -1,0 +1,119 @@
+name: Build and Test on OpenBSD
+
+on:
+  push:
+    branches: [ main, master, 'claude/*' ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build-openbsd:
+    name: OpenBSD ${{ matrix.release }} (${{ matrix.arch }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - release: '7.8'
+            arch: x86_64
+          - release: '7.6'
+            arch: x86_64
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build on OpenBSD
+        uses: vmactions/openbsd-vm@v1
+        with:
+          release: ${{ matrix.release }}
+          usesh: true
+          prepare: |
+            pkg_add sqlite3
+          run: |
+            set -e
+            echo "==> OpenBSD $(uname -r) on $(uname -m)"
+            echo "==> Building NSH/NSWall..."
+
+            # Build
+            make clean || true
+            make
+
+            # Verify binary was created
+            if [ -f nsh ]; then
+              echo "==> Build successful!"
+              ls -la nsh
+              file nsh
+              echo "==> Version info:"
+              ./nsh -v || true
+            else
+              echo "==> Build failed!"
+              exit 1
+            fi
+
+  build-arm64:
+    name: OpenBSD 7.8 (ARM64)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build on OpenBSD ARM64
+        uses: vmactions/openbsd-vm@v1
+        with:
+          release: '7.8'
+          arch: aarch64
+          usesh: true
+          prepare: |
+            pkg_add sqlite3
+          run: |
+            set -e
+            echo "==> OpenBSD $(uname -r) on $(uname -m)"
+            make clean || true
+            make
+
+            if [ -f nsh ]; then
+              echo "==> ARM64 build successful!"
+              file nsh
+            else
+              exit 1
+            fi
+
+  release:
+    name: Create Release Package
+    runs-on: ubuntu-latest
+    needs: [build-openbsd, build-arm64]
+    if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build package on OpenBSD
+        uses: vmactions/openbsd-vm@v1
+        with:
+          release: '7.8'
+          usesh: true
+          prepare: |
+            pkg_add sqlite3
+          run: |
+            set -e
+            make clean || true
+            make
+            make install DESTDIR=/tmp/pkg PREFIX=/usr/local
+
+            VERSION=$(grep '^VERSION=' nsh-version.mk | cut -d= -f2 || echo "2.0.0")
+            cd /tmp/pkg
+            tar czf ~/nswall-${VERSION}-$(uname -m).tgz .
+            cp ~/nswall-*.tgz ~/work/NSWall/NSWall/ || true
+            ls -la ~/work/NSWall/NSWall/*.tgz || echo "Package in home dir"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: nswall-package
+          path: "*.tgz"
+          retention-days: 30
+          if-no-files-found: ignore
