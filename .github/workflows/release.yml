@@ -44,15 +44,23 @@ jobs:
           arch: ${{ matrix.arch }}
           usesh: true
           prepare: |
-            pkg_add sqlite3
+            pkg_add sqlite3 go
           run: |
             set -e
             VERSION="${{ steps.version.outputs.version }}"
             ARCH=$(uname -m)
 
+            # Build shell
             make clean || true
             make
             make install DESTDIR=/tmp/pkg PREFIX=/usr/local
+
+            # Build API
+            cd api
+            go mod download || true
+            make build
+            make install DESTDIR=/tmp/pkg PREFIX=/usr/local
+            cd ..
 
             cd /tmp/pkg
             TARBALL="nswall-${VERSION}-openbsd-${ARCH}.tgz"
