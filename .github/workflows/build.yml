@@ -30,25 +30,34 @@ jobs:
           release: ${{ matrix.release }}
           usesh: true
           prepare: |
-            pkg_add sqlite3
+            pkg_add sqlite3 go
           run: |
             set -e
             echo "==> OpenBSD $(uname -r) on $(uname -m)"
-            echo "==> Building NSH/NSWall..."
 
-            # Build
+            echo "==> Building NSH/NSWall shell..."
             make clean || true
             make
 
-            # Verify binary was created
             if [ -f nsh ]; then
-              echo "==> Build successful!"
+              echo "==> Shell build successful!"
               ls -la nsh
-              file nsh
-              echo "==> Version info:"
               ./nsh -v || true
             else
-              echo "==> Build failed!"
+              echo "==> Shell build failed!"
+              exit 1
+            fi
+
+            echo "==> Building NSWall API server..."
+            cd api
+            go mod download || true
+            make build
+
+            if [ -f nswall-api ]; then
+              echo "==> API build successful!"
+              ls -la nswall-api
+            else
+              echo "==> API build failed!"
               exit 1
             fi
 
@@ -67,16 +76,30 @@ jobs:
           arch: aarch64
           usesh: true
           prepare: |
-            pkg_add sqlite3
+            pkg_add sqlite3 go
           run: |
             set -e
             echo "==> OpenBSD $(uname -r) on $(uname -m)"
+
+            # Build shell
             make clean || true
             make
 
             if [ -f nsh ]; then
-              echo "==> ARM64 build successful!"
+              echo "==> ARM64 shell build successful!"
               file nsh
+            else
+              exit 1
+            fi
+
+            # Build API
+            cd api
+            go mod download || true
+            make build
+
+            if [ -f nswall-api ]; then
+              echo "==> ARM64 API build successful!"
+              file nswall-api
             else
               exit 1
             fi
@@ -97,12 +120,21 @@ jobs:
           release: '7.8'
           usesh: true
           prepare: |
-            pkg_add sqlite3
+            pkg_add sqlite3 go
           run: |
             set -e
+
+            # Build shell
             make clean || true
             make
             make install DESTDIR=/tmp/pkg PREFIX=/usr/local
+
+            # Build API
+            cd api
+            go mod download
+            make build
+            make install DESTDIR=/tmp/pkg PREFIX=/usr/local
+            cd ..
 
             VERSION=$(grep '^VERSION=' nsh-version.mk | cut -d= -f2 || echo "2.0.0")
             cd /tmp/pkg
