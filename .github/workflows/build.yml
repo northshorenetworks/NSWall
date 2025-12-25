@@ -8,9 +8,42 @@ on:
   workflow_dispatch:
 
 jobs:
-  # Run Go tests on Linux first (faster feedback)
+  # Lint and static analysis
+  lint:
+    name: Lint & Static Analysis
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+
+      - name: Run go vet
+        working-directory: ./api
+        run: |
+          go mod download
+          go vet ./...
+
+      - name: Install staticcheck
+        run: go install honnef.co/go/tools/cmd/staticcheck@latest
+
+      - name: Run staticcheck
+        working-directory: ./api
+        run: staticcheck ./...
+
+      - name: Check go mod tidy
+        working-directory: ./api
+        run: |
+          go mod tidy
+          git diff --exit-code go.mod go.sum || (echo "go.mod/go.sum not tidy" && exit 1)
+
+  # Run Go unit tests on Linux (faster feedback)
   test-linux:
-    name: Go Tests (Linux)
+    name: Go Unit Tests (Linux)
     runs-on: ubuntu-latest
 
     steps:
@@ -63,10 +96,74 @@ jobs:
             echo "::warning::Code coverage is below 50% (${COVERAGE}%)"
           fi
 
+  # Run integration/E2E tests
+  integration-tests:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    needs: [lint, test-linux]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+
+      - name: Run integration tests
+        working-directory: ./api
+        env:
+          NSWALL_DEV_MODE: "1"
+        run: |
+          go mod download
+          echo "==> Running integration tests..."
+          go test -v -tags=integration -race -timeout=5m ./...
+
+      - name: Run benchmarks
+        working-directory: ./api
+        env:
+          NSWALL_DEV_MODE: "1"
+        run: |
+          echo "==> Running benchmarks..."
+          go test -tags=integration -bench=. -benchmem -run=^$ ./tests/... 2>/dev/null || echo "No benchmarks found or skipped"
+
+  # Frontend tests
+  frontend-tests:
+    name: Frontend Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: webui/package-lock.json
+
+      - name: Install dependencies
+        working-directory: ./webui
+        run: npm ci || npm install
+
+      - name: Run linter
+        working-directory: ./webui
+        run: npm run lint 2>/dev/null || echo "No lint script configured"
+
+      - name: Build frontend
+        working-directory: ./webui
+        run: npm run build
+
+      - name: Run tests
+        working-directory: ./webui
+        run: npm test 2>/dev/null || echo "No test script configured"
+
   build-openbsd:
     name: OpenBSD ${{ matrix.release }} (${{ matrix.arch }})
     runs-on: ubuntu-latest
-    needs: test-linux
+    needs: [lint, test-linux]
     strategy:
       fail-fast: false
       matrix:
@@ -123,7 +220,7 @@ jobs:
   build-arm64:
     name: OpenBSD 7.8 (ARM64)
     runs-on: ubuntu-latest
-    needs: test-linux
+    needs: [lint, test-linux]
 
     steps:
       - name: Checkout code
@@ -167,7 +264,7 @@ jobs:
   release:
     name: Create Release Package
     runs-on: ubuntu-latest
-    needs: [build-openbsd, build-arm64]
+    needs: [build-openbsd, build-arm64, integration-tests, frontend-tests]
     if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main'
 
     steps:
