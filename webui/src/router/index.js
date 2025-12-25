@@ -1,7 +1,18 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import api from '@/services/api'
+
+// Track setup status
+let setupChecked = false
+let setupRequired = false
 
 const routes = [
+  {
+    path: '/setup',
+    name: 'Setup',
+    component: () => import('../views/Setup.vue'),
+    meta: { setup: true }
+  },
   {
     path: '/login',
     name: 'Login',
@@ -110,9 +121,45 @@ const router = createRouter({
   routes
 })
 
+// Check if initial setup is required
+async function checkSetupStatus() {
+  if (setupChecked) return setupRequired
+
+  try {
+    const response = await api.get('/setup/status')
+    setupRequired = !response.data.data.completed
+    setupChecked = true
+  } catch (error) {
+    // If we can't reach the API, assume setup is needed
+    console.error('Failed to check setup status:', error)
+    setupRequired = false
+    setupChecked = true
+  }
+
+  return setupRequired
+}
+
 // Navigation guards
 router.beforeEach(async (to, from, next) => {
   const authStore = useAuthStore()
+
+  // Check if setup is required (only once)
+  const needsSetup = await checkSetupStatus()
+
+  // If setup is required, redirect to setup wizard (except if already there)
+  if (needsSetup && !to.meta.setup) {
+    return next({ name: 'Setup' })
+  }
+
+  // If setup is complete and trying to access setup page, redirect to login
+  if (!needsSetup && to.meta.setup) {
+    return next({ name: 'Login' })
+  }
+
+  // Setup page doesn't need auth
+  if (to.meta.setup) {
+    return next()
+  }
 
   // Check auth status on first load
   if (!authStore.isAuthenticated && authStore.token) {
@@ -141,5 +188,11 @@ router.beforeEach(async (to, from, next) => {
 
   next()
 })
+
+// Reset setup check (useful after completing setup)
+export function resetSetupCheck() {
+  setupChecked = false
+  setupRequired = false
+}
 
 export default router
