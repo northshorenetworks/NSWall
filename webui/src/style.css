@@ -1,27 +1,719 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Orbitron:wght@400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* ========================================
+   NSWall Futuristic Design System
+   ======================================== */
+
+@layer base {
+  :root {
+    --neon-cyan: #00f0ff;
+    --neon-purple: #8b5cf6;
+    --neon-green: #00ff88;
+    --neon-red: #ff3366;
+    --cyber-black: #0a0a0f;
+    --cyber-dark: #12121a;
+    --glass-opacity: 0.08;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-cyber-black text-gray-100 font-sans antialiased;
+    background-image:
+      radial-gradient(ellipse at top, rgba(0, 240, 255, 0.03) 0%, transparent 50%),
+      radial-gradient(ellipse at bottom right, rgba(139, 92, 246, 0.03) 0%, transparent 50%);
+  }
+
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-cyber-darker;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-cyber-lighter rounded-full;
+    border: 2px solid transparent;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-neon-cyan/30;
+  }
+
+  /* Selection */
+  ::selection {
+    @apply bg-neon-cyan/30 text-white;
+  }
+}
+
 @layer components {
+  /* ========================================
+     Buttons
+     ======================================== */
   .btn {
-    @apply px-4 py-2 rounded-md font-medium transition-colors;
+    @apply relative px-5 py-2.5 font-medium text-sm rounded-lg transition-all duration-300;
+    @apply inline-flex items-center justify-center gap-2;
+    @apply disabled:opacity-50 disabled:cursor-not-allowed;
   }
+
   .btn-primary {
-    @apply bg-primary-600 text-white hover:bg-primary-700;
+    @apply bg-gradient-to-r from-neon-cyan/20 to-neon-blue/20;
+    @apply border border-neon-cyan/50 text-neon-cyan;
+    @apply hover:from-neon-cyan/30 hover:to-neon-blue/30;
+    @apply hover:border-neon-cyan hover:shadow-neon-cyan;
+    @apply active:scale-[0.98];
   }
+
   .btn-secondary {
-    @apply bg-gray-200 text-gray-700 hover:bg-gray-300;
+    @apply bg-glass border border-white/10 text-gray-300;
+    @apply hover:bg-glass-medium hover:border-white/20 hover:text-white;
+    @apply active:scale-[0.98];
   }
+
   .btn-danger {
-    @apply bg-red-600 text-white hover:bg-red-700;
+    @apply bg-gradient-to-r from-neon-red/20 to-neon-pink/20;
+    @apply border border-neon-red/50 text-neon-red;
+    @apply hover:from-neon-red/30 hover:to-neon-pink/30;
+    @apply hover:border-neon-red hover:shadow-neon-red;
   }
+
+  .btn-success {
+    @apply bg-gradient-to-r from-neon-green/20 to-emerald-500/20;
+    @apply border border-neon-green/50 text-neon-green;
+    @apply hover:from-neon-green/30 hover:to-emerald-500/30;
+    @apply hover:border-neon-green hover:shadow-neon-green;
+  }
+
+  .btn-ghost {
+    @apply bg-transparent border-0 text-gray-400;
+    @apply hover:text-neon-cyan hover:bg-glass;
+  }
+
+  .btn-icon {
+    @apply p-2.5 aspect-square;
+  }
+
+  /* ========================================
+     Cards & Panels
+     ======================================== */
   .card {
-    @apply bg-white rounded-lg shadow p-6;
+    @apply relative overflow-hidden;
+    @apply bg-cyber-dark/80 backdrop-blur-xl;
+    @apply border border-white/5 rounded-xl;
+    @apply shadow-card;
+    @apply p-6;
   }
+
+  .card::before {
+    content: '';
+    @apply absolute inset-0 opacity-0 transition-opacity duration-500;
+    background: linear-gradient(
+      135deg,
+      rgba(0, 240, 255, 0.05) 0%,
+      transparent 50%
+    );
+  }
+
+  .card:hover::before {
+    @apply opacity-100;
+  }
+
+  .card-glow {
+    @apply card;
+    @apply border-neon-cyan/20;
+    box-shadow:
+      0 4px 30px rgba(0, 0, 0, 0.4),
+      inset 0 0 30px rgba(0, 240, 255, 0.03);
+  }
+
+  .card-header {
+    @apply flex items-center justify-between mb-6 pb-4;
+    @apply border-b border-white/5;
+  }
+
+  .card-title {
+    @apply text-lg font-semibold text-white flex items-center gap-3;
+  }
+
+  .card-title::before {
+    content: '';
+    @apply w-1 h-5 bg-gradient-to-b from-neon-cyan to-neon-purple rounded-full;
+  }
+
+  /* Glass Panel */
+  .glass-panel {
+    @apply bg-white/5 backdrop-blur-md;
+    @apply border border-white/10 rounded-xl;
+    @apply shadow-lg;
+  }
+
+  /* ========================================
+     Inputs & Forms
+     ======================================== */
   .input {
-    @apply w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500;
+    @apply w-full px-4 py-3 rounded-lg;
+    @apply bg-cyber-darker/50 border border-white/10;
+    @apply text-white placeholder-gray-500;
+    @apply focus:outline-none focus:border-neon-cyan/50;
+    @apply focus:ring-2 focus:ring-neon-cyan/20;
+    @apply transition-all duration-300;
   }
+
+  .input:focus {
+    @apply bg-cyber-dark;
+  }
+
+  .input-group {
+    @apply relative;
+  }
+
+  .input-group .input {
+    @apply pl-11;
+  }
+
+  .input-group-icon {
+    @apply absolute left-4 top-1/2 -translate-y-1/2;
+    @apply text-gray-500 w-5 h-5;
+  }
+
   .label {
-    @apply block text-sm font-medium text-gray-700 mb-1;
+    @apply block text-sm font-medium text-gray-400 mb-2;
   }
+
+  .select {
+    @apply input appearance-none cursor-pointer;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236b7280'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+    background-position: right 12px center;
+    background-repeat: no-repeat;
+    background-size: 16px;
+    @apply pr-10;
+  }
+
+  .checkbox {
+    @apply w-5 h-5 rounded border-2 border-white/20 bg-cyber-darker;
+    @apply checked:bg-neon-cyan checked:border-neon-cyan;
+    @apply focus:ring-2 focus:ring-neon-cyan/20 focus:ring-offset-0;
+    @apply transition-all duration-200 cursor-pointer;
+  }
+
+  .toggle {
+    @apply relative inline-flex h-6 w-11 items-center rounded-full cursor-pointer;
+    @apply bg-cyber-lighter transition-colors duration-300;
+  }
+
+  .toggle.active {
+    @apply bg-neon-cyan;
+  }
+
+  .toggle-knob {
+    @apply inline-block h-4 w-4 rounded-full bg-white shadow-lg;
+    @apply transform transition-transform duration-300;
+    @apply translate-x-1;
+  }
+
+  .toggle.active .toggle-knob {
+    @apply translate-x-6;
+  }
+
+  /* ========================================
+     Tables
+     ======================================== */
+  .table-cyber {
+    @apply w-full text-sm;
+  }
+
+  .table-cyber thead {
+    @apply bg-cyber-darker/50;
+  }
+
+  .table-cyber th {
+    @apply px-4 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider;
+    @apply border-b border-white/5;
+  }
+
+  .table-cyber td {
+    @apply px-4 py-4 text-gray-300;
+    @apply border-b border-white/5;
+  }
+
+  .table-cyber tbody tr {
+    @apply transition-colors duration-200;
+  }
+
+  .table-cyber tbody tr:hover {
+    @apply bg-white/[0.02];
+  }
+
+  .table-cyber tbody tr:hover td {
+    @apply text-white;
+  }
+
+  /* ========================================
+     Status Indicators
+     ======================================== */
+  .status-dot {
+    @apply w-2.5 h-2.5 rounded-full;
+  }
+
+  .status-online {
+    @apply bg-neon-green shadow-neon-green animate-pulse-slow;
+  }
+
+  .status-offline {
+    @apply bg-gray-500;
+  }
+
+  .status-warning {
+    @apply bg-neon-yellow shadow-[0_0_10px_rgba(251,191,36,0.5)] animate-pulse;
+  }
+
+  .status-error {
+    @apply bg-neon-red shadow-neon-red animate-pulse;
+  }
+
+  .status-badge {
+    @apply inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium;
+  }
+
+  .status-badge-success {
+    @apply bg-neon-green/10 text-neon-green border border-neon-green/20;
+  }
+
+  .status-badge-warning {
+    @apply bg-neon-yellow/10 text-neon-yellow border border-neon-yellow/20;
+  }
+
+  .status-badge-error {
+    @apply bg-neon-red/10 text-neon-red border border-neon-red/20;
+  }
+
+  .status-badge-info {
+    @apply bg-neon-cyan/10 text-neon-cyan border border-neon-cyan/20;
+  }
+
+  /* Animated status ring */
+  .status-ring {
+    @apply relative;
+  }
+
+  .status-ring::after {
+    content: '';
+    @apply absolute inset-0 rounded-full;
+    @apply border-2 border-current opacity-0;
+    animation: pulseRing 2s ease-out infinite;
+  }
+
+  .status-ring.active::after {
+    @apply opacity-100;
+  }
+
+  /* ========================================
+     Navigation
+     ======================================== */
+  .nav-item {
+    @apply flex items-center gap-3 px-4 py-3 rounded-lg;
+    @apply text-gray-400 transition-all duration-300;
+    @apply hover:bg-white/5 hover:text-white;
+    @apply relative overflow-hidden;
+  }
+
+  .nav-item::before {
+    content: '';
+    @apply absolute left-0 top-0 bottom-0 w-0.5 bg-neon-cyan;
+    @apply scale-y-0 transition-transform duration-300;
+  }
+
+  .nav-item.active {
+    @apply bg-neon-cyan/10 text-neon-cyan;
+  }
+
+  .nav-item.active::before {
+    @apply scale-y-100;
+  }
+
+  .nav-item-icon {
+    @apply w-5 h-5 flex-shrink-0;
+  }
+
+  /* ========================================
+     Tabs
+     ======================================== */
+  .tabs {
+    @apply flex gap-1 p-1 bg-cyber-darker/50 rounded-lg;
+    @apply border border-white/5;
+  }
+
+  .tab {
+    @apply px-4 py-2 rounded-md text-sm font-medium;
+    @apply text-gray-400 transition-all duration-200;
+    @apply hover:text-white;
+  }
+
+  .tab.active {
+    @apply bg-neon-cyan/10 text-neon-cyan;
+    @apply shadow-sm;
+  }
+
+  /* Underline tabs */
+  .tabs-underline {
+    @apply flex gap-8 border-b border-white/10;
+  }
+
+  .tab-underline {
+    @apply relative pb-3 text-sm font-medium;
+    @apply text-gray-400 transition-colors duration-200;
+    @apply hover:text-white;
+  }
+
+  .tab-underline.active {
+    @apply text-neon-cyan;
+  }
+
+  .tab-underline.active::after {
+    content: '';
+    @apply absolute bottom-0 left-0 right-0 h-0.5;
+    @apply bg-gradient-to-r from-neon-cyan to-neon-purple;
+  }
+
+  /* ========================================
+     Modals & Overlays
+     ======================================== */
+  .modal-overlay {
+    @apply fixed inset-0 z-50;
+    @apply bg-black/70 backdrop-blur-sm;
+    @apply flex items-center justify-center p-4;
+    animation: fadeIn 0.2s ease-out;
+  }
+
+  .modal {
+    @apply relative max-w-lg w-full;
+    @apply bg-cyber-dark border border-white/10 rounded-2xl;
+    @apply shadow-2xl overflow-hidden;
+    animation: slideUp 0.3s ease-out;
+  }
+
+  .modal-header {
+    @apply flex items-center justify-between px-6 py-4;
+    @apply border-b border-white/5;
+  }
+
+  .modal-title {
+    @apply text-lg font-semibold text-white;
+  }
+
+  .modal-body {
+    @apply px-6 py-5;
+  }
+
+  .modal-footer {
+    @apply flex items-center justify-end gap-3 px-6 py-4;
+    @apply border-t border-white/5 bg-cyber-darker/30;
+  }
+
+  /* ========================================
+     Tooltips
+     ======================================== */
+  .tooltip {
+    @apply absolute z-50 px-3 py-2 text-sm;
+    @apply bg-cyber-lighter text-white rounded-lg;
+    @apply border border-white/10 shadow-xl;
+    @apply opacity-0 invisible transition-all duration-200;
+    @apply -translate-y-1;
+  }
+
+  .tooltip.show {
+    @apply opacity-100 visible translate-y-0;
+  }
+
+  .tooltip::before {
+    content: '';
+    @apply absolute w-2 h-2 bg-cyber-lighter;
+    @apply border-l border-b border-white/10;
+    @apply -bottom-1 left-1/2 -translate-x-1/2 rotate-[-45deg];
+  }
+
+  /* ========================================
+     Progress & Loading
+     ======================================== */
+  .progress-bar {
+    @apply h-2 bg-cyber-lighter rounded-full overflow-hidden;
+  }
+
+  .progress-bar-fill {
+    @apply h-full rounded-full transition-all duration-500;
+    @apply bg-gradient-to-r from-neon-cyan to-neon-purple;
+  }
+
+  .progress-bar-animated .progress-bar-fill {
+    background-size: 200% 100%;
+    animation: shimmer 2s linear infinite;
+  }
+
+  .skeleton {
+    @apply bg-cyber-lighter rounded animate-pulse;
+  }
+
+  .spinner {
+    @apply w-5 h-5 border-2 border-neon-cyan/30 border-t-neon-cyan rounded-full;
+    animation: spin 0.8s linear infinite;
+  }
+
+  /* ========================================
+     Metrics & Stats
+     ======================================== */
+  .metric-card {
+    @apply card flex flex-col;
+  }
+
+  .metric-label {
+    @apply text-sm text-gray-400 mb-1;
+  }
+
+  .metric-value {
+    @apply text-3xl font-bold text-white font-mono;
+    @apply bg-gradient-to-r from-white to-gray-300 bg-clip-text;
+  }
+
+  .metric-trend {
+    @apply inline-flex items-center gap-1 text-sm mt-2;
+  }
+
+  .metric-trend.up {
+    @apply text-neon-green;
+  }
+
+  .metric-trend.down {
+    @apply text-neon-red;
+  }
+
+  /* ========================================
+     Data Display
+     ======================================== */
+  .code-block {
+    @apply p-4 bg-cyber-black/50 rounded-lg;
+    @apply font-mono text-sm text-gray-300;
+    @apply border border-white/5;
+    @apply overflow-x-auto;
+  }
+
+  .tag {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium;
+    @apply bg-cyber-lighter text-gray-300;
+  }
+
+  .tag-cyan {
+    @apply bg-neon-cyan/10 text-neon-cyan border border-neon-cyan/20;
+  }
+
+  .tag-purple {
+    @apply bg-neon-purple/10 text-neon-purple border border-neon-purple/20;
+  }
+
+  .tag-green {
+    @apply bg-neon-green/10 text-neon-green border border-neon-green/20;
+  }
+
+  /* ========================================
+     Alerts & Notifications
+     ======================================== */
+  .alert {
+    @apply flex items-start gap-3 p-4 rounded-lg;
+    @apply border backdrop-blur-sm;
+  }
+
+  .alert-info {
+    @apply bg-neon-cyan/5 border-neon-cyan/20 text-neon-cyan;
+  }
+
+  .alert-success {
+    @apply bg-neon-green/5 border-neon-green/20 text-neon-green;
+  }
+
+  .alert-warning {
+    @apply bg-neon-yellow/5 border-neon-yellow/20 text-neon-yellow;
+  }
+
+  .alert-error {
+    @apply bg-neon-red/5 border-neon-red/20 text-neon-red;
+  }
+
+  /* Toast notifications */
+  .toast {
+    @apply flex items-center gap-3 px-4 py-3 rounded-xl;
+    @apply bg-cyber-dark/95 backdrop-blur-lg;
+    @apply border border-white/10 shadow-2xl;
+    animation: slideUp 0.3s ease-out;
+  }
+
+  /* ========================================
+     Charts & Graphs
+     ======================================== */
+  .chart-container {
+    @apply relative p-4 bg-cyber-darker/30 rounded-xl;
+    @apply border border-white/5;
+  }
+
+  .chart-label {
+    @apply text-xs text-gray-500 font-mono;
+  }
+
+  .chart-value {
+    @apply text-sm text-gray-300 font-mono;
+  }
+
+  /* Sparkline */
+  .sparkline {
+    @apply flex items-end gap-0.5 h-8;
+  }
+
+  .sparkline-bar {
+    @apply flex-1 bg-neon-cyan/30 rounded-t;
+    @apply transition-all duration-300;
+    @apply hover:bg-neon-cyan;
+  }
+
+  /* ========================================
+     Dividers
+     ======================================== */
+  .divider {
+    @apply h-px bg-gradient-to-r from-transparent via-white/10 to-transparent;
+  }
+
+  .divider-vertical {
+    @apply w-px h-full bg-gradient-to-b from-transparent via-white/10 to-transparent;
+  }
+
+  .divider-glow {
+    @apply h-px bg-gradient-to-r from-transparent via-neon-cyan/30 to-transparent;
+  }
+
+  /* ========================================
+     Utility Classes
+     ======================================== */
+  .text-gradient {
+    @apply bg-gradient-to-r from-neon-cyan to-neon-purple bg-clip-text text-transparent;
+  }
+
+  .text-gradient-gold {
+    @apply bg-gradient-to-r from-amber-400 to-orange-500 bg-clip-text text-transparent;
+  }
+
+  .border-gradient {
+    position: relative;
+    border: none !important;
+  }
+
+  .border-gradient::before {
+    content: '';
+    @apply absolute inset-0 rounded-xl p-px;
+    background: linear-gradient(135deg, rgba(0, 240, 255, 0.3), rgba(139, 92, 246, 0.3));
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+  }
+
+  .glow-text {
+    text-shadow: 0 0 20px currentColor;
+  }
+
+  .truncate-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  /* Hover effects */
+  .hover-lift {
+    @apply transition-transform duration-300;
+    @apply hover:-translate-y-1;
+  }
+
+  .hover-glow {
+    @apply transition-shadow duration-300;
+    @apply hover:shadow-glow;
+  }
+
+  /* Grid background effect */
+  .cyber-grid {
+    @apply relative;
+  }
+
+  .cyber-grid::before {
+    content: '';
+    @apply absolute inset-0 pointer-events-none;
+    background-image:
+      linear-gradient(rgba(0, 240, 255, 0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0, 240, 255, 0.03) 1px, transparent 1px);
+    background-size: 50px 50px;
+  }
+
+  /* Scan line effect */
+  .scan-lines::after {
+    content: '';
+    @apply absolute inset-0 pointer-events-none;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0, 0, 0, 0.03) 2px,
+      rgba(0, 0, 0, 0.03) 4px
+    );
+  }
+}
+
+/* ========================================
+   Animations
+   ======================================== */
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes ping-slow {
+  75%, 100% {
+    transform: scale(1.5);
+    opacity: 0;
+  }
+}
+
+/* Data flow animation for network diagrams */
+@keyframes dataFlow {
+  0% { stroke-dashoffset: 100; }
+  100% { stroke-dashoffset: 0; }
+}
+
+.data-flow {
+  stroke-dasharray: 10;
+  animation: dataFlow 1s linear infinite;
+}
+
+/* Number counter animation */
+@keyframes countUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.count-up {
+  animation: countUp 0.5s ease-out forwards;
+}
+
+/* Heartbeat for critical status */
+@keyframes heartbeat {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+
+.heartbeat {
+  animation: heartbeat 1s ease-in-out infinite;
 }
