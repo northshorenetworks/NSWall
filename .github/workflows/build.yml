@@ -8,9 +8,65 @@ on:
   workflow_dispatch:
 
 jobs:
+  # Run Go tests on Linux first (faster feedback)
+  test-linux:
+    name: Go Tests (Linux)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+
+      - name: Run Go tests with coverage
+        working-directory: ./api
+        run: |
+          go mod download
+          go test -v -race -coverprofile=coverage.out -covermode=atomic ./...
+
+      - name: Generate coverage report
+        working-directory: ./api
+        run: |
+          go tool cover -func=coverage.out
+          go tool cover -html=coverage.out -o coverage.html
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          file: ./api/coverage.out
+          flags: unittests
+          name: nswall-api-coverage
+          fail_ci_if_error: false
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
+      - name: Upload coverage HTML artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: ./api/coverage.html
+          retention-days: 30
+
+      - name: Check coverage threshold
+        working-directory: ./api
+        run: |
+          COVERAGE=$(go tool cover -func=coverage.out | grep total | awk '{print $3}' | sed 's/%//')
+          echo "Total coverage: ${COVERAGE}%"
+          echo "coverage=${COVERAGE}" >> $GITHUB_OUTPUT
+
+          # Warn if coverage is below 50%
+          if (( $(echo "$COVERAGE < 50" | bc -l) )); then
+            echo "::warning::Code coverage is below 50% (${COVERAGE}%)"
+          fi
+
   build-openbsd:
     name: OpenBSD ${{ matrix.release }} (${{ matrix.arch }})
     runs-on: ubuntu-latest
+    needs: test-linux
     strategy:
       fail-fast: false
       matrix:
@@ -24,7 +80,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Build on OpenBSD
+      - name: Build and Test on OpenBSD
         uses: vmactions/openbsd-vm@v1
         with:
           release: ${{ matrix.release }}
@@ -61,9 +117,13 @@ jobs:
               exit 1
             fi
 
+            echo "==> Running Go tests on OpenBSD..."
+            go test -v -short ./... || echo "::warning::Some tests failed on OpenBSD"
+
   build-arm64:
     name: OpenBSD 7.8 (ARM64)
     runs-on: ubuntu-latest
+    needs: test-linux
 
     steps:
       - name: Checkout code
