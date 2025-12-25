@@ -13,3 +13,9 @@ nshdoas/*.o
 nshdoas/compile.c
 nshdoas/nshdoas
 nshdoas/parse.c
+
+# Node.js
+node_modules/
+webui/node_modules/
+*.log
+.DS_Store
