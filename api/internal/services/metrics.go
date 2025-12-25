@@ -135,13 +135,42 @@ func (m *MetricsService) appendSystemMetrics(sb *strings.Builder) {
 }
 
 func (m *MetricsService) appendPFMetrics(sb *strings.Builder) {
-	// PF state count
+	// PF info (pfctl -si)
+	m.appendPFInfo(sb)
+
+	// PF packet counters
+	m.appendPFCounters(sb)
+
+	// PF state breakdown by protocol
+	m.appendPFStatesByProtocol(sb)
+
+	// PF per-rule metrics
+	m.appendPFRuleMetrics(sb)
+
+	// PF queue metrics (ALTQ/HFSC)
+	m.appendPFQueueMetrics(sb)
+
+	// PF table metrics
+	m.appendPFTableMetrics(sb)
+}
+
+func (m *MetricsService) appendPFInfo(sb *strings.Builder) {
 	output, err := exec.Command("pfctl", "-si").Output()
 	if err != nil {
 		return
 	}
 
 	lines := strings.Split(string(output), "\n")
+
+	// PF enabled status
+	enabled := 0
+	if strings.Contains(string(output), "Status: Enabled") {
+		enabled = 1
+	}
+	sb.WriteString("# HELP nswall_pf_enabled PF enabled status (1=enabled, 0=disabled)\n")
+	sb.WriteString("# TYPE nswall_pf_enabled gauge\n")
+	sb.WriteString(fmt.Sprintf("nswall_pf_enabled %d\n\n", enabled))
+
 	for _, line := range lines {
 		line = strings.TrimSpace(line)
 
@@ -158,18 +187,379 @@ func (m *MetricsService) appendPFMetrics(sb *strings.Builder) {
 				}
 			}
 		}
+
+		// State table limit
+		if strings.HasPrefix(line, "limit") {
+			fields := strings.Fields(line)
+			if len(fields) >= 2 {
+				if limit, err := strconv.ParseInt(fields[1], 10, 64); err == nil {
+					sb.WriteString("# HELP nswall_pf_state_limit Maximum state table entries\n")
+					sb.WriteString("# TYPE nswall_pf_state_limit gauge\n")
+					sb.WriteString(fmt.Sprintf("nswall_pf_state_limit %d\n\n", limit))
+				}
+			}
+		}
+
+		// Source nodes
+		if strings.Contains(line, "source nodes") {
+			fields := strings.Fields(line)
+			for i, f := range fields {
+				if f == "source" && i > 0 {
+					count, _ := strconv.ParseInt(fields[i-1], 10, 64)
+					sb.WriteString("# HELP nswall_pf_source_nodes Current source tracking nodes\n")
+					sb.WriteString("# TYPE nswall_pf_source_nodes gauge\n")
+					sb.WriteString(fmt.Sprintf("nswall_pf_source_nodes %d\n\n", count))
+					break
+				}
+			}
+		}
+	}
+}
+
+func (m *MetricsService) appendPFCounters(sb *strings.Builder) {
+	// Get verbose stats for packet counters
+	output, err := exec.Command("pfctl", "-vsi").Output()
+	if err != nil {
+		return
 	}
 
-	// PF enabled status
-	if strings.Contains(string(output), "Status: Enabled") {
-		sb.WriteString("# HELP nswall_pf_enabled PF enabled status\n")
-		sb.WriteString("# TYPE nswall_pf_enabled gauge\n")
-		sb.WriteString("nswall_pf_enabled 1\n\n")
-	} else {
-		sb.WriteString("# HELP nswall_pf_enabled PF enabled status\n")
-		sb.WriteString("# TYPE nswall_pf_enabled gauge\n")
-		sb.WriteString("nswall_pf_enabled 0\n\n")
+	sb.WriteString("# HELP nswall_pf_packets_total Total packets processed by direction and action\n")
+	sb.WriteString("# TYPE nswall_pf_packets_total counter\n")
+	sb.WriteString("# HELP nswall_pf_bytes_total Total bytes processed by direction and action\n")
+	sb.WriteString("# TYPE nswall_pf_bytes_total counter\n")
+
+	lines := strings.Split(string(output), "\n")
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+
+		// Parse packet/byte counters
+		// Format varies, look for Passed/Blocked lines
+		if strings.Contains(line, "Passed") || strings.Contains(line, "Blocked") {
+			direction := "in"
+			if strings.Contains(line, "Out") {
+				direction = "out"
+			}
+
+			fields := strings.Fields(line)
+			for i, f := range fields {
+				if f == "Passed" && i+1 < len(fields) {
+					packets, _ := strconv.ParseInt(fields[i+1], 10, 64)
+					sb.WriteString(fmt.Sprintf("nswall_pf_packets_total{direction=\"%s\",action=\"pass\"} %d\n", direction, packets))
+					if i+2 < len(fields) {
+						bytes, _ := strconv.ParseInt(fields[i+2], 10, 64)
+						sb.WriteString(fmt.Sprintf("nswall_pf_bytes_total{direction=\"%s\",action=\"pass\"} %d\n", direction, bytes))
+					}
+				}
+				if f == "Blocked" && i+1 < len(fields) {
+					packets, _ := strconv.ParseInt(fields[i+1], 10, 64)
+					sb.WriteString(fmt.Sprintf("nswall_pf_packets_total{direction=\"%s\",action=\"block\"} %d\n", direction, packets))
+					if i+2 < len(fields) {
+						bytes, _ := strconv.ParseInt(fields[i+2], 10, 64)
+						sb.WriteString(fmt.Sprintf("nswall_pf_bytes_total{direction=\"%s\",action=\"block\"} %d\n", direction, bytes))
+					}
+				}
+			}
+		}
+
+		// Counter section
+		if strings.HasPrefix(line, "match") || strings.HasPrefix(line, "bad-offset") ||
+			strings.HasPrefix(line, "fragment") || strings.HasPrefix(line, "short") ||
+			strings.HasPrefix(line, "normalize") || strings.HasPrefix(line, "memory") {
+			fields := strings.Fields(line)
+			if len(fields) >= 2 {
+				name := strings.ReplaceAll(fields[0], "-", "_")
+				if count, err := strconv.ParseInt(fields[1], 10, 64); err == nil {
+					sb.WriteString(fmt.Sprintf("nswall_pf_counter_%s %d\n", name, count))
+				}
+			}
+		}
 	}
+	sb.WriteString("\n")
+}
+
+func (m *MetricsService) appendPFStatesByProtocol(sb *strings.Builder) {
+	// Get states and count by protocol
+	output, err := exec.Command("pfctl", "-ss").Output()
+	if err != nil {
+		return
+	}
+
+	protoCounts := map[string]int64{
+		"tcp":   0,
+		"udp":   0,
+		"icmp":  0,
+		"other": 0,
+	}
+
+	lines := strings.Split(string(output), "\n")
+	for _, line := range lines {
+		switch {
+		case strings.Contains(line, " tcp "):
+			protoCounts["tcp"]++
+		case strings.Contains(line, " udp "):
+			protoCounts["udp"]++
+		case strings.Contains(line, " icmp "):
+			protoCounts["icmp"]++
+		default:
+			if strings.TrimSpace(line) != "" && !strings.HasPrefix(line, "No") {
+				protoCounts["other"]++
+			}
+		}
+	}
+
+	sb.WriteString("# HELP nswall_pf_states_by_protocol State table entries by protocol\n")
+	sb.WriteString("# TYPE nswall_pf_states_by_protocol gauge\n")
+	for proto, count := range protoCounts {
+		sb.WriteString(fmt.Sprintf("nswall_pf_states_by_protocol{protocol=\"%s\"} %d\n", proto, count))
+	}
+	sb.WriteString("\n")
+}
+
+func (m *MetricsService) appendPFRuleMetrics(sb *strings.Builder) {
+	// Get rules with counters (pfctl -vsr)
+	output, err := exec.Command("pfctl", "-vsr").Output()
+	if err != nil {
+		return
+	}
+
+	sb.WriteString("# HELP nswall_pf_rule_evaluations Rule evaluation count\n")
+	sb.WriteString("# TYPE nswall_pf_rule_evaluations counter\n")
+	sb.WriteString("# HELP nswall_pf_rule_packets Packets matched by rule\n")
+	sb.WriteString("# TYPE nswall_pf_rule_packets counter\n")
+	sb.WriteString("# HELP nswall_pf_rule_bytes Bytes matched by rule\n")
+	sb.WriteString("# TYPE nswall_pf_rule_bytes counter\n")
+	sb.WriteString("# HELP nswall_pf_rule_states States created by rule\n")
+	sb.WriteString("# TYPE nswall_pf_rule_states gauge\n")
+
+	lines := strings.Split(string(output), "\n")
+	ruleNum := 0
+
+	for i, line := range lines {
+		if line == "" {
+			continue
+		}
+
+		// Rules start with @
+		if strings.HasPrefix(strings.TrimSpace(line), "@") {
+			// Extract rule number
+			fields := strings.Fields(line)
+			if len(fields) > 0 {
+				numStr := strings.TrimPrefix(fields[0], "@")
+				if num, err := strconv.Atoi(numStr); err == nil {
+					ruleNum = num
+				}
+			}
+
+			// Determine action and direction
+			action := "unknown"
+			if strings.Contains(line, " pass ") {
+				action = "pass"
+			} else if strings.Contains(line, " block ") {
+				action = "block"
+			} else if strings.Contains(line, " match ") {
+				action = "match"
+			}
+
+			direction := "any"
+			if strings.Contains(line, " in ") {
+				direction = "in"
+			} else if strings.Contains(line, " out ") {
+				direction = "out"
+			}
+
+			// Extract interface
+			iface := "any"
+			for j, f := range fields {
+				if f == "on" && j+1 < len(fields) {
+					iface = fields[j+1]
+					break
+				}
+			}
+
+			labels := fmt.Sprintf("rule=\"%d\",action=\"%s\",direction=\"%s\",interface=\"%s\"",
+				ruleNum, action, direction, iface)
+
+			// Look for stats on next line
+			if i+1 < len(lines) {
+				statsLine := lines[i+1]
+				if strings.Contains(statsLine, "Evaluations:") {
+					// Parse: [ Evaluations: 123456  Packets: 12345  Bytes: 1234567  States: 12 ]
+					statFields := strings.Fields(statsLine)
+					for j, f := range statFields {
+						switch f {
+						case "Evaluations:":
+							if j+1 < len(statFields) {
+								if val, err := strconv.ParseInt(statFields[j+1], 10, 64); err == nil {
+									sb.WriteString(fmt.Sprintf("nswall_pf_rule_evaluations{%s} %d\n", labels, val))
+								}
+							}
+						case "Packets:":
+							if j+1 < len(statFields) {
+								if val, err := strconv.ParseInt(statFields[j+1], 10, 64); err == nil {
+									sb.WriteString(fmt.Sprintf("nswall_pf_rule_packets{%s} %d\n", labels, val))
+								}
+							}
+						case "Bytes:":
+							if j+1 < len(statFields) {
+								if val, err := strconv.ParseInt(statFields[j+1], 10, 64); err == nil {
+									sb.WriteString(fmt.Sprintf("nswall_pf_rule_bytes{%s} %d\n", labels, val))
+								}
+							}
+						case "States:":
+							if j+1 < len(statFields) {
+								val := strings.TrimSuffix(statFields[j+1], "]")
+								if num, err := strconv.ParseInt(val, 10, 64); err == nil {
+									sb.WriteString(fmt.Sprintf("nswall_pf_rule_states{%s} %d\n", labels, num))
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	sb.WriteString("\n")
+}
+
+func (m *MetricsService) appendPFQueueMetrics(sb *strings.Builder) {
+	// Get queue stats (pfctl -vsq)
+	output, err := exec.Command("pfctl", "-vsq").Output()
+	if err != nil || len(output) == 0 {
+		return
+	}
+
+	sb.WriteString("# HELP nswall_pf_queue_packets Packets through queue\n")
+	sb.WriteString("# TYPE nswall_pf_queue_packets counter\n")
+	sb.WriteString("# HELP nswall_pf_queue_bytes Bytes through queue\n")
+	sb.WriteString("# TYPE nswall_pf_queue_bytes counter\n")
+	sb.WriteString("# HELP nswall_pf_queue_dropped Packets dropped by queue\n")
+	sb.WriteString("# TYPE nswall_pf_queue_dropped counter\n")
+	sb.WriteString("# HELP nswall_pf_queue_length Current queue length\n")
+	sb.WriteString("# TYPE nswall_pf_queue_length gauge\n")
+
+	var queueName, queueIface string
+	lines := strings.Split(string(output), "\n")
+
+	for _, line := range lines {
+		if strings.HasPrefix(line, "queue") {
+			fields := strings.Fields(line)
+			if len(fields) >= 4 {
+				queueName = fields[1]
+				for i, f := range fields {
+					if f == "on" && i+1 < len(fields) {
+						queueIface = fields[i+1]
+						break
+					}
+				}
+			}
+		}
+
+		if queueName != "" && strings.Contains(line, "pkts:") {
+			labels := fmt.Sprintf("queue=\"%s\",interface=\"%s\"", queueName, queueIface)
+
+			fields := strings.Fields(line)
+			for i, f := range fields {
+				switch f {
+				case "pkts:":
+					if i+1 < len(fields) {
+						if val, err := strconv.ParseInt(fields[i+1], 10, 64); err == nil {
+							sb.WriteString(fmt.Sprintf("nswall_pf_queue_packets{%s} %d\n", labels, val))
+						}
+					}
+				case "bytes:":
+					if i+1 < len(fields) {
+						if val, err := strconv.ParseInt(fields[i+1], 10, 64); err == nil {
+							sb.WriteString(fmt.Sprintf("nswall_pf_queue_bytes{%s} %d\n", labels, val))
+						}
+					}
+				case "dropped":
+					// Look for dropped pkts after this
+					if i+2 < len(fields) && fields[i+1] == "pkts:" {
+						if val, err := strconv.ParseInt(fields[i+2], 10, 64); err == nil {
+							sb.WriteString(fmt.Sprintf("nswall_pf_queue_dropped{%s} %d\n", labels, val))
+						}
+					}
+				case "qlength:":
+					if i+1 < len(fields) {
+						// May be fraction like 0/50
+						parts := strings.Split(fields[i+1], "/")
+						if len(parts) >= 1 {
+							if val, err := strconv.ParseInt(parts[0], 10, 64); err == nil {
+								sb.WriteString(fmt.Sprintf("nswall_pf_queue_length{%s} %d\n", labels, val))
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	sb.WriteString("\n")
+}
+
+func (m *MetricsService) appendPFTableMetrics(sb *strings.Builder) {
+	// Get table stats (pfctl -vsTables)
+	output, err := exec.Command("pfctl", "-vsTables").Output()
+	if err != nil || len(output) == 0 {
+		return
+	}
+
+	sb.WriteString("# HELP nswall_pf_table_addresses Addresses in table\n")
+	sb.WriteString("# TYPE nswall_pf_table_addresses gauge\n")
+	sb.WriteString("# HELP nswall_pf_table_evaluations Table evaluations\n")
+	sb.WriteString("# TYPE nswall_pf_table_evaluations counter\n")
+	sb.WriteString("# HELP nswall_pf_table_match Table matches\n")
+	sb.WriteString("# TYPE nswall_pf_table_match counter\n")
+
+	var tableName string
+	lines := strings.Split(string(output), "\n")
+
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+		if line == "" {
+			continue
+		}
+
+		// Table name line starts with -
+		if strings.HasPrefix(line, "-") {
+			fields := strings.Fields(line)
+			if len(fields) >= 2 {
+				tableName = strings.Trim(fields[1], "<>")
+			}
+			continue
+		}
+
+		if tableName != "" && strings.Contains(line, "Addresses:") {
+			fields := strings.Fields(line)
+			for i, f := range fields {
+				if f == "Addresses:" && i+1 < len(fields) {
+					if val, err := strconv.ParseInt(fields[i+1], 10, 64); err == nil {
+						sb.WriteString(fmt.Sprintf("nswall_pf_table_addresses{table=\"%s\"} %d\n", tableName, val))
+					}
+				}
+			}
+		}
+
+		if tableName != "" && strings.Contains(line, "Evaluations:") {
+			fields := strings.Fields(line)
+			for i, f := range fields {
+				switch f {
+				case "Evaluations:":
+					if i+1 < len(fields) {
+						if val, err := strconv.ParseInt(fields[i+1], 10, 64); err == nil {
+							sb.WriteString(fmt.Sprintf("nswall_pf_table_evaluations{table=\"%s\"} %d\n", tableName, val))
+						}
+					}
+				case "Match:":
+					if i+1 < len(fields) {
+						if val, err := strconv.ParseInt(fields[i+1], 10, 64); err == nil {
+							sb.WriteString(fmt.Sprintf("nswall_pf_table_match{table=\"%s\"} %d\n", tableName, val))
+						}
+					}
+				}
+			}
+		}
+	}
+	sb.WriteString("\n")
 }
 
 func (m *MetricsService) appendInterfaceMetrics(sb *strings.Builder) {
