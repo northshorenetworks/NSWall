@@ -5,6 +5,7 @@ package main
 import (
 	"context"
 	"flag"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -30,6 +31,11 @@ var (
 	rateLimit      = flag.Int("rate-limit", 100, "Rate limit per minute (0 to disable)")
 	readTimeout    = flag.Duration("read-timeout", 10*time.Second, "HTTP read timeout")
 	writeTimeout   = flag.Duration("write-timeout", 30*time.Second, "HTTP write timeout")
+
+	// Fleet/Controller settings
+	controllerURL  = flag.String("controller", "", "Controller NATS URL (e.g., nats://controller:4222)")
+	agentID        = flag.String("agent-id", "", "Agent ID (auto-generated if not specified)")
+
 	version        = "2.0.0"
 )
 
@@ -42,6 +48,28 @@ func main() {
 	// Create data directory
 	if err := os.MkdirAll(*dataDir, 0700); err != nil {
 		log.Printf("Warning: failed to create data directory: %v", err)
+	}
+
+	// Start NATS agent if controller is configured
+	var natsAgent *services.NATSAgent
+	if *controllerURL != "" {
+		aid := *agentID
+		if aid == "" {
+			aid = getOrCreateAgentID(*dataDir)
+		}
+		log.Printf("Connecting to controller at %s (agent ID: %s)", *controllerURL, aid)
+
+		var err error
+		natsAgent, err = services.NewNATSAgent(*controllerURL, aid, *nshPath)
+		if err != nil {
+			log.Printf("Warning: failed to connect to controller: %v", err)
+		} else {
+			if err := natsAgent.Start(); err != nil {
+				log.Printf("Warning: failed to start NATS agent: %v", err)
+			} else {
+				log.Printf("Connected to controller, agent mode active")
+			}
+		}
 	}
 
 	// Create handler with all services
@@ -263,6 +291,12 @@ func main() {
 	<-quit
 
 	log.Println("Shutting down server...")
+
+	// Stop NATS agent if running
+	if natsAgent != nil {
+		natsAgent.Stop()
+	}
+
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
@@ -270,6 +304,39 @@ func main() {
 		log.Fatalf("Server shutdown error: %v", err)
 	}
 	log.Println("Server stopped")
+}
+
+// getOrCreateAgentID generates or retrieves a persistent agent ID
+func getOrCreateAgentID(dataDir string) string {
+	idFile := dataDir + "/agent_id"
+
+	// Try to read existing ID
+	if data, err := os.ReadFile(idFile); err == nil {
+		id := trimString(string(data))
+		if id != "" {
+			return id
+		}
+	}
+
+	// Generate new ID based on hostname and random suffix
+	hostname, _ := os.Hostname()
+	if hostname == "" {
+		hostname = "nswall"
+	}
+
+	// Generate random suffix
+	b := make([]byte, 4)
+	if f, err := os.Open("/dev/urandom"); err == nil {
+		f.Read(b)
+		f.Close()
+	}
+
+	id := hostname + "-" + fmt.Sprintf("%x", b)
+
+	// Save for future use
+	os.WriteFile(idFile, []byte(id), 0600)
+
+	return id
 }
 
 // simpleAPIKeyAuth is a simple API key middleware for when full auth is disabled

@@ -11,57 +11,188 @@ on:
         required: true
         type: string
 
+env:
+  GO_VERSION: '1.21'
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}/controller
+
 jobs:
-  build-release:
-    name: Build Release on OpenBSD
+  # Build Go binaries for multiple platforms
+  build-binaries:
+    name: Build Binaries
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        version: ['7.6']
+        include:
+          - goos: linux
+            goarch: amd64
+          - goos: linux
+            goarch: arm64
+          - goos: openbsd
+            goarch: amd64
+          - goos: darwin
+            goarch: amd64
+          - goos: darwin
+            goarch: arm64
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Build release on OpenBSD
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Get version
+        id: version
+        run: |
+          if [ -n "${{ github.event.inputs.version }}" ]; then
+            echo "version=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+          else
+            echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Build API
+        env:
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+          CGO_ENABLED: 0
+        run: |
+          cd api
+          go build -ldflags="-s -w -X main.version=${{ steps.version.outputs.version }}" \
+            -o ../dist/nswall-api-${{ matrix.goos }}-${{ matrix.goarch }} \
+            ./cmd/nswall-api
+
+      - name: Build Controller
+        env:
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+          CGO_ENABLED: 0
+        run: |
+          cd controller
+          go build -ldflags="-s -w -X main.version=${{ steps.version.outputs.version }}" \
+            -o ../dist/nswall-controller-${{ matrix.goos }}-${{ matrix.goarch }} \
+            ./cmd/nswall-controller
+
+      - name: Upload binaries
+        uses: actions/upload-artifact@v4
+        with:
+          name: binaries-${{ matrix.goos }}-${{ matrix.goarch }}
+          path: dist/
+          retention-days: 7
+
+  # Build on actual OpenBSD for nssh
+  build-openbsd:
+    name: Build on OpenBSD
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        version: ['7.5', '7.6']
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build on OpenBSD
         uses: vmactions/openbsd-vm@v1
         with:
           release: ${{ matrix.version }}
           usesh: true
           prepare: |
-            pkg_add gmake
+            pkg_add gmake go
           run: |
-            echo "=== Building NSWall Release ==="
-            uname -a
+            echo "=== Building NSWall on OpenBSD ${{ matrix.version }} ==="
 
-            # Build nssh
-            cd nssh
-            if [ -f Makefile ]; then
+            # Build nssh (C code)
+            if [ -f nssh/Makefile ]; then
+              cd nssh
               make clean || true
-              make || echo "Note: Full build requires OpenBSD source tree"
+              make || echo "Note: Full build may require OpenBSD source tree"
+              cd ..
             fi
 
-            # Create release artifacts
+            # Build Go components natively on OpenBSD
+            export GOPATH=/tmp/go
+            mkdir -p $GOPATH
+
+            # Build API
+            cd api
+            go build -ldflags="-s -w" -o ../dist/nswall-api-openbsd-amd64 ./cmd/nswall-api
             cd ..
-            mkdir -p release
 
-            # Package source
-            tar czf release/nswall-src.tar.gz \
+            # Build Controller
+            cd controller
+            go build -ldflags="-s -w" -o ../dist/nswall-controller-openbsd-amd64 ./cmd/nswall-controller
+            cd ..
+
+            # Create package structure
+            mkdir -p pkg-build
+            tar czf dist/nswall-openbsd-${{ matrix.version }}.tar.gz \
               --exclude='.git' \
-              --exclude='release' \
-              nssh/ initial-conf/ packages/ PLATFORM/ tools/ \
-              Makefile build-*.sh LICENSE README
+              nssh/*.c nssh/*.h nssh/Makefile \
+              dist/nswall-*-openbsd-*
 
-      - name: Upload release artifacts
+      - name: Upload OpenBSD build
         uses: actions/upload-artifact@v4
         with:
-          name: nswall-release-openbsd-${{ matrix.version }}
-          path: release/
-          retention-days: 30
+          name: openbsd-${{ matrix.version }}
+          path: dist/
+          retention-days: 7
 
+  # Build Docker image
+  build-docker:
+    name: Build Docker Image
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Get version
+        id: version
+        run: |
+          if [ -n "${{ github.event.inputs.version }}" ]; then
+            echo "version=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+          else
+            echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: packaging/docker/Dockerfile.controller
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.version }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+          build-args: |
+            VERSION=${{ steps.version.outputs.version }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # Create GitHub Release
   create-release:
-    name: Create GitHub Release
-    needs: build-release
+    name: Create Release
+    needs: [build-binaries, build-openbsd, build-docker]
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/')
     permissions:
@@ -71,17 +202,95 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Download artifacts
+      - name: Download all artifacts
         uses: actions/download-artifact@v4
         with:
           path: artifacts
 
+      - name: Prepare release assets
+        run: |
+          mkdir -p release
+
+          # Collect all binaries
+          find artifacts -name "nswall-*" -type f | while read f; do
+            cp "$f" release/
+          done
+
+          # Make binaries executable
+          chmod +x release/nswall-*
+
+          # Create checksums
+          cd release
+          sha256sum * > SHA256SUMS
+
+          ls -la
+
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
-          files: artifacts/**/*
+          files: release/*
           generate_release_notes: true
           draft: false
           prerelease: ${{ contains(github.ref, 'beta') || contains(github.ref, 'alpha') }}
+          body: |
+            ## NSWall Release ${{ github.ref_name }}
+
+            ### Downloads
+
+            **API Binary** (for NSWall appliances):
+            - `nswall-api-openbsd-amd64` - OpenBSD amd64
+            - `nswall-api-linux-amd64` - Linux amd64
+            - `nswall-api-linux-arm64` - Linux arm64
+
+            **Controller** (fleet management server):
+            - `nswall-controller-linux-amd64` - Linux amd64
+            - `nswall-controller-linux-arm64` - Linux arm64
+            - Docker: `ghcr.io/${{ github.repository }}/controller:${{ github.ref_name }}`
+
+            **OpenBSD Package**:
+            - `nswall-openbsd-7.6.tar.gz` - Full package for OpenBSD 7.6
+
+            ### Quick Start
+
+            ```bash
+            # On NSWall appliance (OpenBSD)
+            curl -LO https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/nswall-api-openbsd-amd64
+            chmod +x nswall-api-openbsd-amd64
+            ./nswall-api-openbsd-amd64 -listen :8443
+
+            # Controller (Docker)
+            docker run -d -p 8080:8080 -p 4222:4222 ghcr.io/${{ github.repository }}/controller:${{ github.ref_name }}
+            ```
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # Optional: Build cloud images (runs on demand)
+  build-cloud-images:
+    name: Build Cloud Images
+    needs: create-release
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch'
+    strategy:
+      matrix:
+        cloud: [aws, digitalocean, gcp]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Packer
+        uses: hashicorp/setup-packer@main
+        with:
+          version: latest
+
+      - name: Build ${{ matrix.cloud }} image
+        working-directory: packaging/packer
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          DIGITALOCEAN_TOKEN: ${{ secrets.DIGITALOCEAN_TOKEN }}
+          GOOGLE_CREDENTIALS: ${{ secrets.GCP_CREDENTIALS }}
+          GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+        run: |
+          packer init ${{ matrix.cloud }}.pkr.hcl
+          packer build -var "version=${{ github.event.inputs.version }}" ${{ matrix.cloud }}.pkr.hcl
