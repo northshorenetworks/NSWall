@@ -82,61 +82,147 @@ jobs:
           path: dist/
           retention-days: 7
 
-  # Build on actual OpenBSD for nssh
+  # Build on actual OpenBSD
+  # Supports both self-hosted runners (preferred) and vmactions fallback
   build-openbsd:
-    name: Build on OpenBSD
-    runs-on: ubuntu-latest
+    name: Build on OpenBSD ${{ matrix.version }}
     strategy:
+      fail-fast: false
       matrix:
-        version: ['7.5', '7.6']
+        include:
+          # Self-hosted runners (fast, preferred)
+          # Label your OpenBSD runners: self-hosted, openbsd, openbsd-7.6
+          - version: '7.6'
+            runner: [self-hosted, openbsd, openbsd-7.6]
+            use_vm: false
+          - version: '7.5'
+            runner: [self-hosted, openbsd, openbsd-7.5]
+            use_vm: false
+          # VM fallback (slower, but always available)
+          - version: '7.6'
+            runner: ubuntu-latest
+            use_vm: true
+          - version: '7.5'
+            runner: ubuntu-latest
+            use_vm: true
+
+    runs-on: ${{ matrix.runner }}
+    continue-on-error: ${{ matrix.use_vm == false }}  # Don't fail if self-hosted unavailable
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Build on OpenBSD
+      # Self-hosted OpenBSD runner (native, fast)
+      - name: Build on native OpenBSD
+        if: ${{ matrix.use_vm == false }}
+        run: |
+          echo "=== Building NSWall on OpenBSD ${{ matrix.version }} (native runner) ==="
+
+          # Ensure Go is available
+          export PATH="/usr/local/go/bin:$PATH"
+          export GOPATH="$HOME/go"
+
+          VERSION="${GITHUB_REF#refs/tags/v}"
+          [ -z "$VERSION" ] && VERSION="dev"
+
+          # Build NSH (C code, requires OpenBSD)
+          if [ -d nsh ] && [ -f nsh/Makefile ]; then
+            echo "Building NSH..."
+            cd nsh
+            make clean 2>/dev/null || true
+            make
+            cd ..
+          fi
+
+          mkdir -p dist
+
+          # Build Go API
+          echo "Building nswall-api..."
+          cd api
+          go build -ldflags="-s -w -X main.version=${VERSION}" \
+            -o ../dist/nswall-api-openbsd-amd64 ./cmd/nswall-api
+          cd ..
+
+          # Build Go Controller
+          echo "Building nswall-controller..."
+          cd controller
+          go build -ldflags="-s -w -X main.version=${VERSION}" \
+            -o ../dist/nswall-controller-openbsd-amd64 ./cmd/nswall-controller
+          cd ..
+
+          # Build site.tgz
+          echo "Building site${{ matrix.version }}.tgz..."
+          VERSION_NUM=$(echo "${{ matrix.version }}" | tr -d '.')
+          cd packaging/openbsd
+          chmod +x build-site.sh
+          ./build-site.sh -v "${VERSION_NUM}" -b ../../dist -o ../../dist
+          cd ../..
+
+          # Create full package tarball
+          tar czf dist/nswall-openbsd-${{ matrix.version }}-amd64.tar.gz \
+            dist/nswall-*-openbsd-* \
+            dist/site*.tgz 2>/dev/null || true
+
+          echo "=== Build complete ==="
+          ls -la dist/
+
+      # VM fallback when no self-hosted runner available
+      - name: Build on OpenBSD VM
+        if: ${{ matrix.use_vm == true }}
         uses: vmactions/openbsd-vm@v1
         with:
           release: ${{ matrix.version }}
           usesh: true
           prepare: |
-            pkg_add gmake go
+            pkg_add go
           run: |
-            echo "=== Building NSWall on OpenBSD ${{ matrix.version }} ==="
+            echo "=== Building NSWall on OpenBSD ${{ matrix.version }} (VM) ==="
 
-            # Build nssh (C code)
-            if [ -f nssh/Makefile ]; then
-              cd nssh
-              make clean || true
-              make || echo "Note: Full build may require OpenBSD source tree"
+            export GOPATH=/tmp/go
+            mkdir -p $GOPATH dist
+
+            VERSION="${GITHUB_REF#refs/tags/v}"
+            [ -z "$VERSION" ] && VERSION="dev"
+
+            # Build NSH if present
+            if [ -d nsh ] && [ -f nsh/Makefile ]; then
+              echo "Building NSH..."
+              cd nsh
+              make clean 2>/dev/null || true
+              make 2>/dev/null || echo "NSH build requires full source tree"
               cd ..
             fi
 
-            # Build Go components natively on OpenBSD
-            export GOPATH=/tmp/go
-            mkdir -p $GOPATH
-
-            # Build API
+            # Build Go API
+            echo "Building nswall-api..."
             cd api
-            go build -ldflags="-s -w" -o ../dist/nswall-api-openbsd-amd64 ./cmd/nswall-api
+            go build -ldflags="-s -w -X main.version=${VERSION}" \
+              -o ../dist/nswall-api-openbsd-amd64 ./cmd/nswall-api
             cd ..
 
-            # Build Controller
+            # Build Go Controller
+            echo "Building nswall-controller..."
             cd controller
-            go build -ldflags="-s -w" -o ../dist/nswall-controller-openbsd-amd64 ./cmd/nswall-controller
+            go build -ldflags="-s -w -X main.version=${VERSION}" \
+              -o ../dist/nswall-controller-openbsd-amd64 ./cmd/nswall-controller
             cd ..
 
-            # Create package structure
-            mkdir -p pkg-build
-            tar czf dist/nswall-openbsd-${{ matrix.version }}.tar.gz \
-              --exclude='.git' \
-              nssh/*.c nssh/*.h nssh/Makefile \
-              dist/nswall-*-openbsd-*
+            # Build site.tgz
+            echo "Building site.tgz..."
+            VERSION_NUM=$(echo "${{ matrix.version }}" | tr -d '.')
+            cd packaging/openbsd
+            chmod +x build-site.sh
+            ksh build-site.sh -v "${VERSION_NUM}" -b ../../dist -o ../../dist
+            cd ../..
+
+            echo "=== Build complete ==="
+            ls -la dist/
 
       - name: Upload OpenBSD build
         uses: actions/upload-artifact@v4
         with:
-          name: openbsd-${{ matrix.version }}
+          name: openbsd-${{ matrix.version }}-${{ matrix.use_vm && 'vm' || 'native' }}
           path: dist/
           retention-days: 7
 
