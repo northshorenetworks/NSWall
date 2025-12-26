@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Downloads - NSWall</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: { extend: { fontFamily: { sans: ['Inter', 'sans-serif'] } } }
+        }
+    </script>
+</head>
+<body class="font-sans antialiased bg-gray-50">
+    <!-- Navigation -->
+    <nav class="fixed w-full bg-white/80 backdrop-blur-md z-50 border-b border-gray-100">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <a href="index.html" class="text-2xl font-bold text-gray-900">NS<span class="text-sky-600">Wall</span></a>
+                <div class="hidden md:flex items-center space-x-8">
+                    <a href="index.html#features" class="text-gray-600 hover:text-gray-900">Features</a>
+                    <a href="index.html#pricing" class="text-gray-600 hover:text-gray-900">Pricing</a>
+                    <a href="docs.html" class="text-gray-600 hover:text-gray-900">Docs</a>
+                    <a href="downloads.html" class="text-sky-600 font-medium">Downloads</a>
+                    <a href="https://github.com/northshorenetworks/NSWall" class="bg-gray-900 text-white px-4 py-2 rounded-lg hover:bg-gray-800">GitHub</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="pt-24 pb-16 px-4">
+        <div class="max-w-5xl mx-auto">
+            <div class="text-center mb-16">
+                <h1 class="text-4xl font-bold text-gray-900 mb-4">Download NSWall</h1>
+                <p class="text-xl text-gray-600">Choose your platform and get started in minutes.</p>
+            </div>
+
+            <!-- Latest Version Banner -->
+            <div class="bg-gradient-to-r from-sky-600 to-cyan-500 rounded-2xl p-8 text-white mb-12">
+                <div class="flex flex-col md:flex-row justify-between items-center">
+                    <div>
+                        <div class="text-sky-100 text-sm font-medium mb-1">Latest Stable Release</div>
+                        <div class="text-3xl font-bold mb-2">NSWall 2.0 Beta</div>
+                        <div class="text-sky-100">Released December 2024 &bull; Based on OpenBSD 7.6</div>
+                    </div>
+                    <a href="#" class="mt-6 md:mt-0 bg-white text-sky-700 px-6 py-3 rounded-lg font-semibold hover:bg-sky-50 transition">
+                        View Release Notes
+                    </a>
+                </div>
+            </div>
+
+            <!-- Virtual Appliances -->
+            <section class="mb-16">
+                <h2 class="text-2xl font-bold text-gray-900 mb-6">Virtual Appliances</h2>
+                <p class="text-gray-600 mb-8">Pre-configured images ready to deploy. Just import and boot.</p>
+
+                <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <!-- VMware -->
+                    <div class="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-lg transition">
+                        <div class="flex items-center mb-4">
+                            <div class="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center mr-4">
+                                <svg class="w-8 h-8 text-gray-600" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M12 2L2 7v10l10 5 10-5V7L12 2z"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <h3 class="font-semibold text-gray-900">VMware</h3>
+                                <p class="text-sm text-gray-500">ESXi, Workstation, Fusion</p>
+                            </div>
+                        </div>
+                        <div class="text-sm text-gray-600 mb-4">
+                            <span class="font-medium">Format:</span> OVA<br>
+                            <span class="font-medium">Size:</span> 285 MB
+                        </div>
+                        <a href="#" class="block w-full text-center py-2 rounded-lg bg-sky-600 text-white font-medium hover:bg-sky-700 transition">
+                            Download OVA
+                        </a>
+                    </div>
+
+                    <!-- Hyper-V -->
+                    <div class="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-lg transition">
+                        <div class="flex items-center mb-4">
+                            <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mr-4">
+                                <svg class="w-8 h-8 text-blue-600" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M3 3h8v8H3V3zm10 0h8v8h-8V3zM3 13h8v8H3v-8zm10 0h8v8h-8v-8z"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <h3 class="font-semibold text-gray-900">Hyper-V</h3>
+                                <p class="text-sm text-gray-500">Windows Server, Windows 10/11</p>
+                            </div>
+                        </div>
+                        <div class="text-sm text-gray-600 mb-4">
+                            <span class="font-medium">Format:</span> VHDX<br>
+                            <span class="font-medium">Size:</span> 310 MB
+                        </div>
+                        <a href="#" class="block w-full text-center py-2 rounded-lg bg-sky-600 text-white font-medium hover:bg-sky-700 transition">
+                            Download VHDX
+                        </a>
+                    </div>
+
+                    <!-- KVM/Proxmox -->
+                    <div class="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-lg transition">
+                        <div class="flex items-center mb-4">
+                            <div class="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center mr-4">
+                                <svg class="w-8 h-8 text-orange-600" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <h3 class="font-semibold text-gray-900">KVM / Proxmox</h3>
+                                <p class="text-sm text-gray-500">Linux virtualization</p>
+                            </div>
+                        </div>
+                        <div class="text-sm text-gray-600 mb-4">
+                            <span class="font-medium">Format:</span> QCOW2<br>
+                            <span class="font-medium">Size:</span> 245 MB
+                        </div>
+                        <a href="#" class="block w-full text-center py-2 rounded-lg bg-sky-600 text-white font-medium hover:bg-sky-700 transition">
+                            Download QCOW2
+                        </a>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Cloud Images -->
+            <section class="mb-16">
+                <h2 class="text-2xl font-bold text-gray-900 mb-6">Cloud Images</h2>
+                <p class="text-gray-600 mb-8">Deploy directly to your cloud provider.</p>
+
+                <div class="grid md:grid-cols-3 gap-6">
+                    <!-- AWS -->
+                    <div class="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-lg transition">
+                        <div class="flex items-center mb-4">
+                            <div class="w-12 h-12 bg-yellow-100 rounded-xl flex items-center justify-center mr-4">
+                                <span class="text-2xl font-bold text-yellow-600">AWS</span>
+                            </div>
+                            <div>
+                                <h3 class="font-semibold text-gray-900">Amazon Web Services</h3>
+                                <p class="text-sm text-gray-500">AMI available</p>
+                            </div>
+                        </div>
+                        <a href="#" class="block w-full text-center py-2 rounded-lg border border-gray-300 text-gray-700 font-medium hover:bg-gray-50 transition">
+                            View in Marketplace
+                        </a>
+                    </div>
+
+                    <!-- Azure -->
+                    <div class="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-lg transition">
+                        <div class="flex items-center mb-4">
+                            <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center mr-4">
+                                <span class="text-xl font-bold text-blue-600">Azure</span>
+                            </div>
+                            <div>
+                                <h3 class="font-semibold text-gray-900">Microsoft Azure</h3>
+                                <p class="text-sm text-gray-500">VHD available</p>
+                            </div>
+                        </div>
+                        <a href="#" class="block w-full text-center py-2 rounded-lg border border-gray-300 text-gray-700 font-medium hover:bg-gray-50 transition">
+                            View in Marketplace
+                        </a>
+                    </div>
+
+                    <!-- GCP -->
+                    <div class="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-lg transition">
+                        <div class="flex items-center mb-4">
+                            <div class="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center mr-4">
+                                <span class="text-xl font-bold text-red-600">GCP</span>
+                            </div>
+                            <div>
+                                <h3 class="font-semibold text-gray-900">Google Cloud</h3>
+                                <p class="text-sm text-gray-500">Image available</p>
+                            </div>
+                        </div>
+                        <a href="#" class="block w-full text-center py-2 rounded-lg border border-gray-300 text-gray-700 font-medium hover:bg-gray-50 transition">
+                            View in Marketplace
+                        </a>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Source Code -->
+            <section class="mb-16">
+                <h2 class="text-2xl font-bold text-gray-900 mb-6">Source Code</h2>
+                <p class="text-gray-600 mb-8">Build from source or contribute to development.</p>
+
+                <div class="bg-white rounded-xl border border-gray-200 p-6">
+                    <div class="flex flex-col md:flex-row md:items-center md:justify-between">
+                        <div class="mb-4 md:mb-0">
+                            <h3 class="font-semibold text-gray-900 mb-1">GitHub Repository</h3>
+                            <p class="text-gray-600">Clone, fork, or download the source code.</p>
+                        </div>
+                        <div class="flex gap-4">
+                            <a href="https://github.com/northshorenetworks/NSWall" class="inline-flex items-center px-4 py-2 rounded-lg bg-gray-900 text-white font-medium hover:bg-gray-800 transition">
+                                <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+                                View on GitHub
+                            </a>
+                            <a href="#" class="inline-flex items-center px-4 py-2 rounded-lg border border-gray-300 text-gray-700 font-medium hover:bg-gray-50 transition">
+                                Download ZIP
+                            </a>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 bg-gray-900 rounded-lg p-4">
+                        <code class="text-gray-300 text-sm">git clone https://github.com/northshorenetworks/NSWall.git</code>
+                    </div>
+                </div>
+            </section>
+
+            <!-- System Requirements -->
+            <section>
+                <h2 class="text-2xl font-bold text-gray-900 mb-6">System Requirements</h2>
+
+                <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
+                    <table class="w-full">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="text-left py-3 px-6 font-semibold text-gray-900">Component</th>
+                                <th class="text-left py-3 px-6 font-semibold text-gray-900">Minimum</th>
+                                <th class="text-left py-3 px-6 font-semibold text-gray-900">Recommended</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="border-t border-gray-100">
+                                <td class="py-3 px-6 text-gray-600">CPU</td>
+                                <td class="py-3 px-6 text-gray-900">1 core (x86_64)</td>
+                                <td class="py-3 px-6 text-gray-900">2+ cores</td>
+                            </tr>
+                            <tr class="border-t border-gray-100">
+                                <td class="py-3 px-6 text-gray-600">RAM</td>
+                                <td class="py-3 px-6 text-gray-900">512 MB</td>
+                                <td class="py-3 px-6 text-gray-900">2 GB+</td>
+                            </tr>
+                            <tr class="border-t border-gray-100">
+                                <td class="py-3 px-6 text-gray-600">Storage</td>
+                                <td class="py-3 px-6 text-gray-900">1 GB</td>
+                                <td class="py-3 px-6 text-gray-900">10 GB+</td>
+                            </tr>
+                            <tr class="border-t border-gray-100">
+                                <td class="py-3 px-6 text-gray-600">Network</td>
+                                <td class="py-3 px-6 text-gray-900">1 NIC</td>
+                                <td class="py-3 px-6 text-gray-900">2+ NICs</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-900 text-gray-400 py-12 px-4">
+        <div class="max-w-5xl mx-auto text-center">
+            <p>&copy; 2024 North Shore Networks. All rights reserved.</p>
+        </div>
+    </footer>
+</body>
+</html>
