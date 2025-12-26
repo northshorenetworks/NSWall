@@ -43,6 +43,16 @@
 #define NSPFSH          "/usr/bin/nspf"
 #define PFRELOAD        "/usr/bin/pfreload"
 
+/* OpenBSD base system services (new) */
+#define UNBOUND		"/usr/sbin/unbound"
+#define UNBOUNDCTL	"/usr/sbin/unbound-control"
+#define HTTPD		"/usr/sbin/httpd"
+#define IKED		"/sbin/iked"
+#define IKECTL		"/usr/sbin/ikectl"
+#define RAD		"/usr/sbin/rad"
+#define SMTPD		"/usr/sbin/smtpd"
+#define SMTPCTL		"/usr/sbin/smtpctl"
+
 void call_editor(char *, char **, char *);
 void ctl_symlink(char *, char **, char *);
 int rule_writeline(char *, mode_t, char *);
@@ -247,6 +257,85 @@ struct ctl ctl_inet[] = {
 	{ 0, 0, { 0 }, 0, 0 }
 };
 
+/*
+ * OpenBSD Base System Services
+ * These integrate additional OpenBSD daemons into NSWall
+ */
+
+/* unbound - DNS resolver with DNSSEC */
+char *ctl_unbound_test[] = { UNBOUND, "-c", UNBOUNDCONF_TEMP, "-d", NULL };
+struct ctl ctl_unbound[] = {
+	{ "enable",     "enable DNS resolver",
+	    { UNBOUND, "-c", UNBOUNDCONF_TEMP, NULL }, NULL, X_ENABLE },
+	{ "disable",    "disable DNS resolver",
+	    { PKILL, "unbound", NULL }, NULL, X_DISABLE },
+	{ "edit",       "edit configuration",
+	    { "unbound", (char *)ctl_unbound_test, NULL }, call_editor, NULL },
+	{ "reload",     "reload configuration",
+	    { UNBOUNDCTL, "reload", NULL }, NULL, NULL },
+	{ "flush",      "flush DNS cache",
+	    { UNBOUNDCTL, "flush_zone", ".", NULL }, NULL, NULL },
+	{ "stats",      "show statistics",
+	    { UNBOUNDCTL, "stats_noreset", NULL }, NULL, NULL },
+	{ 0, 0, { 0 }, 0, 0 }
+};
+
+/* httpd - OpenBSD HTTP server */
+char *ctl_httpd_test[] = { HTTPD, "-n", "-f", HTTPDCONF_TEMP, NULL };
+struct ctl ctl_httpd[] = {
+	{ "enable",     "enable HTTP server",
+	    { HTTPD, "-f", HTTPDCONF_TEMP, NULL }, NULL, X_ENABLE },
+	{ "disable",    "disable HTTP server",
+	    { PKILL, "httpd", NULL }, NULL, X_DISABLE },
+	{ "edit",       "edit configuration",
+	    { "httpd", (char *)ctl_httpd_test, NULL }, call_editor, NULL },
+	{ 0, 0, { 0 }, 0, 0 }
+};
+
+/* iked - IKEv2 VPN daemon */
+char *ctl_iked_test[] = { IKED, "-n", "-f", IKEDCONF_TEMP, NULL };
+struct ctl ctl_iked[] = {
+	{ "enable",     "enable IKEv2 VPN",
+	    { IKED, "-f", IKEDCONF_TEMP, NULL }, NULL, X_ENABLE },
+	{ "disable",    "disable IKEv2 VPN",
+	    { PKILL, "iked", NULL }, NULL, X_DISABLE },
+	{ "edit",       "edit configuration",
+	    { "iked", (char *)ctl_iked_test, NULL }, call_editor, NULL },
+	{ "reload",     "reload configuration",
+	    { IKECTL, "reload", NULL }, NULL, NULL },
+	{ "reset",      "reset IKE SA",
+	    { IKECTL, "reset", "all", NULL }, NULL, NULL },
+	{ 0, 0, { 0 }, 0, 0 }
+};
+
+/* rad - IPv6 Router Advertisement daemon */
+char *ctl_rad_test[] = { RAD, "-n", "-f", RADCONF_TEMP, NULL };
+struct ctl ctl_rad[] = {
+	{ "enable",     "enable router advertisements",
+	    { RAD, "-f", RADCONF_TEMP, NULL }, NULL, X_ENABLE },
+	{ "disable",    "disable router advertisements",
+	    { PKILL, "rad", NULL }, NULL, X_DISABLE },
+	{ "edit",       "edit configuration",
+	    { "rad", (char *)ctl_rad_test, NULL }, call_editor, NULL },
+	{ 0, 0, { 0 }, 0, 0 }
+};
+
+/* smtpd - OpenSMTPD mail server */
+char *ctl_smtpd_test[] = { SMTPD, "-n", "-f", SMTPDCONF_TEMP, NULL };
+struct ctl ctl_smtpd[] = {
+	{ "enable",     "enable mail service",
+	    { SMTPD, "-f", SMTPDCONF_TEMP, NULL }, NULL, X_ENABLE },
+	{ "disable",    "disable mail service",
+	    { SMTPCTL, "stop", NULL }, NULL, X_DISABLE },
+	{ "edit",       "edit configuration",
+	    { "smtpd", (char *)ctl_smtpd_test, NULL }, call_editor, NULL },
+	{ "pause",      "pause mail processing",
+	    { SMTPCTL, "pause", "smtp", NULL }, NULL, NULL },
+	{ "resume",     "resume mail processing",
+	    { SMTPCTL, "resume", "smtp", NULL }, NULL, NULL },
+	{ 0, 0, { 0 }, 0, 0 }
+};
+
 struct daemons ctl_daemons[] = {
 	{ "pf",		"PF",	ctl_pf,		PFCONF_TEMP,	0600, 1 },
 	{ "ospf",	"OSPF", ctl_ospf,	OSPFCONF_TEMP,	0600, 0 },
@@ -263,6 +352,12 @@ struct daemons ctl_daemons[] = {
 	{ "ftp-proxy",  "FTP proxy", ctl_ftpproxy, FTPPROXY_TEMP, 0600, 0 },
 	{ "dns", 	"DNS", ctl_dns,		RESOLVCONF_TEMP,0644, 0 },
 	{ "inet",	"Inet", ctl_inet,	INETCONF_TEMP,	0600, 0 },
+	/* OpenBSD base system services */
+	{ "unbound",	"DNS Resolver", ctl_unbound, UNBOUNDCONF_TEMP, 0600, 0 },
+	{ "httpd",	"HTTP Server", ctl_httpd, HTTPDCONF_TEMP, 0600, 0 },
+	{ "iked",	"IKEv2 VPN", ctl_iked, IKEDCONF_TEMP, 0600, 0 },
+	{ "rad",	"Router Adv", ctl_rad, RADCONF_TEMP, 0600, 0 },
+	{ "smtpd",	"Mail", ctl_smtpd, SMTPDCONF_TEMP, 0600, 0 },
 	{ 0, 0, 0, 0, 0 }
 };
 
