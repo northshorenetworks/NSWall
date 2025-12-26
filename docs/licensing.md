@@ -61,17 +61,20 @@ Premium features for businesses:
 
 ---
 
-## Hardware Appliances
+## Virtual Appliances
 
-Pre-configured, ready-to-deploy hardware:
+Pre-configured VM images (free to download, Enterprise features optional):
 
-| Model | Specs | Price |
-|-------|-------|-------|
-| NSWall-100 | 2-port, 1Gbps | $399 |
-| NSWall-500 | 4-port, 2.5Gbps | $699 |
-| NSWall-1000 | 6-port, 10Gbps | $1,499 |
+| Platform | Format | Price |
+|----------|--------|-------|
+| VMware | OVA | Free |
+| Hyper-V | VHDX | Free |
+| KVM/Proxmox | QCOW2 | Free |
+| AWS | AMI | Free |
+| Azure | VHD | Free |
+| GCP | Image | Free |
 
-*Includes 1 year of support*
+*Enterprise features require subscription*
 
 ---
 

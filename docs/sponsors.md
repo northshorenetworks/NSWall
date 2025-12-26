@@ -25,20 +25,6 @@ Support ongoing development:
 
 ---
 
-## Buy Hardware
-
-Best way to support us - buy a pre-configured appliance:
-
-| Model | Price |
-|-------|-------|
-| NSWall-100 | $399 |
-| NSWall-500 | $699 |
-| NSWall-1000 | $1,499 |
-
-[View Appliances →](https://shop.northshorenetworks.com)
-
----
-
 ## Enterprise Edition
 
 Need central management, API access, or priority support?
