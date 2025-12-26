@@ -321,14 +321,14 @@ func cmdRecord(args []string) {
 			result.DeviationStd = (*value - baseline.Mean) / baseline.StdDev
 		}
 
-		// Determine status based on deviation
+		// Determine status based on deviation (tight thresholds - 5% matters)
 		result.Status = "passed"
-		if result.DeviationPct > 50 || result.DeviationStd > 3 {
+		if result.DeviationPct > 15 || result.DeviationStd > 2.5 {
 			result.Status = "failed"
-			result.Message = fmt.Sprintf("%.1f%% worse than baseline (%.1f std devs)", result.DeviationPct, result.DeviationStd)
-		} else if result.DeviationPct > 20 || result.DeviationStd > 2 {
+			result.Message = fmt.Sprintf("%.1f%% regression (%.1f std devs from baseline)", result.DeviationPct, result.DeviationStd)
+		} else if result.DeviationPct > 5 || result.DeviationStd > 1.5 {
 			result.Status = "warning"
-			result.Message = fmt.Sprintf("%.1f%% worse than baseline", result.DeviationPct)
+			result.Message = fmt.Sprintf("%.1f%% regression from baseline", result.DeviationPct)
 		}
 	} else {
 		result.Status = "passed"

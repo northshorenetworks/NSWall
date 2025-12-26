@@ -15,8 +15,8 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 METRICS_DB="${METRICS_DB:-$SCRIPT_DIR/metrics.db}"
 METRICS_BIN="${METRICS_BIN:-$SCRIPT_DIR/metrics-collector}"
 BASELINE_BRANCH="${BASELINE_BRANCH:-main}"
-WARN_THRESHOLD="${WARN_THRESHOLD:-20}"
-FAIL_THRESHOLD="${FAIL_THRESHOLD:-50}"
+WARN_THRESHOLD="${WARN_THRESHOLD:-5}"      # 5% regression triggers warning
+FAIL_THRESHOLD="${FAIL_THRESHOLD:-15}"     # 15% regression triggers failure
 
 # Colors
 RED='\033[0;31m'

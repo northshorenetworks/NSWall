@@ -188,9 +188,9 @@ CREATE TABLE IF NOT EXISTS test_library (
     critical        BOOLEAN DEFAULT FALSE,      -- Is this a blocking test?
     timeout_secs    INTEGER DEFAULT 300,
 
-    -- Thresholds
-    warn_threshold_pct  REAL DEFAULT 20.0,      -- Warn if > 20% worse than baseline
-    fail_threshold_pct  REAL DEFAULT 50.0,      -- Fail if > 50% worse than baseline
+    -- Thresholds (tighter defaults - even 5% regression matters)
+    warn_threshold_pct  REAL DEFAULT 5.0,       -- Warn if > 5% worse than baseline
+    fail_threshold_pct  REAL DEFAULT 15.0,      -- Fail if > 15% worse than baseline
 
     created_at      DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at      DATETIME DEFAULT CURRENT_TIMESTAMP
@@ -337,9 +337,9 @@ CREATE TABLE IF NOT EXISTS metric_definitions (
     -- Direction: 'lower' means lower is better, 'higher' means higher is better
     direction       TEXT DEFAULT 'lower',
 
-    -- Default thresholds (std devs from mean)
-    default_warn    REAL DEFAULT 2.0,
-    default_fail    REAL DEFAULT 3.0,
+    -- Default thresholds (std devs from mean) - tight for early detection
+    default_warn    REAL DEFAULT 1.5,
+    default_fail    REAL DEFAULT 2.5,
 
     -- Is this a critical metric?
     critical        BOOLEAN DEFAULT FALSE,
