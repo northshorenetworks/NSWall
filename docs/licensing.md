@@ -9,7 +9,7 @@ title: Pricing - NSWall
 
 | | Free | Pro | Business | Enterprise |
 |---|:---:|:---:|:---:|:---:|
-| **Price** | $0 | $29/mo | $99/mo | $499/mo |
+| **Price** | $0 | $9/mo | $49/mo | $199/mo |
 | **Devices** | 1 | 5 | 25 | Unlimited |
 | | | | | |
 | Firewall (PF) | ✅ | ✅ | ✅ | ✅ |
@@ -52,7 +52,7 @@ Includes:
 
 ---
 
-## Pro - $29/month
+## Pro - $9/month
 
 For power users and small offices:
 - Up to 5 devices
@@ -63,7 +63,7 @@ For power users and small offices:
 
 ---
 
-## Business - $99/month
+## Business - $49/month
 
 For growing companies:
 - Up to 25 devices
@@ -74,7 +74,7 @@ For growing companies:
 
 ---
 
-## Enterprise - $499/month
+## Enterprise - $199/month
 
 For large organizations:
 - Unlimited devices
