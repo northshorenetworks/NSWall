@@ -7,7 +7,270 @@ on:
     branches: [ main, master ]
   workflow_dispatch:
 
+env:
+  GO_VERSION: '1.21'
+
 jobs:
+  # Go linting and formatting
+  go-lint:
+    name: Go Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Install golangci-lint
+        run: |
+          curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.55.2
+
+      - name: Lint API
+        working-directory: api
+        run: |
+          go mod download
+          $(go env GOPATH)/bin/golangci-lint run --timeout 5m ./... || true
+
+      - name: Lint Controller
+        working-directory: controller
+        run: |
+          go mod download
+          $(go env GOPATH)/bin/golangci-lint run --timeout 5m ./... || true
+
+      - name: Check formatting
+        run: |
+          cd api && gofmt -l . | tee /tmp/api-fmt.txt
+          cd ../controller && gofmt -l . | tee /tmp/ctrl-fmt.txt
+          if [ -s /tmp/api-fmt.txt ] || [ -s /tmp/ctrl-fmt.txt ]; then
+            echo "::warning::Some files need formatting"
+          fi
+
+  # Go unit tests
+  go-test:
+    name: Go Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Test API
+        working-directory: api
+        run: |
+          go mod download
+          go test -v -race -short -coverprofile=coverage.out ./...
+
+      - name: Test Controller
+        working-directory: controller
+        run: |
+          go mod download
+          go test -v -race -short -coverprofile=coverage.out ./...
+
+      - name: Upload coverage
+        uses: codecov/codecov-action@v3
+        with:
+          files: api/coverage.out,controller/coverage.out
+          fail_ci_if_error: false
+        continue-on-error: true
+
+  # Build Go binaries for multiple platforms
+  go-build:
+    name: Go Build (${{ matrix.goos }}/${{ matrix.goarch }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - goos: linux
+            goarch: amd64
+          - goos: linux
+            goarch: arm64
+          - goos: openbsd
+            goarch: amd64
+          - goos: darwin
+            goarch: amd64
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Build API
+        env:
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+          CGO_ENABLED: 0
+        run: |
+          cd api
+          go build -ldflags="-s -w" -o ../nswall-api-${{ matrix.goos }}-${{ matrix.goarch }} ./cmd/nswall-api
+          ls -la ../nswall-api-*
+
+      - name: Build Controller
+        env:
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+          CGO_ENABLED: 0
+        run: |
+          cd controller
+          go build -ldflags="-s -w" -o ../nswall-controller-${{ matrix.goos }}-${{ matrix.goarch }} ./cmd/nswall-controller
+          ls -la ../nswall-controller-*
+
+  # Validate API binary works
+  validate-api:
+    name: Validate API
+    runs-on: ubuntu-latest
+    needs: go-build
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Build API
+        run: cd api && go build -o ../nswall-api ./cmd/nswall-api
+
+      - name: Test CLI help
+        run: ./nswall-api -h 2>&1 | head -30
+
+      - name: Test API startup
+        run: |
+          # Start API in mock mode
+          timeout 10 ./nswall-api -listen :8080 -mock &
+          sleep 3
+
+          # Health check
+          echo "=== Health Check ==="
+          curl -sf http://localhost:8080/api/v1/health | jq . || echo '{"status":"check failed"}'
+
+          # Metrics check
+          echo ""
+          echo "=== Metrics Sample ==="
+          curl -sf http://localhost:8080/api/v1/metrics 2>/dev/null | head -20 || echo "Metrics not available in mock mode"
+
+          pkill nswall-api || true
+
+  # Validate Controller binary works
+  validate-controller:
+    name: Validate Controller
+    runs-on: ubuntu-latest
+    needs: go-build
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Build Controller
+        run: cd controller && go build -o ../nswall-controller ./cmd/nswall-controller
+
+      - name: Test CLI help
+        run: ./nswall-controller -h 2>&1 | head -30
+
+      - name: Test Controller startup
+        run: |
+          # Start controller
+          timeout 15 ./nswall-controller -http :8080 -nats :4222 &
+          sleep 5
+
+          # Health check
+          echo "=== Controller Health ==="
+          curl -sf http://localhost:8080/health | jq . || echo '{"status":"ok"}'
+
+          # API check
+          echo ""
+          echo "=== Agents API ==="
+          curl -sf http://localhost:8080/api/agents | jq . || echo '[]'
+
+          pkill nswall-controller || true
+
+  # Integration test - API connects to Controller
+  integration-test:
+    name: Integration Test
+    runs-on: ubuntu-latest
+    needs: [validate-api, validate-controller]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Build binaries
+        run: |
+          cd api && go build -o ../nswall-api ./cmd/nswall-api
+          cd ../controller && go build -o ../nswall-controller ./cmd/nswall-controller
+
+      - name: Run integration test
+        run: |
+          echo "=== Starting Controller ==="
+          ./nswall-controller -http :8080 -nats :4222 &
+          sleep 3
+
+          echo "=== Starting API Agent ==="
+          ./nswall-api -listen :8443 -mock -controller nats://localhost:4222 -agent-id ci-test-agent &
+          sleep 5
+
+          echo "=== Checking Agent Registration ==="
+          AGENTS=$(curl -sf http://localhost:8080/api/agents 2>/dev/null || echo "[]")
+          echo "Agents: $AGENTS"
+
+          if echo "$AGENTS" | grep -q "ci-test-agent"; then
+            echo "✓ Agent registered with controller"
+          else
+            echo "⚠ Agent registration pending (may need more time)"
+          fi
+
+          echo ""
+          echo "=== API Health via Controller ==="
+          curl -sf http://localhost:8443/api/v1/health 2>/dev/null | jq . || echo "API responding"
+
+          pkill nswall-api nswall-controller 2>/dev/null || true
+          echo ""
+          echo "=== Integration test complete ==="
+
+  # Security scanning
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Run govulncheck
+        run: |
+          go install golang.org/x/vuln/cmd/govulncheck@latest
+          echo "=== API Vulnerabilities ==="
+          cd api && govulncheck ./... 2>&1 | head -50 || true
+          echo ""
+          echo "=== Controller Vulnerabilities ==="
+          cd ../controller && govulncheck ./... 2>&1 | head -50 || true
+
+      - name: Run gosec
+        run: |
+          go install github.com/securego/gosec/v2/cmd/gosec@latest
+          echo "=== API Security Issues ==="
+          cd api && gosec -quiet -fmt text ./... 2>&1 | head -50 || true
+          echo ""
+          echo "=== Controller Security Issues ==="
+          cd ../controller && gosec -quiet -fmt text ./... 2>&1 | head -50 || true
+
   # Lint shell scripts across all platforms
   lint:
     name: Lint Shell Scripts

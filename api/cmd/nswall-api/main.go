@@ -36,13 +36,25 @@ var (
 	controllerURL  = flag.String("controller", "", "Controller NATS URL (e.g., nats://controller:4222)")
 	agentID        = flag.String("agent-id", "", "Agent ID (auto-generated if not specified)")
 
+	// CI/Testing mode
+	mockMode       = flag.Bool("mock", false, "Run in mock mode for CI testing (no OpenBSD dependencies)")
+	showVersion    = flag.Bool("version", false, "Show version and exit")
+
 	version        = "2.0.0"
 )
 
 func main() {
 	flag.Parse()
 
+	if *showVersion {
+		fmt.Printf("NSWall API Server v%s\n", version)
+		os.Exit(0)
+	}
+
 	log.Printf("NSWall API Server v%s starting...", version)
+	if *mockMode {
+		log.Printf("Running in MOCK MODE - no OpenBSD dependencies required")
+	}
 	log.Printf("Listening on %s", *listenAddr)
 
 	// Create data directory
@@ -73,7 +85,7 @@ func main() {
 	}
 
 	// Create handler with all services
-	h := handlers.NewHandler(*nshPath, *dataDir, version)
+	h := handlers.NewHandler(*nshPath, *dataDir, version, *mockMode)
 
 	// Create router
 	r := chi.NewRouter()

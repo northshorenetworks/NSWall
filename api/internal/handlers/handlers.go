@@ -26,10 +26,11 @@ type Handler struct {
 	Config   *services.ConfigService
 	Auth     *services.AuthService
 	Version  string
+	MockMode bool
 }
 
 // NewHandler creates a new Handler
-func NewHandler(nshPath, dataDir, version string) *Handler {
+func NewHandler(nshPath, dataDir, version string, mockMode bool) *Handler {
 	return &Handler{
 		System:   services.NewSystemService(nshPath),
 		Network:  services.NewNetworkService(nshPath),
@@ -42,6 +43,7 @@ func NewHandler(nshPath, dataDir, version string) *Handler {
 		Config:   services.NewConfigService(nshPath),
 		Auth:     services.NewAuthService(dataDir),
 		Version:  version,
+		MockMode: mockMode,
 	}
 }
 
@@ -83,12 +85,30 @@ func (h *Handler) Root(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) Health(w http.ResponseWriter, r *http.Request) {
-	writeJSON(w, map[string]string{"status": "ok"})
+	writeJSON(w, map[string]interface{}{
+		"status":   "healthy",
+		"version":  h.Version,
+		"mockMode": h.MockMode,
+	})
 }
 
 // System handlers
 
 func (h *Handler) GetSystemInfo(w http.ResponseWriter, r *http.Request) {
+	// Return mock data in mock mode
+	if h.MockMode {
+		writeJSON(w, map[string]interface{}{
+			"hostname": "nswall-mock",
+			"os":       "OpenBSD",
+			"version":  "7.6",
+			"arch":     "amd64",
+			"uptime":   "1 day, 2:30",
+			"load":     []float64{0.5, 0.4, 0.3},
+			"mockMode": true,
+		})
+		return
+	}
+
 	info, err := h.System.GetSystemInfo()
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, err.Error())
