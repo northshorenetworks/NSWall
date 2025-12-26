@@ -282,7 +282,7 @@ jobs:
       - name: Run full validation on OpenBSD
         uses: vmactions/openbsd-vm@v1
         with:
-          release: '7.6'
+          release: '7.8'
           usesh: true
           prepare: |
             pkg_add go curl jq
@@ -428,7 +428,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        version: ['7.6', '7.5']
+        version: ['7.8', '7.6']
         arch: ['x86-64']
 
     steps:

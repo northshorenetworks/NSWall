@@ -91,18 +91,18 @@ jobs:
       matrix:
         include:
           # Self-hosted runners (fast, preferred)
-          # Label your OpenBSD runners: self-hosted, openbsd, openbsd-7.6
+          # Label your OpenBSD runners: self-hosted, openbsd, openbsd-7.8
+          - version: '7.8'
+            runner: [self-hosted, openbsd, openbsd-7.8]
+            use_vm: false
           - version: '7.6'
             runner: [self-hosted, openbsd, openbsd-7.6]
             use_vm: false
-          - version: '7.5'
-            runner: [self-hosted, openbsd, openbsd-7.5]
-            use_vm: false
           # VM fallback (slower, but always available)
-          - version: '7.6'
+          - version: '7.8'
             runner: ubuntu-latest
             use_vm: true
-          - version: '7.5'
+          - version: '7.6'
             runner: ubuntu-latest
             use_vm: true
 
@@ -334,7 +334,7 @@ jobs:
             - Docker: `ghcr.io/${{ github.repository }}/controller:${{ github.ref_name }}`
 
             **OpenBSD Package**:
-            - `nswall-openbsd-7.6.tar.gz` - Full package for OpenBSD 7.6
+            - `nswall-openbsd-7.8.tar.gz` - Full package for OpenBSD 7.8
 
             ### Quick Start
 
