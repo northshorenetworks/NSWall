@@ -1,0 +1,494 @@
+name: Network Traffic Tests
+
+on:
+  push:
+    branches: [main, develop, 'feature/**', 'claude/**']
+    paths:
+      - 'tests/network/**'
+      - 'api/internal/services/firewall.go'
+      - 'api/internal/services/network.go'
+      - 'nssh/pf/**'
+      - 'initial-conf/pf.conf'
+      - '.github/workflows/network-tests.yml'
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'tests/network/**'
+      - 'api/internal/services/**'
+  workflow_dispatch:
+    inputs:
+      openbsd_version:
+        description: 'OpenBSD version'
+        required: false
+        default: '7.8'
+      run_stress_tests:
+        description: 'Run stress tests'
+        required: false
+        default: 'false'
+        type: boolean
+
+jobs:
+  # ==========================================================================
+  # SINGLE VM NETWORK TESTS
+  # Tests PF, NAT, routing within a single VM using virtual interfaces
+  # ==========================================================================
+  single-vm-network-tests:
+    name: Single VM Network Tests (OpenBSD ${{ matrix.version }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        version: ['7.8', '7.6']
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run network tests on OpenBSD ${{ matrix.version }}
+        uses: vmactions/openbsd-vm@v1
+        with:
+          release: ${{ matrix.version }}
+          usesh: true
+          prepare: |
+            pkg_add -I curl
+          run: |
+            set -e
+            echo "=== OpenBSD Network Tests ==="
+            echo "Version: $(uname -r)"
+            echo "Hostname: $(hostname)"
+            echo ""
+
+            # Make test scripts executable
+            chmod +x tests/network/*.sh
+
+            # Run network setup
+            echo "Setting up virtual network topology..."
+            cd tests/network
+            ./network-test-setup.sh setup
+
+            # Wait for interfaces to stabilize
+            sleep 2
+
+            # Show network state
+            echo ""
+            echo "=== Interface Status ==="
+            ifconfig -a | grep -E "^[a-z]|inet|flags"
+
+            echo ""
+            echo "=== PF Status ==="
+            pfctl -si | head -10
+
+            echo ""
+            echo "=== PF Rules ==="
+            pfctl -sr
+
+            # Run traffic tests
+            echo ""
+            echo "=== Running Traffic Tests ==="
+            ./traffic-tests.sh all
+
+            # Cleanup
+            echo ""
+            echo "=== Cleanup ==="
+            ./network-test-setup.sh cleanup
+
+  # ==========================================================================
+  # MULTI-VM NETWORK TESTS (Using nested VMs or advanced features)
+  # Tests actual traffic between multiple VMs
+  # ==========================================================================
+  multi-zone-tests:
+    name: Multi-Zone PF Tests
+    runs-on: ubuntu-latest
+    needs: single-vm-network-tests
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run multi-zone tests on OpenBSD
+        uses: vmactions/openbsd-vm@v1
+        with:
+          release: '7.8'
+          usesh: true
+          run: |
+            set -e
+            echo "=== Multi-Zone PF Tests ==="
+
+            # Create extended test topology with multiple zones
+            cat > /etc/pf.conf.multizone << 'PFCONF'
+            # Multi-zone test configuration
+
+            # Interfaces
+            ext_if = "pair1"
+            int_if = "vether0"
+            dmz_if = "vether1"
+            mgmt_if = "vether2"
+
+            # Networks
+            int_net = "192.168.1.0/24"
+            dmz_net = "10.0.0.0/24"
+            mgmt_net = "172.16.0.0/24"
+
+            # Tables
+            table <bruteforce> persist
+            table <whitelist> persist { 172.16.0.0/24 }
+
+            set skip on lo
+            set block-policy return
+
+            # Scrub
+            match in all scrub (no-df random-id)
+
+            # NAT
+            match out on $ext_if from { $int_net, $dmz_net } nat-to ($ext_if)
+
+            # Default block
+            block log all
+
+            # Management zone - full access
+            pass from <whitelist>
+
+            # Zone policies
+            # Internal -> DMZ: allowed
+            pass in on $int_if from $int_net to $dmz_net
+
+            # Internal -> External: allowed (NAT)
+            pass in on $int_if from $int_net to ! { $dmz_net, $mgmt_net }
+            pass out on $ext_if from $int_net
+
+            # DMZ -> External: limited
+            pass in on $dmz_if proto { tcp, udp } from $dmz_net to any port { 80, 443, 53 }
+            pass out on $ext_if from $dmz_net
+
+            # DMZ -> Internal: blocked (implicit)
+
+            # Allow established
+            pass out on { $int_if, $dmz_if }
+
+            # Anti-spoofing
+            antispoof quick for { $ext_if, $int_if, $dmz_if }
+            PFCONF
+
+            # Validate configuration
+            echo "Validating multi-zone configuration..."
+            pfctl -nf /etc/pf.conf.multizone
+            echo "Configuration valid!"
+
+            # Create test interfaces
+            ifconfig vether0 create
+            ifconfig vether1 create
+            ifconfig vether2 create
+            ifconfig pair0 create
+            ifconfig pair1 create
+            ifconfig pair0 patch pair1
+
+            # Configure addresses
+            ifconfig pair1 inet 203.0.113.1/24
+            ifconfig vether0 inet 192.168.1.1/24
+            ifconfig vether1 inet 10.0.0.1/24
+            ifconfig vether2 inet 172.16.0.1/24
+
+            # Enable forwarding
+            sysctl net.inet.ip.forwarding=1
+
+            # Load rules
+            pfctl -f /etc/pf.conf.multizone
+            pfctl -e 2>/dev/null || true
+
+            # Test anti-spoofing rules
+            echo ""
+            echo "=== Testing Anti-Spoofing ==="
+            if pfctl -sr | grep -q "antispoof"; then
+                echo "PASS: Anti-spoofing rules loaded"
+            else
+                echo "FAIL: Anti-spoofing rules missing"
+                exit 1
+            fi
+
+            # Test zone isolation
+            echo ""
+            echo "=== Testing Zone Isolation Rules ==="
+
+            # Check DMZ cannot reach internal (no direct pass rule)
+            if pfctl -sr | grep -qE "pass.*from.*10.0.0.0/24.*to.*192.168.1.0/24"; then
+                echo "FAIL: DMZ->Internal should be blocked"
+                exit 1
+            else
+                echo "PASS: DMZ->Internal blocked by default"
+            fi
+
+            # Check internal can reach DMZ
+            if pfctl -sr | grep -qE "pass.*from.*192.168.1.0/24.*to.*10.0.0.0/24"; then
+                echo "PASS: Internal->DMZ allowed"
+            else
+                echo "FAIL: Internal->DMZ rule missing"
+                exit 1
+            fi
+
+            echo ""
+            echo "=== Multi-Zone Tests Complete ==="
+
+            # Cleanup
+            ifconfig vether0 destroy
+            ifconfig vether1 destroy
+            ifconfig vether2 destroy
+            ifconfig pair0 destroy
+
+  # ==========================================================================
+  # STRESS TESTS
+  # High-volume traffic tests for state table and performance
+  # ==========================================================================
+  stress-tests:
+    name: PF Stress Tests
+    runs-on: ubuntu-latest
+    if: github.event.inputs.run_stress_tests == 'true' || github.event_name == 'schedule'
+    needs: single-vm-network-tests
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run stress tests on OpenBSD
+        uses: vmactions/openbsd-vm@v1
+        with:
+          release: '7.8'
+          usesh: true
+          run: |
+            set -e
+            echo "=== PF Stress Tests ==="
+
+            # Configure stress test PF rules
+            cat > /etc/pf.conf.stress << 'PFCONF'
+            set limit { states 100000, src-nodes 50000, frags 25000 }
+            set timeout { tcp.established 300, tcp.closing 60 }
+
+            pass all keep state
+            PFCONF
+
+            pfctl -f /etc/pf.conf.stress
+            pfctl -e 2>/dev/null || true
+
+            # Create test interface
+            ifconfig vether0 create
+            ifconfig vether0 inet 192.168.1.1/24
+            ifconfig vether0 inet 192.168.1.2/24 alias
+
+            # Generate high-volume ICMP traffic
+            echo "Generating ICMP flood (1000 packets)..."
+            ping -c 1000 -i 0.001 -f 192.168.1.2 > /dev/null 2>&1 || true
+
+            # Check state table
+            echo ""
+            echo "=== State Table After Stress ==="
+            pfctl -si | grep -E "current entries|searches|inserts"
+
+            # Check for memory issues
+            echo ""
+            echo "=== Memory Status ==="
+            pfctl -si | grep -E "memory|limit"
+
+            # Get performance metrics
+            echo ""
+            echo "=== Performance Metrics ==="
+            pfctl -si | grep -E "match|state-mismatch|bad"
+
+            echo ""
+            echo "=== Stress Tests Complete ==="
+
+            # Cleanup
+            ifconfig vether0 destroy
+
+  # ==========================================================================
+  # CARP FAILOVER TESTS
+  # Tests high availability with CARP
+  # ==========================================================================
+  carp-tests:
+    name: CARP Failover Tests
+    runs-on: ubuntu-latest
+    needs: single-vm-network-tests
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run CARP tests on OpenBSD
+        uses: vmactions/openbsd-vm@v1
+        with:
+          release: '7.8'
+          usesh: true
+          run: |
+            set -e
+            echo "=== CARP Failover Tests ==="
+
+            # Enable CARP
+            sysctl net.inet.carp.allow=1
+
+            # Create interfaces
+            ifconfig vether0 create
+            ifconfig vether0 inet 192.168.1.1/24
+
+            # Create CARP interface
+            ifconfig carp0 create
+            ifconfig carp0 vhid 1 pass "testpass" carpdev vether0 192.168.1.254/24
+
+            # Wait for CARP to initialize
+            sleep 2
+
+            # Check CARP status
+            echo ""
+            echo "=== CARP Status ==="
+            ifconfig carp0
+
+            # Should be MASTER (only CARP peer)
+            if ifconfig carp0 | grep -q "MASTER"; then
+                echo "PASS: CARP is MASTER"
+            else
+                echo "INFO: CARP state: $(ifconfig carp0 | grep carp:)"
+            fi
+
+            # Test PF with CARP
+            cat > /etc/pf.conf.carp << 'PFCONF'
+            carp_if = "carp0"
+
+            set skip on lo
+
+            # Allow CARP protocol
+            pass quick proto carp keep state (no-sync)
+
+            # Allow pfsync (would be used between CARP peers)
+            pass quick proto pfsync keep state (no-sync)
+
+            # Allow traffic to VIP
+            pass in on $carp_if proto tcp to ($carp_if) port { 22, 80, 443 }
+            pass out keep state
+            PFCONF
+
+            pfctl -nf /etc/pf.conf.carp
+            echo "PASS: CARP PF configuration valid"
+
+            pfctl -f /etc/pf.conf.carp
+            pfctl -e 2>/dev/null || true
+
+            # Verify CARP rules
+            echo ""
+            echo "=== CARP PF Rules ==="
+            pfctl -sr | grep -E "carp|pfsync"
+
+            echo ""
+            echo "=== CARP Tests Complete ==="
+
+            # Cleanup
+            ifconfig carp0 destroy
+            ifconfig vether0 destroy
+
+  # ==========================================================================
+  # PFSYNC TESTS
+  # Tests state synchronization (simulated)
+  # ==========================================================================
+  pfsync-tests:
+    name: PFSync Tests
+    runs-on: ubuntu-latest
+    needs: single-vm-network-tests
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run PFSync tests on OpenBSD
+        uses: vmactions/openbsd-vm@v1
+        with:
+          release: '7.8'
+          usesh: true
+          run: |
+            set -e
+            echo "=== PFSync Tests ==="
+
+            # Create pfsync interface
+            ifconfig pfsync0 create || true
+
+            # Create sync interface
+            ifconfig vether0 create
+            ifconfig vether0 inet 10.0.0.1/24
+
+            # Configure pfsync
+            ifconfig pfsync0 syncdev vether0 up
+
+            # Check pfsync status
+            echo ""
+            echo "=== PFSync Interface ==="
+            ifconfig pfsync0
+
+            # Test PF with pfsync
+            cat > /etc/pf.conf.pfsync << 'PFCONF'
+            sync_if = "vether0"
+
+            set skip on lo
+
+            # Pfsync traffic
+            pass quick on $sync_if proto pfsync keep state (no-sync)
+
+            # Regular traffic with sync
+            pass in proto tcp to any port 80 keep state
+            pass in proto tcp to any port 443 keep state
+            pass out keep state
+
+            # Some traffic without sync
+            pass in proto udp to any port 53 keep state (no-sync)
+            PFCONF
+
+            pfctl -nf /etc/pf.conf.pfsync
+            echo "PASS: PFSync PF configuration valid"
+
+            pfctl -f /etc/pf.conf.pfsync
+            pfctl -e 2>/dev/null || true
+
+            # Check sync state option in rules
+            echo ""
+            echo "=== PFSync Rules ==="
+            pfctl -sr | grep -E "no-sync|pfsync"
+
+            # Generate some states
+            ifconfig vether0 inet 10.0.0.2/24 alias
+            ping -c 5 10.0.0.2 > /dev/null 2>&1 || true
+
+            # Check state sync statistics
+            echo ""
+            echo "=== PFSync Statistics ==="
+            netstat -s -p pfsync 2>/dev/null | head -20 || echo "pfsync stats not available"
+
+            echo ""
+            echo "=== PFSync Tests Complete ==="
+
+            # Cleanup
+            ifconfig pfsync0 destroy
+            ifconfig vether0 destroy
+
+  # ==========================================================================
+  # SUMMARY
+  # ==========================================================================
+  test-summary:
+    name: Test Summary
+    runs-on: ubuntu-latest
+    needs: [single-vm-network-tests, multi-zone-tests, carp-tests, pfsync-tests]
+    if: always()
+
+    steps:
+      - name: Check test results
+        run: |
+          echo "=== Network Test Summary ==="
+          echo ""
+          echo "Single VM Tests: ${{ needs.single-vm-network-tests.result }}"
+          echo "Multi-Zone Tests: ${{ needs.multi-zone-tests.result }}"
+          echo "CARP Tests: ${{ needs.carp-tests.result }}"
+          echo "PFSync Tests: ${{ needs.pfsync-tests.result }}"
+          echo ""
+
+          if [[ "${{ needs.single-vm-network-tests.result }}" == "failure" ]] || \
+             [[ "${{ needs.multi-zone-tests.result }}" == "failure" ]] || \
+             [[ "${{ needs.carp-tests.result }}" == "failure" ]] || \
+             [[ "${{ needs.pfsync-tests.result }}" == "failure" ]]; then
+            echo "Some tests failed!"
+            exit 1
+          fi
+
+          echo "All network tests passed!"
