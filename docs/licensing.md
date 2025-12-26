@@ -1,126 +1,127 @@
 ---
 layout: default
-title: Licensing - NSWall
+title: Pricing - NSWall
 ---
 
-# NSWall Licensing
+# NSWall Pricing
 
-## Open Core Model
+## Simple, Transparent Pricing
 
-**NSWall Community Edition** is 100% open source under the BSD license.
-
-**NSWall Enterprise** adds premium features for businesses.
+| | Free | Pro | Business | Enterprise |
+|---|:---:|:---:|:---:|:---:|
+| **Price** | $0 | $29/mo | $99/mo | $499/mo |
+| **Devices** | 1 | 5 | 25 | Unlimited |
+| | | | | |
+| Firewall (PF) | ✅ | ✅ | ✅ | ✅ |
+| VPN (IKEv2/IPSec) | ✅ | ✅ | ✅ | ✅ |
+| Routing (Static) | ✅ | ✅ | ✅ | ✅ |
+| CLI Access | ✅ | ✅ | ✅ | ✅ |
+| VM Images | ✅ | ✅ | ✅ | ✅ |
+| | | | | |
+| BGP/OSPF Routing | ❌ | ✅ | ✅ | ✅ |
+| High Availability (CARP) | ❌ | ✅ | ✅ | ✅ |
+| Load Balancing | ❌ | ✅ | ✅ | ✅ |
+| | | | | |
+| Central Dashboard | ❌ | ❌ | ✅ | ✅ |
+| REST API | ❌ | ❌ | ✅ | ✅ |
+| Config Backup | ❌ | ❌ | ✅ | ✅ |
+| | | | | |
+| RBAC | ❌ | ❌ | ❌ | ✅ |
+| Audit Logging | ❌ | ❌ | ❌ | ✅ |
+| SSO/SAML | ❌ | ❌ | ❌ | ✅ |
+| Priority Support | ❌ | ❌ | ❌ | ✅ |
+| SLA | ❌ | ❌ | ❌ | ✅ |
 
 ---
 
-## Community Edition (Free & Open Source)
+## Free Tier
 
-Everything in this repository is free:
+Perfect for:
+- Home networks
+- Learning & testing
+- Single-site deployments
 
-| Included | |
-|----------|---|
-| Full firewall (PF) | ✅ |
-| BGP, OSPF, RIP routing | ✅ |
-| IPSec & IKEv2 VPN | ✅ |
-| CARP high availability | ✅ |
-| DNS, DHCP, NTP, SNMP | ✅ |
-| CLI management | ✅ |
-| All OpenBSD features | ✅ |
-| Commercial use | ✅ |
-| Modify & redistribute | ✅ |
-| Community support | ✅ |
+Includes:
+- Full firewall with PF
+- Basic VPN
+- Static routing
+- 1 device
+- Community support
 
-**License:** BSD (same as OpenBSD)
+**Free forever. No credit card required.**
 
 ---
 
-## Enterprise Edition (Coming Soon)
+## Pro - $29/month
 
-Premium features for businesses:
+For power users and small offices:
+- Up to 5 devices
+- Dynamic routing (BGP, OSPF)
+- High availability (CARP)
+- Load balancing
+- Email support
 
-| Feature | CE | Enterprise |
-|---------|:--:|:----------:|
-| Core firewall & routing | ✅ | ✅ |
-| CLI management | ✅ | ✅ |
-| **Central Management Console** | ❌ | ✅ |
-| **Multi-device Dashboard** | ❌ | ✅ |
-| **Role-Based Access Control** | ❌ | ✅ |
-| **REST API** | ❌ | ✅ |
-| **Audit Logging** | ❌ | ✅ |
-| **Config Backup & Restore** | ❌ | ✅ |
-| **Automated Updates** | ❌ | ✅ |
-| **Priority Support** | ❌ | ✅ |
+---
 
-### Pricing
+## Business - $99/month
 
-| Plan | Devices | Price |
-|------|---------|-------|
-| Team | Up to 10 | $99/month |
-| Business | Up to 50 | $299/month |
-| Enterprise | Unlimited | $999/month |
+For growing companies:
+- Up to 25 devices
+- Central management dashboard
+- REST API access
+- Automated config backup
+- Priority email support
+
+---
+
+## Enterprise - $499/month
+
+For large organizations:
+- Unlimited devices
+- Role-based access control
+- Audit logging & compliance
+- SSO/SAML integration
+- Dedicated support
+- 99.9% SLA
 
 ---
 
 ## Virtual Appliances
 
-Pre-configured VM images (free to download, Enterprise features optional):
+All tiers include VM images:
 
-| Platform | Format | Price |
-|----------|--------|-------|
-| VMware | OVA | Free |
-| Hyper-V | VHDX | Free |
-| KVM/Proxmox | QCOW2 | Free |
-| AWS | AMI | Free |
-| Azure | VHD | Free |
-| GCP | Image | Free |
-
-*Enterprise features require subscription*
+| Platform | Format |
+|----------|--------|
+| VMware | OVA |
+| Hyper-V | VHDX |
+| KVM/Proxmox | QCOW2 |
+| AWS | AMI |
+| Azure | VHD |
+| GCP | Image |
 
 ---
 
 ## FAQ
 
-**Is the Community Edition really free for commercial use?**
+**Can I start with Free and upgrade later?**
+Yes. Upgrade anytime, keep your config.
 
-Yes. BSD license allows any use, including commercial.
+**Is there a trial for paid tiers?**
+Yes, 14-day free trial on all paid plans.
 
-**What's the catch?**
+**Annual billing discount?**
+Yes, 2 months free when you pay annually.
 
-No catch. We make money from Enterprise features and hardware. The community edition stays free forever.
+**What happens if I downgrade?**
+Features are disabled, config is preserved.
 
-**Can I modify the code?**
-
-Yes. Fork it, change it, sell it. BSD license.
-
-**Will free features become paid?**
-
-No. What's in CE stays in CE. Enterprise is additive.
-
----
-
-## Contact
-
-**Sales:** sales@northshorenetworks.com
-**Support:** support@northshorenetworks.com
+**Is the source code available?**
+Core components are open source (BSD license).
 
 ---
 
-## License Text
+## Contact Sales
 
-```
-Copyright (c) 2024 North Shore Networks
-Copyright (c) 2001-2009 Damien Miller, Chris Cappuccio
+Need custom pricing or have questions?
 
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are met:
-
-1. Redistributions of source code must retain the above copyright notice,
-   this list of conditions and the following disclaimer.
-2. Redistributions in binary form must reproduce the above copyright notice,
-   this list of conditions and the following disclaimer in the documentation
-   and/or other materials provided with the distribution.
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS "AS IS" AND ANY EXPRESS
-OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
-OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
-```
+**Email:** sales@northshorenetworks.com
