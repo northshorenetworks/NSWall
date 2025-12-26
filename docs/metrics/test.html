@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Details - NSWall Performance Metrics</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+    <style>
+        :root {
+            --bg-primary: #0d1117;
+            --bg-secondary: #161b22;
+            --bg-tertiary: #21262d;
+            --text-primary: #c9d1d9;
+            --text-secondary: #8b949e;
+            --border-color: #30363d;
+            --accent-green: #238636;
+            --accent-red: #da3633;
+            --accent-yellow: #d29922;
+            --accent-blue: #58a6ff;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.5;
+        }
+
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 0;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 30px;
+        }
+
+        .breadcrumb { font-size: 14px; color: var(--text-secondary); }
+        .breadcrumb a { color: var(--accent-blue); text-decoration: none; }
+
+        h1 { font-size: 24px; font-weight: 600; margin-bottom: 8px; }
+        .test-meta { color: var(--text-secondary); font-size: 14px; }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 16px;
+            font-size: 12px;
+            font-weight: 500;
+            margin-left: 12px;
+        }
+        .status-badge.passed { background: rgba(35, 134, 54, 0.2); color: var(--accent-green); }
+        .status-badge.warning { background: rgba(210, 153, 34, 0.2); color: var(--accent-yellow); }
+        .status-badge.failed { background: rgba(218, 54, 51, 0.2); color: var(--accent-red); }
+        .status-badge.critical { background: rgba(218, 54, 51, 0.4); color: #ff7b72; }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 16px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 16px;
+            text-align: center;
+        }
+
+        .stat-value { font-size: 28px; font-weight: 600; }
+        .stat-label { font-size: 12px; color: var(--text-secondary); margin-top: 4px; }
+
+        .card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            margin-bottom: 20px;
+        }
+
+        .card-header {
+            padding: 16px;
+            border-bottom: 1px solid var(--border-color);
+            font-weight: 600;
+        }
+
+        .card-body { padding: 16px; }
+
+        .chart-container { height: 300px; position: relative; }
+
+        .history-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .history-table th,
+        .history-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .history-table th {
+            font-weight: 600;
+            color: var(--text-secondary);
+            font-size: 12px;
+            text-transform: uppercase;
+            position: sticky;
+            top: 0;
+            background: var(--bg-secondary);
+        }
+
+        .history-table tbody tr:hover { background: var(--bg-tertiary); }
+
+        .commit-link {
+            font-family: monospace;
+            color: var(--accent-blue);
+            text-decoration: none;
+        }
+
+        .value-change {
+            font-size: 12px;
+            margin-left: 8px;
+        }
+        .value-change.up { color: var(--accent-red); }
+        .value-change.down { color: var(--accent-green); }
+
+        .baseline-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+        }
+
+        .baseline-stat {
+            padding: 12px;
+            background: var(--bg-tertiary);
+            border-radius: 4px;
+        }
+
+        .baseline-stat-label { font-size: 11px; color: var(--text-secondary); }
+        .baseline-stat-value { font-size: 18px; font-weight: 600; }
+
+        .no-data { text-align: center; padding: 40px; color: var(--text-secondary); }
+
+        .threshold-bar {
+            height: 8px;
+            background: var(--bg-tertiary);
+            border-radius: 4px;
+            margin-top: 8px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .threshold-marker {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+        }
+        .threshold-marker.warn { background: var(--accent-yellow); }
+        .threshold-marker.fail { background: var(--accent-red); }
+
+        .threshold-current {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            background: var(--accent-blue);
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div>
+                <div class="breadcrumb"><a href="index.html">Dashboard</a> / Test Details</div>
+                <h1 id="testName">Loading...</h1>
+                <div class="test-meta" id="testMeta"></div>
+            </div>
+        </header>
+
+        <div class="stats-grid" id="statsGrid"></div>
+
+        <div class="card">
+            <div class="card-header">Performance Trend (All Time)</div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="trendChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">Baseline Statistics</div>
+            <div class="card-body">
+                <div class="baseline-info" id="baselineInfo"></div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">Complete History (<span id="historyCount">0</span> runs)</div>
+            <div class="card-body" style="max-height: 600px; overflow-y: auto;">
+                <table class="history-table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Value</th>
+                            <th>Change</th>
+                            <th>Status</th>
+                            <th>Commit</th>
+                            <th>Branch</th>
+                        </tr>
+                    </thead>
+                    <tbody id="historyTable"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const testId = urlParams.get('id');
+
+        if (!testId) {
+            document.body.innerHTML = '<div class="container"><div class="no-data">No test ID specified. <a href="index.html">Go back</a></div></div>';
+        }
+
+        let testData = null;
+        let historyData = null;
+
+        async function loadData() {
+            try {
+                // Load test library for metadata
+                const testsRes = await fetch('tests.json');
+                const tests = await testsRes.json();
+                testData = tests.tests.find(t => t.test_id === testId);
+
+                // Load full history
+                const historyRes = await fetch(`history/${testId.replace(/\./g, '-')}.json`);
+                if (historyRes.ok) {
+                    historyData = await historyRes.json();
+                } else {
+                    // Fallback to metrics.json
+                    const metricsRes = await fetch('metrics.json');
+                    const metrics = await metricsRes.json();
+                    const metric = metrics.tests.find(t => t.test_id === testId);
+                    if (metric) {
+                        historyData = {
+                            test_id: testId,
+                            history: metric.history || [],
+                            baseline: {
+                                mean: metric.baseline_mean,
+                                std_dev: metric.baseline_std_dev
+                            }
+                        };
+                    }
+                }
+
+                renderPage();
+            } catch (error) {
+                console.error('Failed to load data:', error);
+                document.body.innerHTML = `<div class="container"><div class="no-data">Failed to load test data: ${error.message}</div></div>`;
+            }
+        }
+
+        function renderPage() {
+            if (!testData) {
+                document.getElementById('testName').textContent = testId;
+                document.getElementById('testMeta').textContent = 'Test not found in library';
+                return;
+            }
+
+            // Header
+            let badges = '';
+            if (testData.critical) badges += '<span class="status-badge critical">Critical</span>';
+
+            document.getElementById('testName').innerHTML = testData.test_name + badges;
+            document.getElementById('testMeta').textContent =
+                `${testData.category.toUpperCase()} | ${testData.test_type} | ${testData.description || ''}`;
+
+            // Stats
+            if (historyData && historyData.history && historyData.history.length > 0) {
+                const history = historyData.history;
+                const latest = history[history.length - 1];
+                const values = history.map(h => h.value);
+                const baseline = historyData.baseline || {};
+
+                const stats = [
+                    { label: 'Current', value: formatValue(latest.value, testData.unit) },
+                    { label: 'Baseline', value: formatValue(baseline.mean, testData.unit) },
+                    { label: 'Min (All Time)', value: formatValue(Math.min(...values), testData.unit) },
+                    { label: 'Max (All Time)', value: formatValue(Math.max(...values), testData.unit) },
+                    { label: 'Total Runs', value: history.length },
+                    { label: 'Pass Rate', value: `${((history.filter(h => h.status === 'passed').length / history.length) * 100).toFixed(0)}%` }
+                ];
+
+                document.getElementById('statsGrid').innerHTML = stats.map(s => `
+                    <div class="stat-card">
+                        <div class="stat-value">${s.value}</div>
+                        <div class="stat-label">${s.label}</div>
+                    </div>
+                `).join('');
+
+                // Baseline info
+                document.getElementById('baselineInfo').innerHTML = `
+                    <div class="baseline-stat">
+                        <div class="baseline-stat-label">Mean</div>
+                        <div class="baseline-stat-value">${formatValue(baseline.mean, testData.unit)}</div>
+                    </div>
+                    <div class="baseline-stat">
+                        <div class="baseline-stat-label">Std Dev</div>
+                        <div class="baseline-stat-value">${formatValue(baseline.std_dev, testData.unit)}</div>
+                    </div>
+                    <div class="baseline-stat">
+                        <div class="baseline-stat-label">Warning Threshold (+5%)</div>
+                        <div class="baseline-stat-value">${formatValue(baseline.mean * 1.05, testData.unit)}</div>
+                    </div>
+                    <div class="baseline-stat">
+                        <div class="baseline-stat-label">Failure Threshold (+15%)</div>
+                        <div class="baseline-stat-value">${formatValue(baseline.mean * 1.15, testData.unit)}</div>
+                    </div>
+                `;
+
+                // Chart
+                createChart(history, baseline);
+
+                // History table
+                document.getElementById('historyCount').textContent = history.length;
+                const tbody = document.getElementById('historyTable');
+                let prevValue = null;
+
+                tbody.innerHTML = [...history].reverse().map((h, i) => {
+                    let changeHtml = '-';
+                    if (prevValue !== null) {
+                        const change = ((h.value - prevValue) / prevValue) * 100;
+                        const changeClass = change > 0 ? 'up' : change < 0 ? 'down' : '';
+                        changeHtml = `<span class="value-change ${changeClass}">${change > 0 ? '+' : ''}${change.toFixed(1)}%</span>`;
+                    }
+                    prevValue = h.value;
+
+                    return `
+                        <tr>
+                            <td>${new Date(h.timestamp).toLocaleString()}</td>
+                            <td>${formatValue(h.value, testData.unit)}</td>
+                            <td>${changeHtml}</td>
+                            <td><span class="status-badge ${h.status}">${h.status}</span></td>
+                            <td><a class="commit-link" href="#">${(h.commit_sha || '').substring(0, 8)}</a></td>
+                            <td>${h.branch || '-'}</td>
+                        </tr>
+                    `;
+                }).join('');
+            } else {
+                document.getElementById('statsGrid').innerHTML = '<div class="no-data">No historical data available</div>';
+            }
+        }
+
+        function createChart(history, baseline) {
+            const ctx = document.getElementById('trendChart').getContext('2d');
+
+            const data = history.map(h => ({
+                x: new Date(h.timestamp),
+                y: h.value
+            }));
+
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    datasets: [
+                        {
+                            label: testData.unit,
+                            data: data,
+                            borderColor: '#58a6ff',
+                            backgroundColor: 'rgba(88, 166, 255, 0.1)',
+                            fill: true,
+                            tension: 0.2,
+                            pointRadius: 3,
+                            pointHoverRadius: 6
+                        },
+                        {
+                            label: 'Baseline',
+                            data: data.map(d => ({ x: d.x, y: baseline.mean })),
+                            borderColor: '#8b949e',
+                            borderDash: [5, 5],
+                            pointRadius: 0,
+                            fill: false
+                        },
+                        {
+                            label: 'Warning (+5%)',
+                            data: data.map(d => ({ x: d.x, y: baseline.mean * 1.05 })),
+                            borderColor: '#d29922',
+                            borderDash: [2, 2],
+                            pointRadius: 0,
+                            fill: false
+                        },
+                        {
+                            label: 'Failure (+15%)',
+                            data: data.map(d => ({ x: d.x, y: baseline.mean * 1.15 })),
+                            borderColor: '#da3633',
+                            borderDash: [2, 2],
+                            pointRadius: 0,
+                            fill: false
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            labels: { color: '#8b949e' }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: (ctx) => `${ctx.dataset.label}: ${ctx.parsed.y.toFixed(2)}`
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            type: 'time',
+                            time: { unit: 'day' },
+                            grid: { color: '#30363d' },
+                            ticks: { color: '#8b949e' }
+                        },
+                        y: {
+                            grid: { color: '#30363d' },
+                            ticks: { color: '#8b949e' }
+                        }
+                    }
+                }
+            });
+        }
+
+        function formatValue(value, unit) {
+            if (value === null || value === undefined) return '-';
+            if (unit === 'ms') return `${value.toFixed(0)}ms`;
+            if (unit === 'rate') return `${value.toFixed(0)}/s`;
+            if (unit === 'count') return value.toLocaleString();
+            return value.toFixed(2);
+        }
+
+        loadData();
+    </script>
+</body>
+</html>
