@@ -32,6 +32,8 @@ on:
 
 env:
   RESULTS_DIR: /tmp/stress-results
+  METRICS_DB: /tmp/metrics/metrics.db
+  BASELINE_BRANCH: main
 
 jobs:
   # ==========================================================================
@@ -251,12 +253,167 @@ jobs:
           retention-days: 30
 
   # ==========================================================================
+  # Metrics Analysis Job
+  # ==========================================================================
+  metrics-analysis:
+    name: Performance Regression Analysis
+    runs-on: ubuntu-latest
+    needs: [openbsd-stress-tests, nats-stress-tests]
+    if: always()
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.21'
+
+      - name: Download Previous Metrics DB
+        uses: dawidd6/action-download-artifact@v3
+        with:
+          workflow: stress-tests.yml
+          name: metrics-database
+          path: /tmp/metrics
+          if_no_artifact_found: warn
+          branch: ${{ env.BASELINE_BRANCH }}
+        continue-on-error: true
+
+      - name: Build Metrics Collector
+        run: |
+          cd tests/metrics
+          go mod init metrics-collector 2>/dev/null || true
+          go get github.com/google/uuid
+          go get github.com/mattn/go-sqlite3
+          go build -o metrics-collector collector.go
+
+      - name: Initialize Metrics Database
+        run: |
+          mkdir -p /tmp/metrics
+          cd tests/metrics
+          ./metrics-collector -db "${{ env.METRICS_DB }}" -schema schema.sql init
+
+      - name: Download OpenBSD Results
+        uses: actions/download-artifact@v4
+        with:
+          name: openbsd-stress-results
+          path: results/openbsd
+        continue-on-error: true
+
+      - name: Download NATS Results
+        uses: actions/download-artifact@v4
+        with:
+          name: nats-stress-results
+          path: results/nats
+        continue-on-error: true
+
+      - name: Import Results to Metrics DB
+        run: |
+          cd tests/metrics
+
+          # Start a new run
+          RUN_OUTPUT=$(./metrics-collector -db "${{ env.METRICS_DB }}" start-run \
+            -branch "${{ github.ref_name }}" \
+            -commit "${{ github.sha }}" \
+            -type stress \
+            -suite full)
+
+          RUN_ID=$(echo "$RUN_OUTPUT" | grep "RUN_ID=" | cut -d= -f2)
+          echo "RUN_ID=$RUN_ID" >> $GITHUB_ENV
+
+          # Parse and import results from OpenBSD tests
+          if [ -d "../../results/openbsd" ]; then
+            # Import PF results
+            for csv in ../../results/openbsd/*_times.csv; do
+              [ -f "$csv" ] || continue
+              echo "Importing $csv..."
+
+              # Parse CSV and record metrics
+              tail -n +2 "$csv" | while IFS=, read -r scale type time rest; do
+                if [ -n "$scale" ] && [ -n "$time" ]; then
+                  test_id="pf.${type:-filter}.parse.$scale"
+                  ./metrics-collector -db "${{ env.METRICS_DB }}" record \
+                    -run-id "$RUN_ID" \
+                    -test-id "$test_id" \
+                    -value "$time" \
+                    -unit "ms" 2>/dev/null || true
+                fi
+              done
+            done
+          fi
+
+          # End the run
+          ./metrics-collector -db "${{ env.METRICS_DB }}" end-run -run-id "$RUN_ID" -status passed
+
+      - name: Compare Against Baseline
+        id: compare
+        run: |
+          cd tests/metrics
+
+          echo "## Performance Comparison Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          ./metrics-collector -db "${{ env.METRICS_DB }}" compare \
+            -run-id "${{ env.RUN_ID }}" \
+            -baseline "${{ env.BASELINE_BRANCH }}" \
+            -output markdown >> $GITHUB_STEP_SUMMARY 2>/dev/null || echo "No baseline available for comparison" >> $GITHUB_STEP_SUMMARY
+
+          # Check for regressions
+          COMPARE_OUTPUT=$(./metrics-collector -db "${{ env.METRICS_DB }}" compare \
+            -run-id "${{ env.RUN_ID }}" \
+            -baseline "${{ env.BASELINE_BRANCH }}" \
+            -output json 2>/dev/null || echo '{"failures":0}')
+
+          FAILURES=$(echo "$COMPARE_OUTPUT" | jq -r '.failures // 0')
+          WARNINGS=$(echo "$COMPARE_OUTPUT" | jq -r '.warnings // 0')
+
+          echo "failures=$FAILURES" >> $GITHUB_OUTPUT
+          echo "warnings=$WARNINGS" >> $GITHUB_OUTPUT
+
+          if [ "$FAILURES" -gt 0 ]; then
+            echo "::error::Performance regressions detected: $FAILURES failures, $WARNINGS warnings"
+          elif [ "$WARNINGS" -gt 0 ]; then
+            echo "::warning::Performance warnings: $WARNINGS tests showed degradation"
+          fi
+
+      - name: Update Baseline (main branch only)
+        if: github.ref_name == 'main'
+        run: |
+          cd tests/metrics
+          ./metrics-collector -db "${{ env.METRICS_DB }}" update-baseline -branch main
+          echo "Baseline updated for main branch"
+
+      - name: Upload Metrics Database
+        uses: actions/upload-artifact@v4
+        with:
+          name: metrics-database
+          path: ${{ env.METRICS_DB }}
+          retention-days: 90
+
+      - name: Export Metrics as CSV
+        run: |
+          cd tests/metrics
+          mkdir -p /tmp/metrics-export
+          ./metrics-collector -db "${{ env.METRICS_DB }}" export \
+            -format csv \
+            -output /tmp/metrics-export/metrics.csv \
+            -days 90
+
+      - name: Upload Metrics Export
+        uses: actions/upload-artifact@v4
+        with:
+          name: metrics-export
+          path: /tmp/metrics-export/
+          retention-days: 90
+
+  # ==========================================================================
   # Summary Job
   # ==========================================================================
   stress-test-summary:
     name: Stress Test Summary
     runs-on: ubuntu-latest
-    needs: [openbsd-stress-tests, nats-stress-tests]
+    needs: [openbsd-stress-tests, nats-stress-tests, metrics-analysis]
     if: always()
 
     steps:
@@ -272,6 +429,13 @@ jobs:
         with:
           name: nats-stress-results
           path: results/nats
+        continue-on-error: true
+
+      - name: Download Metrics Export
+        uses: actions/download-artifact@v4
+        with:
+          name: metrics-export
+          path: results/metrics
         continue-on-error: true
 
       - name: Generate Combined Report
