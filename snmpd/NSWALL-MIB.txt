@@ -1,0 +1,224 @@
+-- NSWall MIB Definition
+-- Copyright (c) 2024 NSWall Project
+--
+-- This MIB defines objects for monitoring NSWall firewall/router systems
+
+NSWALL-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    MODULE-IDENTITY, OBJECT-TYPE, Integer32, Unsigned32, Counter64, enterprises
+        FROM SNMPv2-SMI
+    DisplayString
+        FROM SNMPv2-TC
+    MODULE-COMPLIANCE, OBJECT-GROUP
+        FROM SNMPv2-CONF;
+
+nswall MODULE-IDENTITY
+    LAST-UPDATED "202412240000Z"
+    ORGANIZATION "NSWall Project"
+    CONTACT-INFO
+        "https://github.com/northshorenetworks/NSWall"
+    DESCRIPTION
+        "MIB module for NSWall firewall/router monitoring"
+    REVISION "202412240000Z"
+    DESCRIPTION "Initial version"
+    ::= { enterprises 59999 }
+
+--
+-- Object groups
+--
+
+nswallSystem    OBJECT IDENTIFIER ::= { nswall 1 }
+nswallInterfaces OBJECT IDENTIFIER ::= { nswall 2 }
+nswallFirewall  OBJECT IDENTIFIER ::= { nswall 3 }
+nswallVPN       OBJECT IDENTIFIER ::= { nswall 4 }
+nswallHA        OBJECT IDENTIFIER ::= { nswall 5 }
+
+--
+-- System objects
+--
+
+sysVersion OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE (0..255))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "OpenBSD version"
+    ::= { nswallSystem 1 }
+
+sysHostname OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE (0..255))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "System hostname"
+    ::= { nswallSystem 2 }
+
+sysUptime OBJECT-TYPE
+    SYNTAX      TimeTicks
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "System uptime in hundredths of seconds"
+    ::= { nswallSystem 3 }
+
+sysLoadAvg1 OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE (0..16))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "1-minute load average"
+    ::= { nswallSystem 4 }
+
+sysLoadAvg5 OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE (0..16))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "5-minute load average"
+    ::= { nswallSystem 5 }
+
+sysLoadAvg15 OBJECT-TYPE
+    SYNTAX      DisplayString (SIZE (0..16))
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "15-minute load average"
+    ::= { nswallSystem 6 }
+
+sysMemTotal OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "Total physical memory in bytes"
+    ::= { nswallSystem 7 }
+
+sysMemFree OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "Free memory in bytes"
+    ::= { nswallSystem 8 }
+
+--
+-- Firewall (PF) objects
+--
+
+pfEnabled OBJECT-TYPE
+    SYNTAX      INTEGER { disabled(0), enabled(1) }
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "PF firewall enabled status"
+    ::= { nswallFirewall 1 }
+
+pfStates OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "Current number of PF states"
+    ::= { nswallFirewall 2 }
+
+pfStateLimit OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "Maximum number of PF states"
+    ::= { nswallFirewall 3 }
+
+pfSrcNodes OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "Number of source nodes"
+    ::= { nswallFirewall 4 }
+
+pfRules OBJECT-TYPE
+    SYNTAX      Unsigned32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "Number of active PF rules"
+    ::= { nswallFirewall 5 }
+
+pfBytesIn OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "Total bytes passed in through PF"
+    ::= { nswallFirewall 6 }
+
+pfBytesOut OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "Total bytes passed out through PF"
+    ::= { nswallFirewall 7 }
+
+pfPacketsIn OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "Total packets passed in through PF"
+    ::= { nswallFirewall 8 }
+
+pfPacketsOut OBJECT-TYPE
+    SYNTAX      Counter64
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "Total packets passed out through PF"
+    ::= { nswallFirewall 9 }
+
+--
+-- High Availability (CARP/pfsync) objects
+--
+
+carpMaster OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "Number of CARP interfaces in MASTER state"
+    ::= { nswallHA 1 }
+
+carpBackup OBJECT-TYPE
+    SYNTAX      Integer32
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "Number of CARP interfaces in BACKUP state"
+    ::= { nswallHA 2 }
+
+pfsyncEnabled OBJECT-TYPE
+    SYNTAX      INTEGER { disabled(0), enabled(1) }
+    MAX-ACCESS  read-only
+    STATUS      current
+    DESCRIPTION "pfsync state synchronization enabled"
+    ::= { nswallHA 3 }
+
+--
+-- Conformance information
+--
+
+nswallConformance OBJECT IDENTIFIER ::= { nswall 99 }
+nswallCompliances OBJECT IDENTIFIER ::= { nswallConformance 1 }
+nswallGroups      OBJECT IDENTIFIER ::= { nswallConformance 2 }
+
+nswallCompliance MODULE-COMPLIANCE
+    STATUS current
+    DESCRIPTION "Compliance statement for NSWall MIB"
+    MODULE
+        MANDATORY-GROUPS { nswallSystemGroup, nswallFirewallGroup, nswallHAGroup }
+    ::= { nswallCompliances 1 }
+
+nswallSystemGroup OBJECT-GROUP
+    OBJECTS { sysVersion, sysHostname, sysUptime, sysLoadAvg1,
+              sysLoadAvg5, sysLoadAvg15, sysMemTotal, sysMemFree }
+    STATUS current
+    DESCRIPTION "System information objects"
+    ::= { nswallGroups 1 }
+
+nswallFirewallGroup OBJECT-GROUP
+    OBJECTS { pfEnabled, pfStates, pfStateLimit, pfSrcNodes, pfRules,
+              pfBytesIn, pfBytesOut, pfPacketsIn, pfPacketsOut }
+    STATUS current
+    DESCRIPTION "Firewall monitoring objects"
+    ::= { nswallGroups 2 }
+
+nswallHAGroup OBJECT-GROUP
+    OBJECTS { carpMaster, carpBackup, pfsyncEnabled }
+    STATUS current
+    DESCRIPTION "High availability monitoring objects"
+    ::= { nswallGroups 3 }
+
+END

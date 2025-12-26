@@ -1,0 +1,23 @@
+---
+namespace: nswall
+name: network
+version: 1.0.0
+readme: README.md
+authors:
+  - NSWall Team
+description: Ansible Collection for NSWall network appliance automation
+license_file: LICENSE
+tags:
+  - networking
+  - firewall
+  - openbsd
+  - router
+  - vpn
+  - wireguard
+dependencies: {}
+repository: https://github.com/northshorenetworks/NSWall
+documentation: https://github.com/northshorenetworks/NSWall/tree/master/ansible
+homepage: https://github.com/northshorenetworks/NSWall
+issues: https://github.com/northshorenetworks/NSWall/issues
+build_ignore:
+  - "*.tar.gz"

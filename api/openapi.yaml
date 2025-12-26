@@ -1,0 +1,1195 @@
+openapi: 3.1.0
+info:
+  title: NSWall API
+  description: |
+    Comprehensive REST API for NSWall/NSH network appliance automation.
+
+    NSWall transforms OpenBSD into a network appliance with a Junos/IOS-like CLI.
+    This API provides full programmatic access to all NSWall features.
+  version: 2.0.0
+  license:
+    name: BSD
+    url: https://opensource.org/licenses/BSD-3-Clause
+  contact:
+    name: NSWall
+    url: https://github.com/northshorenetworks/NSWall
+
+servers:
+  - url: http://localhost:8080
+    description: Local development
+  - url: https://{host}:{port}
+    description: Production
+    variables:
+      host:
+        default: nswall.local
+      port:
+        default: "8080"
+
+tags:
+  - name: System
+    description: System information and management
+  - name: Interfaces
+    description: Network interface management
+  - name: Routing
+    description: Routing table management
+  - name: ARP
+    description: ARP table management
+  - name: Firewall
+    description: PF firewall management
+  - name: VPN
+    description: VPN (WireGuard, IKE/IPsec) management
+  - name: HA
+    description: High availability (CARP, pfsync)
+  - name: DHCP
+    description: DHCP server management
+  - name: DNS
+    description: DNS configuration
+  - name: Services
+    description: Daemon/service management
+  - name: Config
+    description: Configuration management
+  - name: Auth
+    description: Authentication and user management
+
+security:
+  - ApiKeyAuth: []
+  - BearerAuth: []
+
+paths:
+  /:
+    get:
+      summary: API root
+      description: Returns API information and available endpoints
+      operationId: getRoot
+      security: []
+      responses:
+        '200':
+          description: API information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiInfo'
+
+  /health:
+    get:
+      summary: Health check
+      operationId: getHealth
+      security: []
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+
+  /api/v1/system:
+    get:
+      summary: Get system information
+      operationId: getSystemInfo
+      tags: [System]
+      responses:
+        '200':
+          description: System information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+
+  /api/v1/system/version:
+    get:
+      summary: Get version information
+      operationId: getVersion
+      tags: [System]
+      responses:
+        '200':
+          description: Version information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+
+  /api/v1/system/memory:
+    get:
+      summary: Get memory usage
+      operationId: getMemory
+      tags: [System]
+      responses:
+        '200':
+          description: Memory information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+
+  /api/v1/system/disks:
+    get:
+      summary: Get disk usage
+      operationId: getDisks
+      tags: [System]
+      responses:
+        '200':
+          description: Disk information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+
+  /api/v1/system/logs:
+    get:
+      summary: Get system logs
+      operationId: getLogs
+      tags: [System]
+      parameters:
+        - name: facility
+          in: query
+          schema:
+            type: string
+          description: Log facility (e.g., messages, authlog)
+        - name: lines
+          in: query
+          schema:
+            type: integer
+            default: 100
+          description: Number of lines to return
+      responses:
+        '200':
+          description: Log entries
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+
+  /api/v1/command:
+    post:
+      summary: Execute NSH command
+      operationId: runCommand
+      tags: [System]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommandRequest'
+      responses:
+        '200':
+          description: Command output
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommandResponse'
+        '403':
+          description: Command not allowed
+
+  /api/v1/interfaces:
+    get:
+      summary: List all interfaces
+      operationId: getInterfaces
+      tags: [Interfaces]
+      responses:
+        '200':
+          description: List of interfaces
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+
+  /api/v1/interfaces/{name}:
+    get:
+      summary: Get interface details
+      operationId: getInterface
+      tags: [Interfaces]
+      parameters:
+        - $ref: '#/components/parameters/InterfaceName'
+      responses:
+        '200':
+          description: Interface details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+        '404':
+          description: Interface not found
+    put:
+      summary: Configure interface
+      operationId: configureInterface
+      tags: [Interfaces]
+      parameters:
+        - $ref: '#/components/parameters/InterfaceName'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InterfaceConfig'
+      responses:
+        '200':
+          description: Interface configured
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+
+  /api/v1/routes:
+    get:
+      summary: Get routing table
+      operationId: getRoutes
+      tags: [Routing]
+      responses:
+        '200':
+          description: Routing table
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+    post:
+      summary: Add a route
+      operationId: addRoute
+      tags: [Routing]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RouteConfig'
+      responses:
+        '200':
+          description: Route added
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+
+  /api/v1/routes/{destination}:
+    delete:
+      summary: Delete a route
+      operationId: deleteRoute
+      tags: [Routing]
+      parameters:
+        - name: destination
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Route deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+
+  /api/v1/arp:
+    get:
+      summary: Get ARP table
+      operationId: getArpTable
+      tags: [ARP]
+      responses:
+        '200':
+          description: ARP table
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+
+  /api/v1/arp/{ip}:
+    delete:
+      summary: Delete ARP entry
+      operationId: deleteArpEntry
+      tags: [ARP]
+      parameters:
+        - name: ip
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: ARP entry deleted
+
+  /api/v1/arp/flush:
+    post:
+      summary: Flush ARP table
+      operationId: flushArpTable
+      tags: [ARP]
+      responses:
+        '200':
+          description: ARP table flushed
+
+  /api/v1/pf:
+    get:
+      summary: Get PF status
+      operationId: getPfInfo
+      tags: [Firewall]
+      responses:
+        '200':
+          description: PF status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+
+  /api/v1/pf/stats:
+    get:
+      summary: Get PF statistics
+      operationId: getPfStats
+      tags: [Firewall]
+      responses:
+        '200':
+          description: PF statistics
+
+  /api/v1/pf/rules:
+    get:
+      summary: Get PF rules
+      operationId: getPfRules
+      tags: [Firewall]
+      responses:
+        '200':
+          description: PF rules
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Response'
+
+  /api/v1/pf/states:
+    get:
+      summary: Get PF states
+      operationId: getPfStates
+      tags: [Firewall]
+      responses:
+        '200':
+          description: PF states
+    delete:
+      summary: Kill PF states
+      operationId: killPfStates
+      tags: [Firewall]
+      parameters:
+        - name: src
+          in: query
+          schema:
+            type: string
+          description: Source IP filter
+        - name: dst
+          in: query
+          schema:
+            type: string
+          description: Destination IP filter
+        - name: interface
+          in: query
+          schema:
+            type: string
+          description: Interface filter
+      responses:
+        '200':
+          description: States killed
+
+  /api/v1/pf/enable:
+    post:
+      summary: Enable PF
+      operationId: enablePf
+      tags: [Firewall]
+      responses:
+        '200':
+          description: PF enabled
+
+  /api/v1/pf/disable:
+    post:
+      summary: Disable PF
+      operationId: disablePf
+      tags: [Firewall]
+      responses:
+        '200':
+          description: PF disabled
+
+  /api/v1/pf/reload:
+    post:
+      summary: Reload PF rules
+      operationId: reloadPf
+      tags: [Firewall]
+      responses:
+        '200':
+          description: PF rules reloaded
+
+  /api/v1/pf/tables:
+    get:
+      summary: List PF tables
+      operationId: getPfTables
+      tags: [Firewall]
+      responses:
+        '200':
+          description: PF tables
+
+  /api/v1/pf/tables/{name}:
+    get:
+      summary: Get PF table entries
+      operationId: getPfTable
+      tags: [Firewall]
+      parameters:
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Table entries
+    post:
+      summary: Add address to PF table
+      operationId: addPfTableAddress
+      tags: [Firewall]
+      parameters:
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                address:
+                  type: string
+              required: [address]
+      responses:
+        '200':
+          description: Address added
+
+  /api/v1/pf/tables/{name}/{address}:
+    delete:
+      summary: Remove address from PF table
+      operationId: deletePfTableAddress
+      tags: [Firewall]
+      parameters:
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: address
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Address removed
+
+  /api/v1/pf/tables/{name}/flush:
+    post:
+      summary: Flush PF table
+      operationId: flushPfTable
+      tags: [Firewall]
+      parameters:
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Table flushed
+
+  /api/v1/vpn/wireguard:
+    get:
+      summary: List WireGuard interfaces
+      operationId: getWireGuardInterfaces
+      tags: [VPN]
+      responses:
+        '200':
+          description: WireGuard interfaces
+    post:
+      summary: Create WireGuard interface
+      operationId: createWireGuardInterface
+      tags: [VPN]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+              required: [name]
+      responses:
+        '200':
+          description: Interface created
+
+  /api/v1/vpn/wireguard/{name}:
+    get:
+      summary: Get WireGuard interface
+      operationId: getWireGuardInterface
+      tags: [VPN]
+      parameters:
+        - $ref: '#/components/parameters/InterfaceName'
+      responses:
+        '200':
+          description: WireGuard interface details
+    put:
+      summary: Configure WireGuard interface
+      operationId: configureWireGuard
+      tags: [VPN]
+      parameters:
+        - $ref: '#/components/parameters/InterfaceName'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WireGuardConfig'
+      responses:
+        '200':
+          description: Interface configured
+
+  /api/v1/vpn/wireguard/{name}/peers:
+    post:
+      summary: Add WireGuard peer
+      operationId: addWireGuardPeer
+      tags: [VPN]
+      parameters:
+        - $ref: '#/components/parameters/InterfaceName'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WireGuardPeerConfig'
+      responses:
+        '200':
+          description: Peer added
+
+  /api/v1/vpn/wireguard/{name}/peers/{publicKey}:
+    delete:
+      summary: Remove WireGuard peer
+      operationId: deleteWireGuardPeer
+      tags: [VPN]
+      parameters:
+        - $ref: '#/components/parameters/InterfaceName'
+        - name: publicKey
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Peer removed
+
+  /api/v1/vpn/wireguard/keygen:
+    post:
+      summary: Generate WireGuard key pair
+      operationId: generateWireGuardKey
+      tags: [VPN]
+      responses:
+        '200':
+          description: Key pair generated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  private_key:
+                    type: string
+                  public_key:
+                    type: string
+
+  /api/v1/vpn/ike/sas:
+    get:
+      summary: Get IKE Security Associations
+      operationId: getIkeSas
+      tags: [VPN]
+      responses:
+        '200':
+          description: IKE SAs
+
+  /api/v1/vpn/ipsec/sas:
+    get:
+      summary: Get IPsec Security Associations
+      operationId: getIpsecSas
+      tags: [VPN]
+      responses:
+        '200':
+          description: IPsec SAs
+
+  /api/v1/ha/carp:
+    get:
+      summary: Get CARP status
+      operationId: getCarpStatus
+      tags: [HA]
+      responses:
+        '200':
+          description: CARP interfaces
+
+  /api/v1/ha/carp/{name}:
+    get:
+      summary: Get CARP interface status
+      operationId: getCarpInterface
+      tags: [HA]
+      parameters:
+        - $ref: '#/components/parameters/InterfaceName'
+      responses:
+        '200':
+          description: CARP interface status
+    put:
+      summary: Configure CARP interface
+      operationId: configureCarpInterface
+      tags: [HA]
+      parameters:
+        - $ref: '#/components/parameters/InterfaceName'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CarpConfig'
+      responses:
+        '200':
+          description: CARP configured
+
+  /api/v1/ha/pfsync:
+    get:
+      summary: Get pfsync status
+      operationId: getPfsync
+      tags: [HA]
+      responses:
+        '200':
+          description: pfsync status
+
+  /api/v1/dhcp/leases:
+    get:
+      summary: Get DHCP leases
+      operationId: getDhcpLeases
+      tags: [DHCP]
+      responses:
+        '200':
+          description: DHCP leases
+
+  /api/v1/dhcp/subnets:
+    get:
+      summary: Get DHCP subnets
+      operationId: getDhcpSubnets
+      tags: [DHCP]
+      responses:
+        '200':
+          description: DHCP subnets
+
+  /api/v1/dns:
+    get:
+      summary: Get DNS configuration
+      operationId: getDnsConfig
+      tags: [DNS]
+      responses:
+        '200':
+          description: DNS configuration
+
+  /api/v1/dns/flush:
+    post:
+      summary: Flush DNS cache
+      operationId: flushDnsCache
+      tags: [DNS]
+      responses:
+        '200':
+          description: DNS cache flushed
+
+  /api/v1/services:
+    get:
+      summary: List all services
+      operationId: getServices
+      tags: [Services]
+      responses:
+        '200':
+          description: Service list
+
+  /api/v1/services/{name}:
+    get:
+      summary: Get service status
+      operationId: getService
+      tags: [Services]
+      parameters:
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Service status
+    post:
+      summary: Control service
+      operationId: serviceAction
+      tags: [Services]
+      parameters:
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ServiceAction'
+      responses:
+        '200':
+          description: Action completed
+
+  /api/v1/config:
+    get:
+      summary: Get running configuration
+      operationId: getRunningConfig
+      tags: [Config]
+      responses:
+        '200':
+          description: Running configuration
+
+  /api/v1/config/running:
+    get:
+      summary: Get running configuration
+      operationId: getRunningConfig2
+      tags: [Config]
+      responses:
+        '200':
+          description: Running configuration
+
+  /api/v1/config/startup:
+    get:
+      summary: Get startup configuration
+      operationId: getStartupConfig
+      tags: [Config]
+      responses:
+        '200':
+          description: Startup configuration
+
+  /api/v1/config/diff:
+    get:
+      summary: Get config diff
+      operationId: getConfigDiff
+      tags: [Config]
+      responses:
+        '200':
+          description: Configuration diff
+
+  /api/v1/config/save:
+    post:
+      summary: Save running to startup
+      operationId: saveConfig
+      tags: [Config]
+      responses:
+        '200':
+          description: Configuration saved
+
+  /api/v1/config/validate:
+    post:
+      summary: Validate configuration
+      operationId: validateConfig
+      tags: [Config]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                config:
+                  type: string
+              required: [config]
+      responses:
+        '200':
+          description: Validation result
+
+  /api/v1/config/apply:
+    post:
+      summary: Apply configuration
+      operationId: applyConfig
+      tags: [Config]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                config:
+                  type: string
+              required: [config]
+      responses:
+        '200':
+          description: Configuration applied
+
+  /api/v1/config/backups:
+    get:
+      summary: List configuration backups
+      operationId: listBackups
+      tags: [Config]
+      responses:
+        '200':
+          description: Backup list
+    post:
+      summary: Create configuration backup
+      operationId: createBackup
+      tags: [Config]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+      responses:
+        '200':
+          description: Backup created
+
+  /api/v1/config/backups/{name}/restore:
+    post:
+      summary: Restore configuration backup
+      operationId: restoreBackup
+      tags: [Config]
+      parameters:
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Backup restored
+
+  /api/v1/config/backups/{name}:
+    delete:
+      summary: Delete configuration backup
+      operationId: deleteBackup
+      tags: [Config]
+      parameters:
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Backup deleted
+
+  /api/v1/auth/login:
+    post:
+      summary: Login
+      operationId: login
+      tags: [Auth]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Session'
+        '401':
+          description: Invalid credentials
+
+  /api/v1/auth/logout:
+    post:
+      summary: Logout
+      operationId: logout
+      tags: [Auth]
+      responses:
+        '200':
+          description: Logged out
+
+  /api/v1/auth/users:
+    get:
+      summary: List users
+      operationId: getUsers
+      tags: [Auth]
+      responses:
+        '200':
+          description: User list
+    post:
+      summary: Create user
+      operationId: createUser
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                password:
+                  type: string
+                role:
+                  type: string
+                  enum: [admin, operator, viewer]
+              required: [username, password, role]
+      responses:
+        '200':
+          description: User created
+
+  /api/v1/auth/users/{username}:
+    delete:
+      summary: Delete user
+      operationId: deleteUser
+      tags: [Auth]
+      parameters:
+        - name: username
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: User deleted
+
+  /api/v1/auth/users/{username}/apikey:
+    post:
+      summary: Create API key
+      operationId: createApiKey
+      tags: [Auth]
+      parameters:
+        - name: username
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                expiry:
+                  type: string
+                  description: Duration (e.g., "720h" for 30 days)
+      responses:
+        '200':
+          description: API key created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  api_key:
+                    type: string
+
+  /metrics:
+    get:
+      summary: Prometheus metrics
+      operationId: getMetrics
+      security: []
+      responses:
+        '200':
+          description: Prometheus metrics
+          content:
+            text/plain:
+              schema:
+                type: string
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+    BearerAuth:
+      type: http
+      scheme: bearer
+
+  parameters:
+    InterfaceName:
+      name: name
+      in: path
+      required: true
+      schema:
+        type: string
+      description: Interface name (e.g., em0, wg0)
+
+  schemas:
+    Response:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: object
+        error:
+          type: string
+        meta:
+          $ref: '#/components/schemas/Meta'
+
+    Meta:
+      type: object
+      properties:
+        total:
+          type: integer
+        page:
+          type: integer
+        page_size:
+          type: integer
+        version:
+          type: string
+
+    ApiInfo:
+      type: object
+      properties:
+        name:
+          type: string
+        version:
+          type: string
+        docs:
+          type: string
+        endpoints:
+          type: object
+
+    CommandRequest:
+      type: object
+      properties:
+        command:
+          type: string
+          description: NSH command to execute
+        timeout:
+          type: integer
+          description: Timeout in seconds
+      required: [command]
+
+    CommandResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: object
+          properties:
+            command:
+              type: string
+            output:
+              type: string
+            exit_code:
+              type: integer
+            duration:
+              type: string
+
+    InterfaceConfig:
+      type: object
+      properties:
+        description:
+          type: string
+        ipv4_addresses:
+          type: array
+          items:
+            type: string
+        ipv6_addresses:
+          type: array
+          items:
+            type: string
+        mtu:
+          type: integer
+        admin_up:
+          type: boolean
+
+    RouteConfig:
+      type: object
+      properties:
+        destination:
+          type: string
+        gateway:
+          type: string
+        interface:
+          type: string
+        priority:
+          type: integer
+        label:
+          type: string
+      required: [destination]
+
+    WireGuardConfig:
+      type: object
+      properties:
+        listen_port:
+          type: integer
+        private_key:
+          type: string
+
+    WireGuardPeerConfig:
+      type: object
+      properties:
+        public_key:
+          type: string
+        endpoint:
+          type: string
+        allowed_ips:
+          type: array
+          items:
+            type: string
+        preshared_key:
+          type: string
+        persistent_keepalive:
+          type: integer
+      required: [public_key]
+
+    CarpConfig:
+      type: object
+      properties:
+        vhid:
+          type: integer
+        advbase:
+          type: integer
+        advskew:
+          type: integer
+        pass:
+          type: string
+        virtual_ip:
+          type: string
+
+    ServiceAction:
+      type: object
+      properties:
+        action:
+          type: string
+          enum: [start, stop, restart, reload, enable, disable]
+      required: [action]
+
+    LoginRequest:
+      type: object
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+      required: [username, password]
+
+    Session:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: object
+          properties:
+            token:
+              type: string
+            username:
+              type: string
+            role:
+              type: string
+            created_at:
+              type: string
+              format: date-time
+            expires_at:
+              type: string
+              format: date-time

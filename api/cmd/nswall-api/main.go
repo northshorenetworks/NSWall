@@ -1,0 +1,343 @@
+// NSWall API Server
+// Comprehensive REST API for NSWall/NSH network appliance automation
+package main
+
+import (
+	"context"
+	"flag"
+	"log"
+	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
+
+	"github.com/go-chi/chi/v5"
+	chimw "github.com/go-chi/chi/v5/middleware"
+
+	"github.com/northshorenetworks/nswall/api/internal/handlers"
+	"github.com/northshorenetworks/nswall/api/internal/middleware"
+	"github.com/northshorenetworks/nswall/api/internal/services"
+)
+
+var (
+	listenAddr     = flag.String("listen", "127.0.0.1:8080", "API listen address")
+	nshPath        = flag.String("nsh", "/usr/local/bin/nsh", "Path to nsh binary")
+	dataDir        = flag.String("data", "/var/db/nswall-api", "Data directory for API state")
+	apiKey         = flag.String("apikey", "", "Static API key for authentication (optional)")
+	enableAuth     = flag.Bool("auth", false, "Enable authentication (default: false)")
+	corsOrigins    = flag.String("cors", "", "Allowed CORS origins (comma-separated)")
+	rateLimit      = flag.Int("rate-limit", 100, "Rate limit per minute (0 to disable)")
+	readTimeout    = flag.Duration("read-timeout", 10*time.Second, "HTTP read timeout")
+	writeTimeout   = flag.Duration("write-timeout", 30*time.Second, "HTTP write timeout")
+	version        = "2.0.0"
+)
+
+func main() {
+	flag.Parse()
+
+	log.Printf("NSWall API Server v%s starting...", version)
+	log.Printf("Listening on %s", *listenAddr)
+
+	// Create data directory
+	if err := os.MkdirAll(*dataDir, 0700); err != nil {
+		log.Printf("Warning: failed to create data directory: %v", err)
+	}
+
+	// Create handler with all services
+	h := handlers.NewHandler(*nshPath, *dataDir, version)
+
+	// Create router
+	r := chi.NewRouter()
+
+	// Base middleware
+	r.Use(chimw.RequestID)
+	r.Use(chimw.RealIP)
+	r.Use(chimw.Logger)
+	r.Use(chimw.Recoverer)
+	r.Use(chimw.Timeout(60 * time.Second))
+	r.Use(middleware.JSONContentType)
+
+	// CORS if configured
+	if *corsOrigins != "" {
+		origins := splitAndTrim(*corsOrigins, ",")
+		r.Use(middleware.CORS(origins))
+	}
+
+	// Rate limiting if enabled
+	if *rateLimit > 0 {
+		rl := middleware.NewRateLimiter(*rateLimit, time.Minute)
+		r.Use(rl.Middleware)
+	}
+
+	// Public routes (no auth required)
+	r.Get("/", h.Root)
+	r.Get("/health", h.Health)
+	r.Get("/api/v1", h.Root)
+
+	// Auth routes (login doesn't require auth)
+	r.Post("/api/v1/auth/login", h.Login)
+
+	// API v1 routes
+	r.Route("/api/v1", func(r chi.Router) {
+		// Apply authentication if enabled
+		if *enableAuth {
+			r.Use(middleware.APIKeyAuth(h.Auth, *apiKey))
+		} else if *apiKey != "" {
+			// Simple API key auth only
+			r.Use(simpleAPIKeyAuth(*apiKey))
+		}
+
+		// System endpoints
+		r.Route("/system", func(r chi.Router) {
+			r.Get("/", h.GetSystemInfo)
+			r.Get("/info", h.GetSystemInfo)
+			r.Get("/version", h.GetVersion)
+			r.Get("/memory", h.GetMemory)
+			r.Get("/disks", h.GetDisks)
+			r.Get("/logs", h.GetLogs)
+		})
+
+		// Command execution
+		r.Post("/command", h.RunCommand)
+
+		// Interface endpoints
+		r.Route("/interfaces", func(r chi.Router) {
+			r.Get("/", h.GetInterfaces)
+			r.Get("/{name}", h.GetInterface)
+			r.Put("/{name}", h.ConfigureInterface)
+			r.Patch("/{name}", h.ConfigureInterface)
+		})
+
+		// Routing endpoints
+		r.Route("/routes", func(r chi.Router) {
+			r.Get("/", h.GetRoutes)
+			r.Post("/", h.AddRoute)
+			r.Delete("/{destination}", h.DeleteRoute)
+		})
+
+		// ARP endpoints
+		r.Route("/arp", func(r chi.Router) {
+			r.Get("/", h.GetArpTable)
+			r.Delete("/{ip}", h.DeleteArpEntry)
+			r.Post("/flush", h.FlushArpTable)
+		})
+
+		// Firewall (PF) endpoints
+		r.Route("/pf", func(r chi.Router) {
+			r.Get("/", h.GetPFInfo)
+			r.Get("/info", h.GetPFInfo)
+			r.Get("/stats", h.GetPFStats)
+			r.Get("/rules", h.GetPFRules)
+			r.Get("/states", h.GetPFStates)
+			r.Delete("/states", h.KillPFStates)
+			r.Post("/enable", h.EnablePF)
+			r.Post("/disable", h.DisablePF)
+			r.Post("/reload", h.ReloadPF)
+
+			// Tables
+			r.Route("/tables", func(r chi.Router) {
+				r.Get("/", h.GetPFTables)
+				r.Get("/{name}", h.GetPFTable)
+				r.Post("/{name}", h.AddPFTableAddress)
+				r.Delete("/{name}/{address}", h.DeletePFTableAddress)
+				r.Post("/{name}/flush", h.FlushPFTable)
+			})
+		})
+
+		// VPN endpoints
+		r.Route("/vpn", func(r chi.Router) {
+			// WireGuard
+			r.Route("/wireguard", func(r chi.Router) {
+				r.Get("/", h.GetWireGuardInterfaces)
+				r.Post("/", h.CreateWireGuardInterface)
+				r.Get("/{name}", h.GetWireGuardInterface)
+				r.Put("/{name}", h.ConfigureWireGuard)
+				r.Post("/{name}/peers", h.AddWireGuardPeer)
+				r.Delete("/{name}/peers/{publicKey}", h.DeleteWireGuardPeer)
+				r.Post("/keygen", h.GenerateWireGuardKey)
+			})
+
+			// IKE/IPsec
+			r.Get("/ike/sas", h.GetIKESAs)
+			r.Get("/ipsec/sas", h.GetIPSecSAs)
+		})
+
+		// High Availability endpoints
+		r.Route("/ha", func(r chi.Router) {
+			// CARP
+			r.Route("/carp", func(r chi.Router) {
+				r.Get("/", h.GetCARPStatus)
+				r.Get("/{name}", h.GetCARPInterface)
+				r.Put("/{name}", h.ConfigureCARPInterface)
+			})
+
+			// pfsync
+			r.Get("/pfsync", h.GetPFSync)
+		})
+
+		// DHCP endpoints
+		r.Route("/dhcp", func(r chi.Router) {
+			r.Get("/leases", h.GetDHCPLeases)
+			r.Get("/subnets", h.GetDHCPSubnets)
+		})
+
+		// DNS endpoints
+		r.Route("/dns", func(r chi.Router) {
+			r.Get("/", h.GetDNSConfig)
+			r.Get("/config", h.GetDNSConfig)
+			r.Post("/flush", h.FlushDNSCache)
+		})
+
+		// Service management endpoints
+		r.Route("/services", func(r chi.Router) {
+			r.Get("/", h.GetServices)
+			r.Get("/{name}", h.GetService)
+			r.Post("/{name}", h.ServiceAction)
+		})
+
+		// Configuration endpoints
+		r.Route("/config", func(r chi.Router) {
+			r.Get("/", h.GetRunningConfig)
+			r.Get("/running", h.GetRunningConfig)
+			r.Get("/startup", h.GetStartupConfig)
+			r.Get("/diff", h.GetConfigDiff)
+			r.Post("/save", h.SaveConfig)
+			r.Post("/validate", h.ValidateConfig)
+			r.Post("/apply", h.ApplyConfig)
+
+			// Backups
+			r.Route("/backups", func(r chi.Router) {
+				r.Get("/", h.ListBackups)
+				r.Post("/", h.BackupConfig)
+				r.Post("/{name}/restore", h.RestoreBackup)
+				r.Delete("/{name}", h.DeleteBackup)
+			})
+		})
+
+		// Auth management endpoints (only when auth is enabled)
+		if *enableAuth {
+			r.Route("/auth", func(r chi.Router) {
+				r.Post("/logout", h.Logout)
+
+				// User management (admin only)
+				r.Route("/users", func(r chi.Router) {
+					r.Use(middleware.RequireRole(h.Auth, "users:read"))
+					r.Get("/", h.GetUsers)
+
+					r.Group(func(r chi.Router) {
+						r.Use(middleware.RequireRole(h.Auth, "users:write"))
+						r.Post("/", h.CreateUser)
+						r.Delete("/{username}", h.DeleteUser)
+						r.Post("/{username}/apikey", h.CreateAPIKey)
+					})
+				})
+			})
+		}
+	})
+
+	// Legacy routes for backwards compatibility
+	r.Get("/api/v1/status", h.GetSystemInfo)
+	r.Get("/api/v1/version", h.GetVersion)
+
+	// Server with graceful shutdown
+	srv := &http.Server{
+		Addr:         *listenAddr,
+		Handler:      r,
+		ReadTimeout:  *readTimeout,
+		WriteTimeout: *writeTimeout,
+		IdleTimeout:  60 * time.Second,
+	}
+
+	// Start server in goroutine
+	go func() {
+		log.Printf("API server ready")
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatalf("Server error: %v", err)
+		}
+	}()
+
+	// Wait for interrupt
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+
+	log.Println("Shutting down server...")
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	if err := srv.Shutdown(ctx); err != nil {
+		log.Fatalf("Server shutdown error: %v", err)
+	}
+	log.Println("Server stopped")
+}
+
+// simpleAPIKeyAuth is a simple API key middleware for when full auth is disabled
+func simpleAPIKeyAuth(key string) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			apiKey := r.Header.Get("X-API-Key")
+			if apiKey == "" {
+				apiKey = r.URL.Query().Get("api_key")
+			}
+
+			if apiKey != key {
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(http.StatusUnauthorized)
+				w.Write([]byte(`{"success":false,"error":"Invalid or missing API key"}`))
+				return
+			}
+
+			next.ServeHTTP(w, r)
+		})
+	}
+}
+
+func splitAndTrim(s, sep string) []string {
+	if s == "" {
+		return nil
+	}
+	parts := make([]string, 0)
+	for _, p := range splitString(s, sep) {
+		p = trimString(p)
+		if p != "" {
+			parts = append(parts, p)
+		}
+	}
+	return parts
+}
+
+func splitString(s, sep string) []string {
+	var result []string
+	for len(s) > 0 {
+		idx := indexString(s, sep)
+		if idx < 0 {
+			result = append(result, s)
+			break
+		}
+		result = append(result, s[:idx])
+		s = s[idx+len(sep):]
+	}
+	return result
+}
+
+func indexString(s, sep string) int {
+	for i := 0; i <= len(s)-len(sep); i++ {
+		if s[i:i+len(sep)] == sep {
+			return i
+		}
+	}
+	return -1
+}
+
+func trimString(s string) string {
+	start := 0
+	end := len(s)
+	for start < end && (s[start] == ' ' || s[start] == '\t') {
+		start++
+	}
+	for end > start && (s[end-1] == ' ' || s[end-1] == '\t') {
+		end--
+	}
+	return s[start:end]
+}

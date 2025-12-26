@@ -1,0 +1,14 @@
+#!/bin/ksh
+#
+# $OpenBSD$
+
+daemon="/usr/local/bin/nswall-api"
+daemon_flags="-listen 127.0.0.1:8080"
+daemon_user="_nswall"
+
+. /etc/rc.d/rc.subr
+
+rc_bg=YES
+rc_reload=NO
+
+rc_cmd $1
