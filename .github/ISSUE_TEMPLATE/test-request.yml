@@ -1,0 +1,111 @@
+name: Test Request
+description: Suggest a new performance or capacity test based on your use case
+title: "[Test Request] "
+labels: ["test-request", "community"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Request a New Test
+
+        Help us test scenarios that matter to you! We'll add tests based on real-world use cases.
+
+        See our [Test Library](https://northshorenetworks.github.io/NSWall/metrics/library.html) for existing tests.
+
+  - type: dropdown
+    id: category
+    attributes:
+      label: Category
+      description: What area does this test cover?
+      options:
+        - PF Filter Rules
+        - PF NAT Rules
+        - PF Tables
+        - PF States
+        - BGP Routing
+        - OSPF Routing
+        - IPsec/VPN
+        - Fleet Management (NATS)
+        - High Availability
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: scenario
+    attributes:
+      label: Real-World Scenario
+      description: Describe your actual use case that this test would validate
+      placeholder: |
+        Example: "We have 200 branch offices, each with 10 local subnets.
+        All sites connect via IPsec to 2 redundant hub firewalls. During
+        maintenance, we need all tunnels to fail over within 30 seconds."
+    validations:
+      required: true
+
+  - type: textarea
+    id: scale
+    attributes:
+      label: Scale / Numbers
+      description: Specific quantities for the test
+      placeholder: |
+        - 200 IPsec tunnels
+        - 2,000 routes (10 per tunnel × 200 sites)
+        - 500 filter rules
+        - 50,000 table entries (blocklist)
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: metrics
+    attributes:
+      label: What Should We Measure?
+      description: Select all that apply
+      options:
+        - label: Configuration parse time
+        - label: Configuration load time
+        - label: Failover/convergence time
+        - label: Memory usage
+        - label: CPU usage
+        - label: Throughput (packets/bytes per second)
+        - label: Latency
+        - label: Maximum capacity (find the limit)
+
+  - type: textarea
+    id: success-criteria
+    attributes:
+      label: Success Criteria
+      description: What does "good" look like?
+      placeholder: |
+        Example: "Config reload should complete in under 10 seconds.
+        Memory usage should stay under 2GB."
+
+  - type: textarea
+    id: hardware
+    attributes:
+      label: Hardware Context (Optional)
+      description: Your deployment hardware, if relevant
+      placeholder: |
+        - CPU: 4 cores @ 3.0GHz
+        - RAM: 8GB
+        - Storage: SSD
+        - Network: 10Gbps
+
+  - type: textarea
+    id: current-baseline
+    attributes:
+      label: Current Observation (Optional)
+      description: If you've measured this yourself, what did you find?
+      placeholder: |
+        "Currently seeing 45 second reload times, causes
+        customer-visible outage during failover."
+
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Acknowledgments
+      options:
+        - label: I've checked the [existing test library](https://northshorenetworks.github.io/NSWall/metrics/library.html) and this test doesn't exist
+          required: true
+        - label: This is based on a real deployment scenario (not hypothetical)
+          required: true
