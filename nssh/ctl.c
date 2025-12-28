@@ -247,6 +247,22 @@ struct ctl ctl_inet[] = {
 	{ 0, 0, { 0 }, 0, 0 }
 };
 
+struct ctl ctl_wg[] = {
+	{ "enable",     "enable WireGuard interfaces",
+	    { "/bin/sh", "-c", "for i in /etc/hostname.wg*; do [ -f \"$i\" ] && sh /etc/netstart ${i##*/hostname.}; done", NULL }, NULL, X_ENABLE },
+	{ "disable",    "disable WireGuard interfaces",
+	    { "/bin/sh", "-c", "for i in $(ifconfig wg 2>/dev/null | grep ^wg | cut -d: -f1); do ifconfig $i destroy 2>/dev/null; done", NULL }, NULL, X_DISABLE },
+	{ "edit",       "edit WireGuard configuration",
+	    { "wireguard", NULL, NULL }, call_editor, NULL },
+	{ "genkey",     "generate new private key",
+	    { "/bin/sh", "-c", "openssl rand -base64 32", NULL }, NULL, NULL },
+	{ "genpsk",     "generate preshared key",
+	    { "/bin/sh", "-c", "openssl rand -base64 32", NULL }, NULL, NULL },
+	{ "pubkey",     "derive public key from private key",
+	    { "/bin/sh", "-c", "echo 'Enter private key:' && read key && echo $key | openssl ec -pubout 2>/dev/null | tail -2 | head -1", NULL }, NULL, NULL },
+	{ 0, 0, { 0 }, 0, 0 }
+};
+
 struct daemons ctl_daemons[] = {
 	{ "pf",		"PF",	ctl_pf,		PFCONF_TEMP,	0600, 1 },
 	{ "ospf",	"OSPF", ctl_ospf,	OSPFCONF_TEMP,	0600, 0 },
@@ -263,6 +279,7 @@ struct daemons ctl_daemons[] = {
 	{ "ftp-proxy",  "FTP proxy", ctl_ftpproxy, FTPPROXY_TEMP, 0600, 0 },
 	{ "dns", 	"DNS", ctl_dns,		RESOLVCONF_TEMP,0644, 0 },
 	{ "inet",	"Inet", ctl_inet,	INETCONF_TEMP,	0600, 0 },
+	{ "wireguard",	"WireGuard", ctl_wg,	WGCONF_TEMP,	0600, 0 },
 	{ 0, 0, 0, 0, 0 }
 };
 

@@ -168,6 +168,7 @@ extern struct ctl ctl_ntp[];
 extern struct ctl ctl_ftpproxy[];
 extern struct ctl ctl_dns[];
 extern struct ctl ctl_inet[];
+extern struct ctl ctl_wg[];
 void flag_x(char *, int *, char *);
 
 /* commands.c */
@@ -434,3 +435,13 @@ void inithist(void);
 void endhist(void);
 void initedit(void);
 void endedit(void);
+
+/* wg.c */
+#define IFCONFIG	"/sbin/ifconfig"
+#define WGCONF_TEMP	"/var/run/wg.conf"
+int intwg(char *, int, int, char **);
+int intwgkey(char *, int, int, char **);
+int intwgrtable(char *, int, int, char **);
+int show_wg(int, char **);
+void wg_stats(void);
+int conf_wg(FILE *, int, char *);
