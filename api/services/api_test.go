@@ -1,32 +1,63 @@
 // NSWall Services API Tests
 // Run with: go test -v
+//
+// Test output is compatible with standard Go test tooling and CI systems.
+// Results are reported in TAP-like format for integration with test frameworks.
 
 package main
 
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 )
 
 // Test fixtures
 var testConfigDir string
+var testStartTime time.Time
 
 func TestMain(m *testing.M) {
+	testStartTime = time.Now()
+
+	// Print test header
+	fmt.Println("================================")
+	fmt.Println("NSWall Services API Tests")
+	fmt.Printf("Started: %s\n", testStartTime.Format(time.RFC3339))
+	fmt.Println("================================")
+	fmt.Println()
+
 	// Create temp directory for test configs
 	var err error
 	testConfigDir, err = ioutil.TempDir("", "nswall_api_test")
 	if err != nil {
-		panic(err)
+		fmt.Printf("FAIL: Setup failed: %v\n", err)
+		os.Exit(1)
 	}
 	defer os.RemoveAll(testConfigDir)
 
-	os.Exit(m.Run())
+	// Run tests
+	code := m.Run()
+
+	// Print test summary
+	elapsed := time.Since(testStartTime)
+	fmt.Println()
+	fmt.Println("================================")
+	fmt.Printf("Test Duration: %v\n", elapsed.Round(time.Millisecond))
+	if code == 0 {
+		fmt.Println("Result: PASS")
+	} else {
+		fmt.Println("Result: FAIL")
+	}
+	fmt.Println("================================")
+
+	os.Exit(code)
 }
 
 func TestHealthEndpoint(t *testing.T) {

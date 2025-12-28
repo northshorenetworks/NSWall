@@ -13,6 +13,16 @@ LDADD=-ledit -ltermcap #-static
 
 NOMAN=1
 
+# Test targets
+test:
+	@echo "================================"
+	@echo "NSsh Unit and Integration Tests"
+	@echo "================================"
+	cd ${.CURDIR}/tests && make test
+
+test-clean:
+	cd ${.CURDIR}/tests && make clean
+
 compile.c: compile.sh
 	sh ${.CURDIR}/misc-precompile.sh
 	sh ${.CURDIR}/compile.sh
