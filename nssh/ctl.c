@@ -64,6 +64,230 @@ void ctl_symlink(char *, char **, char *);
 int rule_writeline(char *, mode_t, char *);
 int acq_lock(char *);
 void rls_lock(int);
+void ctl_show_config(char *, char **, char *);
+void ctl_show_status(char *, char **, char *);
+void ctl_set_config(char *, char **, char *);
+void ctl_unset_config(char *, char **, char *);
+void ctl_append_config(char *, char **, char *);
+void ctl_init_config(char *, char **, char *);
+
+/* Show config file contents */
+void
+ctl_show_config(char *conffile, char **notused, char *notused2)
+{
+	FILE *f;
+	char line[1024];
+
+	f = fopen(conffile, "r");
+	if (f == NULL) {
+		printf("%% Configuration file %s not found\n", conffile);
+		printf("%% Use 'init' to create default configuration\n");
+		return;
+	}
+	printf("%% Configuration: %s\n", conffile);
+	printf("%% ----------------------------------------\n");
+	while (fgets(line, sizeof(line), f) != NULL) {
+		printf("%s", line);
+	}
+	printf("%% ----------------------------------------\n");
+	fclose(f);
+}
+
+/* Show daemon status */
+void
+ctl_show_status(char *daemon, char **notused, char *notused2)
+{
+	char cmd[256];
+	FILE *f;
+	char line[64];
+	int found = 0;
+
+	snprintf(cmd, sizeof(cmd), "/usr/bin/pgrep -l %s 2>/dev/null", daemon);
+	f = popen(cmd, "r");
+	if (f != NULL) {
+		while (fgets(line, sizeof(line), f) != NULL) {
+			if (!found) {
+				printf("%% %s is running:\n", daemon);
+				found = 1;
+			}
+			printf("%%   PID %s", line);
+		}
+		pclose(f);
+	}
+	if (!found) {
+		printf("%% %s is not running\n", daemon);
+	}
+}
+
+/* Set/replace a config line (key value) */
+void
+ctl_set_config(char *conffile, char **args, char *notused)
+{
+	FILE *f, *tmp;
+	char tmpfile[256];
+	char line[1024];
+	char *key = args[1];
+	char *value = args[2];
+	int found = 0;
+
+	if (key == NULL) {
+		printf("%% Usage: set <key> <value>\n");
+		return;
+	}
+
+	snprintf(tmpfile, sizeof(tmpfile), "%s.tmp", conffile);
+
+	f = fopen(conffile, "r");
+	tmp = fopen(tmpfile, "w");
+	if (tmp == NULL) {
+		printf("%% Cannot write to %s\n", tmpfile);
+		if (f) fclose(f);
+		return;
+	}
+
+	/* Read existing config and replace matching line */
+	if (f != NULL) {
+		while (fgets(line, sizeof(line), f) != NULL) {
+			if (strncmp(line, key, strlen(key)) == 0 &&
+			    (line[strlen(key)] == ' ' || line[strlen(key)] == '\t')) {
+				found = 1;
+				if (value)
+					fprintf(tmp, "%s %s\n", key, value);
+				else
+					fprintf(tmp, "%s\n", key);
+			} else {
+				fprintf(tmp, "%s", line);
+			}
+		}
+		fclose(f);
+	}
+
+	/* Append if not found */
+	if (!found) {
+		if (value)
+			fprintf(tmp, "%s %s\n", key, value);
+		else
+			fprintf(tmp, "%s\n", key);
+	}
+
+	fclose(tmp);
+	rename(tmpfile, conffile);
+	chmod(conffile, 0600);
+	printf("%% Configuration updated\n");
+}
+
+/* Remove a config line */
+void
+ctl_unset_config(char *conffile, char **args, char *notused)
+{
+	FILE *f, *tmp;
+	char tmpfile[256];
+	char line[1024];
+	char *key = args[1];
+	int removed = 0;
+
+	if (key == NULL) {
+		printf("%% Usage: unset <key>\n");
+		return;
+	}
+
+	snprintf(tmpfile, sizeof(tmpfile), "%s.tmp", conffile);
+
+	f = fopen(conffile, "r");
+	if (f == NULL) {
+		printf("%% Configuration file not found\n");
+		return;
+	}
+
+	tmp = fopen(tmpfile, "w");
+	if (tmp == NULL) {
+		printf("%% Cannot write to %s\n", tmpfile);
+		fclose(f);
+		return;
+	}
+
+	while (fgets(line, sizeof(line), f) != NULL) {
+		if (strncmp(line, key, strlen(key)) == 0 &&
+		    (line[strlen(key)] == ' ' || line[strlen(key)] == '\t' ||
+		     line[strlen(key)] == '\n')) {
+			removed = 1;
+			continue;
+		}
+		fprintf(tmp, "%s", line);
+	}
+
+	fclose(f);
+	fclose(tmp);
+	rename(tmpfile, conffile);
+	chmod(conffile, 0600);
+
+	if (removed)
+		printf("%% Configuration line removed\n");
+	else
+		printf("%% Key not found in configuration\n");
+}
+
+/* Append a line to config */
+void
+ctl_append_config(char *conffile, char **args, char *notused)
+{
+	FILE *f;
+	char *line = args[1];
+	int i;
+
+	if (line == NULL) {
+		printf("%% Usage: append <config line>\n");
+		return;
+	}
+
+	f = fopen(conffile, "a");
+	if (f == NULL) {
+		printf("%% Cannot open %s for writing\n", conffile);
+		return;
+	}
+
+	/* Write all remaining args as one line */
+	for (i = 1; args[i] != NULL; i++) {
+		fprintf(f, "%s", args[i]);
+		if (args[i+1] != NULL)
+			fprintf(f, " ");
+	}
+	fprintf(f, "\n");
+	fclose(f);
+	chmod(conffile, 0600);
+	printf("%% Configuration line appended\n");
+}
+
+/* Initialize config with defaults */
+void
+ctl_init_config(char *conffile, char **defaults, char *notused)
+{
+	FILE *f;
+	struct stat sb;
+
+	if (stat(conffile, &sb) == 0) {
+		printf("%% Configuration file already exists\n");
+		printf("%% Use 'show' to view or 'set'/'unset' to modify\n");
+		return;
+	}
+
+	f = fopen(conffile, "w");
+	if (f == NULL) {
+		printf("%% Cannot create %s\n", conffile);
+		return;
+	}
+
+	/* Write default config passed in defaults array */
+	if (defaults != NULL && defaults[1] != NULL) {
+		fprintf(f, "%s", defaults[1]);
+	} else {
+		fprintf(f, "# Default configuration\n");
+	}
+
+	fclose(f);
+	chmod(conffile, 0600);
+	printf("%% Default configuration created at %s\n", conffile);
+}
 
 char *ctl_pf_test[] = { PFCTL, "-nf", PFCONF_TEMP, '\0' };
 struct ctl ctl_pf[] = {
@@ -81,13 +305,24 @@ struct ctl ctl_pf[] = {
 };
 
 char *ctl_ospf_test[] = { OSPFD, "-nf", OSPFCONF_TEMP, '\0' };
+char *ctl_ospf_default[] = { NULL, "router-id 0.0.0.0\n", NULL };
 struct ctl ctl_ospf[] = {
 	{ "enable",     "enable service",
 	    { OSPFD, "-f", OSPFCONF_TEMP, NULL }, NULL, X_ENABLE },
 	{ "disable",    "disable service",
 	    { PKILL, "ospfd", NULL }, NULL, X_DISABLE },
-	{ "edit",       "edit configuration",
-	    { "ospf", (char *)ctl_ospf_test, NULL }, call_editor, NULL },
+	{ "show",       "show configuration",
+	    { OSPFCONF_TEMP, NULL, NULL }, ctl_show_config, NULL },
+	{ "status",     "show daemon status",
+	    { "ospfd", NULL, NULL }, ctl_show_status, NULL },
+	{ "set",        "set config <key> <value>",
+	    { OSPFCONF_TEMP, OPT, OPT, NULL }, ctl_set_config, NULL },
+	{ "unset",      "remove config <key>",
+	    { OSPFCONF_TEMP, OPT, NULL }, ctl_unset_config, NULL },
+	{ "append",     "append config line",
+	    { OSPFCONF_TEMP, OPT, OPT, OPT, OPT, NULL }, ctl_append_config, NULL },
+	{ "init",       "create default config",
+	    { OSPFCONF_TEMP, (char *)ctl_ospf_default, NULL }, ctl_init_config, NULL },
 	{ "reload",     "reload service",
 	    { OSPFCTL, "reload", NULL }, NULL, NULL },
 	{ "fib",        "fib couple/decouple",
@@ -96,13 +331,24 @@ struct ctl ctl_ospf[] = {
 };
 
 char *ctl_bgp_test[] = { BGPD, "-nf", BGPCONF_TEMP, NULL, '\0' };
+char *ctl_bgp_default[] = { NULL, "AS 65000\nrouter-id 0.0.0.0\n", NULL };
 struct ctl ctl_bgp[] = {
 	{ "enable",     "enable service",
 	    { BGPD, "-f", BGPCONF_TEMP, NULL }, NULL, X_ENABLE },
 	{ "disable",    "disable service",
 	    { PKILL, "bgpd", NULL }, NULL, X_DISABLE },
-	{ "edit",       "edit configuration",
-	    { "bgp", (char *)ctl_bgp_test, NULL }, call_editor, NULL },
+	{ "show",       "show configuration",
+	    { BGPCONF_TEMP, NULL, NULL }, ctl_show_config, NULL },
+	{ "status",     "show daemon status",
+	    { "bgpd", NULL, NULL }, ctl_show_status, NULL },
+	{ "set",        "set config <key> <value>",
+	    { BGPCONF_TEMP, OPT, OPT, NULL }, ctl_set_config, NULL },
+	{ "unset",      "remove config <key>",
+	    { BGPCONF_TEMP, OPT, NULL }, ctl_unset_config, NULL },
+	{ "append",     "append config line",
+	    { BGPCONF_TEMP, OPT, OPT, OPT, OPT, NULL }, ctl_append_config, NULL },
+	{ "init",       "create default config",
+	    { BGPCONF_TEMP, (char *)ctl_bgp_default, NULL }, ctl_init_config, NULL },
 	{ "reload",     "reload service",
 	    { BGPCTL, "reload", NULL }, NULL, NULL },
 	{ "fib",	"fib couple/decouple",
@@ -117,13 +363,24 @@ struct ctl ctl_bgp[] = {
 };
 
 char *ctl_rip_test[] = { RIPD, "-nf", RIPCONF_TEMP, '\0' };
+char *ctl_rip_default[] = { NULL, "# RIP Configuration\n", NULL };
 struct ctl ctl_rip[] = {
 	{ "enable",     "enable service",
 	    { RIPD, "-f", RIPCONF_TEMP, NULL }, NULL, X_ENABLE },
 	{ "disable",    "disable service",
 	    { PKILL, "ripd", NULL }, NULL, X_DISABLE },
-	{ "edit",       "edit configuration",
-	    { "rip", (char *)ctl_rip_test, NULL }, call_editor, NULL },
+	{ "show",       "show configuration",
+	    { RIPCONF_TEMP, NULL, NULL }, ctl_show_config, NULL },
+	{ "status",     "show daemon status",
+	    { "ripd", NULL, NULL }, ctl_show_status, NULL },
+	{ "set",        "set config <key> <value>",
+	    { RIPCONF_TEMP, OPT, OPT, NULL }, ctl_set_config, NULL },
+	{ "unset",      "remove config <key>",
+	    { RIPCONF_TEMP, OPT, NULL }, ctl_unset_config, NULL },
+	{ "append",     "append config line",
+	    { RIPCONF_TEMP, OPT, OPT, OPT, OPT, NULL }, ctl_append_config, NULL },
+	{ "init",       "create default config",
+	    { RIPCONF_TEMP, (char *)ctl_rip_default, NULL }, ctl_init_config, NULL },
 	{ "reload",     "reload service",
 	    { RIPCTL, "reload", NULL }, NULL, NULL },
 	{ "fib",        "fib couple/decouple",
@@ -166,47 +423,91 @@ struct ctl ctl_sasync[] = {
 };
 
 char *ctl_dhcp_test[] = { DHCPD, "-nc", DHCPCONF_TEMP, '\0' };
+char *ctl_dhcp_default[] = { NULL, "option domain-name-servers 8.8.8.8;\ndefault-lease-time 600;\nmax-lease-time 7200;\n", NULL };
 struct ctl ctl_dhcp[] = {
 	{ "enable",     "enable service",
 	    { DHCPD, "-c", DHCPCONF_TEMP, NULL }, NULL, X_ENABLE },
 	{ "disable",    "disable service",
 	    { PKILL, "dhcpd", NULL }, NULL, X_DISABLE },
-	{ "edit",       "edit configuration",
-	    { "dhcp", (char *)ctl_dhcp_test, NULL }, call_editor, NULL },
+	{ "show",       "show configuration",
+	    { DHCPCONF_TEMP, NULL, NULL }, ctl_show_config, NULL },
+	{ "status",     "show daemon status",
+	    { "dhcpd", NULL, NULL }, ctl_show_status, NULL },
+	{ "set",        "set config <key> <value>",
+	    { DHCPCONF_TEMP, OPT, OPT, NULL }, ctl_set_config, NULL },
+	{ "unset",      "remove config <key>",
+	    { DHCPCONF_TEMP, OPT, NULL }, ctl_unset_config, NULL },
+	{ "append",     "append config line",
+	    { DHCPCONF_TEMP, OPT, OPT, OPT, OPT, NULL }, ctl_append_config, NULL },
+	{ "init",       "create default config",
+	    { DHCPCONF_TEMP, (char *)ctl_dhcp_default, NULL }, ctl_init_config, NULL },
 	{ 0, 0, { 0 }, 0, 0 }
 };
 
 char *ctl_snmp_test[] = { SNMPD, "-nf", SNMPCONF_TEMP, '\0' };
+char *ctl_snmp_default[] = { NULL, "listen on 127.0.0.1\n", NULL };
 struct ctl ctl_snmp[] = {
 	{ "enable",     "enable service",
 	    { SNMPD, "-f", SNMPCONF_TEMP, NULL }, NULL, X_ENABLE },
 	{ "disable",    "disable service",
 	    { PKILL, "snmpd", NULL }, NULL, X_DISABLE },
-	{ "edit",       "edit configuration",
-	    { "snmp", (char *)ctl_snmp_test, NULL }, call_editor, NULL },
+	{ "show",       "show configuration",
+	    { SNMPCONF_TEMP, NULL, NULL }, ctl_show_config, NULL },
+	{ "status",     "show daemon status",
+	    { "snmpd", NULL, NULL }, ctl_show_status, NULL },
+	{ "set",        "set config <key> <value>",
+	    { SNMPCONF_TEMP, OPT, OPT, NULL }, ctl_set_config, NULL },
+	{ "unset",      "remove config <key>",
+	    { SNMPCONF_TEMP, OPT, NULL }, ctl_unset_config, NULL },
+	{ "append",     "append config line",
+	    { SNMPCONF_TEMP, OPT, OPT, OPT, OPT, NULL }, ctl_append_config, NULL },
+	{ "init",       "create default config",
+	    { SNMPCONF_TEMP, (char *)ctl_snmp_default, NULL }, ctl_init_config, NULL },
 	{ "trap",	"send traps",
 	    { SNMPCTL, "trap", "send", REQ, OPT, NULL }, NULL, NULL },
 	{ 0, 0, { 0 }, 0, 0 }
 };
 
+char *ctl_sshd_default[] = { NULL, "Port 22\nPermitRootLogin no\nPasswordAuthentication yes\n", NULL };
 struct ctl ctl_sshd[] = {
 	{ "enable",	"enable service",
 	    { SSHD, "-f", SSHDCONF_TEMP, NULL }, NULL, X_ENABLE },
 	{ "disable",	"disable service",
 	    { PKILL, "-f", SSHD, "-f", SSHDCONF_TEMP, NULL }, NULL, X_DISABLE },
-	{ "edit",	"edit configuration",
-	    { "sshd", NULL, NULL }, call_editor, NULL },
+	{ "show",       "show configuration",
+	    { SSHDCONF_TEMP, NULL, NULL }, ctl_show_config, NULL },
+	{ "status",     "show daemon status",
+	    { "sshd", NULL, NULL }, ctl_show_status, NULL },
+	{ "set",        "set config <key> <value>",
+	    { SSHDCONF_TEMP, OPT, OPT, NULL }, ctl_set_config, NULL },
+	{ "unset",      "remove config <key>",
+	    { SSHDCONF_TEMP, OPT, NULL }, ctl_unset_config, NULL },
+	{ "append",     "append config line",
+	    { SSHDCONF_TEMP, OPT, OPT, OPT, OPT, NULL }, ctl_append_config, NULL },
+	{ "init",       "create default config",
+	    { SSHDCONF_TEMP, (char *)ctl_sshd_default, NULL }, ctl_init_config, NULL },
 	{ 0, 0, { 0 }, 0, 0 }
 };
 
 char *ctl_ntp_test[] = { NTPD, "-nf", NTPCONF_TEMP, '\0' };
+char *ctl_ntp_default[] = { NULL, "servers pool.ntp.org\nsensor *\n", NULL };
 struct ctl ctl_ntp[] = {
 	{ "enable",     "enable service",
 	    { NTPD, "-sf", NTPCONF_TEMP, NULL }, NULL, X_ENABLE },
 	{ "disable",    "disable service",
 	    { PKILL, "ntpd", NULL }, NULL, X_DISABLE },
-	{ "edit",       "edit configuration",
-	    { "ntp", (char *)ctl_ntp_test, NULL }, call_editor, NULL },
+	{ "show",       "show configuration",
+	    { NTPCONF_TEMP, NULL, NULL }, ctl_show_config, NULL },
+	{ "status",     "show daemon status",
+	    { "ntpd", NULL, NULL }, ctl_show_status, NULL },
+	{ "set",        "set config <key> <value>",
+	    { NTPCONF_TEMP, OPT, OPT, NULL }, ctl_set_config, NULL },
+	{ "unset",      "remove config <key>",
+	    { NTPCONF_TEMP, OPT, NULL }, ctl_unset_config, NULL },
+	{ "append",     "append config line",
+	    { NTPCONF_TEMP, OPT, OPT, OPT, OPT, NULL }, ctl_append_config, NULL },
+	{ "init",       "create default config",
+	    { NTPCONF_TEMP, (char *)ctl_ntp_default, NULL }, ctl_init_config, NULL },
 	{ 0, 0, { 0 }, 0, 0 }
 };
 
@@ -270,13 +571,24 @@ struct ctl ctl_inet[] = {
 
 /* unbound - DNS resolver with DNSSEC */
 char *ctl_unbound_test[] = { UNBOUND, "-c", UNBOUNDCONF_TEMP, "-d", NULL };
+char *ctl_unbound_default[] = { NULL, "server:\n\tinterface: 127.0.0.1\n\taccess-control: 127.0.0.0/8 allow\n", NULL };
 struct ctl ctl_unbound[] = {
 	{ "enable",     "enable DNS resolver",
 	    { UNBOUND, "-c", UNBOUNDCONF_TEMP, NULL }, NULL, X_ENABLE },
 	{ "disable",    "disable DNS resolver",
 	    { PKILL, "unbound", NULL }, NULL, X_DISABLE },
-	{ "edit",       "edit configuration",
-	    { "unbound", (char *)ctl_unbound_test, NULL }, call_editor, NULL },
+	{ "show",       "show configuration",
+	    { UNBOUNDCONF_TEMP, NULL, NULL }, ctl_show_config, NULL },
+	{ "status",     "show daemon status",
+	    { "unbound", NULL, NULL }, ctl_show_status, NULL },
+	{ "set",        "set config <key> <value>",
+	    { UNBOUNDCONF_TEMP, OPT, OPT, NULL }, ctl_set_config, NULL },
+	{ "unset",      "remove config <key>",
+	    { UNBOUNDCONF_TEMP, OPT, NULL }, ctl_unset_config, NULL },
+	{ "append",     "append config line",
+	    { UNBOUNDCONF_TEMP, OPT, OPT, OPT, OPT, NULL }, ctl_append_config, NULL },
+	{ "init",       "create default config",
+	    { UNBOUNDCONF_TEMP, (char *)ctl_unbound_default, NULL }, ctl_init_config, NULL },
 	{ "reload",     "reload configuration",
 	    { UNBOUNDCTL, "reload", NULL }, NULL, NULL },
 	{ "flush",      "flush DNS cache",
@@ -288,13 +600,24 @@ struct ctl ctl_unbound[] = {
 
 /* httpd - OpenBSD HTTP server */
 char *ctl_httpd_test[] = { HTTPD, "-n", "-f", HTTPDCONF_TEMP, NULL };
+char *ctl_httpd_default[] = { NULL, "server \"default\" {\n\tlisten on * port 80\n\troot \"/htdocs\"\n}\n", NULL };
 struct ctl ctl_httpd[] = {
 	{ "enable",     "enable HTTP server",
 	    { HTTPD, "-f", HTTPDCONF_TEMP, NULL }, NULL, X_ENABLE },
 	{ "disable",    "disable HTTP server",
 	    { PKILL, "httpd", NULL }, NULL, X_DISABLE },
-	{ "edit",       "edit configuration",
-	    { "httpd", (char *)ctl_httpd_test, NULL }, call_editor, NULL },
+	{ "show",       "show configuration",
+	    { HTTPDCONF_TEMP, NULL, NULL }, ctl_show_config, NULL },
+	{ "status",     "show daemon status",
+	    { "httpd", NULL, NULL }, ctl_show_status, NULL },
+	{ "set",        "set config <key> <value>",
+	    { HTTPDCONF_TEMP, OPT, OPT, NULL }, ctl_set_config, NULL },
+	{ "unset",      "remove config <key>",
+	    { HTTPDCONF_TEMP, OPT, NULL }, ctl_unset_config, NULL },
+	{ "append",     "append config line",
+	    { HTTPDCONF_TEMP, OPT, OPT, OPT, OPT, NULL }, ctl_append_config, NULL },
+	{ "init",       "create default config",
+	    { HTTPDCONF_TEMP, (char *)ctl_httpd_default, NULL }, ctl_init_config, NULL },
 	{ 0, 0, { 0 }, 0, 0 }
 };
 
@@ -353,13 +676,24 @@ struct ctl ctl_acme[] = {
 
 /* ldpd - MPLS Label Distribution Protocol */
 char *ctl_ldp_test[] = { LDPD, "-n", "-f", LDPDCONF_TEMP, NULL };
+char *ctl_ldp_default[] = { NULL, "router-id 0.0.0.0\n", NULL };
 struct ctl ctl_ldp[] = {
 	{ "enable",     "enable MPLS LDP service",
 	    { LDPD, "-f", LDPDCONF_TEMP, NULL }, NULL, X_ENABLE },
 	{ "disable",    "disable MPLS LDP service",
 	    { PKILL, "ldpd", NULL }, NULL, X_DISABLE },
-	{ "edit",       "edit configuration",
-	    { "ldp", (char *)ctl_ldp_test, NULL }, call_editor, NULL },
+	{ "show",       "show configuration",
+	    { LDPDCONF_TEMP, NULL, NULL }, ctl_show_config, NULL },
+	{ "status",     "show daemon status",
+	    { "ldpd", NULL, NULL }, ctl_show_status, NULL },
+	{ "set",        "set config <key> <value>",
+	    { LDPDCONF_TEMP, OPT, OPT, NULL }, ctl_set_config, NULL },
+	{ "unset",      "remove config <key>",
+	    { LDPDCONF_TEMP, OPT, NULL }, ctl_unset_config, NULL },
+	{ "append",     "append config line",
+	    { LDPDCONF_TEMP, OPT, OPT, OPT, OPT, NULL }, ctl_append_config, NULL },
+	{ "init",       "create default config",
+	    { LDPDCONF_TEMP, (char *)ctl_ldp_default, NULL }, ctl_init_config, NULL },
 	{ "reload",     "reload configuration",
 	    { LDPCTL, "reload", NULL }, NULL, NULL },
 	{ "fib",        "fib couple/decouple",
@@ -380,13 +714,24 @@ struct ctl ctl_pflog[] = {
 
 /* eigrpd - EIGRP routing protocol */
 char *ctl_eigrp_test[] = { EIGRPD, "-n", "-f", EIGRPDCONF_TEMP, NULL };
+char *ctl_eigrp_default[] = { NULL, "router-id 0.0.0.0\n", NULL };
 struct ctl ctl_eigrp[] = {
 	{ "enable",     "enable EIGRP routing",
 	    { EIGRPD, "-f", EIGRPDCONF_TEMP, NULL }, NULL, X_ENABLE },
 	{ "disable",    "disable EIGRP routing",
 	    { PKILL, "eigrpd", NULL }, NULL, X_DISABLE },
-	{ "edit",       "edit configuration",
-	    { "eigrp", (char *)ctl_eigrp_test, NULL }, call_editor, NULL },
+	{ "show",       "show configuration",
+	    { EIGRPDCONF_TEMP, NULL, NULL }, ctl_show_config, NULL },
+	{ "status",     "show daemon status",
+	    { "eigrpd", NULL, NULL }, ctl_show_status, NULL },
+	{ "set",        "set config <key> <value>",
+	    { EIGRPDCONF_TEMP, OPT, OPT, NULL }, ctl_set_config, NULL },
+	{ "unset",      "remove config <key>",
+	    { EIGRPDCONF_TEMP, OPT, NULL }, ctl_unset_config, NULL },
+	{ "append",     "append config line",
+	    { EIGRPDCONF_TEMP, OPT, OPT, OPT, OPT, NULL }, ctl_append_config, NULL },
+	{ "init",       "create default config",
+	    { EIGRPDCONF_TEMP, (char *)ctl_eigrp_default, NULL }, ctl_init_config, NULL },
 	{ "reload",     "reload configuration",
 	    { EIGRPCTL, "reload", NULL }, NULL, NULL },
 	{ "fib",        "fib couple/decouple",
