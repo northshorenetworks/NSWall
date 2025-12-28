@@ -422,6 +422,7 @@ void conf_interfaces(FILE *output, char *only)
 			conf_pfsync(output, ifs, ifnp->if_name);
 			conf_carp(output, ifs, ifnp->if_name);
 			conf_trunk(output, ifs, ifnp->if_name);
+			conf_wg(output, ifs, ifnp->if_name);
 			if (timeslot_status(ifs, ifnp->if_name, tmp,
 			    sizeof(tmp)) == 1) 
 				fprintf(output, " timeslots %s\n", tmp);

@@ -336,6 +336,23 @@ struct ctl ctl_smtpd[] = {
 	{ 0, 0, { 0 }, 0, 0 }
 };
 
+/* WireGuard VPN */
+struct ctl ctl_wg[] = {
+	{ "enable",     "enable WireGuard interfaces",
+	    { "/bin/sh", "-c", "for i in /etc/hostname.wg*; do [ -f \"$i\" ] && sh /etc/netstart ${i##*/hostname.}; done", NULL }, NULL, X_ENABLE },
+	{ "disable",    "disable WireGuard interfaces",
+	    { "/bin/sh", "-c", "for i in $(ifconfig wg 2>/dev/null | grep ^wg | cut -d: -f1); do ifconfig $i destroy 2>/dev/null; done", NULL }, NULL, X_DISABLE },
+	{ "edit",       "edit WireGuard configuration",
+	    { "wireguard", NULL, NULL }, call_editor, NULL },
+	{ "genkey",     "generate new private key",
+	    { "/bin/sh", "-c", "openssl rand -base64 32", NULL }, NULL, NULL },
+	{ "genpsk",     "generate preshared key",
+	    { "/bin/sh", "-c", "openssl rand -base64 32", NULL }, NULL, NULL },
+	{ "pubkey",     "derive public key from private key",
+	    { "/bin/sh", "-c", "echo 'Enter private key:' && read key && echo $key | openssl ec -pubout 2>/dev/null | tail -2 | head -1", NULL }, NULL, NULL },
+	{ 0, 0, { 0 }, 0, 0 }
+};
+
 struct daemons ctl_daemons[] = {
 	{ "pf",		"PF",	ctl_pf,		PFCONF_TEMP,	0600, 1 },
 	{ "ospf",	"OSPF", ctl_ospf,	OSPFCONF_TEMP,	0600, 0 },
@@ -358,6 +375,7 @@ struct daemons ctl_daemons[] = {
 	{ "iked",	"IKEv2 VPN", ctl_iked, IKEDCONF_TEMP, 0600, 0 },
 	{ "rad",	"Router Adv", ctl_rad, RADCONF_TEMP, 0600, 0 },
 	{ "smtpd",	"Mail", ctl_smtpd, SMTPDCONF_TEMP, 0600, 0 },
+	{ "wireguard",	"WireGuard", ctl_wg,	WGCONF_TEMP,	0600, 0 },
 	{ 0, 0, 0, 0, 0 }
 };
 

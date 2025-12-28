@@ -48,6 +48,7 @@ static struct stt {
 	{ "carp",	"Common Address Redundancy Protocol",	carp_stats },
 	{ "mbuf",	"Packet memory buffer",			mbpr },
 	{ "pf",		"Packet Filter",			pf_stats },
+	{ "wireguard",	"WireGuard VPN",			wg_stats },
 	{ 0,		0,					0 }
 };
 
