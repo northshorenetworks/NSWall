@@ -27,6 +27,17 @@ const (
 
 // Service configuration paths
 var serviceConfigs = map[string]ServiceConfig{
+	"pf": {
+		Name:       "pf",
+		Daemon:     "/sbin/pfctl",
+		Control:    "/sbin/pfctl",
+		ConfigFile: "/var/run/pf.conf",
+		ConfigTemplate: `# PF Configuration
+set skip on lo0
+block in all
+pass out all keep state
+`,
+	},
 	"unbound": {
 		Name:       "unbound",
 		Daemon:     "/usr/sbin/unbound",
@@ -768,6 +779,41 @@ func parseKeyValueStats(output string) map[string]string {
 
 // Comprehensive service control commands mapping
 var serviceCommands = map[string]map[string][]string{
+	"pf": {
+		// Show commands
+		"show-rules":      {"-s", "rules"},
+		"show-nat":        {"-s", "nat"},
+		"show-queue":      {"-s", "queue"},
+		"show-states":     {"-s", "states"},
+		"show-sources":    {"-s", "Sources"},
+		"show-info":       {"-s", "info"},
+		"show-labels":     {"-s", "labels"},
+		"show-interfaces": {"-s", "Interfaces"},
+		"show-tables":     {"-s", "Tables"},
+		"show-osfp":       {"-s", "osfp"},
+		"show-anchors":    {"-s", "Anchors"},
+		"show-timeouts":   {"-s", "timeouts"},
+		"show-memory":     {"-s", "memory"},
+		"show-running":    {"-s", "Running"},
+		"show-all":        {"-s", "all"},
+		// Flush commands
+		"flush-all":       {"-Fall"},
+		"flush-rules":     {"-Frules"},
+		"flush-nat":       {"-Fnat"},
+		"flush-queue":     {"-Fqueue"},
+		"flush-states":    {"-Fstate"},
+		"flush-sources":   {"-FSources"},
+		"flush-info":      {"-Finfo"},
+		"flush-tables":    {"-FTables"},
+		"flush-osfp":      {"-Fosfp"},
+		// State operations
+		"clear-stats":     {"-z"},
+		// Verbose
+		"verbose-rules":   {"-vs", "rules"},
+		"verbose-states":  {"-vs", "states"},
+		"verbose-tables":  {"-vvs", "Tables"},
+		"rules-numbered":  {"-vvs", "rules"},
+	},
 	"ospfd": {
 		"reload":            {"reload"},
 		"fib-couple":        {"fib", "couple"},

@@ -10,6 +10,66 @@ This document provides a comprehensive comparison between OpenBSD daemon control
 
 ---
 
+## pfctl (Packet Filter)
+
+| Command | Description | NSWall CLI | NSWall API |
+|---------|-------------|------------|------------|
+| `-e` | Enable PF | ✅ | ✅ |
+| `-d` | Disable PF | ✅ | ✅ |
+| `-f file` | Load rules from file | ✅ | ✅ |
+| `-nf file` | Test rules syntax | ✅ | ✅ |
+| `-R -f file` | Load only filter rules | ✅ | ✅ |
+| `-N -f file` | Load only NAT rules | ✅ | ✅ |
+| `-O -f file` | Load only options | ✅ | ✅ |
+| `-s rules` | Show filter rules | ✅ | ✅ |
+| `-s nat` | Show NAT rules | ✅ | ✅ |
+| `-s queue` | Show queue rules | ✅ | ✅ |
+| `-s states` | Show state table | ✅ | ✅ |
+| `-s Sources` | Show source tracking | ✅ | ✅ |
+| `-s info` | Show filter info | ✅ | ✅ |
+| `-s labels` | Show per-rule labels | ✅ | ✅ |
+| `-s Interfaces` | Show interfaces | ✅ | ✅ |
+| `-s Tables` | Show address tables | ✅ | ✅ |
+| `-s osfp` | Show OS fingerprints | ✅ | ✅ |
+| `-s Anchors` | Show anchors | ✅ | ✅ |
+| `-s timeouts` | Show timeout values | ✅ | ✅ |
+| `-s memory` | Show memory limits | ✅ | ✅ |
+| `-s Running` | Show running config | ✅ | ✅ |
+| `-s all` | Show all information | ✅ | ✅ |
+| `-Fall` | Flush all | ✅ | ✅ |
+| `-Frules` | Flush filter rules | ✅ | ✅ |
+| `-Fnat` | Flush NAT rules | ✅ | ✅ |
+| `-Fqueue` | Flush queue rules | ✅ | ✅ |
+| `-Fstate` | Flush state table | ✅ | ✅ |
+| `-FSources` | Flush source tracking | ✅ | ✅ |
+| `-Finfo` | Flush filter info | ✅ | ✅ |
+| `-FTables` | Flush address tables | ✅ | ✅ |
+| `-Fosfp` | Flush OS fingerprints | ✅ | ✅ |
+| `-t table -T show` | Show table contents | ✅ | ✅ |
+| `-t table -T add` | Add to table | ✅ | ✅ |
+| `-t table -T delete` | Delete from table | ✅ | ✅ |
+| `-t table -T replace` | Replace table contents | ✅ | ✅ |
+| `-t table -T test` | Test address in table | ✅ | ✅ |
+| `-t table -T zero` | Zero table counters | ✅ | ✅ |
+| `-t table -T flush` | Flush table contents | ✅ | ✅ |
+| `-t table -T expire` | Expire table entries | ✅ | ✅ |
+| `-t table -T kill` | Kill states from table | ✅ | ✅ |
+| `-k host` | Kill matching states | ✅ | ✅ |
+| `-K host` | Kill by source address | ✅ | ✅ |
+| `-z` | Clear per-rule statistics | ✅ | ✅ |
+| `-x level` | Set debug level | ✅ | ✅ |
+| `-o level` | Set optimization level | ✅ | ✅ |
+| `-a anchor -s rules` | Show anchor rules | ✅ | ✅ |
+| `-a anchor -Frules` | Flush anchor rules | ✅ | ✅ |
+| `-vs rules` | Verbose rules (with evals) | ✅ | ✅ |
+| `-vs states` | Verbose states (with details) | ✅ | ✅ |
+| `-vvs Tables` | Verbose tables (with counters) | ✅ | ✅ |
+| `-vvs rules` | Rules with line numbers | ✅ | ✅ |
+
+**Coverage: 100%**
+
+---
+
 ## ospfctl (OSPF Routing)
 
 | Command | Description | NSWall CLI | NSWall API |
@@ -367,6 +427,7 @@ This document provides a comprehensive comparison between OpenBSD daemon control
 
 | Category | Total Commands | CLI Implemented | API Implemented |
 |----------|----------------|-----------------|-----------------|
+| pfctl | 52 | 52 (100%) | 52 (100%) |
 | ospfctl | 23 | 23 (100%) | 23 (100%) |
 | bgpctl | 28 | 28 (100%) | 28 (100%) |
 | ripctl | 9 | 9 (100%) | 9 (100%) |
