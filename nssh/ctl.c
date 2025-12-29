@@ -366,6 +366,12 @@ struct ctl ctl_bgp[] = {
 	    { BGPCTL, "network", REQ, OPT, NULL }, NULL, NULL },
 	{ "log",        "log brief/verbose",
 	    { BGPCTL, "log", REQ, NULL }, NULL, NULL },
+	{ "show-tables", "show routing tables",
+	    { BGPCTL, "show", "tables", NULL }, NULL, NULL },
+	{ "show-fib",   "show FIB bgp/connected/static",
+	    { BGPCTL, "show", "fib", OPT, NULL }, NULL, NULL },
+	{ "flowspec",   "flowspec add/delete/flush/show",
+	    { BGPCTL, "flowspec", REQ, OPT, OPT, NULL }, NULL, NULL },
         { 0, 0, { 0 }, 0, 0 }
 };
 
@@ -478,6 +484,12 @@ struct ctl ctl_snmp[] = {
 	    { SNMPCTL, "snmp", "walk", REQ, "community", REQ, "oid", REQ, NULL }, NULL, NULL },
 	{ "get",	"SNMP get OID value",
 	    { SNMPCTL, "snmp", "get", REQ, "community", REQ, "oid", REQ, NULL }, NULL, NULL },
+	{ "bulkwalk",	"SNMP bulk walk",
+	    { SNMPCTL, "snmp", "bulkwalk", REQ, "community", REQ, "oid", REQ, NULL }, NULL, NULL },
+	{ "log",        "log brief/verbose",
+	    { SNMPCTL, "log", REQ, NULL }, NULL, NULL },
+	{ "mibtree",    "show MIB tree",
+	    { SNMPCTL, "snmp", "mibtree", OPT, NULL }, NULL, NULL },
 	{ 0, 0, { 0 }, 0, 0 }
 };
 
@@ -556,6 +568,12 @@ struct ctl ctl_relay[] = {
 	    { RELAYCTL, "show", "sessions", NULL }, NULL, NULL },
 	{ "show-summary", "show summary",
 	    { RELAYCTL, "show", "summary", NULL }, NULL, NULL },
+	{ "show-routers", "show routers",
+	    { RELAYCTL, "show", "routers", NULL }, NULL, NULL },
+	{ "log",        "log brief/verbose",
+	    { RELAYCTL, "log", REQ, NULL }, NULL, NULL },
+	{ "stop",       "stop daemon",
+	    { RELAYCTL, "stop", NULL }, NULL, NULL },
 	{ 0, 0, { 0 }, 0, 0 }
 };
 
@@ -727,6 +745,24 @@ struct ctl ctl_smtpd[] = {
 	    { SMTPCTL, "remove", REQ, NULL }, NULL, NULL },
 	{ "discover",   "discover local user",
 	    { SMTPCTL, "discover", REQ, NULL }, NULL, NULL },
+	{ "log",        "log brief/verbose",
+	    { SMTPCTL, "log", REQ, NULL }, NULL, NULL },
+	{ "show-envelope", "show envelope details",
+	    { SMTPCTL, "show", "envelope", REQ, NULL }, NULL, NULL },
+	{ "show-message", "show message content",
+	    { SMTPCTL, "show", "message", REQ, NULL }, NULL, NULL },
+	{ "show-hosts", "show remote MX hosts",
+	    { SMTPCTL, "show", "hosts", NULL }, NULL, NULL },
+	{ "show-routes", "show mail routes",
+	    { SMTPCTL, "show", "routes", NULL }, NULL, NULL },
+	{ "trace",      "enable subsystem tracing",
+	    { SMTPCTL, "trace", REQ, NULL }, NULL, NULL },
+	{ "untrace",    "disable subsystem tracing",
+	    { SMTPCTL, "untrace", REQ, NULL }, NULL, NULL },
+	{ "update-table", "update lookup table",
+	    { SMTPCTL, "update", "table", REQ, NULL }, NULL, NULL },
+	{ "spf",        "SPF record walk",
+	    { SMTPCTL, "spf", "walk", REQ, NULL }, NULL, NULL },
 	{ 0, 0, { 0 }, 0, 0 }
 };
 
