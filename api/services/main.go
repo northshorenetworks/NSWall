@@ -681,20 +681,49 @@ func handleServiceStats(w http.ResponseWriter, r *http.Request, cfg ServiceConfi
 		stats = parseKeyValueStats(output)
 
 	case "ospfd", "bgpd", "ripd", "eigrpd", "ldpd":
-		output, _ := runCommand(cfg.Control, "show", "summary")
-		stats = map[string]string{"summary": output}
+		summary, _ := runCommand(cfg.Control, "show", "summary")
+		neighbors, _ := runCommand(cfg.Control, "show", "neighbor")
+		stats = map[string]string{
+			"summary":   summary,
+			"neighbors": neighbors,
+		}
 
 	case "smtpd":
-		output, _ := runCommand(cfg.Control, "show", "stats")
-		stats = parseKeyValueStats(output)
+		statsOut, _ := runCommand(cfg.Control, "show", "stats")
+		queue, _ := runCommand(cfg.Control, "show", "queue")
+		stats = map[string]interface{}{
+			"stats": parseKeyValueStats(statsOut),
+			"queue": queue,
+		}
 
 	case "relayd":
-		output, _ := runCommand(cfg.Control, "show", "summary")
-		stats = map[string]string{"summary": output}
+		summary, _ := runCommand(cfg.Control, "show", "summary")
+		hosts, _ := runCommand(cfg.Control, "show", "hosts")
+		stats = map[string]string{
+			"summary": summary,
+			"hosts":   hosts,
+		}
 
 	case "pflogd":
 		output, _ := runCommand("/usr/sbin/tcpdump", "-n", "-e", "-ttt", "-r", cfg.ConfigFile, "-c", "20")
 		stats = map[string]string{"recent_logs": output}
+
+	case "ntpd":
+		peers, _ := runCommand("/usr/sbin/ntpctl", "-s", "peers")
+		status, _ := runCommand("/usr/sbin/ntpctl", "-s", "status")
+		stats = map[string]string{
+			"peers":  peers,
+			"status": status,
+		}
+
+	case "iked":
+		sa, _ := runCommand("/usr/sbin/ikectl", "show", "sa")
+		stats = map[string]string{"security_associations": sa}
+
+	case "sshd":
+		// Count active SSH connections
+		output, _ := runCommand("/bin/ps", "aux")
+		stats = map[string]string{"processes": output}
 
 	default:
 		stats = map[string]string{"message": "No stats available for this service"}

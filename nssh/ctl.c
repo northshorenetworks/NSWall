@@ -44,6 +44,7 @@
 #define PFRELOAD        "/usr/bin/pfreload"
 
 /* OpenBSD base system services (new) */
+#define NTPCTL		"/usr/sbin/ntpctl"
 #define UNBOUND		"/usr/sbin/unbound"
 #define UNBOUNDCTL	"/usr/sbin/unbound-control"
 #define HTTPD		"/usr/sbin/httpd"
@@ -56,6 +57,8 @@
 #define LDPD		"/usr/sbin/ldpd"
 #define LDPCTL		"/usr/sbin/ldpctl"
 #define PFLOGD		"/usr/sbin/pflogd"
+#define TCPDUMP		"/usr/sbin/tcpdump"
+#define RACTL		"/usr/sbin/ractl"
 #define EIGRPD		"/usr/sbin/eigrpd"
 #define EIGRPCTL	"/usr/sbin/eigrpctl"
 
@@ -325,8 +328,10 @@ struct ctl ctl_ospf[] = {
 	    { OSPFCONF_TEMP, (char *)ctl_ospf_default, NULL }, ctl_init_config, NULL },
 	{ "reload",     "reload service",
 	    { OSPFCTL, "reload", NULL }, NULL, NULL },
-	{ "fib",        "fib couple/decouple",
+	{ "fib",        "fib couple/decouple/reload",
 	    { OSPFCTL, "fib", REQ, NULL }, NULL, NULL },
+	{ "log",        "log brief/verbose",
+	    { OSPFCTL, "log", REQ, NULL }, NULL, NULL },
 	{ 0, 0, { 0 }, 0, 0 }
 };
 
@@ -359,6 +364,8 @@ struct ctl ctl_bgp[] = {
 	    { BGPCTL, "neighbor", OPT, OPT, NULL }, NULL, NULL },
 	{ "network",	"network add/delete/flush/show",
 	    { BGPCTL, "network", REQ, OPT, NULL }, NULL, NULL },
+	{ "log",        "log brief/verbose",
+	    { BGPCTL, "log", REQ, NULL }, NULL, NULL },
         { 0, 0, { 0 }, 0, 0 }
 };
 
@@ -385,6 +392,8 @@ struct ctl ctl_rip[] = {
 	    { RIPCTL, "reload", NULL }, NULL, NULL },
 	{ "fib",        "fib couple/decouple",
 	    { RIPCTL, "fib", REQ, NULL }, NULL, NULL },
+	{ "log",        "log brief/verbose",
+	    { RIPCTL, "log", REQ, NULL }, NULL, NULL },
 	{ 0, 0, { 0 }, 0, 0 }
 };
 
@@ -463,8 +472,12 @@ struct ctl ctl_snmp[] = {
 	    { SNMPCONF_TEMP, OPT, OPT, OPT, OPT, NULL }, ctl_append_config, NULL },
 	{ "init",       "create default config",
 	    { SNMPCONF_TEMP, (char *)ctl_snmp_default, NULL }, ctl_init_config, NULL },
-	{ "trap",	"send traps",
+	{ "trap",	"send trap message",
 	    { SNMPCTL, "trap", "send", REQ, OPT, NULL }, NULL, NULL },
+	{ "walk",	"SNMP walk OID tree",
+	    { SNMPCTL, "snmp", "walk", REQ, "community", REQ, "oid", REQ, NULL }, NULL, NULL },
+	{ "get",	"SNMP get OID value",
+	    { SNMPCTL, "snmp", "get", REQ, "community", REQ, "oid", REQ, NULL }, NULL, NULL },
 	{ 0, 0, { 0 }, 0, 0 }
 };
 
@@ -508,6 +521,12 @@ struct ctl ctl_ntp[] = {
 	    { NTPCONF_TEMP, OPT, OPT, OPT, OPT, NULL }, ctl_append_config, NULL },
 	{ "init",       "create default config",
 	    { NTPCONF_TEMP, (char *)ctl_ntp_default, NULL }, ctl_init_config, NULL },
+	{ "peers",      "show NTP peers",
+	    { NTPCTL, "-s", "peers", NULL }, NULL, NULL },
+	{ "sensors",    "show time sensors",
+	    { NTPCTL, "-s", "sensors", NULL }, NULL, NULL },
+	{ "all",        "show all NTP status",
+	    { NTPCTL, "-s", "all", NULL }, NULL, NULL },
 	{ 0, 0, { 0 }, 0, 0 }
 };
 
@@ -521,16 +540,22 @@ struct ctl ctl_relay[] = {
 	    { "relay", (char *)ctl_relay_test, NULL }, call_editor, NULL },
         { "reload",	"reload configuration",
 	    { RELAYCTL, "reload", NULL }, NULL, NULL },
-	{ "host",	"per-host control",
-	    { RELAYCTL, "host", OPT, OPT, NULL }, NULL, NULL },
-	{ "table",	"per-table control",
-	    { RELAYCTL, "table", OPT, OPT, NULL }, NULL, NULL },
-	{ "redirect",	"per-redirect control",
-	    { RELAYCTL, "redirect", OPT, OPT, NULL }, NULL, NULL },
-	{ "monitor",	"monitor mode",
+	{ "host",	"per-host enable/disable",
+	    { RELAYCTL, "host", REQ, REQ, NULL }, NULL, NULL },
+	{ "table",	"per-table enable/disable",
+	    { RELAYCTL, "table", REQ, REQ, NULL }, NULL, NULL },
+	{ "redirect",	"per-redirect enable/disable",
+	    { RELAYCTL, "redirect", REQ, REQ, NULL }, NULL, NULL },
+	{ "monitor",	"monitor health checks",
 	    { RELAYCTL, "monitor", NULL }, NULL, NULL },
-	{ "poll",	"poll mode",
+	{ "poll",	"immediate health check",
 	    { RELAYCTL, "poll", NULL }, NULL, NULL},
+	{ "show-hosts", "show host status",
+	    { RELAYCTL, "show", "hosts", NULL }, NULL, NULL },
+	{ "show-sessions", "show active sessions",
+	    { RELAYCTL, "show", "sessions", NULL }, NULL, NULL },
+	{ "show-summary", "show summary",
+	    { RELAYCTL, "show", "summary", NULL }, NULL, NULL },
 	{ 0, 0, { 0 }, 0, 0 }
 };
 
@@ -595,6 +620,18 @@ struct ctl ctl_unbound[] = {
 	    { UNBOUNDCTL, "flush_zone", ".", NULL }, NULL, NULL },
 	{ "stats",      "show statistics",
 	    { UNBOUNDCTL, "stats_noreset", NULL }, NULL, NULL },
+	{ "stop",       "stop DNS resolver",
+	    { UNBOUNDCTL, "stop", NULL }, NULL, NULL },
+	{ "verbosity",  "set verbosity level",
+	    { UNBOUNDCTL, "verbosity", REQ, NULL }, NULL, NULL },
+	{ "list-stubs", "list stub zones",
+	    { UNBOUNDCTL, "list_stubs", NULL }, NULL, NULL },
+	{ "list-forwards", "list forward zones",
+	    { UNBOUNDCTL, "list_forwards", NULL }, NULL, NULL },
+	{ "list-local", "list local zones",
+	    { UNBOUNDCTL, "list_local_zones", NULL }, NULL, NULL },
+	{ "dump-cache", "dump cache contents",
+	    { UNBOUNDCTL, "dump_cache", NULL }, NULL, NULL },
 	{ 0, 0, { 0 }, 0, 0 }
 };
 
@@ -632,8 +669,22 @@ struct ctl ctl_iked[] = {
 	    { "iked", (char *)ctl_iked_test, NULL }, call_editor, NULL },
 	{ "reload",     "reload configuration",
 	    { IKECTL, "reload", NULL }, NULL, NULL },
-	{ "reset",      "reset IKE SA",
-	    { IKECTL, "reset", "all", NULL }, NULL, NULL },
+	{ "reset",      "reset sa/ca/policy/user/id",
+	    { IKECTL, "reset", REQ, OPT, NULL }, NULL, NULL },
+	{ "show-sa",    "show security associations",
+	    { IKECTL, "show", "sa", NULL }, NULL, NULL },
+	{ "active",     "set active mode",
+	    { IKECTL, "active", NULL }, NULL, NULL },
+	{ "passive",    "set passive mode",
+	    { IKECTL, "passive", NULL }, NULL, NULL },
+	{ "couple",     "load SAs into kernel",
+	    { IKECTL, "couple", NULL }, NULL, NULL },
+	{ "decouple",   "unload SAs from kernel",
+	    { IKECTL, "decouple", NULL }, NULL, NULL },
+	{ "log",        "log brief/verbose",
+	    { IKECTL, "log", REQ, NULL }, NULL, NULL },
+	{ "monitor",    "monitor IKE events",
+	    { IKECTL, "monitor", NULL }, NULL, NULL },
 	{ 0, 0, { 0 }, 0, 0 }
 };
 
@@ -646,6 +697,8 @@ struct ctl ctl_rad[] = {
 	    { PKILL, "rad", NULL }, NULL, X_DISABLE },
 	{ "edit",       "edit configuration",
 	    { "rad", (char *)ctl_rad_test, NULL }, call_editor, NULL },
+	{ "log",        "log brief/verbose",
+	    { RACTL, "log", REQ, NULL }, NULL, NULL },
 	{ 0, 0, { 0 }, 0, 0 }
 };
 
@@ -658,17 +711,35 @@ struct ctl ctl_smtpd[] = {
 	    { SMTPCTL, "stop", NULL }, NULL, X_DISABLE },
 	{ "edit",       "edit configuration",
 	    { "smtpd", (char *)ctl_smtpd_test, NULL }, call_editor, NULL },
-	{ "pause",      "pause mail processing",
-	    { SMTPCTL, "pause", "smtp", NULL }, NULL, NULL },
-	{ "resume",     "resume mail processing",
-	    { SMTPCTL, "resume", "smtp", NULL }, NULL, NULL },
+	{ "pause",      "pause smtp/mda/mta",
+	    { SMTPCTL, "pause", REQ, NULL }, NULL, NULL },
+	{ "resume",     "resume smtp/mda/mta",
+	    { SMTPCTL, "resume", REQ, NULL }, NULL, NULL },
+	{ "queue",      "show mail queue",
+	    { SMTPCTL, "show", "queue", NULL }, NULL, NULL },
+	{ "stats",      "show statistics",
+	    { SMTPCTL, "show", "stats", NULL }, NULL, NULL },
+	{ "monitor",    "monitor mail activity",
+	    { SMTPCTL, "monitor", NULL }, NULL, NULL },
+	{ "schedule",   "schedule message for delivery",
+	    { SMTPCTL, "schedule", REQ, NULL }, NULL, NULL },
+	{ "remove",     "remove message from queue",
+	    { SMTPCTL, "remove", REQ, NULL }, NULL, NULL },
+	{ "discover",   "discover local user",
+	    { SMTPCTL, "discover", REQ, NULL }, NULL, NULL },
 	{ 0, 0, { 0 }, 0, 0 }
 };
 
 /* acme-client - Let's Encrypt certificate management */
 struct ctl ctl_acme[] = {
 	{ "renew",      "renew certificates",
-	    { ACMECLIENT, "-v", OPT, NULL }, NULL, NULL },
+	    { ACMECLIENT, "-v", REQ, NULL }, NULL, NULL },
+	{ "force",      "force renewal (ignore expiry)",
+	    { ACMECLIENT, "-Fv", REQ, NULL }, NULL, NULL },
+	{ "revoke",     "revoke certificate",
+	    { ACMECLIENT, "-rv", REQ, NULL }, NULL, NULL },
+	{ "check",      "check configuration",
+	    { ACMECLIENT, "-n", REQ, NULL }, NULL, NULL },
 	{ "edit",       "edit configuration",
 	    { "acme", NULL, NULL }, call_editor, NULL },
 	{ 0, 0, { 0 }, 0, 0 }
@@ -699,16 +770,26 @@ struct ctl ctl_ldp[] = {
 	{ "fib",        "fib couple/decouple",
 	    { LDPCTL, "fib", REQ, NULL }, NULL, NULL },
 	{ "clear",      "clear neighbors",
-	    { LDPCTL, "clear", "neighbors", NULL }, NULL, NULL },
+	    { LDPCTL, "clear", "neighbors", OPT, NULL }, NULL, NULL },
+	{ "log",        "log brief/verbose",
+	    { LDPCTL, "log", REQ, NULL }, NULL, NULL },
+	{ "l2vpn",      "show L2VPN bindings/pseudowires",
+	    { LDPCTL, "show", "l2vpn", REQ, NULL }, NULL, NULL },
 	{ 0, 0, { 0 }, 0, 0 }
 };
 
 /* pflogd - PF logging daemon */
 struct ctl ctl_pflog[] = {
 	{ "enable",     "enable PF logging",
-	    { PFLOGD, "-s", "128", "-f", PFLOGD_LOGFILE, NULL }, NULL, X_ENABLE },
+	    { PFLOGD, "-s", "160", "-f", PFLOGD_LOGFILE, NULL }, NULL, X_ENABLE },
 	{ "disable",    "disable PF logging",
 	    { PKILL, "pflogd", NULL }, NULL, X_DISABLE },
+	{ "read",       "read recent log entries",
+	    { TCPDUMP, "-n", "-e", "-ttt", "-r", PFLOGD_LOGFILE, "-c", "50", NULL }, NULL, NULL },
+	{ "live",       "monitor live traffic",
+	    { TCPDUMP, "-n", "-e", "-ttt", "-i", "pflog0", NULL }, NULL, NULL },
+	{ "filter",     "read with filter expression",
+	    { TCPDUMP, "-n", "-e", "-ttt", "-r", PFLOGD_LOGFILE, REQ, OPT, OPT, NULL }, NULL, NULL },
 	{ 0, 0, { 0 }, 0, 0 }
 };
 
@@ -737,7 +818,9 @@ struct ctl ctl_eigrp[] = {
 	{ "fib",        "fib couple/decouple",
 	    { EIGRPCTL, "fib", REQ, NULL }, NULL, NULL },
 	{ "clear",      "clear neighbors",
-	    { EIGRPCTL, "clear", "neighbors", NULL }, NULL, NULL },
+	    { EIGRPCTL, "clear", "neighbors", OPT, NULL }, NULL, NULL },
+	{ "log",        "log brief/verbose",
+	    { EIGRPCTL, "log", REQ, NULL }, NULL, NULL },
 	{ 0, 0, { 0 }, 0, 0 }
 };
 
