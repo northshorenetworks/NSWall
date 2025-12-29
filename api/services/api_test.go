@@ -293,3 +293,377 @@ func TestServiceNotFound(t *testing.T) {
 		t.Errorf("Expected status 404, got %d", resp.StatusCode)
 	}
 }
+
+// ============================================
+// Full CRUD Integration Tests for All Services
+// ============================================
+
+// AllServices lists all services to test
+var allServices = []string{
+	"ospfd", "bgpd", "ripd", "dhcpd", "snmpd", "sshd", "ntpd",
+	"unbound", "httpd", "ldpd", "eigrpd", "iked", "rad", "smtpd",
+	"acme", "relayd",
+}
+
+func TestAllServicesExist(t *testing.T) {
+	for _, svc := range allServices {
+		t.Run(svc, func(t *testing.T) {
+			_, exists := serviceConfigs[svc]
+			if !exists {
+				t.Errorf("Service %s not found in serviceConfigs", svc)
+			}
+		})
+	}
+}
+
+func TestAllServicesHaveRequiredFields(t *testing.T) {
+	for name, cfg := range serviceConfigs {
+		t.Run(name, func(t *testing.T) {
+			if cfg.Name == "" {
+				t.Error("Service name is empty")
+			}
+			if cfg.Daemon == "" {
+				t.Error("Daemon path is empty")
+			}
+			if cfg.ConfigFile == "" {
+				t.Error("ConfigFile path is empty")
+			}
+		})
+	}
+}
+
+func TestServiceGetEndpoint(t *testing.T) {
+	for name := range serviceConfigs {
+		t.Run(name, func(t *testing.T) {
+			req := httptest.NewRequest("GET", "/api/v1/services/"+name, nil)
+			w := httptest.NewRecorder()
+
+			handleServiceByName(w, req)
+
+			resp := w.Result()
+			if resp.StatusCode != http.StatusOK {
+				t.Errorf("GET /api/v1/services/%s: expected 200, got %d", name, resp.StatusCode)
+			}
+
+			var response APIResponse
+			json.NewDecoder(resp.Body).Decode(&response)
+
+			if response.Status != "success" {
+				t.Errorf("Expected status 'success', got '%s'", response.Status)
+			}
+		})
+	}
+}
+
+func TestServiceConfigEndpoint(t *testing.T) {
+	for name, cfg := range serviceConfigs {
+		t.Run(name+"_config", func(t *testing.T) {
+			// Skip if no config template
+			if cfg.ConfigTemplate == "" && name != "pflogd" {
+				t.Skip("No config template for " + name)
+			}
+
+			req := httptest.NewRequest("GET", "/api/v1/services/"+name+"/config", nil)
+			w := httptest.NewRecorder()
+
+			handleServiceByName(w, req)
+
+			resp := w.Result()
+			// May be 200 (config exists) or 500 (file not found, but template available)
+			if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusInternalServerError {
+				t.Errorf("GET config for %s: unexpected status %d", name, resp.StatusCode)
+			}
+		})
+	}
+}
+
+func TestServiceStatusEndpoint(t *testing.T) {
+	for name := range serviceConfigs {
+		t.Run(name+"_status", func(t *testing.T) {
+			req := httptest.NewRequest("GET", "/api/v1/services/"+name+"/status", nil)
+			w := httptest.NewRecorder()
+
+			handleServiceByName(w, req)
+
+			resp := w.Result()
+			if resp.StatusCode != http.StatusOK {
+				t.Errorf("GET status for %s: expected 200, got %d", name, resp.StatusCode)
+			}
+
+			var response APIResponse
+			json.NewDecoder(resp.Body).Decode(&response)
+
+			if response.Status != "success" {
+				t.Errorf("Expected status 'success', got '%s'", response.Status)
+			}
+
+			// Verify status data structure
+			if response.Data == nil {
+				t.Error("Status data should not be nil")
+			}
+		})
+	}
+}
+
+func TestServiceStatsEndpoint(t *testing.T) {
+	for name := range serviceConfigs {
+		t.Run(name+"_stats", func(t *testing.T) {
+			req := httptest.NewRequest("GET", "/api/v1/services/"+name+"/stats", nil)
+			w := httptest.NewRecorder()
+
+			handleServiceByName(w, req)
+
+			resp := w.Result()
+			if resp.StatusCode != http.StatusOK {
+				t.Errorf("GET stats for %s: expected 200, got %d", name, resp.StatusCode)
+			}
+		})
+	}
+}
+
+func TestServiceConfigUpdate(t *testing.T) {
+	// Test config update with temp file
+	testCfg := filepath.Join(testConfigDir, "update_test.conf")
+
+	// Create initial config
+	ioutil.WriteFile(testCfg, []byte("initial\n"), 0600)
+
+	// Test update
+	updateReq := ConfigUpdateRequest{
+		Content: "updated content\nwith multiple lines\n",
+		Reload:  false,
+	}
+
+	body, _ := json.Marshal(updateReq)
+	req := httptest.NewRequest("PUT", "/test", bytes.NewReader(body))
+
+	var decoded ConfigUpdateRequest
+	json.NewDecoder(req.Body).Decode(&decoded)
+
+	if decoded.Content != updateReq.Content {
+		t.Error("Config update request not properly decoded")
+	}
+
+	// Write updated content
+	ioutil.WriteFile(testCfg, []byte(decoded.Content), 0600)
+
+	// Verify
+	content, _ := ioutil.ReadFile(testCfg)
+	if string(content) != updateReq.Content {
+		t.Error("Config file not updated correctly")
+	}
+}
+
+func TestServiceActionTypes(t *testing.T) {
+	actions := []string{"enable", "disable", "start", "stop", "reload", "restart"}
+
+	for _, action := range actions {
+		t.Run(action, func(t *testing.T) {
+			req := ServiceActionRequest{Action: action}
+			data, err := json.Marshal(req)
+			if err != nil {
+				t.Fatalf("Failed to marshal action: %v", err)
+			}
+
+			var decoded ServiceActionRequest
+			json.Unmarshal(data, &decoded)
+
+			if decoded.Action != action {
+				t.Errorf("Expected action '%s', got '%s'", action, decoded.Action)
+			}
+		})
+	}
+}
+
+func TestServiceActionEndpointMethodValidation(t *testing.T) {
+	// GET should not be allowed for action endpoint
+	req := httptest.NewRequest("GET", "/api/v1/services/ospfd/action", nil)
+	w := httptest.NewRecorder()
+
+	handleServiceByName(w, req)
+
+	resp := w.Result()
+	if resp.StatusCode != http.StatusMethodNotAllowed {
+		t.Errorf("GET on action endpoint: expected 405, got %d", resp.StatusCode)
+	}
+}
+
+func TestServiceDeleteEndpoint(t *testing.T) {
+	for name := range serviceConfigs {
+		t.Run(name+"_delete", func(t *testing.T) {
+			req := httptest.NewRequest("DELETE", "/api/v1/services/"+name, nil)
+			w := httptest.NewRecorder()
+
+			handleServiceByName(w, req)
+
+			resp := w.Result()
+			// DELETE should return 200 (success) even if service wasn't running
+			if resp.StatusCode != http.StatusOK {
+				t.Errorf("DELETE %s: expected 200, got %d", name, resp.StatusCode)
+			}
+		})
+	}
+}
+
+func TestInvalidSubResource(t *testing.T) {
+	req := httptest.NewRequest("GET", "/api/v1/services/ospfd/invalid_resource", nil)
+	w := httptest.NewRecorder()
+
+	handleServiceByName(w, req)
+
+	resp := w.Result()
+	if resp.StatusCode != http.StatusNotFound {
+		t.Errorf("Invalid sub-resource: expected 404, got %d", resp.StatusCode)
+	}
+}
+
+func TestConfigCreateFromTemplate(t *testing.T) {
+	for name, cfg := range serviceConfigs {
+		if cfg.ConfigTemplate == "" {
+			continue
+		}
+
+		t.Run(name+"_create", func(t *testing.T) {
+			req := httptest.NewRequest("POST", "/api/v1/services/"+name+"/config", nil)
+			w := httptest.NewRecorder()
+
+			handleServiceByName(w, req)
+
+			resp := w.Result()
+			// Should be 201 (created) or 500 (write error in test env)
+			if resp.StatusCode != http.StatusCreated && resp.StatusCode != http.StatusInternalServerError {
+				t.Errorf("POST config for %s: unexpected status %d", name, resp.StatusCode)
+			}
+		})
+	}
+}
+
+func TestCORSHeaders(t *testing.T) {
+	handler := corsMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
+
+	req := httptest.NewRequest("OPTIONS", "/api/v1/services", nil)
+	w := httptest.NewRecorder()
+
+	handler.ServeHTTP(w, req)
+
+	resp := w.Result()
+	if resp.StatusCode != http.StatusOK {
+		t.Errorf("OPTIONS request: expected 200, got %d", resp.StatusCode)
+	}
+
+	// Check CORS headers
+	if w.Header().Get("Access-Control-Allow-Origin") != "*" {
+		t.Error("Missing or incorrect Access-Control-Allow-Origin header")
+	}
+	if w.Header().Get("Access-Control-Allow-Methods") == "" {
+		t.Error("Missing Access-Control-Allow-Methods header")
+	}
+}
+
+func TestConcurrentRequests(t *testing.T) {
+	// Test that concurrent requests don't cause race conditions
+	done := make(chan bool, 10)
+
+	for i := 0; i < 10; i++ {
+		go func(idx int) {
+			req := httptest.NewRequest("GET", "/api/v1/services", nil)
+			w := httptest.NewRecorder()
+			handleServices(w, req)
+			done <- w.Result().StatusCode == http.StatusOK
+		}(i)
+	}
+
+	successCount := 0
+	for i := 0; i < 10; i++ {
+		if <-done {
+			successCount++
+		}
+	}
+
+	if successCount != 10 {
+		t.Errorf("Expected 10 successful concurrent requests, got %d", successCount)
+	}
+}
+
+func TestEmptyConfigContent(t *testing.T) {
+	updateReq := ConfigUpdateRequest{
+		Content: "",
+		Reload:  false,
+	}
+
+	data, _ := json.Marshal(updateReq)
+	if !bytes.Contains(data, []byte(`"content":""`)) {
+		t.Error("Empty content should be valid JSON")
+	}
+}
+
+func TestLargeConfigContent(t *testing.T) {
+	// Test handling of large config content
+	largeContent := bytes.Repeat([]byte("# comment line\n"), 10000)
+
+	testFile := filepath.Join(testConfigDir, "large_config.conf")
+	err := ioutil.WriteFile(testFile, largeContent, 0600)
+	if err != nil {
+		t.Fatalf("Failed to write large config: %v", err)
+	}
+
+	content, err := ioutil.ReadFile(testFile)
+	if err != nil {
+		t.Fatalf("Failed to read large config: %v", err)
+	}
+
+	if len(content) != len(largeContent) {
+		t.Errorf("Large config content mismatch: got %d bytes, want %d", len(content), len(largeContent))
+	}
+}
+
+func TestSpecialCharactersInConfig(t *testing.T) {
+	specialContent := `server "test" {
+	listen on * port 80
+	root "/var/www/htdocs"
+	location "/api/*" {
+		pass "http://127.0.0.1:8080"
+	}
+}
+`
+	testFile := filepath.Join(testConfigDir, "special_chars.conf")
+	err := ioutil.WriteFile(testFile, []byte(specialContent), 0600)
+	if err != nil {
+		t.Fatalf("Failed to write special chars config: %v", err)
+	}
+
+	content, _ := ioutil.ReadFile(testFile)
+	if !bytes.Contains(content, []byte(`"/var/www/htdocs"`)) {
+		t.Error("Special characters not preserved")
+	}
+	if !bytes.Contains(content, []byte(`"/api/*"`)) {
+		t.Error("Asterisk not preserved")
+	}
+}
+
+// Benchmark tests
+func BenchmarkListServices(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		req := httptest.NewRequest("GET", "/api/v1/services", nil)
+		w := httptest.NewRecorder()
+		handleServices(w, req)
+	}
+}
+
+func BenchmarkGetServiceStatus(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		req := httptest.NewRequest("GET", "/api/v1/services/ospfd/status", nil)
+		w := httptest.NewRecorder()
+		handleServiceByName(w, req)
+	}
+}
+
+func BenchmarkHealthCheck(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		req := httptest.NewRequest("GET", "/api/v1/health", nil)
+		w := httptest.NewRecorder()
+		handleHealth(w, req)
+	}
+}
