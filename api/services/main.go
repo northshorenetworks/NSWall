@@ -351,6 +351,12 @@ func handleServices(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// ControlCommandRequest for executing control commands
+type ControlCommandRequest struct {
+	Command string   `json:"command"`
+	Args    []string `json:"args,omitempty"`
+}
+
 // Service-specific handlers
 func handleServiceByName(w http.ResponseWriter, r *http.Request) {
 	// Extract service name from path
@@ -384,6 +390,10 @@ func handleServiceByName(w http.ResponseWriter, r *http.Request) {
 		handleServiceAction(w, r, cfg)
 	case "stats":
 		handleServiceStats(w, r, cfg)
+	case "control":
+		handleServiceControl(w, r, cfg)
+	case "commands":
+		handleServiceCommands(w, r, cfg)
 	default:
 		writeJSON(w, http.StatusNotFound, APIResponse{
 			Status: "error",
@@ -754,4 +764,270 @@ func parseKeyValueStats(output string) map[string]string {
 		}
 	}
 	return stats
+}
+
+// Comprehensive service control commands mapping
+var serviceCommands = map[string]map[string][]string{
+	"ospfd": {
+		"reload":            {"reload"},
+		"fib-couple":        {"fib", "couple"},
+		"fib-decouple":      {"fib", "decouple"},
+		"fib-reload":        {"fib", "reload"},
+		"log-brief":         {"log", "brief"},
+		"log-verbose":       {"log", "verbose"},
+		"database":          {"show", "database"},
+		"database-asbr":     {"show", "database", "asbr"},
+		"database-external": {"show", "database", "external"},
+		"database-network":  {"show", "database", "network"},
+		"database-router":   {"show", "database", "router"},
+		"database-self":     {"show", "database", "self-originated"},
+		"database-summary":  {"show", "database", "summary"},
+		"show-fib":          {"show", "fib"},
+		"fib-connected":     {"show", "fib", "connected"},
+		"fib-ospf":          {"show", "fib", "ospf"},
+		"fib-static":        {"show", "fib", "static"},
+		"show-interfaces":   {"show", "interfaces"},
+		"show-neighbor":     {"show", "neighbor"},
+		"show-rib":          {"show", "rib"},
+		"show-summary":      {"show", "summary"},
+	},
+	"bgpd": {
+		"reload":          {"reload"},
+		"fib-couple":      {"fib", "couple"},
+		"fib-decouple":    {"fib", "decouple"},
+		"log-brief":       {"log", "brief"},
+		"log-verbose":     {"log", "verbose"},
+		"network-show":    {"network", "show"},
+		"network-flush":   {"network", "flush"},
+		"show-tables":     {"show", "tables"},
+		"show-fib":        {"show", "fib"},
+		"show-metrics":    {"show", "metrics"},
+		"show-summary":    {"show", "summary"},
+		"show-neighbor":   {"show", "neighbor"},
+		"show-rib":        {"show", "rib"},
+		"show-interfaces": {"show", "interfaces"},
+	},
+	"ripd": {
+		"reload":          {"reload"},
+		"fib-couple":      {"fib", "couple"},
+		"fib-decouple":    {"fib", "decouple"},
+		"log-brief":       {"log", "brief"},
+		"log-verbose":     {"log", "verbose"},
+		"show-fib":        {"show", "fib"},
+		"show-interfaces": {"show", "interfaces"},
+		"show-neighbor":   {"show", "neighbor"},
+		"show-rib":        {"show", "rib"},
+	},
+	"eigrpd": {
+		"reload":          {"reload"},
+		"fib-couple":      {"fib", "couple"},
+		"fib-decouple":    {"fib", "decouple"},
+		"clear-neighbors": {"clear", "neighbors"},
+		"log-brief":       {"log", "brief"},
+		"log-verbose":     {"log", "verbose"},
+		"show-fib":        {"show", "fib"},
+		"show-interfaces": {"show", "interfaces"},
+		"show-neighbor":   {"show", "neighbor"},
+		"show-topology":   {"show", "topology"},
+		"show-stats":      {"show", "stats"},
+	},
+	"ldpd": {
+		"reload":          {"reload"},
+		"fib-couple":      {"fib", "couple"},
+		"fib-decouple":    {"fib", "decouple"},
+		"clear-neighbors": {"clear", "neighbors"},
+		"log-brief":       {"log", "brief"},
+		"log-verbose":     {"log", "verbose"},
+		"show-fib":        {"show", "fib"},
+		"show-interfaces": {"show", "interfaces"},
+		"show-neighbor":   {"show", "neighbor"},
+		"show-lib":        {"show", "lib"},
+		"show-discovery":  {"show", "discovery"},
+		"l2vpn-bindings":  {"show", "l2vpn", "bindings"},
+		"l2vpn-pseudowires": {"show", "l2vpn", "pseudowires"},
+	},
+	"unbound": {
+		"reload":             {"reload"},
+		"reload-keep":        {"reload_keep_cache"},
+		"flush":              {"flush_zone", "."},
+		"stats":              {"stats_noreset"},
+		"stats-reset":        {"stats"},
+		"stop":               {"stop"},
+		"dump-cache":         {"dump_cache"},
+		"dump-infra":         {"dump_infra"},
+		"list-stubs":         {"list_stubs"},
+		"list-forwards":      {"list_forwards"},
+		"list-local":         {"list_local_zones"},
+		"list-local-data":    {"list_local_data"},
+		"list-insecure":      {"list_insecure"},
+		"list-auth":          {"list_auth_zones"},
+		"log-reopen":         {"log_reopen"},
+	},
+	"smtpd": {
+		"pause-smtp":       {"pause", "smtp"},
+		"pause-mda":        {"pause", "mda"},
+		"pause-mta":        {"pause", "mta"},
+		"resume-smtp":      {"resume", "smtp"},
+		"resume-mda":       {"resume", "mda"},
+		"resume-mta":       {"resume", "mta"},
+		"log-brief":        {"log", "brief"},
+		"log-verbose":      {"log", "verbose"},
+		"show-queue":       {"show", "queue"},
+		"show-stats":       {"show", "stats"},
+		"show-hosts":       {"show", "hosts"},
+		"show-routes":      {"show", "routes"},
+		"show-hoststats":   {"show", "hoststats"},
+		"show-relays":      {"show", "relays"},
+		"show-status":      {"show", "status"},
+		"schedule-all":     {"schedule", "all"},
+		"remove-all":       {"remove", "all"},
+		"monitor":          {"monitor"},
+	},
+	"iked": {
+		"reload":       {"reload"},
+		"active":       {"active"},
+		"passive":      {"passive"},
+		"couple":       {"couple"},
+		"decouple":     {"decouple"},
+		"log-brief":    {"log", "brief"},
+		"log-verbose":  {"log", "verbose"},
+		"monitor":      {"monitor"},
+		"show-sa":      {"show", "sa"},
+		"show-ca":      {"show", "ca"},
+		"reset-all":    {"reset", "all"},
+		"reset-ca":     {"reset", "ca"},
+		"reset-id":     {"reset", "id"},
+		"reset-policy": {"reset", "policy"},
+	},
+	"relayd": {
+		"reload":        {"reload"},
+		"poll":          {"poll"},
+		"monitor":       {"monitor"},
+		"stop":          {"stop"},
+		"log-brief":     {"log", "brief"},
+		"log-verbose":   {"log", "verbose"},
+		"show-hosts":    {"show", "hosts"},
+		"show-sessions": {"show", "sessions"},
+		"show-summary":  {"show", "summary"},
+		"show-routers":  {"show", "routers"},
+		"show-redirects": {"show", "redirects"},
+		"show-relays":   {"show", "relays"},
+	},
+	"snmpd": {
+		"log-brief":   {"log", "brief"},
+		"log-verbose": {"log", "verbose"},
+	},
+	"ntpd": {
+		"peers":   {"-s", "peers"},
+		"sensors": {"-s", "sensors"},
+		"status":  {"-s", "status"},
+		"all":     {"-s", "all"},
+	},
+}
+
+// GET /api/v1/services/{name}/commands - List available commands
+func handleServiceCommands(w http.ResponseWriter, r *http.Request, cfg ServiceConfig) {
+	if r.Method != http.MethodGet {
+		writeJSON(w, http.StatusMethodNotAllowed, APIResponse{
+			Status: "error",
+			Error:  "Method not allowed",
+		})
+		return
+	}
+
+	commands, exists := serviceCommands[cfg.Name]
+	if !exists {
+		writeJSON(w, http.StatusOK, APIResponse{
+			Status:  "success",
+			Message: "No control commands available for this service",
+			Data:    []string{},
+		})
+		return
+	}
+
+	// Return list of available commands
+	cmdList := make([]string, 0, len(commands))
+	for cmd := range commands {
+		cmdList = append(cmdList, cmd)
+	}
+
+	writeJSON(w, http.StatusOK, APIResponse{
+		Status: "success",
+		Data: map[string]interface{}{
+			"service":  cfg.Name,
+			"commands": cmdList,
+		},
+	})
+}
+
+// POST /api/v1/services/{name}/control - Execute control command
+func handleServiceControl(w http.ResponseWriter, r *http.Request, cfg ServiceConfig) {
+	if r.Method != http.MethodPost {
+		writeJSON(w, http.StatusMethodNotAllowed, APIResponse{
+			Status: "error",
+			Error:  "Method not allowed",
+		})
+		return
+	}
+
+	if cfg.Control == "" {
+		writeJSON(w, http.StatusBadRequest, APIResponse{
+			Status: "error",
+			Error:  fmt.Sprintf("Service '%s' has no control utility", cfg.Name),
+		})
+		return
+	}
+
+	var req ControlCommandRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeJSON(w, http.StatusBadRequest, APIResponse{
+			Status: "error",
+			Error:  "Invalid request body",
+		})
+		return
+	}
+
+	// Check if this is a predefined command
+	commands, hasCommands := serviceCommands[cfg.Name]
+	var args []string
+
+	if hasCommands {
+		predefinedArgs, exists := commands[req.Command]
+		if exists {
+			args = predefinedArgs
+			// Append any additional args from request
+			args = append(args, req.Args...)
+		} else {
+			// Allow raw command execution for flexibility
+			args = append([]string{req.Command}, req.Args...)
+		}
+	} else {
+		// For services without predefined commands, use raw input
+		args = append([]string{req.Command}, req.Args...)
+	}
+
+	// Execute the control command
+	output, err := runCommand(cfg.Control, args...)
+
+	response := map[string]interface{}{
+		"command": req.Command,
+		"args":    args,
+		"output":  output,
+	}
+
+	if err != nil {
+		response["error"] = err.Error()
+		writeJSON(w, http.StatusOK, APIResponse{
+			Status:  "warning",
+			Message: "Command executed with errors",
+			Data:    response,
+		})
+		return
+	}
+
+	writeJSON(w, http.StatusOK, APIResponse{
+		Status:  "success",
+		Message: "Command executed successfully",
+		Data:    response,
+	})
 }
