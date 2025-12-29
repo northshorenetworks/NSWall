@@ -126,13 +126,23 @@ struct ctl ctl_iked[] = {
 /*
  * WireGuard VPN
  */
+char *ctl_wg_test[] = { "/bin/sh", "-n", WGCONF_TEMP, NULL };
+
 struct ctl ctl_wg[] = {
 	{ "enable",     "enable WireGuard interfaces",
 	    { "/bin/sh", "-c", "for i in /etc/hostname.wg*; do [ -f \"$i\" ] && sh /etc/netstart ${i##*/hostname.}; done", NULL }, NULL, X_ENABLE },
 	{ "disable",    "disable WireGuard interfaces",
 	    { "/bin/sh", "-c", "for i in $(ifconfig wg 2>/dev/null | grep ^wg | cut -d: -f1); do ifconfig $i destroy 2>/dev/null; done", NULL }, NULL, X_DISABLE },
 	{ "edit",       "edit WireGuard configuration",
-	    { "wireguard", NULL, NULL }, call_editor, NULL },
+	    { "wireguard", (char *)ctl_wg_test, NULL }, call_editor, NULL },
+	{ "test",       "test configuration shell syntax",
+	    { "/bin/sh", "-n", WGCONF_TEMP, NULL }, NULL, NULL },
+	{ "test-all",   "test all WireGuard configs",
+	    { "/bin/sh", "-c", "for i in /etc/hostname.wg*; do [ -f \"$i\" ] && sh -n \"$i\" && echo \"$i: OK\" || echo \"$i: FAILED\"; done", NULL }, NULL, NULL },
+	{ "show",       "show WireGuard interfaces",
+	    { "/bin/sh", "-c", "ifconfig wg 2>/dev/null || echo 'No WireGuard interfaces'", NULL }, NULL, NULL },
+	{ "status",     "show WireGuard status",
+	    { "/bin/sh", "-c", "for i in $(ifconfig wg 2>/dev/null | grep ^wg | cut -d: -f1); do echo \"=== $i ===\"; ifconfig $i; done", NULL }, NULL, NULL },
 	{ "genkey",     "generate new private key",
 	    { "/bin/sh", "-c", "openssl rand -base64 32", NULL }, NULL, NULL },
 	{ "genpsk",     "generate preshared key",

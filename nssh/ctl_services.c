@@ -104,6 +104,7 @@ struct ctl ctl_snmp[] = {
 /*
  * SSH Daemon
  */
+char *ctl_sshd_test[] = { SSHD, "-t", "-f", SSHDCONF_TEMP, NULL };
 char *ctl_sshd_default[] = { NULL, "Port 22\nPermitRootLogin no\nPasswordAuthentication yes\n", NULL };
 
 struct ctl ctl_sshd[] = {
@@ -111,6 +112,10 @@ struct ctl ctl_sshd[] = {
 	    { SSHD, "-f", SSHDCONF_TEMP, NULL }, NULL, X_ENABLE },
 	{ "disable",	"disable service",
 	    { PKILL, "-f", SSHD, "-f", SSHDCONF_TEMP, NULL }, NULL, X_DISABLE },
+	{ "edit",       "edit configuration",
+	    { "sshd", (char *)ctl_sshd_test, NULL }, call_editor, NULL },
+	{ "test",       "test configuration syntax",
+	    { SSHD, "-t", "-f", SSHDCONF_TEMP, NULL }, NULL, NULL },
 	{ "show",       "show configuration",
 	    { SSHDCONF_TEMP, NULL, NULL }, ctl_show_config, NULL },
 	{ "status",     "show daemon status",
@@ -401,6 +406,8 @@ struct ctl ctl_smtpd[] = {
 /*
  * acme-client - Let's Encrypt Certificate Management
  */
+char *ctl_acme_test[] = { ACMECLIENT, "-n", NULL };
+
 struct ctl ctl_acme[] = {
 	{ "renew",      "renew certificates",
 	    { ACMECLIENT, "-v", REQ, NULL }, NULL, NULL },
@@ -408,10 +415,12 @@ struct ctl ctl_acme[] = {
 	    { ACMECLIENT, "-Fv", REQ, NULL }, NULL, NULL },
 	{ "revoke",     "revoke certificate",
 	    { ACMECLIENT, "-rv", REQ, NULL }, NULL, NULL },
-	{ "check",      "check configuration",
-	    { ACMECLIENT, "-n", REQ, NULL }, NULL, NULL },
+	{ "check",      "check configuration syntax",
+	    { ACMECLIENT, "-n", NULL }, NULL, NULL },
 	{ "edit",       "edit configuration",
-	    { "acme", NULL, NULL }, call_editor, NULL },
+	    { "acme", (char *)ctl_acme_test, NULL }, call_editor, NULL },
+	{ "test",       "test configuration syntax",
+	    { ACMECLIENT, "-n", NULL }, NULL, NULL },
 	/* Additional acme-client commands for 100% coverage */
 	{ "renew-config", "renew with alternate config",
 	    { ACMECLIENT, "-f", REQ, "-v", REQ, NULL }, NULL, NULL },

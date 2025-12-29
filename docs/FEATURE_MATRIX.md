@@ -488,6 +488,44 @@ This document provides a comprehensive comparison between OpenBSD daemon control
 
 ---
 
+## Configuration Syntax Testing
+
+NSWall provides configuration file syntax validation before applying changes. The following daemons support syntax testing:
+
+| Daemon | Test Command | Edit Integration | API Support |
+|--------|--------------|------------------|-------------|
+| pf | `pfctl -nf` | ✅ | ✅ |
+| ospfd | `ospfd -nf` | ✅ | ✅ |
+| bgpd | `bgpd -nf` | ✅ | ✅ |
+| ripd | `ripd -nf` | ✅ | ✅ |
+| ldpd | `ldpd -n -f` | ✅ | ✅ |
+| eigrpd | `eigrpd -n -f` | ✅ | ✅ |
+| dhcpd | `dhcpd -nc` | ✅ | ✅ |
+| snmpd | `snmpd -nf` | ✅ | ✅ |
+| ntpd | `ntpd -nf` | ✅ | ✅ |
+| sshd | `sshd -t -f` | ✅ | ✅ |
+| relayd | `relayd -nf` | ✅ | ✅ |
+| unbound | `unbound -c -d` | ✅ | ✅ |
+| httpd | `httpd -n -f` | ✅ | ✅ |
+| smtpd | `smtpd -n -f` | ✅ | ✅ |
+| ipsecctl | `ipsecctl -nf` | ✅ | ✅ |
+| iked | `iked -n -f` | ✅ | ✅ |
+| dvmrpd | `dvmrpd -nf` | ✅ | ✅ |
+| rad | `rad -n -f` | ✅ | ✅ |
+| acme-client | `acme-client -n` | ✅ | ✅ |
+| wireguard | `sh -n` (shell syntax) | ✅ | ✅ |
+
+**Daemons without syntax testing:**
+- sasyncd - No test flag available
+- inetd - No test flag available
+- ftp-proxy - No configuration file (command-line only)
+- dns (resolv.conf) - Simple file format, no daemon
+- pflogd - Read-only logging, no editable configuration
+
+**Syntax Testing Coverage: 20/25 daemons (80%)**
+
+---
+
 ## New API Endpoints
 
 ### Control Commands Endpoint

@@ -201,6 +201,17 @@ PasswordAuthentication yes
 		ConfigTemplate: `listen on 127.0.0.1
 `,
 	},
+	"wireguard": {
+		Name:       "wireguard",
+		Daemon:     "/bin/sh",
+		Control:    "/bin/sh",
+		ConfigFile: "/var/run/wg.conf",
+		ConfigTemplate: `# WireGuard Interface Configuration
+# Place in /etc/hostname.wgX (e.g., hostname.wg0)
+# wgkey <private-key>
+# wgpeer <public-key> wgendpoint <endpoint:port> wgaip <allowed-ips>
+`,
+	},
 }
 
 // ServiceConfig holds service metadata
@@ -1036,6 +1047,24 @@ var serviceCommands = map[string]map[string][]string{
 		"sensors": {"-s", "sensors"},
 		"status":  {"-s", "status"},
 		"all":     {"-s", "all"},
+	},
+	"sshd": {
+		"test": {"-t", "-f", "/var/run/sshd.conf"},
+	},
+	"acme": {
+		"test":   {"-n"},
+		"check":  {"-n"},
+		"renew":  {"-v"},
+		"force":  {"-Fv"},
+		"revoke": {"-rv"},
+	},
+	"wireguard": {
+		"test":     {"-n", "/var/run/wg.conf"},
+		"test-all": {"-c", "for i in /etc/hostname.wg*; do [ -f \"$i\" ] && sh -n \"$i\" && echo \"$i: OK\" || echo \"$i: FAILED\"; done"},
+		"show":     {"-c", "ifconfig wg 2>/dev/null || echo 'No WireGuard interfaces'"},
+		"status":   {"-c", "for i in $(ifconfig wg 2>/dev/null | grep ^wg | cut -d: -f1); do echo \"=== $i ===\"; ifconfig $i; done"},
+		"genkey":   {"-c", "openssl rand -base64 32"},
+		"genpsk":   {"-c", "openssl rand -base64 32"},
 	},
 }
 
