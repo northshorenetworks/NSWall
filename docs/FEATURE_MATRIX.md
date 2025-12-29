@@ -106,6 +106,62 @@ This document provides a comprehensive comparison between OpenBSD daemon control
 | `-R rule -s rules` | Show specific rule by ID | ✅ | ✅ |
 | `-s syncookies` | Show syncookie status | ✅ | ✅ |
 
+### pf.conf Configuration Commands (Junos/IOS-style)
+
+| Command | Description | NSWall CLI | NSWall API |
+|---------|-------------|------------|------------|
+| `show-config` | Show pf.conf file | ✅ | ✅ |
+| `set` | Set config key/value | ✅ | ✅ |
+| `unset` | Remove config key | ✅ | ✅ |
+| `append` | Append config line | ✅ | ✅ |
+| `init` | Create default config | ✅ | ✅ |
+| `set-block-policy` | Set block-policy | ✅ | ✅ |
+| `set-state-policy` | Set state-policy | ✅ | ✅ |
+| `set-optimization` | Set optimization | ✅ | ✅ |
+| `set-loginterface` | Set loginterface | ✅ | ✅ |
+| `set-skip` | Set skip on interface | ✅ | ✅ |
+| `set-syncookies` | Set syncookies mode | ✅ | ✅ |
+| `set-reassemble` | Set reassemble | ✅ | ✅ |
+| `set-debug` | Set debug level | ✅ | ✅ |
+| `set-ruleset-optimization` | Set ruleset optimization | ✅ | ✅ |
+| `set-fingerprints` | Set fingerprints file | ✅ | ✅ |
+| `set-hostid` | Set hostid for pfsync | ✅ | ✅ |
+| `set-timeout-*` | Set various timeouts (18 types) | ✅ | ✅ |
+| `set-limit-*` | Set various limits (6 types) | ✅ | ✅ |
+| `define-table` | Define persist table | ✅ | ✅ |
+| `define-table-file` | Define table from file | ✅ | ✅ |
+| `define-table-const` | Define const table | ✅ | ✅ |
+| `define-table-counters` | Define table with counters | ✅ | ✅ |
+| `remove-table-def` | Remove table definition | ✅ | ✅ |
+| `add-pass-in` | Add pass in rule | ✅ | ✅ |
+| `add-pass-out` | Add pass out rule | ✅ | ✅ |
+| `add-block-in` | Add block in rule | ✅ | ✅ |
+| `add-block-out` | Add block out rule | ✅ | ✅ |
+| `add-match` | Add match rule | ✅ | ✅ |
+| `add-nat` | Add NAT translation | ✅ | ✅ |
+| `add-rdr` | Add redirect rule | ✅ | ✅ |
+| `add-binat` | Add bidirectional NAT | ✅ | ✅ |
+| `define-queue-root` | Define root queue | ✅ | ✅ |
+| `define-queue-child` | Define child queue | ✅ | ✅ |
+| `define-queue-default` | Define default queue | ✅ | ✅ |
+| `remove-queue-def` | Remove queue definition | ✅ | ✅ |
+| `define-anchor` | Define anchor | ✅ | ✅ |
+| `define-anchor-rules` | Define anchor with inline rules | ✅ | ✅ |
+| `define-anchor-quick` | Define anchor with quick | ✅ | ✅ |
+| `remove-anchor-def` | Remove anchor definition | ✅ | ✅ |
+| `define-macro` | Define macro variable | ✅ | ✅ |
+| `define-macro-list` | Define macro with list | ✅ | ✅ |
+| `remove-macro` | Remove macro definition | ✅ | ✅ |
+| `add-antispoof` | Add antispoof protection | ✅ | ✅ |
+| `add-antispoof-log` | Add antispoof with logging | ✅ | ✅ |
+| `add-antispoof-quick` | Add antispoof with quick | ✅ | ✅ |
+| `add-scrub` | Add scrub rule | ✅ | ✅ |
+| `add-reassemble-tcp` | Add TCP reassembly | ✅ | ✅ |
+
+**pfctl Runtime Commands: 94**
+**pf.conf Configuration Commands: 72**
+**Total PF Commands: 166**
+
 **Coverage: 100%**
 
 ---
@@ -467,7 +523,7 @@ This document provides a comprehensive comparison between OpenBSD daemon control
 
 | Category | Total Commands | CLI Implemented | API Implemented |
 |----------|----------------|-----------------|-----------------|
-| pfctl | 94 | 94 (100%) | 94 (100%) |
+| pfctl + pf.conf | 166 | 166 (100%) | 166 (100%) |
 | ospfctl | 23 | 23 (100%) | 23 (100%) |
 | bgpctl | 28 | 28 (100%) | 28 (100%) |
 | ripctl | 9 | 9 (100%) | 9 (100%) |
