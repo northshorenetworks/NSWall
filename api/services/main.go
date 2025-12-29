@@ -1059,12 +1059,24 @@ var serviceCommands = map[string]map[string][]string{
 		"revoke": {"-rv"},
 	},
 	"wireguard": {
-		"test":     {"-n", "/var/run/wg.conf"},
-		"test-all": {"-c", "for i in /etc/hostname.wg*; do [ -f \"$i\" ] && sh -n \"$i\" && echo \"$i: OK\" || echo \"$i: FAILED\"; done"},
-		"show":     {"-c", "ifconfig wg 2>/dev/null || echo 'No WireGuard interfaces'"},
-		"status":   {"-c", "for i in $(ifconfig wg 2>/dev/null | grep ^wg | cut -d: -f1); do echo \"=== $i ===\"; ifconfig $i; done"},
-		"genkey":   {"-c", "openssl rand -base64 32"},
-		"genpsk":   {"-c", "openssl rand -base64 32"},
+		"test":       {"-n", "/var/run/wg.conf"},
+		"test-all":   {"-c", "for i in /etc/hostname.wg*; do [ -f \"$i\" ] && sh -n \"$i\" && echo \"$i: OK\" || echo \"$i: FAILED\"; done"},
+		"interfaces": {"-c", "ifconfig wg 2>/dev/null || echo 'No WireGuard interfaces'"},
+		"status":     {"-c", "for i in $(ifconfig wg 2>/dev/null | grep ^wg | cut -d: -f1); do echo \"=== $i ===\"; ifconfig $i; done"},
+		"genkey":     {"-c", "openssl rand -base64 32"},
+		"genpsk":     {"-c", "openssl rand -base64 32"},
+	},
+	"ipsec": {
+		"test":   {"-nf", "/var/run/ipsec.conf"},
+		"reload": {"-f", "/var/run/ipsec.conf"},
+	},
+	"dvmrp": {
+		"test": {"-nf", "/var/run/dvmrpd.conf"},
+	},
+	"rad": {
+		"test":        {"-n", "-f", "/var/run/rad.conf"},
+		"log-brief":   {"log", "brief"},
+		"log-verbose": {"log", "verbose"},
 	},
 }
 

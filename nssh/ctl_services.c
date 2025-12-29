@@ -112,8 +112,6 @@ struct ctl ctl_sshd[] = {
 	    { SSHD, "-f", SSHDCONF_TEMP, NULL }, NULL, X_ENABLE },
 	{ "disable",	"disable service",
 	    { PKILL, "-f", SSHD, "-f", SSHDCONF_TEMP, NULL }, NULL, X_DISABLE },
-	{ "edit",       "edit configuration",
-	    { "sshd", (char *)ctl_sshd_test, NULL }, call_editor, NULL },
 	{ "test",       "test configuration syntax",
 	    { SSHD, "-t", "-f", SSHDCONF_TEMP, NULL }, NULL, NULL },
 	{ "show",       "show configuration",
@@ -170,14 +168,27 @@ struct ctl ctl_ntp[] = {
  * Relayd - Load Balancer/Proxy
  */
 char *ctl_relay_test[] = { RELAYD, "-nf", RELAYCONF_TEMP, '\0' };
+char *ctl_relay_default[] = { NULL, "# Relayd Configuration\nlog updates\n", NULL };
 
 struct ctl ctl_relay[] = {
 	{ "enable",	"enable service",
 	    { RELAYD, "-f", RELAYCONF_TEMP, NULL }, NULL, X_ENABLE },
 	{ "disable",	"disable service",
 	    { PKILL, "relayd", NULL }, NULL, X_DISABLE },
-	{ "edit",	"edit configuration",
-	    { "relay", (char *)ctl_relay_test, NULL }, call_editor, NULL },
+	{ "show",       "show configuration",
+	    { RELAYCONF_TEMP, NULL, NULL }, ctl_show_config, NULL },
+	{ "status",     "show daemon status",
+	    { "relayd", NULL, NULL }, ctl_show_status, NULL },
+	{ "set",        "set config <key> <value>",
+	    { RELAYCONF_TEMP, OPT, OPT, NULL }, ctl_set_config, NULL },
+	{ "unset",      "remove config <key>",
+	    { RELAYCONF_TEMP, OPT, NULL }, ctl_unset_config, NULL },
+	{ "append",     "append config line",
+	    { RELAYCONF_TEMP, OPT, OPT, OPT, OPT, NULL }, ctl_append_config, NULL },
+	{ "init",       "create default config",
+	    { RELAYCONF_TEMP, (char *)ctl_relay_default, NULL }, ctl_init_config, NULL },
+	{ "test",       "test configuration syntax",
+	    { RELAYD, "-nf", RELAYCONF_TEMP, NULL }, NULL, NULL },
 	{ "reload",	"reload configuration",
 	    { RELAYCTL, "reload", NULL }, NULL, NULL },
 	{ "host",	"per-host enable/disable",
@@ -325,14 +336,27 @@ struct ctl ctl_httpd[] = {
  * smtpd - OpenSMTPD Mail Server
  */
 char *ctl_smtpd_test[] = { SMTPD, "-n", "-f", SMTPDCONF_TEMP, NULL };
+char *ctl_smtpd_default[] = { NULL, "table aliases file:/etc/mail/aliases\n\nlisten on lo0\n\naction \"local\" mbox alias <aliases>\naction \"relay\" relay\n\nmatch from local for local action \"local\"\nmatch from local for any action \"relay\"\n", NULL };
 
 struct ctl ctl_smtpd[] = {
 	{ "enable",     "enable mail service",
 	    { SMTPD, "-f", SMTPDCONF_TEMP, NULL }, NULL, X_ENABLE },
 	{ "disable",    "disable mail service",
 	    { SMTPCTL, "stop", NULL }, NULL, X_DISABLE },
-	{ "edit",       "edit configuration",
-	    { "smtpd", (char *)ctl_smtpd_test, NULL }, call_editor, NULL },
+	{ "show",       "show configuration",
+	    { SMTPDCONF_TEMP, NULL, NULL }, ctl_show_config, NULL },
+	{ "status",     "show daemon status",
+	    { "smtpd", NULL, NULL }, ctl_show_status, NULL },
+	{ "set",        "set config <key> <value>",
+	    { SMTPDCONF_TEMP, OPT, OPT, NULL }, ctl_set_config, NULL },
+	{ "unset",      "remove config <key>",
+	    { SMTPDCONF_TEMP, OPT, NULL }, ctl_unset_config, NULL },
+	{ "append",     "append config line",
+	    { SMTPDCONF_TEMP, OPT, OPT, OPT, OPT, NULL }, ctl_append_config, NULL },
+	{ "init",       "create default config",
+	    { SMTPDCONF_TEMP, (char *)ctl_smtpd_default, NULL }, ctl_init_config, NULL },
+	{ "test",       "test configuration syntax",
+	    { SMTPD, "-n", "-f", SMTPDCONF_TEMP, NULL }, NULL, NULL },
 	{ "pause",      "pause smtp/mda/mta",
 	    { SMTPCTL, "pause", REQ, NULL }, NULL, NULL },
 	{ "resume",     "resume smtp/mda/mta",
@@ -407,20 +431,27 @@ struct ctl ctl_smtpd[] = {
  * acme-client - Let's Encrypt Certificate Management
  */
 char *ctl_acme_test[] = { ACMECLIENT, "-n", NULL };
+char *ctl_acme_default[] = { NULL, "authority letsencrypt {\n\tapi url \"https://acme-v02.api.letsencrypt.org/directory\"\n\taccount key \"/etc/acme/letsencrypt-privkey.pem\"\n}\n", NULL };
 
 struct ctl ctl_acme[] = {
+	{ "show",       "show configuration",
+	    { ACMECONF_TEMP, NULL, NULL }, ctl_show_config, NULL },
+	{ "set",        "set config <key> <value>",
+	    { ACMECONF_TEMP, OPT, OPT, NULL }, ctl_set_config, NULL },
+	{ "unset",      "remove config <key>",
+	    { ACMECONF_TEMP, OPT, NULL }, ctl_unset_config, NULL },
+	{ "append",     "append config line",
+	    { ACMECONF_TEMP, OPT, OPT, OPT, OPT, NULL }, ctl_append_config, NULL },
+	{ "init",       "create default config",
+	    { ACMECONF_TEMP, (char *)ctl_acme_default, NULL }, ctl_init_config, NULL },
+	{ "test",       "test configuration syntax",
+	    { ACMECLIENT, "-n", NULL }, NULL, NULL },
 	{ "renew",      "renew certificates",
 	    { ACMECLIENT, "-v", REQ, NULL }, NULL, NULL },
 	{ "force",      "force renewal (ignore expiry)",
 	    { ACMECLIENT, "-Fv", REQ, NULL }, NULL, NULL },
 	{ "revoke",     "revoke certificate",
 	    { ACMECLIENT, "-rv", REQ, NULL }, NULL, NULL },
-	{ "check",      "check configuration syntax",
-	    { ACMECLIENT, "-n", NULL }, NULL, NULL },
-	{ "edit",       "edit configuration",
-	    { "acme", (char *)ctl_acme_test, NULL }, call_editor, NULL },
-	{ "test",       "test configuration syntax",
-	    { ACMECLIENT, "-n", NULL }, NULL, NULL },
 	/* Additional acme-client commands for 100% coverage */
 	{ "renew-config", "renew with alternate config",
 	    { ACMECLIENT, "-f", REQ, "-v", REQ, NULL }, NULL, NULL },

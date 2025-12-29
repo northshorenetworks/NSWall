@@ -34,27 +34,52 @@
  * DVMRP - Distance Vector Multicast Routing Protocol
  */
 char *ctl_dvmrp_test[] = { DVMRPD, "-nf", DVMRPCONF_TEMP, '\0' };
+char *ctl_dvmrp_default[] = { NULL, "# DVMRP Configuration\n", NULL };
 
 struct ctl ctl_dvmrp[] = {
 	{ "enable",     "enable service",
 	    { DVMRPD, "-f", DVMRPCONF_TEMP, NULL }, NULL, X_ENABLE },
 	{ "disable",    "disable service",
 	    { PKILL, "dvmrpd", NULL }, NULL, X_DISABLE },
-	{ "edit",       "edit configuration",
-	    { "dvmrp", (char *)ctl_dvmrp_test,  NULL }, call_editor, NULL },
+	{ "show",       "show configuration",
+	    { DVMRPCONF_TEMP, NULL, NULL }, ctl_show_config, NULL },
+	{ "status",     "show daemon status",
+	    { "dvmrpd", NULL, NULL }, ctl_show_status, NULL },
+	{ "set",        "set config <key> <value>",
+	    { DVMRPCONF_TEMP, OPT, OPT, NULL }, ctl_set_config, NULL },
+	{ "unset",      "remove config <key>",
+	    { DVMRPCONF_TEMP, OPT, NULL }, ctl_unset_config, NULL },
+	{ "append",     "append config line",
+	    { DVMRPCONF_TEMP, OPT, OPT, OPT, OPT, NULL }, ctl_append_config, NULL },
+	{ "init",       "create default config",
+	    { DVMRPCONF_TEMP, (char *)ctl_dvmrp_default, NULL }, ctl_init_config, NULL },
+	{ "test",       "test configuration syntax",
+	    { DVMRPD, "-nf", DVMRPCONF_TEMP, NULL }, NULL, NULL },
 	{ 0, 0, { 0 }, 0, 0 }
 };
 
 /*
  * sasyncd - IPsec SA Synchronization Daemon
  */
+char *ctl_sasync_default[] = { NULL, "# sasyncd Configuration\n# interface carp0\n# peer 10.0.0.2\n", NULL };
+
 struct ctl ctl_sasync[] = {
 	{ "enable",     "enable service",
 	    { SASYNCD, "-c", SASYNCCONF_TEMP, NULL }, NULL, X_ENABLE },
 	{ "disable",    "disable service",
 	    { PKILL, "sasyncd", NULL }, NULL, X_DISABLE },
-	{ "edit",       "edit configuration",
-	    { "sasync", NULL, NULL }, call_editor, NULL },
+	{ "show",       "show configuration",
+	    { SASYNCCONF_TEMP, NULL, NULL }, ctl_show_config, NULL },
+	{ "status",     "show daemon status",
+	    { "sasyncd", NULL, NULL }, ctl_show_status, NULL },
+	{ "set",        "set config <key> <value>",
+	    { SASYNCCONF_TEMP, OPT, OPT, NULL }, ctl_set_config, NULL },
+	{ "unset",      "remove config <key>",
+	    { SASYNCCONF_TEMP, OPT, NULL }, ctl_unset_config, NULL },
+	{ "append",     "append config line",
+	    { SASYNCCONF_TEMP, OPT, OPT, OPT, OPT, NULL }, ctl_append_config, NULL },
+	{ "init",       "create default config",
+	    { SASYNCCONF_TEMP, (char *)ctl_sasync_default, NULL }, ctl_init_config, NULL },
 	{ 0, 0, { 0 }, 0, 0 }
 };
 
@@ -66,12 +91,16 @@ struct ctl ctl_ftpproxy[] = {
 	    { FTPPROXY, "-T", "ftp-proxy", "-D", "2", NULL }, NULL, X_ENABLE },
 	{ "disable",	"disable service",
 	    { PKILL, "ftp-proxy", NULL }, NULL, X_DISABLE },
+	{ "status",     "show daemon status",
+	    { "ftp-proxy", NULL, NULL }, ctl_show_status, NULL },
 	{ 0, 0, { 0 }, 0, 0 }
 };
 
 /*
  * DNS (resolv.conf management)
  */
+char *ctl_dns_default[] = { NULL, "# DNS Configuration\nnameserver 8.8.8.8\nnameserver 8.8.4.4\n", NULL };
+
 struct ctl ctl_dns[] = {
 	{ "local-control", "local control over DNS settings",
 	    { RESOLVCONF_SYM, NULL, RESOLVCONF_TEMP, NULL }, ctl_symlink,
@@ -79,21 +108,41 @@ struct ctl ctl_dns[] = {
 	{ "dhcp-control",   "DHCP client control over DNS settings",
 	    { RESOLVCONF_SYM, NULL, RESOLVCONF_DHCP, NULL }, ctl_symlink,
 	    X_OTHER },
-	{ "edit",	    "edit DNS settings",
-	    { "dns", NULL, NULL }, call_editor, NULL },
+	{ "show",       "show configuration",
+	    { RESOLVCONF_TEMP, NULL, NULL }, ctl_show_config, NULL },
+	{ "set",        "set config <key> <value>",
+	    { RESOLVCONF_TEMP, OPT, OPT, NULL }, ctl_set_config, NULL },
+	{ "unset",      "remove config <key>",
+	    { RESOLVCONF_TEMP, OPT, NULL }, ctl_unset_config, NULL },
+	{ "append",     "append config line",
+	    { RESOLVCONF_TEMP, OPT, OPT, OPT, OPT, NULL }, ctl_append_config, NULL },
+	{ "init",       "create default config",
+	    { RESOLVCONF_TEMP, (char *)ctl_dns_default, NULL }, ctl_init_config, NULL },
 	{ 0, 0, { 0 }, 0, 0 }
 };
 
 /*
  * inetd - Internet Super-Server
  */
+char *ctl_inet_default[] = { NULL, "# inetd Configuration\n# service socket protocol wait/nowait user program args\n", NULL };
+
 struct ctl ctl_inet[] = {
 	{ "enable",     "enable service",
 	    { INETD, INETCONF_TEMP, NULL }, NULL, X_ENABLE },
 	{ "disable",    "disable service",
 	    { PKILL, "inetd", NULL }, NULL, X_DISABLE },
-	{ "edit",       "edit configuration",
-	    { "inet", NULL, NULL }, call_editor, NULL },
+	{ "show",       "show configuration",
+	    { INETCONF_TEMP, NULL, NULL }, ctl_show_config, NULL },
+	{ "status",     "show daemon status",
+	    { "inetd", NULL, NULL }, ctl_show_status, NULL },
+	{ "set",        "set config <key> <value>",
+	    { INETCONF_TEMP, OPT, OPT, NULL }, ctl_set_config, NULL },
+	{ "unset",      "remove config <key>",
+	    { INETCONF_TEMP, OPT, NULL }, ctl_unset_config, NULL },
+	{ "append",     "append config line",
+	    { INETCONF_TEMP, OPT, OPT, OPT, OPT, NULL }, ctl_append_config, NULL },
+	{ "init",       "create default config",
+	    { INETCONF_TEMP, (char *)ctl_inet_default, NULL }, ctl_init_config, NULL },
 	{ 0, 0, { 0 }, 0, 0 }
 };
 
@@ -101,14 +150,27 @@ struct ctl ctl_inet[] = {
  * rad - IPv6 Router Advertisement Daemon
  */
 char *ctl_rad_test[] = { RAD, "-n", "-f", RADCONF_TEMP, NULL };
+char *ctl_rad_default[] = { NULL, "# Router Advertisement Configuration\ninterface em0\n", NULL };
 
 struct ctl ctl_rad[] = {
 	{ "enable",     "enable router advertisements",
 	    { RAD, "-f", RADCONF_TEMP, NULL }, NULL, X_ENABLE },
 	{ "disable",    "disable router advertisements",
 	    { PKILL, "rad", NULL }, NULL, X_DISABLE },
-	{ "edit",       "edit configuration",
-	    { "rad", (char *)ctl_rad_test, NULL }, call_editor, NULL },
+	{ "show",       "show configuration",
+	    { RADCONF_TEMP, NULL, NULL }, ctl_show_config, NULL },
+	{ "status",     "show daemon status",
+	    { "rad", NULL, NULL }, ctl_show_status, NULL },
+	{ "set",        "set config <key> <value>",
+	    { RADCONF_TEMP, OPT, OPT, NULL }, ctl_set_config, NULL },
+	{ "unset",      "remove config <key>",
+	    { RADCONF_TEMP, OPT, NULL }, ctl_unset_config, NULL },
+	{ "append",     "append config line",
+	    { RADCONF_TEMP, OPT, OPT, OPT, OPT, NULL }, ctl_append_config, NULL },
+	{ "init",       "create default config",
+	    { RADCONF_TEMP, (char *)ctl_rad_default, NULL }, ctl_init_config, NULL },
+	{ "test",       "test configuration syntax",
+	    { RAD, "-n", "-f", RADCONF_TEMP, NULL }, NULL, NULL },
 	{ "log",        "log brief/verbose",
 	    { RACTL, "log", REQ, NULL }, NULL, NULL },
 	{ 0, 0, { 0 }, 0, 0 }

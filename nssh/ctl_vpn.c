@@ -34,14 +34,27 @@
  * IPsec - IKEv1 (isakmpd)
  */
 char *ctl_ipsec_test[] = { IPSECCTL, "-nf", IPSECCONF_TEMP, '\0' };
+char *ctl_ipsec_default[] = { NULL, "# IPsec Configuration\n# ike esp from local to peer\n", NULL };
 
 struct ctl ctl_ipsec[] = {
 	{ "enable",     "enable service",
 	    { ISAKMPD, "-Sa", NULL }, NULL, X_ENABLE },
 	{ "disable",    "disable service",
 	    { PKILL, "isakmpd", NULL }, NULL, X_DISABLE },
-	{ "edit",       "edit configuration",
-	    { "ipsec", (char *)ctl_ipsec_test, NULL }, call_editor, NULL },
+	{ "show",       "show configuration",
+	    { IPSECCONF_TEMP, NULL, NULL }, ctl_show_config, NULL },
+	{ "status",     "show daemon status",
+	    { "isakmpd", NULL, NULL }, ctl_show_status, NULL },
+	{ "set",        "set config <key> <value>",
+	    { IPSECCONF_TEMP, OPT, OPT, NULL }, ctl_set_config, NULL },
+	{ "unset",      "remove config <key>",
+	    { IPSECCONF_TEMP, OPT, NULL }, ctl_unset_config, NULL },
+	{ "append",     "append config line",
+	    { IPSECCONF_TEMP, OPT, OPT, OPT, OPT, NULL }, ctl_append_config, NULL },
+	{ "init",       "create default config",
+	    { IPSECCONF_TEMP, (char *)ctl_ipsec_default, NULL }, ctl_init_config, NULL },
+	{ "test",       "test configuration syntax",
+	    { IPSECCTL, "-nf", IPSECCONF_TEMP, NULL }, NULL, NULL },
 	{ "reload",     "reload service",
 	    { IPSECCTL, "-f", IPSECCONF_TEMP, NULL }, NULL, NULL },
 	{ 0, 0, { 0 }, 0, 0 }
@@ -51,14 +64,27 @@ struct ctl ctl_ipsec[] = {
  * iked - IKEv2 VPN Daemon
  */
 char *ctl_iked_test[] = { IKED, "-n", "-f", IKEDCONF_TEMP, NULL };
+char *ctl_iked_default[] = { NULL, "# IKEv2 Configuration\n# ikev2 active\n", NULL };
 
 struct ctl ctl_iked[] = {
 	{ "enable",     "enable IKEv2 VPN",
 	    { IKED, "-f", IKEDCONF_TEMP, NULL }, NULL, X_ENABLE },
 	{ "disable",    "disable IKEv2 VPN",
 	    { PKILL, "iked", NULL }, NULL, X_DISABLE },
-	{ "edit",       "edit configuration",
-	    { "iked", (char *)ctl_iked_test, NULL }, call_editor, NULL },
+	{ "show",       "show configuration",
+	    { IKEDCONF_TEMP, NULL, NULL }, ctl_show_config, NULL },
+	{ "status",     "show daemon status",
+	    { "iked", NULL, NULL }, ctl_show_status, NULL },
+	{ "set",        "set config <key> <value>",
+	    { IKEDCONF_TEMP, OPT, OPT, NULL }, ctl_set_config, NULL },
+	{ "unset",      "remove config <key>",
+	    { IKEDCONF_TEMP, OPT, NULL }, ctl_unset_config, NULL },
+	{ "append",     "append config line",
+	    { IKEDCONF_TEMP, OPT, OPT, OPT, OPT, NULL }, ctl_append_config, NULL },
+	{ "init",       "create default config",
+	    { IKEDCONF_TEMP, (char *)ctl_iked_default, NULL }, ctl_init_config, NULL },
+	{ "test",       "test configuration syntax",
+	    { IKED, "-n", "-f", IKEDCONF_TEMP, NULL }, NULL, NULL },
 	{ "reload",     "reload configuration",
 	    { IKECTL, "reload", NULL }, NULL, NULL },
 	{ "reset",      "reset sa/ca/policy/user/id",
@@ -127,19 +153,28 @@ struct ctl ctl_iked[] = {
  * WireGuard VPN
  */
 char *ctl_wg_test[] = { "/bin/sh", "-n", WGCONF_TEMP, NULL };
+char *ctl_wg_default[] = { NULL, "# WireGuard Interface Configuration\n# wgkey <private-key>\n# wgpeer <public-key> wgendpoint <endpoint:port> wgaip <allowed-ips>\n", NULL };
 
 struct ctl ctl_wg[] = {
 	{ "enable",     "enable WireGuard interfaces",
 	    { "/bin/sh", "-c", "for i in /etc/hostname.wg*; do [ -f \"$i\" ] && sh /etc/netstart ${i##*/hostname.}; done", NULL }, NULL, X_ENABLE },
 	{ "disable",    "disable WireGuard interfaces",
 	    { "/bin/sh", "-c", "for i in $(ifconfig wg 2>/dev/null | grep ^wg | cut -d: -f1); do ifconfig $i destroy 2>/dev/null; done", NULL }, NULL, X_DISABLE },
-	{ "edit",       "edit WireGuard configuration",
-	    { "wireguard", (char *)ctl_wg_test, NULL }, call_editor, NULL },
+	{ "show",       "show configuration",
+	    { WGCONF_TEMP, NULL, NULL }, ctl_show_config, NULL },
+	{ "set",        "set config <key> <value>",
+	    { WGCONF_TEMP, OPT, OPT, NULL }, ctl_set_config, NULL },
+	{ "unset",      "remove config <key>",
+	    { WGCONF_TEMP, OPT, NULL }, ctl_unset_config, NULL },
+	{ "append",     "append config line",
+	    { WGCONF_TEMP, OPT, OPT, OPT, OPT, NULL }, ctl_append_config, NULL },
+	{ "init",       "create default config",
+	    { WGCONF_TEMP, (char *)ctl_wg_default, NULL }, ctl_init_config, NULL },
 	{ "test",       "test configuration shell syntax",
 	    { "/bin/sh", "-n", WGCONF_TEMP, NULL }, NULL, NULL },
 	{ "test-all",   "test all WireGuard configs",
 	    { "/bin/sh", "-c", "for i in /etc/hostname.wg*; do [ -f \"$i\" ] && sh -n \"$i\" && echo \"$i: OK\" || echo \"$i: FAILED\"; done", NULL }, NULL, NULL },
-	{ "show",       "show WireGuard interfaces",
+	{ "interfaces", "show WireGuard interfaces",
 	    { "/bin/sh", "-c", "ifconfig wg 2>/dev/null || echo 'No WireGuard interfaces'", NULL }, NULL, NULL },
 	{ "status",     "show WireGuard status",
 	    { "/bin/sh", "-c", "for i in $(ifconfig wg 2>/dev/null | grep ^wg | cut -d: -f1); do echo \"=== $i ===\"; ifconfig $i; done", NULL }, NULL, NULL },
