@@ -56,6 +56,12 @@ This document provides a comprehensive comparison between OpenBSD daemon control
 | `-t table -T kill` | Kill states from table | ✅ | ✅ |
 | `-k host` | Kill matching states | ✅ | ✅ |
 | `-K host` | Kill by source address | ✅ | ✅ |
+| `-k label -k label` | Kill states by rule label | ✅ | ✅ |
+| `-k id -k id` | Kill state by ID | ✅ | ✅ |
+| `-k key -k key` | Kill state by key | ✅ | ✅ |
+| `-V rdomain -k host` | Kill states in routing domain | ✅ | ✅ |
+| `-S file` | Save state table to file | ✅ | ✅ |
+| `-L file` | Load state table from file | ✅ | ✅ |
 | `-z` | Clear per-rule statistics | ✅ | ✅ |
 | `-x level` | Set debug level | ✅ | ✅ |
 | `-o level` | Set optimization level | ✅ | ✅ |
@@ -65,6 +71,11 @@ This document provides a comprehensive comparison between OpenBSD daemon control
 | `-vs states` | Verbose states (with details) | ✅ | ✅ |
 | `-vvs Tables` | Verbose tables (with counters) | ✅ | ✅ |
 | `-vvs rules` | Rules with line numbers | ✅ | ✅ |
+| `-s Interfaces -i iface` | Show specific interface stats | ✅ | ✅ |
+| `-t table -T replace -f file` | Load table from file | ✅ | ✅ |
+| `-FReset` | Reset limits/timeouts to defaults | ✅ | ✅ |
+| `-s Stlimiter` | Show state limiters | ✅ | ✅ |
+| `-s Srclimiter` | Show source limiters | ✅ | ✅ |
 
 **Coverage: 100%**
 
@@ -427,7 +438,7 @@ This document provides a comprehensive comparison between OpenBSD daemon control
 
 | Category | Total Commands | CLI Implemented | API Implemented |
 |----------|----------------|-----------------|-----------------|
-| pfctl | 52 | 52 (100%) | 52 (100%) |
+| pfctl | 63 | 63 (100%) | 63 (100%) |
 | ospfctl | 23 | 23 (100%) | 23 (100%) |
 | bgpctl | 28 | 28 (100%) | 28 (100%) |
 | ripctl | 9 | 9 (100%) | 9 (100%) |

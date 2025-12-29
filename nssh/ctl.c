@@ -378,6 +378,12 @@ struct ctl ctl_pf[] = {
 	    { PFCTL, "-k", REQ, NULL }, NULL, NULL },
 	{ "kill-src",      "kill by source address",
 	    { PFCTL, "-K", REQ, NULL }, NULL, NULL },
+	{ "kill-label",    "kill states by rule label",
+	    { PFCTL, "-k", "label", "-k", REQ, NULL }, NULL, NULL },
+	{ "kill-id",       "kill state by ID",
+	    { PFCTL, "-k", "id", "-k", REQ, NULL }, NULL, NULL },
+	{ "kill-key",      "kill state by key",
+	    { PFCTL, "-k", "key", "-k", REQ, NULL }, NULL, NULL },
 	/* Other commands */
 	{ "clear-stats",   "clear per-rule statistics",
 	    { PFCTL, "-z", NULL }, NULL, NULL },
@@ -415,6 +421,21 @@ struct ctl ctl_pf[] = {
 	/* Combined operations */
 	{ "rules-numbered", "show rules with line numbers",
 	    { PFCTL, "-vvs", "rules", NULL }, NULL, NULL },
+	/* State file operations */
+	{ "save-states",   "save state table to file",
+	    { PFCTL, "-S", REQ, NULL }, NULL, NULL },
+	{ "load-states",   "load state table from file",
+	    { PFCTL, "-L", REQ, NULL }, NULL, NULL },
+	/* Reset and additional show commands */
+	{ "flush-reset",   "reset limits/timeouts to defaults",
+	    { PFCTL, "-FReset", NULL }, NULL, NULL },
+	{ "show-stlimiter", "show state limiters",
+	    { PFCTL, "-s", "Stlimiter", NULL }, NULL, NULL },
+	{ "show-srclimiter", "show source limiters",
+	    { PFCTL, "-s", "Srclimiter", NULL }, NULL, NULL },
+	/* Routing domain */
+	{ "kill-rdomain",  "kill states in routing domain",
+	    { PFCTL, "-V", REQ, "-k", REQ, NULL }, NULL, NULL },
 	{ 0, 0, { 0 }, 0, 0 }
 };
 
