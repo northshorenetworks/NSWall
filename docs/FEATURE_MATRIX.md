@@ -76,6 +76,35 @@ This document provides a comprehensive comparison between OpenBSD daemon control
 | `-FReset` | Reset limits/timeouts to defaults | ✅ | ✅ |
 | `-s Stlimiter` | Show state limiters | ✅ | ✅ |
 | `-s Srclimiter` | Show source limiters | ✅ | ✅ |
+| `-t table -T reset` | Reset table counters (non-zero only) | ✅ | ✅ |
+| `-t table -vT show` | Show table with byte/pkt counters | ✅ | ✅ |
+| `-a anchor -f file` | Load rules into anchor | ✅ | ✅ |
+| `-a anchor -s nat` | Show NAT rules in anchor | ✅ | ✅ |
+| `-a anchor -s queue` | Show queue rules in anchor | ✅ | ✅ |
+| `-a anchor -s states` | Show states in anchor | ✅ | ✅ |
+| `-a anchor -s info` | Show info for anchor | ✅ | ✅ |
+| `-a anchor -s labels` | Show labels in anchor | ✅ | ✅ |
+| `-a anchor -s all` | Show all in anchor | ✅ | ✅ |
+| `-a anchor -Fnat` | Flush NAT in anchor | ✅ | ✅ |
+| `-a anchor -Fqueue` | Flush queues in anchor | ✅ | ✅ |
+| `-a anchor -Fstate` | Flush states in anchor | ✅ | ✅ |
+| `-a anchor -Fall` | Flush all in anchor | ✅ | ✅ |
+| `-vs Anchors` | Show anchors recursively | ✅ | ✅ |
+| `-a anchor -t table -T show` | Show table in anchor | ✅ | ✅ |
+| `-a anchor -t table -T add` | Add to table in anchor | ✅ | ✅ |
+| `-a anchor -t table -T delete` | Delete from table in anchor | ✅ | ✅ |
+| `-K host` | Kill source tracking entry | ✅ | ✅ |
+| `-K 0.0.0.0/0` | Kill all source tracking | ✅ | ✅ |
+| `-A -f file` | Load only queue rules | ✅ | ✅ |
+| `-T load -f file` | Load only table definitions | ✅ | ✅ |
+| `-s keys` | Show state keys for pfsync | ✅ | ✅ |
+| `-vs queue` | Show queue with statistics | ✅ | ✅ |
+| `-vs nat` | Show NAT with counters | ✅ | ✅ |
+| `-vs Sources` | Show source tracking verbose | ✅ | ✅ |
+| `-vs Interfaces -i iface` | Show interface with stats | ✅ | ✅ |
+| `-i iface -Fstate` | Flush states on interface | ✅ | ✅ |
+| `-R rule -s rules` | Show specific rule by ID | ✅ | ✅ |
+| `-s syncookies` | Show syncookie status | ✅ | ✅ |
 
 **Coverage: 100%**
 
@@ -438,7 +467,7 @@ This document provides a comprehensive comparison between OpenBSD daemon control
 
 | Category | Total Commands | CLI Implemented | API Implemented |
 |----------|----------------|-----------------|-----------------|
-| pfctl | 63 | 63 (100%) | 63 (100%) |
+| pfctl | 94 | 94 (100%) | 94 (100%) |
 | ospfctl | 23 | 23 (100%) | 23 (100%) |
 | bgpctl | 28 | 28 (100%) | 28 (100%) |
 | ripctl | 9 | 9 (100%) | 9 (100%) |

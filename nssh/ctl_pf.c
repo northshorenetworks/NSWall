@@ -175,5 +175,87 @@ struct ctl ctl_pf[] = {
 	/* Routing domain */
 	{ "kill-rdomain",  "kill states in routing domain",
 	    { PFCTL, "-V", REQ, "-k", REQ, NULL }, NULL, NULL },
+	/*
+	 * Additional table commands for complete coverage
+	 */
+	{ "table-reset",   "reset non-zero counters only",
+	    { PFCTL, "-t", REQ, "-T", "reset", NULL }, NULL, NULL },
+	{ "table-show-counters", "show table with byte/pkt counters",
+	    { PFCTL, "-t", REQ, "-vT", "show", NULL }, NULL, NULL },
+	/*
+	 * Comprehensive anchor operations
+	 */
+	{ "anchor-load",   "load rules into anchor",
+	    { PFCTL, "-a", REQ, "-f", REQ, NULL }, NULL, NULL },
+	{ "anchor-show-nat", "show NAT rules in anchor",
+	    { PFCTL, "-a", REQ, "-s", "nat", NULL }, NULL, NULL },
+	{ "anchor-show-queue", "show queue rules in anchor",
+	    { PFCTL, "-a", REQ, "-s", "queue", NULL }, NULL, NULL },
+	{ "anchor-show-states", "show states in anchor",
+	    { PFCTL, "-a", REQ, "-s", "states", NULL }, NULL, NULL },
+	{ "anchor-show-info", "show info for anchor",
+	    { PFCTL, "-a", REQ, "-s", "info", NULL }, NULL, NULL },
+	{ "anchor-show-labels", "show labels in anchor",
+	    { PFCTL, "-a", REQ, "-s", "labels", NULL }, NULL, NULL },
+	{ "anchor-show-all", "show all in anchor",
+	    { PFCTL, "-a", REQ, "-s", "all", NULL }, NULL, NULL },
+	{ "anchor-flush-nat", "flush NAT in anchor",
+	    { PFCTL, "-a", REQ, "-Fnat", NULL }, NULL, NULL },
+	{ "anchor-flush-queue", "flush queues in anchor",
+	    { PFCTL, "-a", REQ, "-Fqueue", NULL }, NULL, NULL },
+	{ "anchor-flush-states", "flush states in anchor",
+	    { PFCTL, "-a", REQ, "-Fstate", NULL }, NULL, NULL },
+	{ "anchor-flush-all", "flush all in anchor",
+	    { PFCTL, "-a", REQ, "-Fall", NULL }, NULL, NULL },
+	{ "anchor-recursive", "show anchors recursively",
+	    { PFCTL, "-vs", "Anchors", NULL }, NULL, NULL },
+	{ "anchor-table-show", "show table in anchor",
+	    { PFCTL, "-a", REQ, "-t", REQ, "-T", "show", NULL }, NULL, NULL },
+	{ "anchor-table-add", "add to table in anchor",
+	    { PFCTL, "-a", REQ, "-t", REQ, "-T", "add", REQ, NULL }, NULL, NULL },
+	{ "anchor-table-delete", "delete from table in anchor",
+	    { PFCTL, "-a", REQ, "-t", REQ, "-T", "delete", REQ, NULL }, NULL, NULL },
+	/*
+	 * Source tracking operations
+	 */
+	{ "kill-src-track", "kill source tracking entry",
+	    { PFCTL, "-K", REQ, NULL }, NULL, NULL },
+	{ "kill-src-track-all", "kill all source tracking",
+	    { PFCTL, "-K", "0.0.0.0/0", NULL }, NULL, NULL },
+	/*
+	 * Additional loading options
+	 */
+	{ "load-queue",    "load only queue rules",
+	    { PFCTL, "-A", "-f", REQ, NULL }, NULL, NULL },
+	{ "load-tables",   "load only table definitions",
+	    { PFCTL, "-T", "load", "-f", REQ, NULL }, NULL, NULL },
+	/*
+	 * Additional show commands
+	 */
+	{ "show-keys",     "show state keys for pfsync",
+	    { PFCTL, "-s", "keys", NULL }, NULL, NULL },
+	{ "show-queue-verbose", "show queue with statistics",
+	    { PFCTL, "-vs", "queue", NULL }, NULL, NULL },
+	{ "show-nat-verbose", "show NAT with counters",
+	    { PFCTL, "-vs", "nat", NULL }, NULL, NULL },
+	{ "show-sources-verbose", "show source tracking verbose",
+	    { PFCTL, "-vs", "Sources", NULL }, NULL, NULL },
+	/*
+	 * Interface-specific operations
+	 */
+	{ "show-iface-verbose", "show interface with stats",
+	    { PFCTL, "-vs", "Interfaces", "-i", REQ, NULL }, NULL, NULL },
+	{ "flush-iface-states", "flush states on interface",
+	    { PFCTL, "-i", REQ, "-Fstate", NULL }, NULL, NULL },
+	/*
+	 * Rule-specific operations
+	 */
+	{ "show-rule",     "show specific rule by ID",
+	    { PFCTL, "-R", REQ, "-s", "rules", NULL }, NULL, NULL },
+	/*
+	 * Syncookie operations
+	 */
+	{ "show-syncookies", "show syncookie status",
+	    { PFCTL, "-s", "syncookies", NULL }, NULL, NULL },
 	{ 0, 0, { 0 }, 0, 0 }
 };
