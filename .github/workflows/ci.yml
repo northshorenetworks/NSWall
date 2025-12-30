@@ -30,12 +30,14 @@ jobs:
       - name: Lint API
         working-directory: api
         run: |
+          go mod tidy
           go mod download
           $(go env GOPATH)/bin/golangci-lint run --timeout 5m ./... || true
 
       - name: Lint Controller
         working-directory: controller
         run: |
+          go mod tidy
           go mod download
           $(go env GOPATH)/bin/golangci-lint run --timeout 5m ./... || true
 
@@ -62,12 +64,14 @@ jobs:
       - name: Test API
         working-directory: api
         run: |
+          go mod tidy
           go mod download
           go test -v -race -short -coverprofile=coverage.out ./...
 
       - name: Test Controller
         working-directory: controller
         run: |
+          go mod tidy
           go mod download
           go test -v -race -short -coverprofile=coverage.out ./...
 
