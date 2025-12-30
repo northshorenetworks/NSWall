@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"nswall-api/internal/handlers"
+	"github.com/northshorenetworks/nswall/api/internal/handlers"
 )
 
 // TestHealthCheckHandler tests the health check handler directly

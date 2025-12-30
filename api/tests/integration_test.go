@@ -10,8 +10,8 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
-	"nswall-api/internal/handlers"
-	"nswall-api/internal/middleware"
+	"github.com/northshorenetworks/nswall/api/internal/handlers"
+	"github.com/northshorenetworks/nswall/api/internal/middleware"
 )
 
 // TestServer wraps the API for testing

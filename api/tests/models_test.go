@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"nswall-api/internal/models"
+	"github.com/northshorenetworks/nswall/api/internal/models"
 )
 
 // TestSystemInfoModel tests SystemInfo serialization

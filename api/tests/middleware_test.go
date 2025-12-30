@@ -6,7 +6,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"nswall-api/internal/middleware"
+	"github.com/northshorenetworks/nswall/api/internal/middleware"
 )
 
 // TestRequestIDMiddleware tests the request ID middleware
