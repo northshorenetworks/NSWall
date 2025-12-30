@@ -115,9 +115,13 @@ func main() {
 		r.Use(rl.Middleware)
 	}
 
+	// Metrics handler for Prometheus
+	metricsHandler := handlers.NewMetricsHandler(*nshPath)
+
 	// Public routes (no auth required)
 	r.Get("/", h.Root)
 	r.Get("/health", h.Health)
+	r.Get("/metrics", metricsHandler.GetMetrics)
 	r.Get("/api/v1", h.Root)
 
 	// Auth routes (login doesn't require auth)
