@@ -308,12 +308,12 @@ func parseRuleStats(output string) []PFRuleStats {
 	ruleNum := 0
 
 	for _, line := range lines {
-		line = strings.TrimSpace(line)
+		if line == "" {
+			continue
+		}
 
-		// Check for rule line (starts with @ or action keywords)
-		if strings.HasPrefix(line, "@") || strings.HasPrefix(line, "pass ") ||
-			strings.HasPrefix(line, "block ") || strings.HasPrefix(line, "match ") {
-
+		// Rule line starts with @ for rule number (e.g., "@0 pass in...")
+		if strings.HasPrefix(line, "@") {
 			// Save previous rule if exists
 			if currentRule != nil {
 				rules = append(rules, *currentRule)
@@ -333,11 +333,8 @@ func parseRuleStats(output string) []PFRuleStats {
 					currentRule.Label = rest[:endIdx]
 				}
 			}
-		}
-
-		// Check for counters line
-		if currentRule != nil && strings.Contains(line, "Evaluations:") {
-			// Format: [ Evaluations: 1234    Packets: 5678    Bytes: 91234     States: 12     ]
+		} else if currentRule != nil && strings.HasPrefix(strings.TrimSpace(line), "[") {
+			// Statistics line: [ Evaluations: 1234    Packets: 5678    Bytes: 91234     States: 12     ]
 			parseCounters(line, currentRule)
 		}
 	}
