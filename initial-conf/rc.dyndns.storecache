@@ -1,6 +1,0 @@
-#!/bin/sh
-
-# copy cache file to /conf for permanent storage
-rw
-/bin/cp /var/db/ez-ipupdate.cache /conf
-ro
