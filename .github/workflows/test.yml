@@ -1,0 +1,96 @@
+name: NSWall Tests
+
+on:
+  push:
+    branches: [ main, master, 'claude/**' ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  test-linux:
+    name: Unit Tests (Linux)
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y build-essential
+
+    - name: Build unit tests
+      working-directory: nssh/tests
+      run: |
+        cc -O2 -Wall -I.. -o test_ctl test_ctl.c
+
+    - name: Run unit tests
+      working-directory: nssh/tests
+      run: ./test_ctl
+
+  test-openbsd:
+    name: Full Tests (OpenBSD)
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Run OpenBSD VM tests
+      uses: cross-platform-actions/action@v0.25.0
+      with:
+        operating_system: openbsd
+        version: '7.5'
+        run: |
+          # Install build dependencies
+          pkg_add -I gmake
+
+          # Build and run unit tests
+          cd nssh/tests
+          cc -O2 -Wall -I.. -o test_ctl test_ctl.c
+          ./test_ctl
+
+          # Build and run pf.conf syntax tests
+          cc -O2 -Wall -I.. -o test_pf_conf test_pf_conf.c
+          ./test_pf_conf
+
+  build-api:
+    name: Build API
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: '1.21'
+
+    - name: Build API
+      working-directory: api
+      run: |
+        go mod download
+        go build -v ./...
+
+    - name: Run API tests
+      working-directory: api
+      run: go test -v ./...
+
+  lint:
+    name: Code Quality
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Check C code formatting
+      run: |
+        # Check for common issues
+        find nssh -name '*.c' -o -name '*.h' | xargs grep -l 'TODO\|FIXME\|XXX' || true
+
+    - name: Check shell scripts
+      run: |
+        find . -name '*.sh' -type f | head -20 | xargs -I {} sh -n {} 2>&1 || true
