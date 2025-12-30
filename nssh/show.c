@@ -1,4 +1,3 @@
-/* $nsh: show.c,v 1.10 2009/05/22 23:43:33 chris Exp $ */
 /* From: $OpenBSD: /usr/src/sbin/route/show.c,v 1.61 2007/09/05 20:30:21 claudio Exp $	*/
 
 /*
@@ -80,16 +79,14 @@ static const struct bits bits[] = {
 	{ RTF_DYNAMIC,	'D' },
 	{ RTF_MODIFIED,	'M' },
 	{ RTF_DONE,	'd' }, /* Completed -- for routing messages only */
-	{ RTF_MASK,	'm' }, /* Mask Present -- for routing messages only */
 	{ RTF_CLONING,	'C' },
-	{ RTF_XRESOLVE,	'X' },
 	{ RTF_LLINFO,	'L' },
 	{ RTF_STATIC,	'S' },
 	{ RTF_PROTO1,	'1' },
 	{ RTF_PROTO2,	'2' },
 	{ RTF_PROTO3,	'3' },
 	{ RTF_CLONED,	'c' },
-	{ RTF_JUMBO,	'J' },
+	{ RTF_MPLS,	'T' },
 	{ 0, 0 }
 };
 
@@ -104,8 +101,6 @@ void	p_protocol(struct sadb_protocol *, struct sockaddr *, struct
 	    sadb_protocol *, int);
 void	p_sockaddr(struct sockaddr *, struct sockaddr *, int, int);
 void	p_flags(int, char *);
-char	*routename4(in_addr_t);
-char	*routename6(struct sockaddr_in6 *);
 void	index_pfk(struct sadb_msg *, void **);
 
 /*
@@ -115,7 +110,7 @@ void
 pr_flags(int af)
 {
 	printf("Flags: U - up, G - gateway, H - host, L - link layer, R - reject (unreachable),\n");
-	printf("       D - dynamic, S - static\n");
+	printf("       D - dynamic, S - static, T - MPLS, c - CLONED, l - LOCAL\n");
 }
 
 /*
@@ -132,26 +127,26 @@ p_rttables(int af, u_int tableid, int flags)
 	struct sockaddr *sa;
 	struct rtdump *rtdump;
 
-	rtdump = getrtdump(0, flags, 0);
+	rtdump = getrtdump(af, flags, tableid);
+	if (rtdump == NULL)
+		return;
 
-	if (rtdump) {
-		for (next = rtdump->buf; next < rtdump->lim; next += rtm->rtm_msglen) {
-			rtm = (struct rt_msghdr *)next;
-			if (rtm->rtm_version != RTM_VERSION)
-				continue;
-			sa = (struct sockaddr *)(next + rtm->rtm_hdrlen);
-			if (af != AF_UNSPEC && sa->sa_family != af)
-				continue;
-			if (next == rtdump->buf) {
-				/* start of the loop? print headers */
-				pr_flags(sa->sa_family);
-				pr_family(sa->sa_family);
-				pr_rthdr(sa->sa_family);
-			}
-			p_rtentry(rtm);
+	for (next = rtdump->buf; next < rtdump->lim; next += rtm->rtm_msglen) {
+		rtm = (struct rt_msghdr *)next;
+		if (rtm->rtm_version != RTM_VERSION)
+			continue;
+		sa = (struct sockaddr *)(next + rtm->rtm_hdrlen);
+		if (af != AF_UNSPEC && sa->sa_family != af)
+			continue;
+		if (next == rtdump->buf) {
+			/* start of the loop? print headers */
+			pr_flags(sa->sa_family);
+		pr_family(sa->sa_family);
+			pr_rthdr(sa->sa_family);
 		}
-		freertdump(rtdump);
+		p_rtentry(rtm);
 	}
+	freertdump(rtdump);
 
 	if (af != 0 && af != PF_KEY)
 		return;
@@ -252,7 +247,8 @@ p_rtentry(struct rt_msghdr *rtm)
 	struct sockaddr	*mask, *rti_info[RTAX_MAX];
 	char		 ifbuf[IF_NAMESIZE];
 	int interesting = RTF_UP | RTF_GATEWAY | RTF_HOST | RTF_DYNAMIC |
-	    RTF_LLINFO | RTF_STATIC | RTF_REJECT;
+	    RTF_LLINFO | RTF_STATIC | RTF_REJECT | RTF_MPLS | RTF_CLONED |
+	    RTF_LOCAL;
 
 	if (sa->sa_family == AF_KEY)
 		return;
@@ -336,9 +332,6 @@ pr_family(int af)
 		break;
 	case PF_KEY:
 		afname = "Encap";
-		break;
-	case AF_APPLETALK:
-		afname = "AppleTalk";
 		break;
 	default:
 		afname = NULL;
@@ -447,25 +440,11 @@ p_sockaddr(struct sockaddr *sa, struct sockaddr *mask, int flags, int width)
 	switch (sa->sa_family) {
 	case AF_INET6:
 	    {
-		struct sockaddr_in6 *sa6 = (struct sockaddr_in6 *)sa;
-		struct in6_addr *in6 = &sa6->sin6_addr;
-
-		/*
-		 * XXX: This is a special workaround for KAME kernels.
-		 * sin6_scope_id field of SA should be set in the future.
-		 */
-		if (IN6_IS_ADDR_LINKLOCAL(in6) ||
-		    IN6_IS_ADDR_MC_LINKLOCAL(in6) ||
-		    IN6_IS_ADDR_MC_INTFACELOCAL(in6)) {
-			/* XXX: override is ok? */
-			sa6->sin6_scope_id = (u_int32_t)ntohs(*(u_short *)
-			    &in6->s6_addr[2]);
-			*(u_short *)&in6->s6_addr[2] = 0;
-		}
+		in6_fillscopeid((struct sockaddr_in6 *)sa);
 		if (flags & RTF_HOST)
-			cp = routename((struct sockaddr *)sa6);
+			cp = routename(sa);
 		else
-			cp = netname((struct sockaddr *)sa6, mask);
+			cp = netname(sa, mask);
 		break;
 	    }
 	default:
@@ -495,7 +474,7 @@ p_flags(int f, char *format)
 	printf(format, name);
 }
 
-extern char line[MAXHOSTNAMELEN];
+static char line_show[MAXHOSTNAMELEN];
 static char domain[MAXHOSTNAMELEN];
 
 char *
@@ -503,6 +482,7 @@ routename(struct sockaddr *sa)
 {
 	char *cp = NULL;
 	static int first = 1;
+	struct sockaddr_in6 *sin6 = (struct sockaddr_in6 *)sa;
 
 	if (first) {
 		first = 0;
@@ -517,32 +497,16 @@ routename(struct sockaddr *sa)
 	switch (sa->sa_family) {
 	case AF_INET:
 		if (sa->sa_len == 0)
-			return("0.0.0.0");
+			return "0.0.0.0";
 		else
 			return
 			    (routename4(((struct sockaddr_in *)sa)->
 			    sin_addr.s_addr));
 
 	case AF_INET6:
-	    {
-		struct sockaddr_in6 sin6;
-
-		memset(&sin6, 0, sizeof(sin6));
-		memcpy(&sin6, sa, sa->sa_len);
-		sin6.sin6_len = sizeof(struct sockaddr_in6);
-		sin6.sin6_family = AF_INET6;
-		if (sa->sa_len == sizeof(struct sockaddr_in6) &&
-		    (IN6_IS_ADDR_LINKLOCAL(&sin6.sin6_addr) ||
-		     IN6_IS_ADDR_MC_LINKLOCAL(&sin6.sin6_addr) ||
-		     IN6_IS_ADDR_MC_INTFACELOCAL(&sin6.sin6_addr)) &&
-		    sin6.sin6_scope_id == 0) {
-			sin6.sin6_scope_id =
-			    ntohs(*(u_int16_t *)&sin6.sin6_addr.s6_addr[2]);
-			sin6.sin6_addr.s6_addr[2] = 0;
-			sin6.sin6_addr.s6_addr[3] = 0;
-		}
-		return (routename6(&sin6));
-	    }
+		if (sa->sa_len == sizeof(struct sockaddr_in6))
+			in6_fillscopeid(sin6);
+		return (routename6(sin6));
 
 	case AF_LINK:
 		return (link_print(sa));
@@ -558,11 +522,38 @@ routename(struct sockaddr *sa)
 		}
 		/* FALLTHROUGH */
 	default:
-		(void)snprintf(line, sizeof(line), "(%d) %s",
+		(void)snprintf(line_show, sizeof(line_show), "(%d) %s",
 		    sa->sa_family, any_ntoa(sa));
 		break;
 	}
-	return (line);
+	return (line_show);
+}
+
+void
+in6_fillscopeid(struct sockaddr_in6 *sin6)
+{
+	if ((IN6_IS_ADDR_LINKLOCAL(&sin6->sin6_addr) ||
+	    IN6_IS_ADDR_MC_LINKLOCAL(&sin6->sin6_addr) ||
+	    IN6_IS_ADDR_MC_INTFACELOCAL(&sin6->sin6_addr)) &&
+	    sin6->sin6_scope_id == 0) {
+		sin6->sin6_scope_id =
+		    ntohs(*(u_int16_t *)&sin6->sin6_addr.s6_addr[2]);
+		sin6->sin6_addr.s6_addr[2] = sin6->sin6_addr.s6_addr[3] = 0;
+	}
+}
+
+void
+in6_clearscopeid(struct sockaddr_in6 *sin6)
+{
+	if ((IN6_IS_ADDR_LINKLOCAL(&sin6->sin6_addr) ||
+	    IN6_IS_ADDR_MC_LINKLOCAL(&sin6->sin6_addr) ||
+	    IN6_IS_ADDR_MC_INTFACELOCAL(&sin6->sin6_addr)) &&
+	    *(u_int16_t *)&sin6->sin6_addr.s6_addr[2] == 0 &&
+	    sin6->sin6_scope_id) {
+		*(u_int16_t *)&sin6->sin6_addr.s6_addr[2] =
+		    htons(sin6->sin6_scope_id & 0xffff);
+		sin6->sin6_scope_id = 0;
+	}
 }
 
 char *
@@ -571,24 +562,19 @@ routename4(in_addr_t in)
 	struct in_addr	 ina;
 
 	ina.s_addr = in;
-	strlcpy(line, inet_ntoa(ina), sizeof(line));
+	strlcpy(line_show, inet_ntoa(ina), sizeof(line_show));
 
-	return (line);
+	return (line_show);
 }
 
 char *
 routename6(struct sockaddr_in6 *sin6)
 {
-	int	 niflags = 0;
-
-	niflags |= NI_NUMERICHOST;
-/*		niflags |= NI_NOFQDN;*/
-
 	if (getnameinfo((struct sockaddr *)sin6, sin6->sin6_len,
-	    line, sizeof(line), NULL, 0, niflags) != 0)
-		strncpy(line, "invalid", sizeof(line));
+	    line_show, sizeof(line_show), NULL, 0, NI_NUMERICHOST) != 0)
+		strncpy(line_show, "", sizeof(line_show));
 
-	return (line);
+	return (line_show);
 }
 
 /*
@@ -611,10 +597,10 @@ netname4(in_addr_t in, struct sockaddr_in *maskp)
 	mask = maskp ? ntohl(maskp->sin_addr.s_addr) : 0;
 	mbits = mask ? 33 - ffs(mask) : 0;
 #define C(x)	((x) & 0xff)
-	snprintf(line, sizeof(line), "%u.%u.%u.%u/%d", C(in >> 24),
+	snprintf(line_show, sizeof(line_show), "%u.%u.%u.%u/%d", C(in >> 24),
 	    C(in >> 16), C(in >> 8), C(in), mbits);
 #undef C
-	return (line);
+	return (line_show);
 }
 
 char *
@@ -623,12 +609,11 @@ netname6(struct sockaddr_in6 *sa6, struct sockaddr_in6 *mask)
 	struct sockaddr_in6 sin6;
 	u_char *p;
 	int masklen, final = 0, illegal = 0;
-	int i, lim, flag, error;
+	int i, lim, error;
 	char hbuf[NI_MAXHOST];
 
 	sin6 = *sa6;
 
-	flag = 0;
 	masklen = 0;
 	if (mask) {
 		lim = mask->sin6_len - offsetof(struct sockaddr_in6, sin6_addr);
@@ -637,7 +622,6 @@ netname6(struct sockaddr_in6 *sa6, struct sockaddr_in6 *mask)
 		for (p = (u_char *)&mask->sin6_addr, i = 0; i < lim; p++) {
 			if (final && *p) {
 				illegal++;
-				sin6.sin6_addr.s6_addr[i++] = 0x00;
 				continue;
 			}
 
@@ -682,32 +666,22 @@ netname6(struct sockaddr_in6 *sa6, struct sockaddr_in6 *mask)
 				break;
 			}
 
-			if (!illegal)
-				sin6.sin6_addr.s6_addr[i++] &= *p;
-			else
-				sin6.sin6_addr.s6_addr[i++] = 0x00;
+			i++;
 		}
-		while (i < (int)sizeof(struct in6_addr))
-			sin6.sin6_addr.s6_addr[i++] = 0x00;
 	} else
 		masklen = 128;
 
-#ifdef notyet
-	if (masklen == 0 && IN6_IS_ADDR_UNSPECIFIED(&sin6.sin6_addr))
-		return ("default");
-#endif
-
+	/* This will warn us if the kernel supplies an insane mask */
 	if (illegal)
-		warnx("illegal prefixlen");
+		printf("%% netname6: illegal prefixlen\n");
 
-	flag |= NI_NUMERICHOST;
 	error = getnameinfo((struct sockaddr *)&sin6, sin6.sin6_len,
-	    hbuf, sizeof(hbuf), NULL, 0, flag);
+	    hbuf, sizeof(hbuf), NULL, 0, NI_NUMERICHOST);
 	if (error)
-		snprintf(hbuf, sizeof(hbuf), "invalid");
+		hbuf[0] = '\0';
 
-	snprintf(line, sizeof(line), "%s/%d", hbuf, masklen);
-	return (line);
+	snprintf(line_show, sizeof(line_show), "%s/%d", hbuf, masklen);
+	return (line_show);
 }
 
 /*
@@ -728,11 +702,11 @@ netname(struct sockaddr *sa, struct sockaddr *mask)
 	case AF_LINK:
 		return (link_print(sa));
 	default:
-		snprintf(line, sizeof(line), "af %d: %s",
+		snprintf(line_show, sizeof(line_show), "af %d: %s",
 		    sa->sa_family, any_ntoa(sa));
 		break;
 	}
-	return (line);
+	return (line_show);
 }
 
 static const char hexlist[] = "0123456789abcdef";

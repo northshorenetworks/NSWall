@@ -1,4 +1,3 @@
-/* $nsh: ieee80211.c,v 1.18 2009/03/02 20:50:50 chris Exp $ */
 /* From: $OpenBSD: /usr/src/sbin/ifconfig/ifconfig.c,v 1.68 2002/06/19 18:53:53 millert Exp $ */
 /*
  * Copyright (c) 1983, 1993
@@ -65,9 +64,11 @@
 #include <string.h>
 #include <unistd.h>
 #include <errno.h>
+#include <stdarg.h>
 #include <sys/limits.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
+#include <sys/param.h>
 #include <net/if.h>
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
@@ -84,7 +85,7 @@ get_string(const char *val, const char *sep, u_int8_t *buf, int *lenp)
 
 	len = *lenp;
 	p = buf;
-	hexstr = (val[0] == '0' && tolower((u_char) val[1]) == 'x');
+	hexstr = (val[0] == '0' && tolower((unsigned char)val[1]) == 'x');
 	if (hexstr)
 		val += 2;
 	for (;;) {
@@ -95,8 +96,8 @@ get_string(const char *val, const char *sep, u_int8_t *buf, int *lenp)
 			break;
 		}
 		if (hexstr) {
-			if (!isxdigit((u_char) val[0]) ||
-			    !isxdigit((u_char) val[1])) {
+			if (!isxdigit((unsigned char)val[0]) ||
+			    !isxdigit((unsigned char)val[1])) {
 				printf("%% get_string: bad hexadecimal digits\n");
 				return NULL;
 			}
@@ -109,9 +110,9 @@ get_string(const char *val, const char *sep, u_int8_t *buf, int *lenp)
 			return NULL;
 		}
 		if (hexstr) {
-#define tohex(x)        (isdigit(x) ? (x) - '0' : tolower(x) - 'a' + 10)
-			*p++ = (tohex((u_char) val[0]) << 4) |
-				tohex((u_char) val[1]);
+#define tohex(x)        (isdigit((unsigned char)(x)) ? (x) - '0' : \
+			    tolower((unsigned char)(x)) - 'a' + 10)
+			*p++ = (tohex(val[0]) << 4) | tohex(val[1]);
 #undef tohex
 			val += 2;
 		} else {
@@ -139,12 +140,14 @@ make_string(char *str, int str_len, const u_int8_t *buf, int buf_len)
 	str_len--;
 	i = 0;
 	hasspc = 0;
-	if (buf_len < 2 || buf[0] != '0' || tolower(buf[1]) != 'x') {
+	if (buf_len < 2 || buf[0] != '0' ||
+	    tolower((unsigned char)buf[1]) != 'x') {
 		for (; i < buf_len; i++) {
 			/* Only print 7-bit ASCII keys */
-			if (buf[i] & 0x80 || !isprint(buf[i]))
+			if (buf[i] & 0x80 ||
+			    !isprint((unsigned char)buf[i]))
 				break;
-			if (isspace(buf[i]))
+			if (isspace((unsigned char)buf[i]))
 				hasspc++;
 		}
 	}
@@ -164,12 +167,20 @@ make_string(char *str, int str_len, const u_int8_t *buf, int buf_len)
 
 /* was setifnwkey() */
 int
-intnwkey(char *ifname, int ifs, int argc, char **argv)
+intnwkey(int argc, char **argv, ...)
 {
 	int i, len, set;
 	char *cp = NULL, *val = NULL;
 	struct ieee80211_nwkey nwkey;
 	u_int8_t keybuf[IEEE80211_WEP_NKID][16];
+	va_list ap;
+	char *ifname;
+	int ifs;
+
+	va_start(ap, argv);
+	ifname = va_arg(ap, char *);
+	ifs = va_arg(ap, int);
+	va_end(ap);
 
 	if (NO_ARG(argv[0])) {
 		set = 0;
@@ -186,7 +197,7 @@ intnwkey(char *ifname, int ifs, int argc, char **argv)
 		printf("%% nwkey persist:<key>\n");
 		printf("%% nwkey <n>:<k1>,<k2>,<k3>,<k4>\n");
 		printf("%% no nwkey\n");
-		return(0);
+		return 0;
 	}
 	if(set)
 		val = argv[0];
@@ -210,7 +221,7 @@ intnwkey(char *ifname, int ifs, int argc, char **argv)
 		goto set_nwkey;
 	} else {
 set_nwkey:
-		if (isdigit(val[0]) && val[1] == ':') {
+		if (isdigit((unsigned char)val[0]) && val[1] == ':') {
 			/* specifying a full set of four keys */
 			nwkey.i_defkid = val[0] - '0';
 			val += 2;
@@ -218,19 +229,19 @@ set_nwkey:
 				len = sizeof(keybuf[i]);
 				val = (char *)get_string(val, ",", keybuf[i], &len);
 				if (val == NULL)
-					return(0);
+					return 0;
 				nwkey.i_key[i].i_keylen = len;
 				nwkey.i_key[i].i_keydat = keybuf[i];
 			}
 			if (cp != NULL) {
 				printf("%% intnwkey: too many keys\n");
-				return(0);
+				return 0;
 			}
 		} else {
 			len = sizeof(keybuf[i]);
 			val = (char *)get_string(val, NULL, keybuf[0], &len);
 			if (val == NULL)
-				return(0);
+				return 0;
 			nwkey.i_key[0].i_keylen = len;
 			nwkey.i_key[0].i_keydat = keybuf[0];
 			i = 1;
@@ -244,7 +255,7 @@ set_nwkey:
 	(void) strlcpy(nwkey.i_name, ifname, sizeof(nwkey.i_name));
 	if (ioctl(ifs, SIOCS80211NWKEY, (caddr_t)&nwkey) == -1)
 		printf("%% intnwkey: SIOCS80211NWKEY: %s\n", strerror(errno));
-	return(0);
+	return 0;
 }
 
 /*
@@ -259,7 +270,7 @@ get_nwinfo(char *ifname, char *str, int str_len, int type)
 	ifs = socket(AF_INET, SOCK_DGRAM, 0);
 	if (ifs < 0) {
 		printf("%% get_nwinfo: socket: %s\n", strerror(errno));
-		return(NULL);
+		return 0;
         }
 
 	memset(str, 0, str_len);
@@ -380,15 +391,14 @@ get_nwinfo(char *ifname, char *str, int str_len, int type)
 				}
 				/* check extra ambiguity with keywords */
 				if (!nwkey_verbose) {
-					if (nwkey.i_key[0].i_keylen >= 2 &&
-					    isdigit(nwkey.i_key[0].i_keydat[0])
-					    && nwkey.i_key[0].i_keydat[1] ==
-					    ':')
+					uint8_t *kdat = nwkey.i_key[0].i_keydat;
+					size_t klen = nwkey.i_key[0].i_keylen;
+					if (klen >= 2 &&
+					    isdigit((unsigned char)kdat[0]) &&
+					    kdat[1] == ':')
 						nwkey_verbose = 1;
-					else if (nwkey.i_key[0].i_keylen >= 7 &&
-						    MIN_ARG(
-						    nwkey.i_key[0].i_keydat,
-						    "persist"))
+					else if (klen >= 7 &&
+					    isprefix(kdat, "persist"))
 						nwkey_verbose = 1;
 				}
 				if (nwkey_verbose) {
@@ -421,15 +431,23 @@ get_nwinfo(char *ifname, char *str, int str_len, int type)
 	} /* switch {} */
 
 	close(ifs);
-	return(strlen(str));
+	return strlen(str);
 }
 
 int
-inttxpower(char *ifname, int ifs, int argc, char **argv)
+inttxpower(int argc, char **argv, ...)
 {
 	const char *errmsg = NULL;
 	struct ieee80211_txpower txpower;
 	short dbm, set;
+	va_list ap;
+	char *ifname;
+	int ifs;
+
+	va_start(ap, argv);
+	ifname = va_arg(ap, char *);
+	ifs = va_arg(ap, int);
+	va_end(ap);
 
 	if (NO_ARG(argv[0])) {
 		set = 0;
@@ -444,7 +462,7 @@ inttxpower(char *ifname, int ifs, int argc, char **argv)
 	if ((set && argc != 1) || (!set && argc > 1)) {
 		printf("%% txpower <dBm>\n");
 		printf("%% no txpower     (auto-select)\n");
-		return(0);
+		return 0;
 	}
 
 	strlcpy(txpower.i_name, ifname, sizeof(txpower.i_name));
@@ -457,7 +475,7 @@ inttxpower(char *ifname, int ifs, int argc, char **argv)
 		if (errmsg) {
 			printf("%% inttxpower: txpower %sdBm: %s\n", argv[0],
 			    errmsg);
-			return(0);
+			return 0;
 		}
 		txpower.i_val = (int16_t)dbm;
 		txpower.i_mode = IEEE80211_TXPOWER_MODE_FIXED;
@@ -467,15 +485,23 @@ inttxpower(char *ifname, int ifs, int argc, char **argv)
 		printf("%% inttxpower: SIOCS80211TXPOWER failed: %s\n",
 		    strerror(errno));
 
-	return(0);
+	return 0;
 }
 
 int
-intbssid(char *ifname, int ifs, int argc, char **argv)
+intbssid(int argc, char **argv, ...)
 {
 	struct ieee80211_bssid bssid;
 	struct ether_addr *ea;
 	short set;
+	va_list ap;
+	char *ifname;
+	int ifs;
+
+	va_start(ap, argv);
+	ifname = va_arg(ap, char *);
+	ifs = va_arg(ap, int);
+	va_end(ap);
 
 	if (NO_ARG(argv[0])) {
 		set = 0;
@@ -490,14 +516,14 @@ intbssid(char *ifname, int ifs, int argc, char **argv)
 	if ((set && argc != 1) || (!set && argc > 1)) {
 		printf("%% bssid <xx:xx:xx:xx:xx:xx>\n");
 		printf("%% no bssid       (auto-select)\n");
-		return(0);
+		return 0;
 	}
 
 	if (set) {
-		ea = ether_aton(argv[1]);
+		ea = ether_aton(argv[0]);
 		if (ea == NULL) {
 			printf("%% Invalid bssid\n");
-			return(0);
+			return 0;
 		}
 		memcpy(&bssid.i_bssid, ea->ether_addr_octet,
 		    sizeof(bssid.i_bssid));
