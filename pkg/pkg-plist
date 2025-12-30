@@ -1,0 +1,14 @@
+@comment $OpenBSD$
+bin/nswall
+bin/nstcpd
+bin/nswall-save
+share/examples/nswall/
+share/examples/nswall/nswall.conf.sample
+share/nswall/
+share/nswall/pf/
+share/nswall/pf/pf.subr
+share/nswall/pf/pf.sh
+share/nswall/pf/addrule.sh
+share/nswall/pf/delrule.sh
+share/nswall/pf/pfreload.sh
+@sample ${SYSCONFDIR}/nswall/nswall.conf
