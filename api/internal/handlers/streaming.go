@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/northshorenetworks/nswall/api/internal/openbsd"
@@ -373,6 +374,10 @@ type PFRuleThroughput struct {
 }
 
 // StreamPFRules streams per-rule PF statistics with throughput rates
+// Query params:
+//   - interval: polling interval in seconds (default 2)
+//   - rule: filter by rule number
+//   - label: filter by rule label (substring match)
 func (h *Handler) StreamPFRules(w http.ResponseWriter, r *http.Request) {
 	h.setupSSE(w)
 
@@ -382,6 +387,15 @@ func (h *Handler) StreamPFRules(w http.ResponseWriter, r *http.Request) {
 			interval = time.Duration(secs) * time.Second
 		}
 	}
+
+	// Filter options
+	filterRule := -1
+	if rn := r.URL.Query().Get("rule"); rn != "" {
+		if n, err := strconv.Atoi(rn); err == nil {
+			filterRule = n
+		}
+	}
+	filterLabel := r.URL.Query().Get("label")
 
 	// Track previous values for rate calculation
 	type prevStats struct {
@@ -411,6 +425,14 @@ func (h *Handler) StreamPFRules(w http.ResponseWriter, r *http.Request) {
 			var throughputs []PFRuleThroughput
 
 			for _, rule := range rules {
+				// Apply filters
+				if filterRule >= 0 && rule.Number != filterRule {
+					continue
+				}
+				if filterLabel != "" && !strings.Contains(strings.ToLower(rule.Label), strings.ToLower(filterLabel)) {
+					continue
+				}
+
 				tp := PFRuleThroughput{
 					Number:       rule.Number,
 					Label:        rule.Label,
