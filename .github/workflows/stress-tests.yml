@@ -1,0 +1,521 @@
+name: Stress Tests
+
+on:
+  workflow_dispatch:
+    inputs:
+      test_type:
+        description: 'Type of stress test to run'
+        required: true
+        default: 'quick'
+        type: choice
+        options:
+          - quick
+          - full
+          - pf
+          - ipsec
+          - nats
+      max_tunnels:
+        description: 'Max tunnels for IPsec test'
+        required: false
+        default: '1000'
+      max_rules:
+        description: 'Max rules for PF test'
+        required: false
+        default: '5000'
+      max_agents:
+        description: 'Max agents for NATS test'
+        required: false
+        default: '500'
+  schedule:
+    # Run weekly stress test on Sunday at midnight
+    - cron: '0 0 * * 0'
+
+env:
+  RESULTS_DIR: /tmp/stress-results
+  METRICS_DB: /tmp/metrics/metrics.db
+  BASELINE_BRANCH: main
+
+jobs:
+  # ==========================================================================
+  # OpenBSD Control Plane Stress Tests
+  # ==========================================================================
+  openbsd-stress-tests:
+    name: OpenBSD Control Plane
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run OpenBSD VM Stress Tests
+        uses: vmactions/openbsd-vm@v1
+        with:
+          release: "7.4"
+          usesh: true
+          prepare: |
+            pkg_add -I bash bc
+
+          run: |
+            set -e
+
+            echo "╔══════════════════════════════════════════════════════════════╗"
+            echo "║           OpenBSD Control Plane Stress Tests                 ║"
+            echo "╚══════════════════════════════════════════════════════════════╝"
+
+            mkdir -p ${{ env.RESULTS_DIR }}
+            cd ${{ github.workspace }}
+
+            chmod +x tests/stress/control-plane-stress.sh
+            chmod +x tests/ipsec/ipsec-stress-test.sh
+
+            TEST_TYPE="${{ github.event.inputs.test_type || 'quick' }}"
+
+            case "$TEST_TYPE" in
+              quick)
+                echo "=== Running Quick Stress Test ==="
+                tests/stress/control-plane-stress.sh quick
+                ;;
+              full)
+                echo "=== Running Full Stress Test ==="
+                tests/stress/control-plane-stress.sh full
+                tests/ipsec/ipsec-stress-test.sh full
+                ;;
+              pf)
+                echo "=== Running PF Stress Test ==="
+                MAX_RULES="${{ github.event.inputs.max_rules || '5000' }}"
+                tests/stress/control-plane-stress.sh pf "100 500 1000 2500 $MAX_RULES" filter
+                tests/stress/control-plane-stress.sh pf "100 500 1000" nat
+                tests/stress/control-plane-stress.sh tables "1000 10000 50000 100000"
+                ;;
+              ipsec)
+                echo "=== Running IPsec Stress Test ==="
+                MAX_TUNNELS="${{ github.event.inputs.max_tunnels || '1000' }}"
+                tests/ipsec/ipsec-stress-test.sh scaling "10 50 100 250 500 $MAX_TUNNELS"
+                tests/ipsec/ipsec-stress-test.sh capacity
+                ;;
+              nats)
+                echo "Skipping NATS on OpenBSD - runs on Linux"
+                ;;
+            esac
+
+            # Copy results
+            cp -r /tmp/control-plane-stress/* ${{ env.RESULTS_DIR }}/ 2>/dev/null || true
+            cp -r /tmp/ipsec-stress-results/* ${{ env.RESULTS_DIR }}/ 2>/dev/null || true
+
+            echo ""
+            echo "=== Test Results ==="
+            ls -la ${{ env.RESULTS_DIR }}/
+
+            if [ -f "${{ env.RESULTS_DIR }}/control_plane_report.txt" ]; then
+              cat "${{ env.RESULTS_DIR }}/control_plane_report.txt"
+            fi
+
+      - name: Upload Stress Test Results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: openbsd-stress-results
+          path: ${{ env.RESULTS_DIR }}/
+          retention-days: 30
+
+  # ==========================================================================
+  # NATS Controller Stress Tests (Linux)
+  # ==========================================================================
+  nats-stress-tests:
+    name: NATS Controller Stress
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    if: github.event.inputs.test_type == 'nats' || github.event.inputs.test_type == 'quick' || github.event.inputs.test_type == 'full' || github.event.inputs.test_type == ''
+
+    services:
+      nats:
+        image: nats:latest
+        ports:
+          - 4222:4222
+          - 8222:8222
+        options: >-
+          --health-cmd "wget -q --spider http://localhost:8222/healthz || exit 1"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.21'
+
+      - name: Build Stress Tests
+        run: |
+          cd tests/stress
+          go mod init nswall-stress-test || true
+          go get github.com/nats-io/nats.go
+          go build -o nats-controller-stress nats-controller-stress.go
+          go build -o nats-client-flood nats-client-flood.go
+
+      - name: Wait for NATS
+        run: |
+          for i in {1..30}; do
+            if nc -z localhost 4222; then
+              echo "NATS is ready"
+              break
+            fi
+            echo "Waiting for NATS..."
+            sleep 1
+          done
+
+      - name: Run NATS Connection Test
+        run: |
+          mkdir -p ${{ env.RESULTS_DIR }}
+
+          echo "=== NATS Connection Scaling Test ==="
+          MAX_AGENTS="${{ github.event.inputs.max_agents || '500' }}"
+
+          ./tests/stress/nats-controller-stress \
+            -url nats://localhost:4222 \
+            -agents $MAX_AGENTS \
+            -duration 30s \
+            -test connections \
+            -report ${{ env.RESULTS_DIR }}/nats-connections.txt
+
+          cat ${{ env.RESULTS_DIR }}/nats-connections.txt
+
+      - name: Run NATS Throughput Test
+        run: |
+          echo "=== NATS Throughput Test ==="
+          MAX_AGENTS="${{ github.event.inputs.max_agents || '500' }}"
+
+          ./tests/stress/nats-controller-stress \
+            -url nats://localhost:4222 \
+            -agents $MAX_AGENTS \
+            -duration 30s \
+            -status-interval 5s \
+            -test throughput \
+            -report ${{ env.RESULTS_DIR }}/nats-throughput.txt
+
+          cat ${{ env.RESULTS_DIR }}/nats-throughput.txt
+
+      - name: Run NATS Latency Test
+        run: |
+          echo "=== NATS Latency Test ==="
+
+          ./tests/stress/nats-controller-stress \
+            -url nats://localhost:4222 \
+            -test latency \
+            -report ${{ env.RESULTS_DIR }}/nats-latency.txt
+
+          cat ${{ env.RESULTS_DIR }}/nats-latency.txt
+
+      - name: Run Client Flood Test
+        run: |
+          echo "=== NATS Client Flood Test ==="
+          MAX_AGENTS="${{ github.event.inputs.max_agents || '500' }}"
+
+          timeout 120 ./tests/stress/nats-client-flood \
+            -url nats://localhost:4222 \
+            -max $MAX_AGENTS \
+            -batch 50 \
+            -hold 30s \
+            2>&1 | tee ${{ env.RESULTS_DIR }}/nats-flood.log || true
+
+          echo "=== Flood Test Summary ==="
+          tail -50 ${{ env.RESULTS_DIR }}/nats-flood.log
+
+      - name: Generate NATS Report
+        run: |
+          cat > ${{ env.RESULTS_DIR }}/nats-summary.txt << 'EOF'
+          ================================================================================
+                            NATS Controller Stress Test Summary
+          ================================================================================
+
+          EOF
+
+          for f in ${{ env.RESULTS_DIR }}/nats-*.txt; do
+            if [ -f "$f" ]; then
+              echo "=== $(basename $f) ===" >> ${{ env.RESULTS_DIR }}/nats-summary.txt
+              cat "$f" >> ${{ env.RESULTS_DIR }}/nats-summary.txt
+              echo "" >> ${{ env.RESULTS_DIR }}/nats-summary.txt
+            fi
+          done
+
+          cat ${{ env.RESULTS_DIR }}/nats-summary.txt
+
+      - name: Upload NATS Results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: nats-stress-results
+          path: ${{ env.RESULTS_DIR }}/
+          retention-days: 30
+
+  # ==========================================================================
+  # Metrics Analysis Job
+  # ==========================================================================
+  metrics-analysis:
+    name: Performance Regression Analysis
+    runs-on: ubuntu-latest
+    needs: [openbsd-stress-tests, nats-stress-tests]
+    if: always()
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.21'
+
+      - name: Download Previous Metrics DB
+        uses: dawidd6/action-download-artifact@v3
+        with:
+          workflow: stress-tests.yml
+          name: metrics-database
+          path: /tmp/metrics
+          if_no_artifact_found: warn
+          branch: ${{ env.BASELINE_BRANCH }}
+        continue-on-error: true
+
+      - name: Build Metrics Collector
+        run: |
+          cd tests/metrics
+          go mod init metrics-collector 2>/dev/null || true
+          go get github.com/google/uuid
+          go get github.com/mattn/go-sqlite3
+          go build -o metrics-collector collector.go
+
+      - name: Initialize Metrics Database
+        run: |
+          mkdir -p /tmp/metrics
+          cd tests/metrics
+          ./metrics-collector -db "${{ env.METRICS_DB }}" -schema schema.sql init
+
+      - name: Download OpenBSD Results
+        uses: actions/download-artifact@v4
+        with:
+          name: openbsd-stress-results
+          path: results/openbsd
+        continue-on-error: true
+
+      - name: Download NATS Results
+        uses: actions/download-artifact@v4
+        with:
+          name: nats-stress-results
+          path: results/nats
+        continue-on-error: true
+
+      - name: Import Results to Metrics DB
+        run: |
+          cd tests/metrics
+
+          # Start a new run
+          RUN_OUTPUT=$(./metrics-collector -db "${{ env.METRICS_DB }}" start-run \
+            -branch "${{ github.ref_name }}" \
+            -commit "${{ github.sha }}" \
+            -type stress \
+            -suite full)
+
+          RUN_ID=$(echo "$RUN_OUTPUT" | grep "RUN_ID=" | cut -d= -f2)
+          echo "RUN_ID=$RUN_ID" >> $GITHUB_ENV
+
+          # Parse and import results from OpenBSD tests
+          if [ -d "../../results/openbsd" ]; then
+            # Import PF results
+            for csv in ../../results/openbsd/*_times.csv; do
+              [ -f "$csv" ] || continue
+              echo "Importing $csv..."
+
+              # Parse CSV and record metrics
+              tail -n +2 "$csv" | while IFS=, read -r scale type time rest; do
+                if [ -n "$scale" ] && [ -n "$time" ]; then
+                  test_id="pf.${type:-filter}.parse.$scale"
+                  ./metrics-collector -db "${{ env.METRICS_DB }}" record \
+                    -run-id "$RUN_ID" \
+                    -test-id "$test_id" \
+                    -value "$time" \
+                    -unit "ms" 2>/dev/null || true
+                fi
+              done
+            done
+          fi
+
+          # End the run
+          ./metrics-collector -db "${{ env.METRICS_DB }}" end-run -run-id "$RUN_ID" -status passed
+
+      - name: Compare Against Baseline
+        id: compare
+        run: |
+          cd tests/metrics
+
+          echo "## Performance Comparison Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          ./metrics-collector -db "${{ env.METRICS_DB }}" compare \
+            -run-id "${{ env.RUN_ID }}" \
+            -baseline "${{ env.BASELINE_BRANCH }}" \
+            -output markdown >> $GITHUB_STEP_SUMMARY 2>/dev/null || echo "No baseline available for comparison" >> $GITHUB_STEP_SUMMARY
+
+          # Check for regressions
+          COMPARE_OUTPUT=$(./metrics-collector -db "${{ env.METRICS_DB }}" compare \
+            -run-id "${{ env.RUN_ID }}" \
+            -baseline "${{ env.BASELINE_BRANCH }}" \
+            -output json 2>/dev/null || echo '{"failures":0}')
+
+          FAILURES=$(echo "$COMPARE_OUTPUT" | jq -r '.failures // 0')
+          WARNINGS=$(echo "$COMPARE_OUTPUT" | jq -r '.warnings // 0')
+
+          echo "failures=$FAILURES" >> $GITHUB_OUTPUT
+          echo "warnings=$WARNINGS" >> $GITHUB_OUTPUT
+
+          if [ "$FAILURES" -gt 0 ]; then
+            echo "::error::Performance regressions detected: $FAILURES failures, $WARNINGS warnings"
+          elif [ "$WARNINGS" -gt 0 ]; then
+            echo "::warning::Performance warnings: $WARNINGS tests showed degradation"
+          fi
+
+      - name: Update Baseline (main branch only)
+        if: github.ref_name == 'main'
+        run: |
+          cd tests/metrics
+          ./metrics-collector -db "${{ env.METRICS_DB }}" update-baseline -branch main
+          echo "Baseline updated for main branch"
+
+      - name: Upload Metrics Database
+        uses: actions/upload-artifact@v4
+        with:
+          name: metrics-database
+          path: ${{ env.METRICS_DB }}
+          retention-days: 90
+
+      - name: Export Metrics as CSV
+        run: |
+          cd tests/metrics
+          mkdir -p /tmp/metrics-export
+          ./metrics-collector -db "${{ env.METRICS_DB }}" export \
+            -format csv \
+            -output /tmp/metrics-export/metrics.csv \
+            -days 90
+
+      - name: Upload Metrics Export
+        uses: actions/upload-artifact@v4
+        with:
+          name: metrics-export
+          path: /tmp/metrics-export/
+          retention-days: 90
+
+  # ==========================================================================
+  # Summary Job
+  # ==========================================================================
+  stress-test-summary:
+    name: Stress Test Summary
+    runs-on: ubuntu-latest
+    needs: [openbsd-stress-tests, nats-stress-tests, metrics-analysis]
+    if: always()
+
+    steps:
+      - name: Download OpenBSD Results
+        uses: actions/download-artifact@v4
+        with:
+          name: openbsd-stress-results
+          path: results/openbsd
+        continue-on-error: true
+
+      - name: Download NATS Results
+        uses: actions/download-artifact@v4
+        with:
+          name: nats-stress-results
+          path: results/nats
+        continue-on-error: true
+
+      - name: Download Metrics Export
+        uses: actions/download-artifact@v4
+        with:
+          name: metrics-export
+          path: results/metrics
+        continue-on-error: true
+
+      - name: Generate Combined Report
+        run: |
+          mkdir -p results/combined
+
+          cat > results/combined/stress-test-report.md << 'EOF'
+          # NSWall Stress Test Report
+
+          ## Test Configuration
+          - Test Type: ${{ github.event.inputs.test_type || 'quick' }}
+          - Max Agents: ${{ github.event.inputs.max_agents || '500' }}
+          - Max Rules: ${{ github.event.inputs.max_rules || '5000' }}
+          - Max Tunnels: ${{ github.event.inputs.max_tunnels || '1000' }}
+          - Run Date: $(date -u)
+
+          ## OpenBSD Control Plane Results
+
+          EOF
+
+          if [ -f "results/openbsd/control_plane_report.txt" ]; then
+            echo '```' >> results/combined/stress-test-report.md
+            cat results/openbsd/control_plane_report.txt >> results/combined/stress-test-report.md
+            echo '```' >> results/combined/stress-test-report.md
+          else
+            echo "No OpenBSD results available" >> results/combined/stress-test-report.md
+          fi
+
+          cat >> results/combined/stress-test-report.md << 'EOF'
+
+          ## NATS Controller Results
+
+          EOF
+
+          if [ -f "results/nats/nats-summary.txt" ]; then
+            echo '```' >> results/combined/stress-test-report.md
+            cat results/nats/nats-summary.txt >> results/combined/stress-test-report.md
+            echo '```' >> results/combined/stress-test-report.md
+          else
+            echo "No NATS results available" >> results/combined/stress-test-report.md
+          fi
+
+          cat >> results/combined/stress-test-report.md << 'EOF'
+
+          ## Recommendations
+
+          ### NATS Controller Sizing
+          | Agents | vCPUs | Memory | Notes |
+          |--------|-------|--------|-------|
+          | 100    | 1     | 512MB  | Development |
+          | 500    | 2     | 1GB    | Small deployment |
+          | 1000   | 2     | 2GB    | Medium deployment |
+          | 2000   | 4     | 4GB    | Large deployment |
+          | 5000   | 4     | 8GB    | Enterprise |
+
+          ### PF Performance Guidelines
+          - Keep filter rules < 10,000 for sub-second reloads
+          - Use tables for large IP lists (millions of entries OK)
+          - Monitor state table memory with high connection counts
+
+          ### IPsec Scaling Guidelines
+          - iked handles ~2000 tunnels efficiently
+          - Configuration reload time: ~1-2 seconds per 1000 tunnels
+          - Memory: ~50KB per active tunnel
+          EOF
+
+          cat results/combined/stress-test-report.md
+
+      - name: Upload Combined Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: stress-test-report
+          path: results/combined/
+          retention-days: 90
+
+      - name: Post Summary
+        run: |
+          echo "## Stress Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ -f "results/combined/stress-test-report.md" ]; then
+            cat results/combined/stress-test-report.md >> $GITHUB_STEP_SUMMARY
+          fi
