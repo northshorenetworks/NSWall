@@ -16,9 +16,9 @@ import (
 	"time"
 
 	"github.com/go-chi/chi/v5"
-	"nswall-api/internal/handlers"
-	"nswall-api/internal/middleware"
-	"nswall-api/internal/models"
+	"github.com/northshorenetworks/nswall/api/internal/handlers"
+	"github.com/northshorenetworks/nswall/api/internal/middleware"
+	"github.com/northshorenetworks/nswall/api/internal/models"
 )
 
 // E2ETestSuite holds the test server and auth token
