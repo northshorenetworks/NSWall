@@ -1,4 +1,3 @@
-/* $nsh: more.c,v 1.4 2008/02/07 19:20:03 chris Exp $ */
 /*
  * Copyright (c) 2008 Chris Cappuccio <chris@nmedia.net>
  *
@@ -21,8 +20,10 @@
 #include <termios.h>
 #include <errno.h>
 #include <string.h>
+#include <stdlib.h>
 #include <sys/ttycom.h>
 #include <sys/ioctl.h>
+#include <wchar.h>
 
 #include "externs.h"
 
@@ -44,8 +45,9 @@ more(char *fname)
 {
 	FILE   *f;
 	char   *input, c;
-	size_t	s;
+	size_t	s, wlen;
 	int	i, nopager = 0;
+	wchar_t *ws = NULL;
 
 	if ((f = fopen(fname, "r")) == NULL) {
 		if (errno == ENOENT)
@@ -53,40 +55,67 @@ more(char *fname)
 		else
 			printf ("%% more: fopen(%s): %s\n", fname,
 			    strerror(errno));
-		return(0);
+		return 0;
 	}
 
-	if (nsh_cbreak() < 0)
+	if (!interactive_mode || nsh_cbreak() < 0)
 		nopager = 1;
 
 	for (i = 0; (input = fgetln(f, &s)) != NULL; i++) {
-
-		if (!nopager && i == (winsize.ws_row - 1)) {
-			printf(PAGERPROMPT);
-			fflush(0);
-			c = getchar();
-			printf(BACKOVERPROMPT);
-			if (c == 'q')
-				break;			/* stop */
-			if (c == '\r' || c == '\n')
-				i--;			/* skip one line */
-			else
-				i = 0;			/* skip one page */
-		}
+		int extra_rows = 0;
 
 		/*
 		 * We replace newline (or whatever was at the end of
 	         * the line) with NUL termination
 		 */
-		input[s-1] = '\0';
-		printf("%s\n", input);
-	}
+		input[s - 1] = '\0';
 
+		/* Account for lines overflowing the terminal's width. */
+		if (mbs2ws(&ws, &wlen, input) == 0) {
+			int width = wcswidth(ws, wcslen(ws));
+			if (width == -1) { /* unprintable wide character */
+				free(ws);
+				ws = NULL;
+			} else
+				extra_rows = width / winsize.ws_col;
+		} else
+			ws = NULL;
+
+		if (!nopager && i + extra_rows >= (winsize.ws_row - 1)) {
+			for (;;) {
+				printf(PAGERPROMPT);
+				fflush(0);
+				c = getchar();
+				printf(BACKOVERPROMPT);
+				if (c == 'q')
+					goto quit;
+				if (c == '\r' || c == '\n' || c == 'j' ||
+				    c == CTRL('n')) {
+					i--; /* skip one line */
+					break;
+				}
+				if (c == ' ' || c == 'f' || c == CTRL('f')) {
+					i = 0; /* skip one page */
+					break;
+				}
+			}
+		}
+
+		if (ws) {
+			printf("%ls\n", ws);
+			free(ws);
+			ws = NULL;
+		} else
+			printf("%s\n", input);
+		i += extra_rows;
+	}
+quit:
 	if (!nopager)
 		nsh_nocbreak();
 
 	fclose(f);
-	return(1);
+	free(ws);
+	return 1;
 }
 
 int
@@ -95,7 +124,7 @@ nsh_cbreak(void)
 	struct termios	newtty;
 
 	if (tcgetattr(fileno(stdout), &oldtty) < 0)
-		return(-1);
+		return -1;
 
 	(void)memcpy(&newtty, &oldtty, sizeof(newtty));
 
@@ -104,8 +133,8 @@ nsh_cbreak(void)
 	newtty.c_cc[VTIME] = 0;			/* no timeout */
 
 	if (tcsetattr(fileno(stdout), TCSAFLUSH, &newtty) < 0)
-		return(-1);
-	return(0);
+		return -1;
+	return 0;
 }
 
 void

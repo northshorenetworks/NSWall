@@ -1,4 +1,3 @@
-/* $nsh: passwd.c,v 1.7 2008/02/04 02:49:46 chris Exp $ */
 /*
  * Copyright (c) 2004
  *      Christian Gut.  All rights reserved.
@@ -26,17 +25,21 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <errno.h>
 #include <pwd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/socket.h>
 #include "externs.h"
 
 int read_pass(char *, size_t);
 int write_pass(char *);
+int validate_cpass(char *, char *);
 int gen_salt(char *, size_t);
+void secretusage(void);
 
 char *bcrypt_gensalt(u_int8_t);
 
@@ -49,7 +52,10 @@ read_pass(char *pass, size_t size)
 	pwdhandle = fopen(NSHPASSWD_TEMP, "r");
 	if (pwdhandle == NULL)
 		return (0);
-	fgets(pass, size, pwdhandle);
+	if (fgets(pass, size, pwdhandle) == NULL && ferror(pwdhandle)) {
+		fclose(pwdhandle);
+		return (0);
+	}
 	fclose(pwdhandle);
 
 	return (1);
@@ -75,6 +81,67 @@ write_pass(char *cpass)
 	return (1);
 }
 
+/* sanity checks for crypted password input */
+int
+validate_cpass(char *cipher, char *cpass)
+{
+	const char *errstr;
+	char *rounds, *pw;
+
+	if (!isprefix(cipher, "blowfish")) {
+		printf("%% Invalid cipher: %s\n", cipher);
+		return 0;
+	}
+
+	if (strlen(cpass) > _PASSWORD_LEN) {
+		printf("%% Encrypted password is too long\n");
+		return 0;
+	}
+
+	/* version number: 2b for blowfish */
+	if (cpass[0] != '$' || cpass[1] != '2' || cpass[2] != 'b') {
+		printf("%% Invalid crypted password version number\n");
+		return 0;
+	}
+
+	/* Parse the number of rounds. */
+	if (cpass[3] != '$') {
+		printf("%% Number of blowfish rounds missing from crypted password\n");
+		return 0;
+	}
+	rounds = &cpass[4];
+	while (*rounds == '0') /* skip leading zeroes */
+		rounds++;
+
+	pw = strchr(rounds, '$');
+	if (pw == NULL) {
+		printf("%% Encrypted password string is missing\n");
+		return 0;
+	}
+
+	/* Copy rounds into NUL-terminated buffer for strtonum() */
+	rounds = strndup(rounds, pw - rounds);
+	if (rounds == NULL) {
+		printf("%% validate_cpass: strndup: %s\n", strerror(errno));
+		return 0;
+		
+	}
+	strtonum(rounds, 4, 31, &errstr);
+	free(rounds);
+	if (errstr) {
+		printf("%% Number of blowfish rounds is %s\n", errstr);
+		return 0;
+	}
+
+	pw++; /* skip over '$' separator */
+	if (pw[0] == '\0') {
+		printf("%% Encrypted password string is empty\n");
+		return 0;
+	}
+
+	return 1;
+}
+
 int
 gen_salt(char *salt, size_t saltlen)
 {
@@ -83,13 +150,21 @@ gen_salt(char *salt, size_t saltlen)
 	return 1;
 }
 
+void
+secretusage(void)
+{
+	printf("%% enable secret <password>\t\tSet password"
+	       "(plaintext)\n");
+	printf("%% enable secret <cipher> <hash>\t\tSet"
+	       " password(ciphertext)\n");
+}
+
 /*
  * enable privileged mode
  */
-int
-enable(int argc, char **argv)
+static int
+enable_passwd(int argc, char **argv)
 {
-
 	char *p, *cpass;
 	char salt[_PASSWORD_LEN];
 	char pass[_PASSWORD_LEN + 1];
@@ -97,47 +172,41 @@ enable(int argc, char **argv)
 	switch (argc) {
 
 	case 1:
-		if (priv == 1) {
-			printf("%% Command invalid while privileged\n");
-			return 0;
-		}
-
 		/* try to read pass */
 		if (!(read_pass(pass, sizeof(pass)))) {
 			if (errno == ENOENT) {
 				/* no password file, so enable */
-				priv = 1;
 				return 1;
 			} else {
 				/* cant read password file */
-				printf("%% Unable to read password: %s\n",
-				       strerror(errno));
+				printf("%% Unable to read %s: %s\n",
+				       NSHPASSWD_TEMP, strerror(errno));
 				return 0;
 			}
 		}
-		p = getpass("Password:");
+		p = getpass("Privileged Mode Secret:");
 		if (p == NULL || *p == '\0')
 			return 0;
 
 		if (strcmp(crypt(p, pass), pass) == 0) {
-			priv = 1;
 			return 1;
 		} else {
-			printf("%% Password incorrect\n");
+			printf("%% Secret incorrect\n");
 			return 0;
 		}
 
 	case 2:
 		if (argv[1][0] == '?') {
 			/* print help */
-			printf("%% enable\t\t\t\tenable privileged mode\n");
-			printf("%% enable ?\t\t\t\tShow Options\n");
-			printf("%% enable secret <password>\t\tSet password"
-			       "(plaintext)\n");
-			printf("%% enable secret <cipher> <hash>\t\tSet"
-			       " password(ciphertext)\n");
-				return 1;
+			printf("%% enable\t\t\t\tEnable privileged mode\n");
+			printf("%% enable ?\t\t\t\tPrint help information\n");
+			secretusage();
+			return 0;
 		} else {
+			if (isprefix(argv[1], "secret")) {
+				secretusage();
+				return 0;
+			}
 			printf("%% Invalid argument: %s\n", argv[1]);
 			return 0;
 		}
@@ -148,16 +217,34 @@ enable(int argc, char **argv)
 			return 0;
 		}
 
-		if (priv != 1) {
+		if (config_mode != 1) {
+			printf("%% Configuration mode required\n");
+			return 0;
+		}
+		if (priv != 1) { /* redundant, but kept here just in case */
 			printf("%% Privilege required\n");
 			return 0;
 		}
 
+		if (strlen(argv[2]) < 8) {
+			printf("%% Secret too short; at least 8 characters required\n");
+			return 0;
+		}
+		if (strlen(argv[2]) > _PASSWORD_LEN) {
+			printf("%% Secret too long; at most %d characters allowed\n",
+			    _PASSWORD_LEN);
+			return 0;
+		}
+			
 		/* crypt plaintext and save as pass */
 		strlcpy(pass, argv[2], sizeof(pass));
 		gen_salt(salt, sizeof(salt));
-		cpass = strdup(crypt(pass, salt));
-		return (write_pass(cpass));
+		if ((cpass = crypt(pass, salt)) == NULL) {
+			printf("%% crypt failed\n");
+			return 0;
+		}
+		write_pass(cpass);
+		return 0;
 
 	case 4:
 		if (!isprefix(argv[1], "secret")) {
@@ -166,23 +253,120 @@ enable(int argc, char **argv)
 		}
 
 		if (!isprefix(argv[2], "blowfish")) {
-			printf("%% Invalid cipher: %s\n", argv[3]);
+			printf("%% Invalid cipher: %s\n", argv[2]);
 			return 0;
 		}
 
-		/* privileged? */
-		if (priv != 1) {
+		if (config_mode != 1) {
+			printf("%% Configuration mode required\n");
+			return 0;
+		}
+		if (priv != 1) { /* redundant, but kept here just in case */
 			printf("%% Privilege required\n");
 			return 0;
 		}
 
+		if (!validate_cpass(argv[2], argv[3]))
+			return 0;
+
 		/* set crypted pass */
 		strlcpy(pass, argv[3], sizeof(pass));
-		return (write_pass(pass));
+		write_pass(pass);
+		return 0;
 
 	default:
 		printf("%% Too many arguments\n");
 		return 0;
 	}
 
+	return 0;
+}
+
+static int
+write_line(const char *line, size_t len, int fd)
+{
+	ssize_t written = 0, w;
+
+	do {
+		w = write(fd, line, len);
+		if (w == -1)
+			return -1;
+		written += w;
+	} while (written < len);
+
+	return 0;
+}
+
+int
+enable(int argc, char **argv, ...)
+{
+	char *doas_argv[] = {
+		NSHDOAS_PATH_STR, NULL, NULL, NULL
+	};
+	char buf[64];
+	int exit_code;
+	int pfd[2];
+	pid_t pid;
+
+	if (argc != 1)
+		return enable_passwd(argc, argv);
+
+	if (priv == 1 || !enable_passwd(argc, argv))
+		return 0;
+	
+	if (getuid() == 0) {
+		priv = 1;
+		return 0;
+	}
+
+	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, pfd) == -1) {
+		printf("%% socketpair failed: %s\n", strerror(errno));
+		return 0;
+	}
+
+	if (!interactive_mode) {
+		snprintf(buf, sizeof(buf), "%d", pfd[0]);
+		doas_argv[1] = "-F";
+		doas_argv[2] = buf;
+	}
+
+	/*
+	 * Start an nsh child process in privileged mode.
+	 * The 'priv' flag will remain at zero in our own process.
+	 */
+	pid = cmdargs_nowait(doas_argv[0], doas_argv, pfd[0]);
+	if (pid == -1)
+		return 0;
+
+	close(pfd[0]);
+
+	if (!interactive_mode) {
+		char *line = NULL;
+		size_t linesize = 0;
+		ssize_t linelen;
+
+		while ((linelen = getline(&line, &linesize, stdin)) != -1) {
+			if (write_line(line, linelen, pfd[1]) == -1) {
+				printf("%% writing to privileged child: %s\n",
+				    strerror(errno));
+				break;
+			}
+			if (strcmp(line, "disable\n") == 0)
+				break;
+		}
+		free(line);
+	}
+
+	exit_code = cmdargs_wait_for_child();
+	if (exit_code == 0)
+		return 0;
+	else if (exit_code == NSH_REXEC_EXIT_CODE_QUIT) {
+		/* The child exited due to a 'quit' command. */
+		quit(0, NULL);
+	} else  {
+		printf("%% Privileged mode child process exited "
+		    "with error code %d\n", exit_code);
+	}
+
+	return 0;
 }

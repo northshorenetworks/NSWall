@@ -1,4 +1,3 @@
-/* $nsh: who.c,v 1.3 2008/02/04 02:49:46 chris Exp $ */
 /*
  * Copyright (c) 1989, 1993
  *      The Regents of the University of California.  All rights reserved.
@@ -47,7 +46,7 @@ void  output(struct utmp *);
 void  output_labels(void);
 
 int
-who(int argc, char **argv)
+who(int argc, char **argv, ...)
 {
 	FILE *utmp;
 	struct utmp who;
@@ -55,12 +54,12 @@ who(int argc, char **argv)
 
 	if (argc == 2 && !isprefix(argv[1], "users")) {
 		printf("%% Too many arguments\n");
-		return(0);
+		return 0;
 	}
 
 	if ((utmp = fopen(_PATH_UTMP, "r")) == NULL) {
 		printf("%% who: fopen %s: %s\n",_PATH_UTMP,strerror(errno));
-		return(0);
+		return 0;
 	}
 
 #define HOST_WIDTH 40
@@ -76,7 +75,8 @@ who(int argc, char **argv)
 	}
 	(void) printf ("%% users=%d\n", count);
 
-	return(0);
+	fclose(utmp);
+	return 0;
 }
 
 void
@@ -115,8 +115,8 @@ output(struct utmp *up)
 		(void)printf("00:00 ");
 	else if (idle < (24 * 60 * 60))
 		(void)printf("%02d:%02d ", 
-			     (idle / (60 * 60)),
-			     (idle % (60 * 60)) / 60);
+			     ((int)idle / (60 * 60)),
+			     ((int)idle % (60 * 60)) / 60);
 	else
 		(void)printf(" old  ");
 	

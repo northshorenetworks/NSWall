@@ -1,7 +1,5 @@
-/* From: $OpenBSD: genget.c,v 1.5 2001/05/25 10:23:06 hin Exp $  */
-
-/*-
- * Copyright (c) 1991, 1993
+/*
+ * Copyright (c) 1988, 1990, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -29,70 +27,84 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/types.h>
+
 #include <ctype.h>
 #include <stdio.h>
+#include <string.h>
+
 #include "externs.h"
+#include "editing.h"
 
-int isprefix(char *, char*);
+char line[1024];
+char saveline[1024];
+int  margc;
 
-/*
- * The prefix function returns 0 if *s1 is not a prefix
- * of *s2.  If *s1 exactly matches *s2, the negative of
- * the length is returned.  If *s1 is a prefix of *s2,
- * the length of *s1 is returned.
- */
-int
-isprefix(char *s1, char *s2)
+char	*margv[NARGS];			/* argv storage */
+size_t	cursor_argc;			/* location of cursor in margv */
+size_t	cursor_argo;			/* offset of cursor margv[cursor_argc] */
+
+void
+makeargv(void)
 {
-    char *os1;
-    char c1, c2;
+	char	*cp, *cp2, *base, c;
+	char	**argp = margv;
 
-    if (*s1 == '\0')
-	return -1;
-    os1 = s1;
-    c1 = *s1;
-    c2 = *s2;
-    while (tolower((unsigned char)c1) == tolower((unsigned char)c2)) {
-	if (c1 == '\0')
-	    break;
-	c1 = *++s1;
-	c2 = *++s2;
-    }
-	return *s1 ? 0 : (*s2 ? (s1 - os1) : (os1 - s1));
-}
+	margc = 0;
+	cp = line;
+	if (*cp == '!') {	/* Special case shell escape */
+		/* save for shell command */
+		strlcpy(saveline, line, sizeof(saveline));
 
-static char *ambiguous;		/* special return value for command routines */
-
-char **
-genget(char *name, char **table, int stlen)
-     /* name to match */
-     /* name entry in table */
-	   	      
-{
-    char **c, **found;
-    int n;
-
-    if (name == 0)
-	return 0;
-
-    found = 0;
-    for (c = table; *c != 0; c = (char **)((char *)c + stlen)) {
-	if ((n = isprefix(name, *c)) == 0)
-	    continue;
-	if (n < 0)		/* exact match */
-		return c;
-	if (found)
-		return &ambiguous;
-	found = c;
-    }
-	return found;
-}
-
-/*
- * Function call version of Ambiguous()
- */
-int
-Ambiguous(void *s)
-{
-	return (char **)s == &ambiguous;
+		*argp++ = "!";	/* No room in string to get this */
+		margc++;
+		cp++;
+		cursor_argc = 0;
+		cursor_argo = 0;
+	}
+	while ((c = *cp)) {
+		int inquote = 0;
+		while (isspace((unsigned char)c))
+			c = *++cp;
+		if (c == '\0')
+			break;
+		*argp++ = cp;
+		cursor_argc = margc += 1;
+		base = cp;
+		for (cursor_argo = 0, cp2 = cp; c != '\0';
+		    cursor_argo = (cp + 1) - base, c = *++cp) {
+			if (inquote) {
+				if (c == inquote) {
+					inquote = 0;
+					continue;
+				}
+			} else {
+				if (c == '\\') {
+					if ((c = *++cp) == '\0')
+						break;
+				} else if (c == '"') {
+					inquote = '"';
+					continue;
+				} else if (c == '\'') {
+					inquote = '\'';
+					continue;
+				} else if (isspace((unsigned char)c)) {
+					cursor_argo = 0;
+					break;
+				}
+			}
+			*cp2++ = c;
+		}
+		*cp2 = '\0';
+		if (c == '\0') {
+			cursor_argc--;
+			break;
+		}
+		cp++;
+	}
+	*argp++ = 0;
+	if (cursor_pos == line) {
+		cursor_argc = 0;
+		cursor_argo = 0;
+	}
 }
