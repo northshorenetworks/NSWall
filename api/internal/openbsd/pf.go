@@ -5,6 +5,8 @@ import (
 	"encoding/binary"
 	"fmt"
 	"os"
+	"os/exec"
+	"strings"
 	"unsafe"
 
 	"golang.org/x/sys/unix"
@@ -12,32 +14,32 @@ import (
 
 // PF ioctl commands (from sys/net/pfvar.h)
 const (
-	DIOCSTART        = 0x20004401
-	DIOCSTOP         = 0x20004402
-	DIOCGETSTATUS    = 0xc04c4419
-	DIOCGETSTATE     = 0xc1084418
-	DIOCGETSTATENV   = 0xc0104447
-	DIOCGETSTATES    = 0xc0104415
-	DIOCCLRSTATES    = 0xc00c4413
-	DIOCGETRULES     = 0xcd604406
-	DIOCGETRULE      = 0xcd604407
-	DIOCGETTABLES    = 0xc0104440
-	DIOCGETTABLE     = 0xc450443e
-	DIOCCLRTABLES    = 0xc010443a
-	DIOCADDTABLES    = 0xc0104437
-	DIOCGETTFLAGS    = 0xc050443b
-	DIOCGETADDRS     = 0xc4504449
-	DIOCGETADDR      = 0xc4504448
-	DIOCADDADDRS     = 0xc4504445
-	DIOCDELADDRS     = 0xc4504446
-	DIOCGETIFACES    = 0xc0204457
-	DIOCXBEGIN       = 0xc00c4451
-	DIOCXCOMMIT      = 0xc00c4452
-	DIOCXROLLBACK    = 0xc00c4453
-	DIOCSETTIMEOUT   = 0xc008441d
-	DIOCGETTIMEOUT   = 0xc008441e
-	DIOCSETLIMIT     = 0xc0084428
-	DIOCGETLIMIT     = 0xc0084427
+	DIOCSTART      = 0x20004401
+	DIOCSTOP       = 0x20004402
+	DIOCGETSTATUS  = 0xc04c4419
+	DIOCGETSTATE   = 0xc1084418
+	DIOCGETSTATENV = 0xc0104447
+	DIOCGETSTATES  = 0xc0104415
+	DIOCCLRSTATES  = 0xc00c4413
+	DIOCGETRULES   = 0xcd604406
+	DIOCGETRULE    = 0xcd604407
+	DIOCGETTABLES  = 0xc0104440
+	DIOCGETTABLE   = 0xc450443e
+	DIOCCLRTABLES  = 0xc010443a
+	DIOCADDTABLES  = 0xc0104437
+	DIOCGETTFLAGS  = 0xc050443b
+	DIOCGETADDRS   = 0xc4504449
+	DIOCGETADDR    = 0xc4504448
+	DIOCADDADDRS   = 0xc4504445
+	DIOCDELADDRS   = 0xc4504446
+	DIOCGETIFACES  = 0xc0204457
+	DIOCXBEGIN     = 0xc00c4451
+	DIOCXCOMMIT    = 0xc00c4452
+	DIOCXROLLBACK  = 0xc00c4453
+	DIOCSETTIMEOUT = 0xc008441d
+	DIOCGETTIMEOUT = 0xc008441e
+	DIOCSETLIMIT   = 0xc0084428
+	DIOCGETLIMIT   = 0xc0084427
 )
 
 // PF device path
@@ -45,15 +47,15 @@ const pfDev = "/dev/pf"
 
 // PFStatus represents the status of the PF firewall
 type PFStatus struct {
-	Running       bool   `json:"running"`
-	Debug         uint32 `json:"debug"`
-	Hostid        uint32 `json:"hostid"`
-	States        uint32 `json:"states"`
-	SrcNodes      uint32 `json:"src_nodes"`
-	Since         int64  `json:"since"` // Running since (Unix time)
-	StateInserts  uint64 `json:"state_inserts"`
-	StateRemovals uint64 `json:"state_removals"`
-	StateSearches uint64 `json:"state_searches"`
+	Running       bool      `json:"running"`
+	Debug         uint32    `json:"debug"`
+	Hostid        uint32    `json:"hostid"`
+	States        uint32    `json:"states"`
+	SrcNodes      uint32    `json:"src_nodes"`
+	Since         int64     `json:"since"` // Running since (Unix time)
+	StateInserts  uint64    `json:"state_inserts"`
+	StateRemovals uint64    `json:"state_removals"`
+	StateSearches uint64    `json:"state_searches"`
 	Bytes         [2]uint64 `json:"bytes"`   // [in, out]
 	Packets       [2]uint64 `json:"packets"` // [in, out]
 }
@@ -250,9 +252,9 @@ func (h *PFHandle) GetLimits() ([]PFLimit, error) {
 
 // PFTable represents a PF table
 type PFTable struct {
-	Name    string   `json:"name"`
-	Flags   uint32   `json:"flags"`
-	Addrs   int      `json:"addrs"`
+	Name  string `json:"name"`
+	Flags uint32 `json:"flags"`
+	Addrs int    `json:"addrs"`
 }
 
 // Helper functions for checking PF availability
@@ -274,6 +276,106 @@ func IsPFRunning() bool {
 		return false
 	}
 	return status.Running
+}
+
+// PFRuleStats represents statistics for a single PF rule
+type PFRuleStats struct {
+	Number      int    `json:"number"`      // Rule number (position)
+	Label       string `json:"label"`       // Rule label if any
+	Rule        string `json:"rule"`        // Rule text (summarized)
+	Evaluations uint64 `json:"evaluations"` // Number of times rule was evaluated
+	Packets     uint64 `json:"packets"`     // Packets matched
+	Bytes       uint64 `json:"bytes"`       // Bytes matched
+	States      uint64 `json:"states"`      // Current states for this rule
+}
+
+// GetRuleStats returns per-rule statistics by parsing pfctl output
+func GetRuleStats() ([]PFRuleStats, error) {
+	output, err := exec.Command("pfctl", "-vvs", "rules").Output()
+	if err != nil {
+		return nil, fmt.Errorf("pfctl -vvs rules: %w", err)
+	}
+
+	return parseRuleStats(string(output)), nil
+}
+
+// parseRuleStats parses pfctl -vvs rules output
+func parseRuleStats(output string) []PFRuleStats {
+	var rules []PFRuleStats
+	lines := strings.Split(output, "\n")
+
+	var currentRule *PFRuleStats
+	ruleNum := 0
+
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+
+		// Check for rule line (starts with @ or action keywords)
+		if strings.HasPrefix(line, "@") || strings.HasPrefix(line, "pass ") ||
+			strings.HasPrefix(line, "block ") || strings.HasPrefix(line, "match ") {
+
+			// Save previous rule if exists
+			if currentRule != nil {
+				rules = append(rules, *currentRule)
+			}
+
+			// Start new rule
+			currentRule = &PFRuleStats{
+				Number: ruleNum,
+				Rule:   line,
+			}
+			ruleNum++
+
+			// Extract label if present
+			if idx := strings.Index(line, "label \""); idx >= 0 {
+				rest := line[idx+7:]
+				if endIdx := strings.Index(rest, "\""); endIdx >= 0 {
+					currentRule.Label = rest[:endIdx]
+				}
+			}
+		}
+
+		// Check for counters line
+		if currentRule != nil && strings.Contains(line, "Evaluations:") {
+			// Format: [ Evaluations: 1234    Packets: 5678    Bytes: 91234     States: 12     ]
+			parseCounters(line, currentRule)
+		}
+	}
+
+	// Don't forget the last rule
+	if currentRule != nil {
+		rules = append(rules, *currentRule)
+	}
+
+	return rules
+}
+
+// parseCounters extracts counter values from a stats line
+func parseCounters(line string, rule *PFRuleStats) {
+	// Remove brackets and extra spaces
+	line = strings.TrimPrefix(line, "[")
+	line = strings.TrimSuffix(line, "]")
+	line = strings.TrimSpace(line)
+
+	fields := strings.Fields(line)
+	for i := 0; i < len(fields)-1; i += 2 {
+		key := strings.TrimSuffix(fields[i], ":")
+		value := fields[i+1]
+
+		var num uint64
+		fmt.Sscanf(value, "%d", &num)
+
+		switch key {
+		case "Evaluations":
+			rule.Evaluations = num
+		case "Packets":
+			rule.Packets = num
+		case "Bytes":
+			rule.Bytes = num
+		case "States":
+			rule.States = num
+		}
+	}
 }
 
 // Ignore for build constraints

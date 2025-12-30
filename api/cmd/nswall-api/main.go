@@ -290,6 +290,7 @@ func main() {
 	r.Get("/api/v1/stream/interfaces", h.StreamInterfaces)
 	r.Get("/api/v1/stream/pf", h.StreamPFStatus)
 	r.Get("/api/v1/stream/pf/states", h.StreamPFStates)
+	r.Get("/api/v1/stream/pf/rules", h.StreamPFRules)
 	r.Get("/api/v1/stream/system", h.StreamSystem)
 	r.Get("/api/v1/stream/throughput", h.StreamInterfaceThroughput)
 	r.Get("/api/v1/stream/all", h.StreamAll)

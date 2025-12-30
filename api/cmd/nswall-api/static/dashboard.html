@@ -231,6 +231,79 @@
             font-size: 1.25rem;
             color: #4ade80;
         }
+
+        .rules-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .rule-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem;
+            border-bottom: 1px solid #0f3460;
+            gap: 1rem;
+        }
+
+        .rule-item:last-child {
+            border-bottom: none;
+        }
+
+        .rule-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .rule-label {
+            font-weight: 500;
+            color: #4ade80;
+            font-size: 0.875rem;
+        }
+
+        .rule-text {
+            font-size: 0.75rem;
+            color: #888;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 400px;
+        }
+
+        .rule-stats {
+            display: flex;
+            gap: 1rem;
+            flex-shrink: 0;
+        }
+
+        .rule-stat {
+            text-align: right;
+        }
+
+        .rule-stat-value {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #e94560;
+        }
+
+        .rule-stat-label {
+            font-size: 0.625rem;
+            color: #888;
+        }
+
+        .throughput-bar {
+            height: 4px;
+            background: #0f3460;
+            border-radius: 2px;
+            margin-top: 0.25rem;
+            overflow: hidden;
+        }
+
+        .throughput-bar-fill {
+            height: 100%;
+            background: linear-gradient(to right, #4ade80, #e94560);
+            transition: width 0.3s ease;
+        }
     </style>
 </head>
 <body>
@@ -345,6 +418,19 @@
                 <div class="metric">
                     <div class="metric-value" id="memFree">--</div>
                     <div class="metric-label">Free</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- PF Rules Throughput -->
+        <div class="card wide">
+            <div class="card-header">
+                <span class="card-title">Firewall Rules Throughput</span>
+                <span class="metric-label" id="rulesTotal">--</span>
+            </div>
+            <div class="rules-list" id="rulesList">
+                <div class="rule-item">
+                    <span>Loading rules...</span>
                 </div>
             </div>
         </div>
@@ -736,6 +822,72 @@
             throughputChart.update('none');
         }
 
+        function updateRules(rules) {
+            const list = document.getElementById('rulesList');
+            list.innerHTML = '';
+
+            // Sort by bytes rate (highest first)
+            rules.sort((a, b) => b.bytes_rate - a.bytes_rate);
+
+            // Find max rate for bar scaling
+            const maxRate = Math.max(...rules.map(r => r.bytes_rate), 1);
+
+            // Track totals
+            let totalBytesRate = 0;
+            let totalPacketsRate = 0;
+
+            for (const rule of rules) {
+                // Skip rules with no activity
+                if (rule.total_bytes === 0 && rule.total_packets === 0) {
+                    continue;
+                }
+
+                totalBytesRate += rule.bytes_rate;
+                totalPacketsRate += rule.packets_rate;
+
+                const item = document.createElement('div');
+                item.className = 'rule-item';
+
+                // Truncate rule text for display
+                let ruleText = rule.rule;
+                if (ruleText.length > 60) {
+                    ruleText = ruleText.substring(0, 60) + '...';
+                }
+
+                const barWidth = (rule.bytes_rate / maxRate) * 100;
+
+                item.innerHTML = `
+                    <div class="rule-info">
+                        <div class="rule-label">${rule.label || `Rule #${rule.number}`}</div>
+                        <div class="rule-text" title="${rule.rule}">${ruleText}</div>
+                        <div class="throughput-bar">
+                            <div class="throughput-bar-fill" style="width: ${barWidth}%"></div>
+                        </div>
+                    </div>
+                    <div class="rule-stats">
+                        <div class="rule-stat">
+                            <div class="rule-stat-value">${formatBytesRate(rule.bytes_rate)}</div>
+                            <div class="rule-stat-label">Throughput</div>
+                        </div>
+                        <div class="rule-stat">
+                            <div class="rule-stat-value">${formatNumber(Math.round(rule.packets_rate))}/s</div>
+                            <div class="rule-stat-label">Packets</div>
+                        </div>
+                        <div class="rule-stat">
+                            <div class="rule-stat-value">${formatNumber(rule.states)}</div>
+                            <div class="rule-stat-label">States</div>
+                        </div>
+                    </div>
+                `;
+
+                list.appendChild(item);
+            }
+
+            // Update totals
+            document.getElementById('rulesTotal').textContent =
+                `${formatBytesRate(totalBytesRate)} | ${formatNumber(Math.round(totalPacketsRate))}/s`;
+        }
+
         // Start SSE connection
         function connectStreams() {
             // Combined stream for all data
@@ -806,6 +958,18 @@
                 try {
                     const event = JSON.parse(e.data);
                     updateThroughput(event.data);
+                } catch (err) {
+                    console.error('Parse error:', err);
+                }
+            });
+
+            // PF rules throughput stream
+            const rulesSource = new EventSource(`${API_BASE}/api/v1/stream/pf/rules?interval=2`);
+
+            rulesSource.addEventListener('pf_rules', (e) => {
+                try {
+                    const event = JSON.parse(e.data);
+                    updateRules(event.data);
                 } catch (err) {
                     console.error('Parse error:', err);
                 }

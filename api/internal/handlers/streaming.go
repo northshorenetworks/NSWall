@@ -360,6 +360,90 @@ func (h *Handler) StreamInterfaceThroughput(w http.ResponseWriter, r *http.Reque
 	}
 }
 
+// PFRuleThroughput represents calculated throughput for a PF rule
+type PFRuleThroughput struct {
+	Number       int     `json:"number"`
+	Label        string  `json:"label,omitempty"`
+	Rule         string  `json:"rule"`
+	BytesRate    float64 `json:"bytes_rate"`   // bytes/sec
+	PacketsRate  float64 `json:"packets_rate"` // packets/sec
+	TotalBytes   uint64  `json:"total_bytes"`
+	TotalPackets uint64  `json:"total_packets"`
+	States       uint64  `json:"states"`
+}
+
+// StreamPFRules streams per-rule PF statistics with throughput rates
+func (h *Handler) StreamPFRules(w http.ResponseWriter, r *http.Request) {
+	h.setupSSE(w)
+
+	interval := 2 * time.Second
+	if i := r.URL.Query().Get("interval"); i != "" {
+		if secs, err := strconv.Atoi(i); err == nil && secs > 0 {
+			interval = time.Duration(secs) * time.Second
+		}
+	}
+
+	// Track previous values for rate calculation
+	type prevStats struct {
+		bytes     uint64
+		packets   uint64
+		timestamp time.Time
+	}
+	previous := make(map[int]prevStats)
+
+	ticker := time.NewTicker(interval)
+	defer ticker.Stop()
+
+	ctx := r.Context()
+
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			rules, err := openbsd.GetRuleStats()
+			if err != nil {
+				h.sendSSE(w, "error", map[string]string{"error": err.Error()})
+				continue
+			}
+
+			now := time.Now()
+			var throughputs []PFRuleThroughput
+
+			for _, rule := range rules {
+				tp := PFRuleThroughput{
+					Number:       rule.Number,
+					Label:        rule.Label,
+					Rule:         rule.Rule,
+					TotalBytes:   rule.Bytes,
+					TotalPackets: rule.Packets,
+					States:       rule.States,
+				}
+
+				// Calculate rates if we have previous data
+				if prev, ok := previous[rule.Number]; ok {
+					elapsed := now.Sub(prev.timestamp).Seconds()
+					if elapsed > 0 {
+						tp.BytesRate = float64(rule.Bytes-prev.bytes) / elapsed
+						tp.PacketsRate = float64(rule.Packets-prev.packets) / elapsed
+					}
+				}
+
+				// Store current values for next iteration
+				previous[rule.Number] = prevStats{
+					bytes:     rule.Bytes,
+					packets:   rule.Packets,
+					timestamp: now,
+				}
+
+				throughputs = append(throughputs, tp)
+			}
+
+			h.sendSSE(w, "pf_rules", throughputs)
+		}
+	}
+}
+
 // Helper to add context timeout for streaming
 func withStreamTimeout(ctx context.Context, timeout time.Duration) (context.Context, context.CancelFunc) {
 	if timeout <= 0 {
