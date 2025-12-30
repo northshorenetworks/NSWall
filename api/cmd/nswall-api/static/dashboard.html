@@ -309,6 +309,17 @@
             </div>
         </div>
 
+        <!-- Interface Throughput Chart -->
+        <div class="card wide">
+            <div class="card-header">
+                <span class="card-title">Interface Throughput</span>
+                <span class="metric-label" id="throughputTotal">--</span>
+            </div>
+            <div class="chart-container">
+                <canvas id="throughputChart"></canvas>
+            </div>
+        </div>
+
         <!-- Interfaces -->
         <div class="card">
             <div class="card-header">
@@ -437,7 +448,62 @@
             }
         });
 
+        // Interface throughput data - dynamically created datasets per interface
+        const throughputData = {
+            labels: [],
+            datasets: {}
+        };
+
+        const interfaceColors = [
+            { border: '#4ade80', bg: 'rgba(74, 222, 128, 0.1)' },   // green
+            { border: '#e94560', bg: 'rgba(233, 69, 96, 0.1)' },    // red
+            { border: '#3b82f6', bg: 'rgba(59, 130, 246, 0.1)' },   // blue
+            { border: '#f59e0b', bg: 'rgba(245, 158, 11, 0.1)' },   // amber
+            { border: '#8b5cf6', bg: 'rgba(139, 92, 246, 0.1)' },   // purple
+            { border: '#06b6d4', bg: 'rgba(6, 182, 212, 0.1)' }     // cyan
+        ];
+
+        const throughputChart = new Chart(document.getElementById('throughputChart'), {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: []
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                        labels: { color: '#888' }
+                    }
+                },
+                scales: {
+                    x: {
+                        display: false
+                    },
+                    y: {
+                        grid: { color: '#0f3460' },
+                        ticks: {
+                            color: '#888',
+                            callback: function(value) {
+                                return formatBytesRate(value);
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
         // Helper functions
+        function formatBytesRate(bytesPerSec) {
+            if (bytesPerSec === 0) return '0 B/s';
+            const k = 1024;
+            const sizes = ['B/s', 'KB/s', 'MB/s', 'GB/s'];
+            const i = Math.floor(Math.log(bytesPerSec) / Math.log(k));
+            return parseFloat((bytesPerSec / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[Math.min(i, sizes.length - 1)];
+        }
+
         function formatBytes(bytes) {
             if (bytes === 0) return '0 B';
             const k = 1024;
@@ -586,6 +652,90 @@
             }
         }
 
+        // Track interface index for consistent colors
+        let interfaceColorMap = {};
+        let nextColorIndex = 0;
+
+        function updateThroughput(throughputs) {
+            const now = new Date().toLocaleTimeString();
+            let totalIn = 0;
+            let totalOut = 0;
+
+            // Add timestamp
+            throughputData.labels.push(now);
+            if (throughputData.labels.length > MAX_DATA_POINTS) {
+                throughputData.labels.shift();
+            }
+
+            // Update chart labels
+            throughputChart.data.labels = throughputData.labels;
+
+            // Process each interface
+            for (const tp of throughputs) {
+                // Skip interfaces with no traffic
+                if (tp.bytes_in_rate === 0 && tp.bytes_out_rate === 0 &&
+                    tp.total_bytes_in === 0 && tp.total_bytes_out === 0) {
+                    continue;
+                }
+
+                totalIn += tp.bytes_in_rate;
+                totalOut += tp.bytes_out_rate;
+
+                // Get or assign color for this interface
+                if (!(tp.name in interfaceColorMap)) {
+                    interfaceColorMap[tp.name] = nextColorIndex % interfaceColors.length;
+                    nextColorIndex++;
+                }
+                const colorIdx = interfaceColorMap[tp.name];
+                const colors = interfaceColors[colorIdx];
+
+                // Create dataset for interface if it doesn't exist
+                if (!(tp.name in throughputData.datasets)) {
+                    throughputData.datasets[tp.name] = {
+                        in: [],
+                        out: []
+                    };
+
+                    // Add in/out datasets for this interface
+                    throughputChart.data.datasets.push({
+                        label: `${tp.name} In`,
+                        data: throughputData.datasets[tp.name].in,
+                        borderColor: colors.border,
+                        backgroundColor: colors.bg,
+                        fill: false,
+                        tension: 0.4,
+                        borderWidth: 2
+                    });
+                    throughputChart.data.datasets.push({
+                        label: `${tp.name} Out`,
+                        data: throughputData.datasets[tp.name].out,
+                        borderColor: colors.border,
+                        backgroundColor: colors.bg,
+                        fill: false,
+                        tension: 0.4,
+                        borderWidth: 1,
+                        borderDash: [5, 5]
+                    });
+                }
+
+                // Add data points
+                throughputData.datasets[tp.name].in.push(tp.bytes_in_rate);
+                throughputData.datasets[tp.name].out.push(tp.bytes_out_rate);
+
+                // Trim old data
+                if (throughputData.datasets[tp.name].in.length > MAX_DATA_POINTS) {
+                    throughputData.datasets[tp.name].in.shift();
+                    throughputData.datasets[tp.name].out.shift();
+                }
+            }
+
+            // Update total display
+            document.getElementById('throughputTotal').textContent =
+                `In: ${formatBytesRate(totalIn)} | Out: ${formatBytesRate(totalOut)}`;
+
+            throughputChart.update('none');
+        }
+
         // Start SSE connection
         function connectStreams() {
             // Combined stream for all data
@@ -644,6 +794,18 @@
                 try {
                     const event = JSON.parse(e.data);
                     updateSystem(event.data);
+                } catch (err) {
+                    console.error('Parse error:', err);
+                }
+            });
+
+            // Interface throughput stream
+            const throughputSource = new EventSource(`${API_BASE}/api/v1/stream/throughput?interval=1`);
+
+            throughputSource.addEventListener('throughput', (e) => {
+                try {
+                    const event = JSON.parse(e.data);
+                    updateThroughput(event.data);
                 } catch (err) {
                     console.error('Parse error:', err);
                 }

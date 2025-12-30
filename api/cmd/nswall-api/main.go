@@ -27,25 +27,25 @@ import (
 var staticFiles embed.FS
 
 var (
-	listenAddr     = flag.String("listen", "127.0.0.1:8080", "API listen address")
-	nshPath        = flag.String("nsh", "/usr/local/bin/nsh", "Path to nsh binary")
-	dataDir        = flag.String("data", "/var/db/nswall-api", "Data directory for API state")
-	apiKey         = flag.String("apikey", "", "Static API key for authentication (optional)")
-	enableAuth     = flag.Bool("auth", false, "Enable authentication (default: false)")
-	corsOrigins    = flag.String("cors", "", "Allowed CORS origins (comma-separated)")
-	rateLimit      = flag.Int("rate-limit", 100, "Rate limit per minute (0 to disable)")
-	readTimeout    = flag.Duration("read-timeout", 10*time.Second, "HTTP read timeout")
-	writeTimeout   = flag.Duration("write-timeout", 30*time.Second, "HTTP write timeout")
+	listenAddr   = flag.String("listen", "127.0.0.1:8080", "API listen address")
+	nshPath      = flag.String("nsh", "/usr/local/bin/nsh", "Path to nsh binary")
+	dataDir      = flag.String("data", "/var/db/nswall-api", "Data directory for API state")
+	apiKey       = flag.String("apikey", "", "Static API key for authentication (optional)")
+	enableAuth   = flag.Bool("auth", false, "Enable authentication (default: false)")
+	corsOrigins  = flag.String("cors", "", "Allowed CORS origins (comma-separated)")
+	rateLimit    = flag.Int("rate-limit", 100, "Rate limit per minute (0 to disable)")
+	readTimeout  = flag.Duration("read-timeout", 10*time.Second, "HTTP read timeout")
+	writeTimeout = flag.Duration("write-timeout", 30*time.Second, "HTTP write timeout")
 
 	// Fleet/Controller settings
-	controllerURL  = flag.String("controller", "", "Controller NATS URL (e.g., nats://controller:4222)")
-	agentID        = flag.String("agent-id", "", "Agent ID (auto-generated if not specified)")
+	controllerURL = flag.String("controller", "", "Controller NATS URL (e.g., nats://controller:4222)")
+	agentID       = flag.String("agent-id", "", "Agent ID (auto-generated if not specified)")
 
 	// CI/Testing mode
-	mockMode       = flag.Bool("mock", false, "Run in mock mode for CI testing (no OpenBSD dependencies)")
-	showVersion    = flag.Bool("version", false, "Show version and exit")
+	mockMode    = flag.Bool("mock", false, "Run in mock mode for CI testing (no OpenBSD dependencies)")
+	showVersion = flag.Bool("version", false, "Show version and exit")
 
-	version        = "2.0.0"
+	version = "2.0.0"
 )
 
 func main() {
@@ -291,6 +291,7 @@ func main() {
 	r.Get("/api/v1/stream/pf", h.StreamPFStatus)
 	r.Get("/api/v1/stream/pf/states", h.StreamPFStates)
 	r.Get("/api/v1/stream/system", h.StreamSystem)
+	r.Get("/api/v1/stream/throughput", h.StreamInterfaceThroughput)
 	r.Get("/api/v1/stream/all", h.StreamAll)
 
 	// Dashboard - serve static files

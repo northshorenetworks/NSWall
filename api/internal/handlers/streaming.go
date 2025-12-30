@@ -174,15 +174,15 @@ func (h *Handler) StreamPFStates(w http.ResponseWriter, r *http.Request) {
 			}
 
 			data := map[string]interface{}{
-				"states":          status.States,
-				"src_nodes":       status.SrcNodes,
-				"state_inserts":   status.StateInserts,
-				"state_removals":  status.StateRemovals,
-				"state_searches":  status.StateSearches,
-				"bytes_in":        status.Bytes[0],
-				"bytes_out":       status.Bytes[1],
-				"packets_in":      status.Packets[0],
-				"packets_out":     status.Packets[1],
+				"states":         status.States,
+				"src_nodes":      status.SrcNodes,
+				"state_inserts":  status.StateInserts,
+				"state_removals": status.StateRemovals,
+				"state_searches": status.StateSearches,
+				"bytes_in":       status.Bytes[0],
+				"bytes_out":      status.Bytes[1],
+				"packets_in":     status.Packets[0],
+				"packets_out":    status.Packets[1],
 			}
 
 			h.sendSSE(w, "pf_states", data)
@@ -271,6 +271,92 @@ func (h *Handler) sendSSE(w http.ResponseWriter, eventType string, data interfac
 
 	if f, ok := w.(http.Flusher); ok {
 		f.Flush()
+	}
+}
+
+// InterfaceThroughput represents calculated throughput rates
+type InterfaceThroughput struct {
+	Name           string  `json:"name"`
+	BytesInRate    float64 `json:"bytes_in_rate"`    // bytes/sec
+	BytesOutRate   float64 `json:"bytes_out_rate"`   // bytes/sec
+	PacketsInRate  float64 `json:"packets_in_rate"`  // packets/sec
+	PacketsOutRate float64 `json:"packets_out_rate"` // packets/sec
+	TotalBytesIn   uint64  `json:"total_bytes_in"`
+	TotalBytesOut  uint64  `json:"total_bytes_out"`
+}
+
+// StreamInterfaceThroughput streams interface throughput rates (bytes/sec, packets/sec)
+func (h *Handler) StreamInterfaceThroughput(w http.ResponseWriter, r *http.Request) {
+	h.setupSSE(w)
+
+	interval := 1 * time.Second
+	if i := r.URL.Query().Get("interval"); i != "" {
+		if secs, err := strconv.Atoi(i); err == nil && secs > 0 {
+			interval = time.Duration(secs) * time.Second
+		}
+	}
+
+	// Track previous values for rate calculation
+	type prevStats struct {
+		bytesIn    uint64
+		bytesOut   uint64
+		packetsIn  uint64
+		packetsOut uint64
+		timestamp  time.Time
+	}
+	previous := make(map[string]prevStats)
+
+	ticker := time.NewTicker(interval)
+	defer ticker.Stop()
+
+	ctx := r.Context()
+
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			stats, err := openbsd.GetAllInterfaceStats()
+			if err != nil {
+				h.sendSSE(w, "error", map[string]string{"error": err.Error()})
+				continue
+			}
+
+			now := time.Now()
+			var throughputs []InterfaceThroughput
+
+			for _, s := range stats {
+				tp := InterfaceThroughput{
+					Name:          s.Name,
+					TotalBytesIn:  s.BytesIn,
+					TotalBytesOut: s.BytesOut,
+				}
+
+				// Calculate rates if we have previous data
+				if prev, ok := previous[s.Name]; ok {
+					elapsed := now.Sub(prev.timestamp).Seconds()
+					if elapsed > 0 {
+						tp.BytesInRate = float64(s.BytesIn-prev.bytesIn) / elapsed
+						tp.BytesOutRate = float64(s.BytesOut-prev.bytesOut) / elapsed
+						tp.PacketsInRate = float64(s.PacketsIn-prev.packetsIn) / elapsed
+						tp.PacketsOutRate = float64(s.PacketsOut-prev.packetsOut) / elapsed
+					}
+				}
+
+				// Store current values for next iteration
+				previous[s.Name] = prevStats{
+					bytesIn:    s.BytesIn,
+					bytesOut:   s.BytesOut,
+					packetsIn:  s.PacketsIn,
+					packetsOut: s.PacketsOut,
+					timestamp:  now,
+				}
+
+				throughputs = append(throughputs, tp)
+			}
+
+			h.sendSSE(w, "throughput", throughputs)
+		}
 	}
 }
 

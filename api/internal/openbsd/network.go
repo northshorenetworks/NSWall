@@ -2,7 +2,11 @@
 package openbsd
 
 import (
+	"bufio"
 	"net"
+	"os/exec"
+	"strconv"
+	"strings"
 )
 
 // Interface represents a network interface with structured data
@@ -121,7 +125,6 @@ func GetInterface(name string) (*Interface, error) {
 }
 
 // InterfaceStats contains interface statistics
-// Note: Getting stats requires reading from sysctl or /dev
 type InterfaceStats struct {
 	Name       string `json:"name"`
 	BytesIn    uint64 `json:"bytes_in"`
@@ -132,6 +135,87 @@ type InterfaceStats struct {
 	ErrorsOut  uint64 `json:"errors_out"`
 	DropsIn    uint64 `json:"drops_in"`
 	DropsOut   uint64 `json:"drops_out"`
+}
+
+// GetInterfaceStats returns statistics for a specific interface
+// Uses netstat -I <interface> -b for byte/packet counters
+func GetInterfaceStats(name string) (*InterfaceStats, error) {
+	output, err := exec.Command("netstat", "-I", name, "-b", "-n").Output()
+	if err != nil {
+		return nil, err
+	}
+
+	stats := &InterfaceStats{Name: name}
+
+	lines := strings.Split(string(output), "\n")
+	if len(lines) < 2 {
+		return stats, nil
+	}
+
+	// Parse header to find column positions
+	// Format: Name Mtu Network Address Ipkts Ierrs Ibytes Opkts Oerrs Obytes Coll Drop
+	fields := strings.Fields(lines[1])
+	if len(fields) >= 10 {
+		stats.PacketsIn, _ = strconv.ParseUint(fields[4], 10, 64)
+		stats.ErrorsIn, _ = strconv.ParseUint(fields[5], 10, 64)
+		stats.BytesIn, _ = strconv.ParseUint(fields[6], 10, 64)
+		stats.PacketsOut, _ = strconv.ParseUint(fields[7], 10, 64)
+		stats.ErrorsOut, _ = strconv.ParseUint(fields[8], 10, 64)
+		stats.BytesOut, _ = strconv.ParseUint(fields[9], 10, 64)
+		if len(fields) >= 12 {
+			stats.DropsIn, _ = strconv.ParseUint(fields[11], 10, 64)
+		}
+	}
+
+	return stats, nil
+}
+
+// GetAllInterfaceStats returns statistics for all interfaces
+func GetAllInterfaceStats() ([]InterfaceStats, error) {
+	output, err := exec.Command("netstat", "-i", "-b", "-n").Output()
+	if err != nil {
+		return nil, err
+	}
+
+	var stats []InterfaceStats
+	scanner := bufio.NewScanner(strings.NewReader(string(output)))
+
+	// Skip header
+	if scanner.Scan() {
+		// header line
+	}
+
+	for scanner.Scan() {
+		line := scanner.Text()
+		fields := strings.Fields(line)
+
+		if len(fields) < 10 {
+			continue
+		}
+
+		// Skip loopback and system interfaces for throughput
+		name := fields[0]
+		if strings.HasPrefix(name, "lo") ||
+			strings.HasPrefix(name, "pflog") ||
+			strings.HasPrefix(name, "enc") {
+			continue
+		}
+
+		s := InterfaceStats{Name: name}
+		s.PacketsIn, _ = strconv.ParseUint(fields[4], 10, 64)
+		s.ErrorsIn, _ = strconv.ParseUint(fields[5], 10, 64)
+		s.BytesIn, _ = strconv.ParseUint(fields[6], 10, 64)
+		s.PacketsOut, _ = strconv.ParseUint(fields[7], 10, 64)
+		s.ErrorsOut, _ = strconv.ParseUint(fields[8], 10, 64)
+		s.BytesOut, _ = strconv.ParseUint(fields[9], 10, 64)
+		if len(fields) >= 12 {
+			s.DropsIn, _ = strconv.ParseUint(fields[11], 10, 64)
+		}
+
+		stats = append(stats, s)
+	}
+
+	return stats, nil
 }
 
 // GetWireGuardInterfaces returns only WireGuard interfaces
