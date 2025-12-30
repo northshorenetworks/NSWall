@@ -1,0 +1,1803 @@
+openapi: 3.0.3
+info:
+  title: NSWall API
+  description: |
+    NSWall is an OpenBSD-based firewall management system with comprehensive
+    REST API for managing PF firewall, network interfaces, routing, VPN, and more.
+
+    ## Authentication
+    Most endpoints require JWT authentication. Obtain a token via POST /api/v1/auth/login
+    and include it in the Authorization header as `Bearer <token>`.
+
+    ## Rate Limiting
+    API requests are rate-limited. Check the X-RateLimit-* headers for current limits.
+    Login attempts have stricter limits to prevent brute-force attacks.
+
+    ## Two-Factor Authentication
+    When 2FA is enabled for a user, login requires a TOTP code.
+  version: 2.0.0
+  contact:
+    name: NSWall Support
+    url: https://github.com/northshorenetworks/nswall
+  license:
+    name: BSD-3-Clause
+    url: https://opensource.org/licenses/BSD-3-Clause
+
+servers:
+  - url: https://{hostname}:8443/api/v1
+    description: Production server
+    variables:
+      hostname:
+        default: localhost
+        description: NSWall hostname or IP
+
+tags:
+  - name: Authentication
+    description: User authentication and session management
+  - name: System
+    description: System information and management
+  - name: Firewall
+    description: PF firewall management
+  - name: Interfaces
+    description: Network interface configuration
+  - name: Routes
+    description: Routing table management
+  - name: Services
+    description: System services management
+  - name: VPN
+    description: VPN configuration (IKEv2, WireGuard)
+  - name: DNS
+    description: DNS resolver configuration (Unbound)
+  - name: DHCP
+    description: DHCP server configuration
+  - name: Config
+    description: Configuration management and backup
+  - name: Fleet
+    description: Multi-firewall fleet management
+  - name: Metrics
+    description: Prometheus metrics and monitoring
+  - name: Audit
+    description: Audit logging
+  - name: Diagnostics
+    description: Network diagnostics tools
+
+security:
+  - bearerAuth: []
+
+paths:
+  /auth/login:
+    post:
+      tags: [Authentication]
+      summary: Authenticate user
+      description: Authenticate with username and password, optionally with 2FA code
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [username, password]
+              properties:
+                username:
+                  type: string
+                  example: admin
+                password:
+                  type: string
+                  format: password
+                totp_code:
+                  type: string
+                  description: Required if 2FA is enabled
+                  example: "123456"
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '429':
+          $ref: '#/components/responses/TooManyRequests'
+
+  /auth/logout:
+    post:
+      tags: [Authentication]
+      summary: Logout current session
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+
+  /auth/refresh:
+    post:
+      tags: [Authentication]
+      summary: Refresh access token
+      responses:
+        '200':
+          description: Token refreshed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+
+  /auth/2fa/setup:
+    post:
+      tags: [Authentication]
+      summary: Generate 2FA secret
+      description: Generate a new TOTP secret and backup codes for enabling 2FA
+      responses:
+        '200':
+          description: 2FA setup information
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      secret:
+                        type: string
+                      qr_url:
+                        type: string
+                        description: otpauth:// URL for QR code
+                      backup_codes:
+                        type: array
+                        items:
+                          type: string
+
+  /auth/2fa/enable:
+    post:
+      tags: [Authentication]
+      summary: Enable 2FA
+      description: Enable 2FA after verifying the initial TOTP code
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [code]
+              properties:
+                code:
+                  type: string
+                  description: Current TOTP code
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /auth/2fa/disable:
+    post:
+      tags: [Authentication]
+      summary: Disable 2FA
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [code]
+              properties:
+                code:
+                  type: string
+                  description: Current TOTP or backup code
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+
+  /health:
+    get:
+      tags: [System]
+      summary: Health check
+      security: []
+      responses:
+        '200':
+          description: Service healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      status:
+                        type: string
+                        example: healthy
+
+  /system/info:
+    get:
+      tags: [System]
+      summary: Get system information
+      responses:
+        '200':
+          description: System information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SystemInfo'
+
+  /system/logs:
+    get:
+      tags: [System]
+      summary: Get system logs
+      parameters:
+        - name: facility
+          in: query
+          schema:
+            type: string
+            enum: [daemon, authlog, messages, pflog, all]
+            default: daemon
+        - name: lines
+          in: query
+          schema:
+            type: integer
+            default: 100
+            maximum: 1000
+      responses:
+        '200':
+          description: Log entries
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      logs:
+                        type: array
+                        items:
+                          type: string
+
+  /system/reboot:
+    post:
+      tags: [System]
+      summary: Reboot system
+      description: Initiate system reboot (requires admin privileges)
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /firewall/status:
+    get:
+      tags: [Firewall]
+      summary: Get PF status
+      responses:
+        '200':
+          description: PF status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PFStatus'
+
+  /firewall/rules:
+    get:
+      tags: [Firewall]
+      summary: Get PF rules
+      responses:
+        '200':
+          description: List of PF rules
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      rules:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/PFRule'
+    put:
+      tags: [Firewall]
+      summary: Update PF rules
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                rules:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/PFRule'
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+
+  /firewall/states:
+    get:
+      tags: [Firewall]
+      summary: Get PF state table
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 100
+        - name: filter
+          in: query
+          schema:
+            type: string
+          description: Filter by protocol (tcp, udp, icmp)
+      responses:
+        '200':
+          description: State table entries
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      states:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/PFState'
+                      total:
+                        type: integer
+
+  /firewall/states/{id}:
+    delete:
+      tags: [Firewall]
+      summary: Kill a specific state
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+
+  /firewall/tables:
+    get:
+      tags: [Firewall]
+      summary: List PF tables
+      responses:
+        '200':
+          description: List of tables
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/PFTable'
+
+  /firewall/tables/{name}:
+    get:
+      tags: [Firewall]
+      summary: Get table contents
+      parameters:
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Table addresses
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      name:
+                        type: string
+                      addresses:
+                        type: array
+                        items:
+                          type: string
+
+  /firewall/tables/{name}/add:
+    post:
+      tags: [Firewall]
+      summary: Add address to table
+      parameters:
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [address]
+              properties:
+                address:
+                  type: string
+                  example: 192.168.1.100
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+
+  /firewall/tables/{name}/delete:
+    post:
+      tags: [Firewall]
+      summary: Remove address from table
+      parameters:
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [address]
+              properties:
+                address:
+                  type: string
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+
+  /interfaces:
+    get:
+      tags: [Interfaces]
+      summary: List network interfaces
+      responses:
+        '200':
+          description: List of interfaces
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Interface'
+
+  /interfaces/{name}:
+    get:
+      tags: [Interfaces]
+      summary: Get interface details
+      parameters:
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Interface details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/Interface'
+    put:
+      tags: [Interfaces]
+      summary: Update interface configuration
+      parameters:
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InterfaceConfig'
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+
+  /routes:
+    get:
+      tags: [Routes]
+      summary: Get routing table
+      responses:
+        '200':
+          description: Routing table
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Route'
+    post:
+      tags: [Routes]
+      summary: Add static route
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Route'
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+
+  /routes/{destination}:
+    delete:
+      tags: [Routes]
+      summary: Delete route
+      parameters:
+        - name: destination
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+
+  /arp:
+    get:
+      tags: [Routes]
+      summary: Get ARP table
+      responses:
+        '200':
+          description: ARP table
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ARPEntry'
+
+  /services:
+    get:
+      tags: [Services]
+      summary: List system services
+      responses:
+        '200':
+          description: List of services
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Service'
+
+  /services/{name}/start:
+    post:
+      tags: [Services]
+      summary: Start a service
+      parameters:
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+
+  /services/{name}/stop:
+    post:
+      tags: [Services]
+      summary: Stop a service
+      parameters:
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+
+  /services/{name}/restart:
+    post:
+      tags: [Services]
+      summary: Restart a service
+      parameters:
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+
+  /vpn/ikev2/status:
+    get:
+      tags: [VPN]
+      summary: Get IKEv2 VPN status
+      responses:
+        '200':
+          description: IKEv2 status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IKEv2Status'
+
+  /vpn/ikev2/config:
+    get:
+      tags: [VPN]
+      summary: Get IKEv2 configuration
+      responses:
+        '200':
+          description: IKEv2 configuration
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IKEv2Config'
+    put:
+      tags: [VPN]
+      summary: Update IKEv2 configuration
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IKEv2Config'
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+
+  /dns/config:
+    get:
+      tags: [DNS]
+      summary: Get Unbound DNS configuration
+      responses:
+        '200':
+          description: DNS configuration
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DNSConfig'
+    put:
+      tags: [DNS]
+      summary: Update DNS configuration
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DNSConfig'
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+
+  /dhcp/config:
+    get:
+      tags: [DHCP]
+      summary: Get DHCP configuration
+      responses:
+        '200':
+          description: DHCP configuration
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DHCPConfig'
+    put:
+      tags: [DHCP]
+      summary: Update DHCP configuration
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DHCPConfig'
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+
+  /dhcp/leases:
+    get:
+      tags: [DHCP]
+      summary: Get DHCP leases
+      responses:
+        '200':
+          description: Active DHCP leases
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/DHCPLease'
+
+  /config/running:
+    get:
+      tags: [Config]
+      summary: Get running configuration
+      responses:
+        '200':
+          description: Running configuration
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      config:
+                        type: string
+
+  /config/history:
+    get:
+      tags: [Config]
+      summary: Get configuration history
+      responses:
+        '200':
+          description: Configuration versions
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ConfigVersion'
+
+  /config/history/{id}:
+    get:
+      tags: [Config]
+      summary: Get specific configuration version
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Configuration version details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/ConfigVersion'
+
+  /config/history/{id}/restore:
+    post:
+      tags: [Config]
+      summary: Restore configuration version
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+
+  /config/compare:
+    get:
+      tags: [Config]
+      summary: Compare configuration versions
+      parameters:
+        - name: version1
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: version2
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Configuration diff
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ConfigDiff'
+
+  /backups:
+    get:
+      tags: [Config]
+      summary: List backups
+      responses:
+        '200':
+          description: Available backups
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/BackupInfo'
+    post:
+      tags: [Config]
+      summary: Create backup
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                description:
+                  type: string
+      responses:
+        '200':
+          description: Backup created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/BackupInfo'
+
+  /backups/{id}:
+    get:
+      tags: [Config]
+      summary: Get backup details
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Backup details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/BackupInfo'
+    delete:
+      tags: [Config]
+      summary: Delete backup
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+
+  /backups/{id}/restore:
+    post:
+      tags: [Config]
+      summary: Restore from backup
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+
+  /backups/{id}/download:
+    get:
+      tags: [Config]
+      summary: Download backup file
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Backup file
+          content:
+            application/gzip:
+              schema:
+                type: string
+                format: binary
+
+  /fleet/mode:
+    get:
+      tags: [Fleet]
+      summary: Get fleet mode
+      responses:
+        '200':
+          description: Current fleet mode
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      mode:
+                        type: string
+                        enum: [standalone, manager, agent]
+    put:
+      tags: [Fleet]
+      summary: Set fleet mode
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [mode]
+              properties:
+                mode:
+                  type: string
+                  enum: [standalone, manager, agent]
+                manager_url:
+                  type: string
+                  description: Required when mode is 'agent'
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+
+  /fleet/agents:
+    get:
+      tags: [Fleet]
+      summary: List managed agents
+      description: Only available in manager mode
+      responses:
+        '200':
+          description: List of agents
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AgentInfo'
+
+  /fleet/agents/{id}/config:
+    post:
+      tags: [Fleet]
+      summary: Push configuration to agent
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                pf_conf:
+                  type: string
+      responses:
+        '200':
+          $ref: '#/components/responses/Success'
+
+  /fleet/summary:
+    get:
+      tags: [Fleet]
+      summary: Get fleet summary
+      responses:
+        '200':
+          description: Fleet summary statistics
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      total_agents:
+                        type: integer
+                      online_agents:
+                        type: integer
+                      offline_agents:
+                        type: integer
+                      total_states:
+                        type: integer
+                      avg_cpu_load:
+                        type: number
+
+  /metrics:
+    get:
+      tags: [Metrics]
+      summary: Get Prometheus metrics
+      security: []
+      responses:
+        '200':
+          description: Prometheus metrics
+          content:
+            text/plain:
+              schema:
+                type: string
+
+  /audit/logs:
+    get:
+      tags: [Audit]
+      summary: Get audit logs
+      parameters:
+        - name: action
+          in: query
+          schema:
+            type: string
+        - name: username
+          in: query
+          schema:
+            type: string
+        - name: from
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: to
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 100
+      responses:
+        '200':
+          description: Audit log entries
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AuditEntry'
+
+  /diagnostics/ping:
+    post:
+      tags: [Diagnostics]
+      summary: Ping a host
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [host]
+              properties:
+                host:
+                  type: string
+                count:
+                  type: integer
+                  default: 4
+      responses:
+        '200':
+          description: Ping results
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      output:
+                        type: string
+
+  /diagnostics/traceroute:
+    post:
+      tags: [Diagnostics]
+      summary: Traceroute to a host
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [host]
+              properties:
+                host:
+                  type: string
+      responses:
+        '200':
+          description: Traceroute results
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      output:
+                        type: string
+
+  /diagnostics/dns:
+    post:
+      tags: [Diagnostics]
+      summary: DNS lookup
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [host]
+              properties:
+                host:
+                  type: string
+                type:
+                  type: string
+                  enum: [A, AAAA, MX, NS, TXT, CNAME]
+                  default: A
+      responses:
+        '200':
+          description: DNS lookup results
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      records:
+                        type: array
+                        items:
+                          type: string
+
+  /diagnostics/tcpdump:
+    post:
+      tags: [Diagnostics]
+      summary: Start packet capture
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [interface]
+              properties:
+                interface:
+                  type: string
+                filter:
+                  type: string
+                count:
+                  type: integer
+                  default: 100
+      responses:
+        '200':
+          description: Capture started
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      capture_id:
+                        type: string
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  responses:
+    Success:
+      description: Operation successful
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: true
+              message:
+                type: string
+
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    Unauthorized:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    Forbidden:
+      description: Permission denied
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    TooManyRequests:
+      description: Rate limit exceeded
+      headers:
+        Retry-After:
+          schema:
+            type: integer
+        X-RateLimit-Limit:
+          schema:
+            type: integer
+        X-RateLimit-Remaining:
+          schema:
+            type: integer
+        X-RateLimit-Reset:
+          schema:
+            type: integer
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: string
+
+    LoginResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: object
+          properties:
+            token:
+              type: string
+            expires_at:
+              type: string
+              format: date-time
+            user:
+              type: object
+              properties:
+                username:
+                  type: string
+                role:
+                  type: string
+
+    SystemInfo:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: object
+          properties:
+            hostname:
+              type: string
+            os_version:
+              type: string
+            uptime:
+              type: integer
+            load_average:
+              type: array
+              items:
+                type: number
+            memory:
+              type: object
+              properties:
+                total:
+                  type: integer
+                used:
+                  type: integer
+                free:
+                  type: integer
+            cpu_count:
+              type: integer
+
+    PFStatus:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: object
+          properties:
+            enabled:
+              type: boolean
+            running:
+              type: boolean
+            states:
+              type: integer
+            state_limit:
+              type: integer
+            debug:
+              type: string
+
+    PFRule:
+      type: object
+      properties:
+        number:
+          type: integer
+        action:
+          type: string
+          enum: [pass, block, match]
+        direction:
+          type: string
+          enum: [in, out, any]
+        quick:
+          type: boolean
+        interface:
+          type: string
+        protocol:
+          type: string
+        source:
+          type: string
+        destination:
+          type: string
+        port:
+          type: string
+        log:
+          type: boolean
+        evaluations:
+          type: integer
+        packets:
+          type: integer
+        bytes:
+          type: integer
+
+    PFState:
+      type: object
+      properties:
+        id:
+          type: string
+        protocol:
+          type: string
+        direction:
+          type: string
+        source:
+          type: string
+        destination:
+          type: string
+        gateway:
+          type: string
+        state:
+          type: string
+        age:
+          type: string
+        packets:
+          type: integer
+        bytes:
+          type: integer
+
+    PFTable:
+      type: object
+      properties:
+        name:
+          type: string
+        addresses:
+          type: integer
+        evaluations:
+          type: integer
+        matches:
+          type: integer
+
+    Interface:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+          enum: [up, down]
+        mac_address:
+          type: string
+        ipv4:
+          type: array
+          items:
+            type: object
+            properties:
+              address:
+                type: string
+              netmask:
+                type: string
+        ipv6:
+          type: array
+          items:
+            type: object
+            properties:
+              address:
+                type: string
+              prefix_length:
+                type: integer
+        mtu:
+          type: integer
+        rx_bytes:
+          type: integer
+        tx_bytes:
+          type: integer
+        rx_packets:
+          type: integer
+        tx_packets:
+          type: integer
+
+    InterfaceConfig:
+      type: object
+      properties:
+        description:
+          type: string
+        ipv4:
+          type: object
+          properties:
+            method:
+              type: string
+              enum: [static, dhcp, none]
+            address:
+              type: string
+            netmask:
+              type: string
+            gateway:
+              type: string
+        mtu:
+          type: integer
+
+    Route:
+      type: object
+      properties:
+        destination:
+          type: string
+        gateway:
+          type: string
+        flags:
+          type: string
+        interface:
+          type: string
+        priority:
+          type: integer
+
+    ARPEntry:
+      type: object
+      properties:
+        ip_address:
+          type: string
+        mac_address:
+          type: string
+        interface:
+          type: string
+        flags:
+          type: string
+
+    Service:
+      type: object
+      properties:
+        name:
+          type: string
+        status:
+          type: string
+          enum: [running, stopped, failed]
+        enabled:
+          type: boolean
+        pid:
+          type: integer
+
+    IKEv2Status:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          type: object
+          properties:
+            enabled:
+              type: boolean
+            active_sas:
+              type: integer
+            connections:
+              type: array
+              items:
+                type: object
+
+    IKEv2Config:
+      type: object
+      properties:
+        enabled:
+          type: boolean
+        proposals:
+          type: array
+          items:
+            type: string
+        flows:
+          type: array
+          items:
+            type: object
+
+    DNSConfig:
+      type: object
+      properties:
+        enabled:
+          type: boolean
+        listen_addresses:
+          type: array
+          items:
+            type: string
+        forwarders:
+          type: array
+          items:
+            type: string
+        dnssec:
+          type: boolean
+        local_zones:
+          type: array
+          items:
+            type: object
+
+    DHCPConfig:
+      type: object
+      properties:
+        enabled:
+          type: boolean
+        subnets:
+          type: array
+          items:
+            type: object
+            properties:
+              network:
+                type: string
+              range_start:
+                type: string
+              range_end:
+                type: string
+              gateway:
+                type: string
+              dns_servers:
+                type: array
+                items:
+                  type: string
+              lease_time:
+                type: integer
+
+    DHCPLease:
+      type: object
+      properties:
+        ip_address:
+          type: string
+        mac_address:
+          type: string
+        hostname:
+          type: string
+        starts:
+          type: string
+          format: date-time
+        ends:
+          type: string
+          format: date-time
+
+    ConfigVersion:
+      type: object
+      properties:
+        id:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        username:
+          type: string
+        description:
+          type: string
+        hash:
+          type: string
+        size:
+          type: integer
+        files:
+          type: array
+          items:
+            type: string
+
+    ConfigDiff:
+      type: object
+      properties:
+        file:
+          type: string
+        type:
+          type: string
+          enum: [added, removed, modified]
+        old_lines:
+          type: array
+          items:
+            type: string
+        new_lines:
+          type: array
+          items:
+            type: string
+        added_lines:
+          type: integer
+        removed_lines:
+          type: integer
+
+    BackupInfo:
+      type: object
+      properties:
+        id:
+          type: string
+        filename:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        size:
+          type: integer
+        hash:
+          type: string
+        file_count:
+          type: integer
+        compressed:
+          type: boolean
+        encrypted:
+          type: boolean
+        description:
+          type: string
+        type:
+          type: string
+          enum: [manual, scheduled, pre-update, pre-restore]
+
+    AgentInfo:
+      type: object
+      properties:
+        id:
+          type: string
+        hostname:
+          type: string
+        ip_address:
+          type: string
+        version:
+          type: string
+        status:
+          type: string
+          enum: [online, offline, error]
+        last_seen:
+          type: string
+          format: date-time
+        pf_states:
+          type: integer
+        cpu_load:
+          type: number
+        memory_used:
+          type: number
+        uptime:
+          type: integer
+        tags:
+          type: array
+          items:
+            type: string
+
+    AuditEntry:
+      type: object
+      properties:
+        id:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        action:
+          type: string
+        username:
+          type: string
+        ip_address:
+          type: string
+        resource:
+          type: string
+        details:
+          type: object
+        success:
+          type: boolean

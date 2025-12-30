@@ -1,0 +1,11 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Test Results Dashboard
+    url: https://northshorenetworks.github.io/NSWall/metrics/
+    about: View current performance metrics and test results
+  - name: Test Library
+    url: https://northshorenetworks.github.io/NSWall/metrics/library.html
+    about: Browse all available tests and their results
+  - name: Documentation
+    url: https://github.com/northshorenetworks/NSWall/blob/main/docs/TESTING.md
+    about: Learn about our testing methodology

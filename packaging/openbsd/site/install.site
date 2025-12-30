@@ -1,0 +1,89 @@
+#!/bin/ksh
+#
+# NSWall site installation script
+# This runs after OpenBSD installation to configure the firewall appliance
+#
+# Configuration is stored in /etc/nsh/nsh.conf (single source of truth)
+# NSH generates all daemon configs (pf.conf, dhcpd.conf, etc.) from nsh.conf
+#
+
+set -e
+
+echo "=== NSWall Appliance Configuration ==="
+
+# Create nswall user if not exists
+if ! id _nswall >/dev/null 2>&1; then
+    useradd -c "NSWall Daemon" -d /var/nswall -s /sbin/nologin -g =uid _nswall
+fi
+
+# Set permissions
+mkdir -p /var/nswall /etc/nsh
+chown -R _nswall:_nswall /var/nswall
+chmod 700 /var/nswall
+chmod 700 /etc/nsh
+
+# Generate self-signed TLS certificate if not present
+if [ ! -f /etc/ssl/nswall.crt ]; then
+    echo "Generating self-signed TLS certificate..."
+    openssl req -x509 -nodes -days 3650 \
+        -newkey rsa:2048 \
+        -keyout /etc/ssl/private/nswall.key \
+        -out /etc/ssl/nswall.crt \
+        -subj "/CN=nswall/O=NSWall Firewall/C=US"
+    chmod 600 /etc/ssl/private/nswall.key
+fi
+
+# Initialize default admin password (random)
+ADMIN_PASS=$(openssl rand -base64 12)
+echo "$ADMIN_PASS" | encrypt > /var/nswall/admin.key
+echo ""
+echo "=========================================="
+echo "  NSWall Initial Admin Password: $ADMIN_PASS"
+echo "  Please change this after first login!"
+echo "=========================================="
+echo ""
+echo "$ADMIN_PASS" > /root/nswall-initial-password.txt
+chmod 600 /root/nswall-initial-password.txt
+
+# Apply NSH configuration (generates pf.conf, etc.)
+if [ -f /etc/nsh/nsh.conf ]; then
+    echo "Applying NSH configuration..."
+    chmod 600 /etc/nsh/nsh.conf
+    nsh -c "write-config" 2>/dev/null || true
+fi
+
+# Enable services
+rcctl enable pf
+rcctl enable pflogd
+rcctl enable nswall_api
+rcctl set nswall_api flags "-listen :443 -tls -cert /etc/ssl/nswall.crt -key /etc/ssl/private/nswall.key"
+
+# Set up console login message
+cat > /etc/motd << 'MOTD'
+
+ _   _ ______        __    _ _
+| \ | / ___\ \      / /_ _| | |
+|  \| \___ \\ \ /\ / / _` | | |
+| |\  |___) |\ V  V / (_| | | |
+|_| \_|____/  \_/\_/ \__,_|_|_|
+
+OpenBSD Firewall Appliance
+
+Web Interface: https://<this-ip>/
+CLI Shell:     nsh
+Documentation: https://nswall.dev/docs
+
+Configuration: /etc/nsh/nsh.conf
+Export config: nswall-export-config
+Import config: nswall-import-config
+Factory reset: nswall-factory-reset
+
+MOTD
+
+# Configure default hostname
+echo "nswall" > /etc/myname
+
+echo ""
+echo "NSWall installation complete!"
+echo "Reboot to start all services."
+echo ""

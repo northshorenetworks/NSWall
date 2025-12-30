@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NSWall Controller</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .mono { font-family: 'JetBrains Mono', monospace; }
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-100">
+    <div id="app">
+        <!-- Header -->
+        <header class="bg-gray-800 border-b border-gray-700 px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <h1 class="text-2xl font-bold">NS<span class="text-sky-500">Wall</span> Controller</h1>
+                    <span class="px-2 py-1 text-xs bg-sky-500/20 text-sky-400 rounded">v2.0</span>
+                </div>
+                <div class="flex items-center space-x-4 text-sm">
+                    <div class="flex items-center space-x-2">
+                        <span class="w-2 h-2 bg-green-500 rounded-full"></span>
+                        <span>{{ summary.online_agents || 0 }} online</span>
+                    </div>
+                    <div class="text-gray-400">{{ summary.total_agents || 0 }} total agents</div>
+                </div>
+            </div>
+        </header>
+
+        <div class="flex">
+            <!-- Sidebar -->
+            <nav class="w-64 bg-gray-800 min-h-screen p-4 border-r border-gray-700">
+                <ul class="space-y-2">
+                    <li>
+                        <a @click="view = 'dashboard'" :class="viewClass('dashboard')" class="flex items-center px-4 py-2 rounded-lg cursor-pointer">
+                            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
+                            </svg>
+                            Dashboard
+                        </a>
+                    </li>
+                    <li>
+                        <a @click="view = 'agents'" :class="viewClass('agents')" class="flex items-center px-4 py-2 rounded-lg cursor-pointer">
+                            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2"/>
+                            </svg>
+                            Agents
+                        </a>
+                    </li>
+                    <li>
+                        <a @click="view = 'groups'" :class="viewClass('groups')" class="flex items-center px-4 py-2 rounded-lg cursor-pointer">
+                            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+                            </svg>
+                            Groups
+                        </a>
+                    </li>
+                    <li>
+                        <a @click="view = 'templates'" :class="viewClass('templates')" class="flex items-center px-4 py-2 rounded-lg cursor-pointer">
+                            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                            </svg>
+                            Templates
+                        </a>
+                    </li>
+                    <li>
+                        <a @click="view = 'events'" :class="viewClass('events')" class="flex items-center px-4 py-2 rounded-lg cursor-pointer">
+                            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            Events
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+
+            <!-- Main Content -->
+            <main class="flex-1 p-6">
+                <!-- Dashboard View -->
+                <div v-if="view === 'dashboard'">
+                    <h2 class="text-2xl font-bold mb-6">Fleet Overview</h2>
+
+                    <!-- Stats Cards -->
+                    <div class="grid grid-cols-4 gap-6 mb-8">
+                        <div class="bg-gray-800 rounded-xl p-6 border border-gray-700">
+                            <div class="text-gray-400 text-sm mb-1">Total Agents</div>
+                            <div class="text-3xl font-bold">{{ summary.total_agents || 0 }}</div>
+                        </div>
+                        <div class="bg-gray-800 rounded-xl p-6 border border-gray-700">
+                            <div class="text-gray-400 text-sm mb-1">Online</div>
+                            <div class="text-3xl font-bold text-green-500">{{ summary.online_agents || 0 }}</div>
+                        </div>
+                        <div class="bg-gray-800 rounded-xl p-6 border border-gray-700">
+                            <div class="text-gray-400 text-sm mb-1">Total PF States</div>
+                            <div class="text-3xl font-bold text-sky-500">{{ formatNumber(summary.total_pf_states) }}</div>
+                        </div>
+                        <div class="bg-gray-800 rounded-xl p-6 border border-gray-700">
+                            <div class="text-gray-400 text-sm mb-1">Avg CPU Load</div>
+                            <div class="text-3xl font-bold">{{ (summary.avg_cpu_load || 0).toFixed(2) }}</div>
+                        </div>
+                    </div>
+
+                    <!-- Agent List -->
+                    <div class="bg-gray-800 rounded-xl border border-gray-700">
+                        <div class="px-6 py-4 border-b border-gray-700">
+                            <h3 class="font-semibold">Agents</h3>
+                        </div>
+                        <table class="w-full">
+                            <thead class="bg-gray-900/50">
+                                <tr>
+                                    <th class="text-left px-6 py-3 text-sm text-gray-400">Hostname</th>
+                                    <th class="text-left px-6 py-3 text-sm text-gray-400">Status</th>
+                                    <th class="text-left px-6 py-3 text-sm text-gray-400">PF States</th>
+                                    <th class="text-left px-6 py-3 text-sm text-gray-400">CPU</th>
+                                    <th class="text-left px-6 py-3 text-sm text-gray-400">Memory</th>
+                                    <th class="text-left px-6 py-3 text-sm text-gray-400">Last Seen</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="agent in agents" :key="agent.id" class="border-t border-gray-700 hover:bg-gray-700/30">
+                                    <td class="px-6 py-4">
+                                        <div class="font-medium">{{ agent.hostname }}</div>
+                                        <div class="text-xs text-gray-500 mono">{{ agent.id }}</div>
+                                    </td>
+                                    <td class="px-6 py-4">
+                                        <span :class="statusClass(agent.status)" class="px-2 py-1 rounded text-xs font-medium">
+                                            {{ agent.status }}
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-4 mono">{{ formatNumber(agent.pf_states) }}</td>
+                                    <td class="px-6 py-4">{{ agent.cpu_load?.toFixed(2) || '0.00' }}</td>
+                                    <td class="px-6 py-4">{{ agent.memory_percent?.toFixed(1) || '0' }}%</td>
+                                    <td class="px-6 py-4 text-sm text-gray-400">{{ formatTime(agent.last_seen) }}</td>
+                                </tr>
+                                <tr v-if="agents.length === 0">
+                                    <td colspan="6" class="px-6 py-8 text-center text-gray-500">
+                                        No agents connected. Configure agents to connect to this controller.
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Agents View -->
+                <div v-if="view === 'agents'">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-2xl font-bold">Agents</h2>
+                        <button @click="refreshAgents" class="px-4 py-2 bg-sky-600 hover:bg-sky-700 rounded-lg text-sm">
+                            Refresh
+                        </button>
+                    </div>
+
+                    <div class="grid gap-4">
+                        <div v-for="agent in agents" :key="agent.id"
+                             class="bg-gray-800 rounded-xl p-6 border border-gray-700 hover:border-sky-500/50 transition cursor-pointer"
+                             @click="selectAgent(agent)">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <h3 class="text-lg font-semibold">{{ agent.hostname }}</h3>
+                                    <p class="text-sm text-gray-400 mono">{{ agent.id }}</p>
+                                </div>
+                                <span :class="statusClass(agent.status)" class="px-3 py-1 rounded-full text-xs font-medium">
+                                    {{ agent.status }}
+                                </span>
+                            </div>
+                            <div class="mt-4 grid grid-cols-4 gap-4 text-sm">
+                                <div>
+                                    <span class="text-gray-400">PF States:</span>
+                                    <span class="ml-2 mono">{{ formatNumber(agent.pf_states) }}</span>
+                                </div>
+                                <div>
+                                    <span class="text-gray-400">CPU:</span>
+                                    <span class="ml-2">{{ agent.cpu_load?.toFixed(2) || '0.00' }}</span>
+                                </div>
+                                <div>
+                                    <span class="text-gray-400">Memory:</span>
+                                    <span class="ml-2">{{ agent.memory_percent?.toFixed(1) || '0' }}%</span>
+                                </div>
+                                <div>
+                                    <span class="text-gray-400">Version:</span>
+                                    <span class="ml-2">{{ agent.version }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Events View -->
+                <div v-if="view === 'events'">
+                    <h2 class="text-2xl font-bold mb-6">Events</h2>
+                    <div class="bg-gray-800 rounded-xl border border-gray-700">
+                        <div class="divide-y divide-gray-700">
+                            <div v-for="event in events" :key="event.id" class="px-6 py-4">
+                                <div class="flex justify-between items-start">
+                                    <div>
+                                        <span class="font-medium">{{ event.type }}</span>
+                                        <span v-if="event.agent_id" class="ml-2 text-sm text-gray-400">{{ event.agent_id }}</span>
+                                    </div>
+                                    <span class="text-sm text-gray-400">{{ formatTime(event.timestamp) }}</span>
+                                </div>
+                                <p v-if="event.message" class="mt-1 text-sm text-gray-400">{{ event.message }}</p>
+                            </div>
+                            <div v-if="events.length === 0" class="px-6 py-8 text-center text-gray-500">
+                                No events yet.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script>
+    const { createApp } = Vue
+
+    createApp({
+        data() {
+            return {
+                view: 'dashboard',
+                agents: [],
+                summary: {},
+                events: [],
+                selectedAgent: null,
+                eventSource: null
+            }
+        },
+        methods: {
+            viewClass(v) {
+                return this.view === v
+                    ? 'bg-sky-600 text-white'
+                    : 'text-gray-300 hover:bg-gray-700'
+            },
+            statusClass(status) {
+                const classes = {
+                    'online': 'bg-green-500/20 text-green-400',
+                    'offline': 'bg-red-500/20 text-red-400',
+                    'degraded': 'bg-yellow-500/20 text-yellow-400'
+                }
+                return classes[status] || 'bg-gray-500/20 text-gray-400'
+            },
+            formatNumber(n) {
+                if (!n) return '0'
+                return n.toLocaleString()
+            },
+            formatTime(t) {
+                if (!t) return '-'
+                const d = new Date(t)
+                return d.toLocaleTimeString()
+            },
+            async refreshAgents() {
+                try {
+                    const res = await fetch('/api/v1/agents')
+                    const data = await res.json()
+                    if (data.success) {
+                        this.agents = data.data || []
+                    }
+                } catch (e) {
+                    console.error('Failed to fetch agents:', e)
+                }
+            },
+            async refreshSummary() {
+                try {
+                    const res = await fetch('/api/v1/agents/summary')
+                    const data = await res.json()
+                    if (data.success) {
+                        this.summary = data.data || {}
+                    }
+                } catch (e) {
+                    console.error('Failed to fetch summary:', e)
+                }
+            },
+            async refreshEvents() {
+                try {
+                    const res = await fetch('/api/v1/events?limit=50')
+                    const data = await res.json()
+                    if (data.success) {
+                        this.events = data.data || []
+                    }
+                } catch (e) {
+                    console.error('Failed to fetch events:', e)
+                }
+            },
+            selectAgent(agent) {
+                this.selectedAgent = agent
+            },
+            connectEventStream() {
+                this.eventSource = new EventSource('/api/v1/events/stream')
+                this.eventSource.onmessage = (e) => {
+                    const event = JSON.parse(e.data)
+                    this.events.unshift(event)
+                    if (this.events.length > 100) {
+                        this.events = this.events.slice(0, 100)
+                    }
+                    // Refresh agents on status updates
+                    if (event.type === 'agent_status') {
+                        this.refreshAgents()
+                        this.refreshSummary()
+                    }
+                }
+            }
+        },
+        mounted() {
+            this.refreshAgents()
+            this.refreshSummary()
+            this.refreshEvents()
+            this.connectEventStream()
+
+            // Refresh every 30 seconds
+            setInterval(() => {
+                this.refreshAgents()
+                this.refreshSummary()
+            }, 30000)
+        }
+    }).mount('#app')
+    </script>
+</body>
+</html>

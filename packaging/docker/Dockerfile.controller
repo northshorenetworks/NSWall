@@ -1,0 +1,71 @@
+# NSWall Controller Docker Image
+# Multi-stage build for minimal image size
+
+# Build stage
+FROM golang:1.21-alpine AS builder
+
+WORKDIR /build
+
+# Install build dependencies
+RUN apk add --no-cache git ca-certificates
+
+# Copy go mod files
+COPY controller/go.mod controller/go.sum* ./
+
+# Download dependencies
+RUN go mod download
+
+# Copy source code
+COPY controller/ .
+
+# Build binary
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
+    -ldflags="-s -w -X main.version=${VERSION:-2.0.0}" \
+    -o nswall-controller \
+    ./cmd/nswall-controller
+
+# Runtime stage
+FROM alpine:3.19
+
+LABEL org.opencontainers.image.title="NSWall Controller"
+LABEL org.opencontainers.image.description="Central management server for NSWall fleet"
+LABEL org.opencontainers.image.vendor="North Shore Networks"
+LABEL org.opencontainers.image.url="https://github.com/northshorenetworks/nswall"
+LABEL org.opencontainers.image.source="https://github.com/northshorenetworks/nswall"
+
+# Install runtime dependencies
+RUN apk add --no-cache ca-certificates tzdata
+
+# Create non-root user
+RUN addgroup -g 1000 nswall && \
+    adduser -u 1000 -G nswall -s /sbin/nologin -D nswall
+
+# Create data directory
+RUN mkdir -p /var/db/nswall-controller && \
+    chown nswall:nswall /var/db/nswall-controller
+
+# Copy binary from builder
+COPY --from=builder /build/nswall-controller /usr/local/bin/
+
+# Copy static files (WebUI)
+COPY --from=builder /build/cmd/nswall-controller/static /usr/local/share/nswall-controller/static
+
+# Switch to non-root user
+USER nswall
+
+# Expose ports
+# 8080 - HTTP API/WebUI
+# 4222 - NATS client connections
+# 6222 - NATS cluster (for HA)
+EXPOSE 8080 4222 6222
+
+# Data volume
+VOLUME ["/var/db/nswall-controller"]
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
+    CMD wget -q --spider http://localhost:8080/api/v1/health || exit 1
+
+# Default command
+ENTRYPOINT ["/usr/local/bin/nswall-controller"]
+CMD ["-http", ":8080", "-nats", "0.0.0.0:4222", "-data", "/var/db/nswall-controller"]
