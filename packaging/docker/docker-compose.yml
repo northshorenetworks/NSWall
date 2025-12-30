@@ -1,0 +1,62 @@
+version: '3.8'
+
+services:
+  controller:
+    build:
+      context: ../..
+      dockerfile: packaging/docker/Dockerfile.controller
+    image: nswall-controller:latest
+    container_name: nswall-controller
+    restart: unless-stopped
+    ports:
+      - "8080:8080"   # WebUI/API
+      - "4222:4222"   # NATS client connections
+    volumes:
+      - controller-data:/var/db/nswall-controller
+    environment:
+      - TZ=UTC
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8080/api/v1/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  # Optional: Grafana for dashboards
+  grafana:
+    image: grafana/grafana:latest
+    container_name: nswall-grafana
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ../../grafana:/etc/grafana/provisioning/dashboards:ro
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+    depends_on:
+      - controller
+
+  # Optional: Prometheus for metrics
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: nswall-prometheus
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    volumes:
+      - prometheus-data:/prometheus
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+    depends_on:
+      - controller
+
+volumes:
+  controller-data:
+  grafana-data:
+  prometheus-data:

@@ -1,0 +1,621 @@
+# NSWall Feature Matrix
+
+This document provides a comprehensive comparison between OpenBSD daemon control utilities and NSWall's implementation coverage.
+
+**Sources:** [OpenBSD Manual Pages](https://man.openbsd.org/)
+
+## Legend
+- ✅ Implemented
+- N/A Not applicable
+
+---
+
+## pfctl (Packet Filter)
+
+| Command | Description | NSWall CLI | NSWall API |
+|---------|-------------|------------|------------|
+| `-e` | Enable PF | ✅ | ✅ |
+| `-d` | Disable PF | ✅ | ✅ |
+| `-f file` | Load rules from file | ✅ | ✅ |
+| `-nf file` | Test rules syntax | ✅ | ✅ |
+| `-R -f file` | Load only filter rules | ✅ | ✅ |
+| `-N -f file` | Load only NAT rules | ✅ | ✅ |
+| `-O -f file` | Load only options | ✅ | ✅ |
+| `-s rules` | Show filter rules | ✅ | ✅ |
+| `-s nat` | Show NAT rules | ✅ | ✅ |
+| `-s queue` | Show queue rules | ✅ | ✅ |
+| `-s states` | Show state table | ✅ | ✅ |
+| `-s Sources` | Show source tracking | ✅ | ✅ |
+| `-s info` | Show filter info | ✅ | ✅ |
+| `-s labels` | Show per-rule labels | ✅ | ✅ |
+| `-s Interfaces` | Show interfaces | ✅ | ✅ |
+| `-s Tables` | Show address tables | ✅ | ✅ |
+| `-s osfp` | Show OS fingerprints | ✅ | ✅ |
+| `-s Anchors` | Show anchors | ✅ | ✅ |
+| `-s timeouts` | Show timeout values | ✅ | ✅ |
+| `-s memory` | Show memory limits | ✅ | ✅ |
+| `-s Running` | Show running config | ✅ | ✅ |
+| `-s all` | Show all information | ✅ | ✅ |
+| `-Fall` | Flush all | ✅ | ✅ |
+| `-Frules` | Flush filter rules | ✅ | ✅ |
+| `-Fnat` | Flush NAT rules | ✅ | ✅ |
+| `-Fqueue` | Flush queue rules | ✅ | ✅ |
+| `-Fstate` | Flush state table | ✅ | ✅ |
+| `-FSources` | Flush source tracking | ✅ | ✅ |
+| `-Finfo` | Flush filter info | ✅ | ✅ |
+| `-FTables` | Flush address tables | ✅ | ✅ |
+| `-Fosfp` | Flush OS fingerprints | ✅ | ✅ |
+| `-t table -T show` | Show table contents | ✅ | ✅ |
+| `-t table -T add` | Add to table | ✅ | ✅ |
+| `-t table -T delete` | Delete from table | ✅ | ✅ |
+| `-t table -T replace` | Replace table contents | ✅ | ✅ |
+| `-t table -T test` | Test address in table | ✅ | ✅ |
+| `-t table -T zero` | Zero table counters | ✅ | ✅ |
+| `-t table -T flush` | Flush table contents | ✅ | ✅ |
+| `-t table -T expire` | Expire table entries | ✅ | ✅ |
+| `-t table -T kill` | Kill states from table | ✅ | ✅ |
+| `-k host` | Kill matching states | ✅ | ✅ |
+| `-K host` | Kill by source address | ✅ | ✅ |
+| `-k label -k label` | Kill states by rule label | ✅ | ✅ |
+| `-k id -k id` | Kill state by ID | ✅ | ✅ |
+| `-k key -k key` | Kill state by key | ✅ | ✅ |
+| `-V rdomain -k host` | Kill states in routing domain | ✅ | ✅ |
+| `-S file` | Save state table to file | ✅ | ✅ |
+| `-L file` | Load state table from file | ✅ | ✅ |
+| `-z` | Clear per-rule statistics | ✅ | ✅ |
+| `-x level` | Set debug level | ✅ | ✅ |
+| `-o level` | Set optimization level | ✅ | ✅ |
+| `-a anchor -s rules` | Show anchor rules | ✅ | ✅ |
+| `-a anchor -Frules` | Flush anchor rules | ✅ | ✅ |
+| `-vs rules` | Verbose rules (with evals) | ✅ | ✅ |
+| `-vs states` | Verbose states (with details) | ✅ | ✅ |
+| `-vvs Tables` | Verbose tables (with counters) | ✅ | ✅ |
+| `-vvs rules` | Rules with line numbers | ✅ | ✅ |
+| `-s Interfaces -i iface` | Show specific interface stats | ✅ | ✅ |
+| `-t table -T replace -f file` | Load table from file | ✅ | ✅ |
+| `-FReset` | Reset limits/timeouts to defaults | ✅ | ✅ |
+| `-s Stlimiter` | Show state limiters | ✅ | ✅ |
+| `-s Srclimiter` | Show source limiters | ✅ | ✅ |
+| `-t table -T reset` | Reset table counters (non-zero only) | ✅ | ✅ |
+| `-t table -vT show` | Show table with byte/pkt counters | ✅ | ✅ |
+| `-a anchor -f file` | Load rules into anchor | ✅ | ✅ |
+| `-a anchor -s nat` | Show NAT rules in anchor | ✅ | ✅ |
+| `-a anchor -s queue` | Show queue rules in anchor | ✅ | ✅ |
+| `-a anchor -s states` | Show states in anchor | ✅ | ✅ |
+| `-a anchor -s info` | Show info for anchor | ✅ | ✅ |
+| `-a anchor -s labels` | Show labels in anchor | ✅ | ✅ |
+| `-a anchor -s all` | Show all in anchor | ✅ | ✅ |
+| `-a anchor -Fnat` | Flush NAT in anchor | ✅ | ✅ |
+| `-a anchor -Fqueue` | Flush queues in anchor | ✅ | ✅ |
+| `-a anchor -Fstate` | Flush states in anchor | ✅ | ✅ |
+| `-a anchor -Fall` | Flush all in anchor | ✅ | ✅ |
+| `-vs Anchors` | Show anchors recursively | ✅ | ✅ |
+| `-a anchor -t table -T show` | Show table in anchor | ✅ | ✅ |
+| `-a anchor -t table -T add` | Add to table in anchor | ✅ | ✅ |
+| `-a anchor -t table -T delete` | Delete from table in anchor | ✅ | ✅ |
+| `-K host` | Kill source tracking entry | ✅ | ✅ |
+| `-K 0.0.0.0/0` | Kill all source tracking | ✅ | ✅ |
+| `-A -f file` | Load only queue rules | ✅ | ✅ |
+| `-T load -f file` | Load only table definitions | ✅ | ✅ |
+| `-s keys` | Show state keys for pfsync | ✅ | ✅ |
+| `-vs queue` | Show queue with statistics | ✅ | ✅ |
+| `-vs nat` | Show NAT with counters | ✅ | ✅ |
+| `-vs Sources` | Show source tracking verbose | ✅ | ✅ |
+| `-vs Interfaces -i iface` | Show interface with stats | ✅ | ✅ |
+| `-i iface -Fstate` | Flush states on interface | ✅ | ✅ |
+| `-R rule -s rules` | Show specific rule by ID | ✅ | ✅ |
+| `-s syncookies` | Show syncookie status | ✅ | ✅ |
+
+### pf.conf Configuration Commands (Junos/IOS-style)
+
+| Command | Description | NSWall CLI | NSWall API |
+|---------|-------------|------------|------------|
+| `show-config` | Show pf.conf file | ✅ | ✅ |
+| `set` | Set config key/value | ✅ | ✅ |
+| `unset` | Remove config key | ✅ | ✅ |
+| `append` | Append config line | ✅ | ✅ |
+| `init` | Create default config | ✅ | ✅ |
+| `set-block-policy` | Set block-policy | ✅ | ✅ |
+| `set-state-policy` | Set state-policy | ✅ | ✅ |
+| `set-optimization` | Set optimization | ✅ | ✅ |
+| `set-loginterface` | Set loginterface | ✅ | ✅ |
+| `set-skip` | Set skip on interface | ✅ | ✅ |
+| `set-syncookies` | Set syncookies mode | ✅ | ✅ |
+| `set-reassemble` | Set reassemble | ✅ | ✅ |
+| `set-debug` | Set debug level | ✅ | ✅ |
+| `set-ruleset-optimization` | Set ruleset optimization | ✅ | ✅ |
+| `set-fingerprints` | Set fingerprints file | ✅ | ✅ |
+| `set-hostid` | Set hostid for pfsync | ✅ | ✅ |
+| `set-timeout-*` | Set various timeouts (18 types) | ✅ | ✅ |
+| `set-limit-*` | Set various limits (6 types) | ✅ | ✅ |
+| `define-table` | Define persist table | ✅ | ✅ |
+| `define-table-file` | Define table from file | ✅ | ✅ |
+| `define-table-const` | Define const table | ✅ | ✅ |
+| `define-table-counters` | Define table with counters | ✅ | ✅ |
+| `remove-table-def` | Remove table definition | ✅ | ✅ |
+| `add-pass-in` | Add pass in rule | ✅ | ✅ |
+| `add-pass-out` | Add pass out rule | ✅ | ✅ |
+| `add-block-in` | Add block in rule | ✅ | ✅ |
+| `add-block-out` | Add block out rule | ✅ | ✅ |
+| `add-match` | Add match rule | ✅ | ✅ |
+| `add-nat` | Add NAT translation | ✅ | ✅ |
+| `add-rdr` | Add redirect rule | ✅ | ✅ |
+| `add-binat` | Add bidirectional NAT | ✅ | ✅ |
+| `define-queue-root` | Define root queue | ✅ | ✅ |
+| `define-queue-child` | Define child queue | ✅ | ✅ |
+| `define-queue-default` | Define default queue | ✅ | ✅ |
+| `remove-queue-def` | Remove queue definition | ✅ | ✅ |
+| `define-anchor` | Define anchor | ✅ | ✅ |
+| `define-anchor-rules` | Define anchor with inline rules | ✅ | ✅ |
+| `define-anchor-quick` | Define anchor with quick | ✅ | ✅ |
+| `remove-anchor-def` | Remove anchor definition | ✅ | ✅ |
+| `define-macro` | Define macro variable | ✅ | ✅ |
+| `define-macro-list` | Define macro with list | ✅ | ✅ |
+| `remove-macro` | Remove macro definition | ✅ | ✅ |
+| `add-antispoof` | Add antispoof protection | ✅ | ✅ |
+| `add-antispoof-log` | Add antispoof with logging | ✅ | ✅ |
+| `add-antispoof-quick` | Add antispoof with quick | ✅ | ✅ |
+| `add-scrub` | Add scrub rule | ✅ | ✅ |
+| `add-reassemble-tcp` | Add TCP reassembly | ✅ | ✅ |
+
+**pfctl Runtime Commands: 94**
+**pf.conf Configuration Commands: 72**
+**Total PF Commands: 166**
+
+**Coverage: 100%**
+
+---
+
+## ospfctl (OSPF Routing)
+
+| Command | Description | NSWall CLI | NSWall API |
+|---------|-------------|------------|------------|
+| `fib couple` | Insert routes into kernel | ✅ | ✅ |
+| `fib decouple` | Remove routes from kernel | ✅ | ✅ |
+| `fib reload` | Refetch routes | ✅ | ✅ |
+| `log brief` | Disable verbose logging | ✅ | ✅ |
+| `log verbose` | Enable verbose logging | ✅ | ✅ |
+| `reload` | Reload configuration | ✅ | ✅ |
+| `show database` | Show link state database | ✅ | ✅ |
+| `show database area` | Filter by area ID | ✅ | ✅ |
+| `show database asbr` | ASBR LSAs only | ✅ | ✅ |
+| `show database external` | AS-External LSAs | ✅ | ✅ |
+| `show database network` | Network LSAs | ✅ | ✅ |
+| `show database router` | Router LSAs | ✅ | ✅ |
+| `show database self-originated` | Self-originated LSAs | ✅ | ✅ |
+| `show database summary` | Summary LSAs | ✅ | ✅ |
+| `show fib` | Show forwarding table | ✅ | ✅ |
+| `show fib connected` | Connected routes only | ✅ | ✅ |
+| `show fib interface` | Interfaces only | ✅ | ✅ |
+| `show fib ospf` | OSPF routes only | ✅ | ✅ |
+| `show fib static` | Static routes only | ✅ | ✅ |
+| `show interfaces` | Show interfaces | ✅ | ✅ |
+| `show neighbor` | Show neighbors | ✅ | ✅ |
+| `show rib` | Show routing info base | ✅ | ✅ |
+| `show summary` | Show summary | ✅ | ✅ |
+
+**Coverage: 100%**
+
+---
+
+## bgpctl (BGP Routing)
+
+| Command | Description | NSWall CLI | NSWall API |
+|---------|-------------|------------|------------|
+| `fib couple` | Insert routes into kernel | ✅ | ✅ |
+| `fib decouple` | Remove routes from kernel | ✅ | ✅ |
+| `irrfilter` | Generate BGP filters | ✅ | ✅ |
+| `log brief` | Disable verbose logging | ✅ | ✅ |
+| `log verbose` | Enable verbose logging | ✅ | ✅ |
+| `neighbor up` | Bring neighbor up | ✅ | ✅ |
+| `neighbor down` | Take neighbor down | ✅ | ✅ |
+| `neighbor clear` | Clear neighbor session | ✅ | ✅ |
+| `neighbor refresh` | Refresh neighbor routes | ✅ | ✅ |
+| `neighbor destroy` | Destroy cloned peer | ✅ | ✅ |
+| `network add` | Add announced network | ✅ | ✅ |
+| `network delete` | Remove announced network | ✅ | ✅ |
+| `network flush` | Remove all dynamic networks | ✅ | ✅ |
+| `network show` | Show announced networks | ✅ | ✅ |
+| `network bulk` | Bulk add networks | ✅ | ✅ |
+| `network mrt` | Import MRT dump | ✅ | ✅ |
+| `reload` | Reload configuration | ✅ | ✅ |
+| `flowspec add` | Add flowspec rule | ✅ | ✅ |
+| `flowspec delete` | Delete flowspec rule | ✅ | ✅ |
+| `flowspec flush` | Flush flowspec rules | ✅ | ✅ |
+| `show fib` | Show FIB | ✅ | ✅ |
+| `show interfaces` | Show interfaces | ✅ | ✅ |
+| `show neighbor` | Show neighbor details | ✅ | ✅ |
+| `show nexthop` | Show nexthop routes | ✅ | ✅ |
+| `show rib` | Show RIB | ✅ | ✅ |
+| `show summary` | Show summary | ✅ | ✅ |
+| `show tables` | Show routing tables | ✅ | ✅ |
+| `show metrics` | Show metrics | ✅ | ✅ |
+
+**Coverage: 100%**
+
+---
+
+## ripctl (RIP Routing)
+
+| Command | Description | NSWall CLI | NSWall API |
+|---------|-------------|------------|------------|
+| `fib couple` | Insert routes into kernel | ✅ | ✅ |
+| `fib decouple` | Remove routes from kernel | ✅ | ✅ |
+| `log brief` | Disable verbose logging | ✅ | ✅ |
+| `log verbose` | Enable verbose logging | ✅ | ✅ |
+| `reload` | Reload configuration | ✅ | ✅ |
+| `show fib` | Show forwarding table | ✅ | ✅ |
+| `show interfaces` | Show interfaces | ✅ | ✅ |
+| `show neighbor` | Show neighbors | ✅ | ✅ |
+| `show rib` | Show routing info base | ✅ | ✅ |
+
+**Coverage: 100%**
+
+---
+
+## ldpctl (MPLS LDP)
+
+| Command | Description | NSWall CLI | NSWall API |
+|---------|-------------|------------|------------|
+| `clear neighbors` | Clear neighbor sessions | ✅ | ✅ |
+| `fib couple` | Insert labels into kernel | ✅ | ✅ |
+| `fib decouple` | Remove labels from kernel | ✅ | ✅ |
+| `log brief` | Disable verbose logging | ✅ | ✅ |
+| `log verbose` | Enable verbose logging | ✅ | ✅ |
+| `reload` | Reload configuration | ✅ | ✅ |
+| `show discovery` | Show discovery info | ✅ | ✅ |
+| `show fib` | Show label FIB | ✅ | ✅ |
+| `show interfaces` | Show interfaces | ✅ | ✅ |
+| `show l2vpn bindings` | Show L2VPN bindings | ✅ | ✅ |
+| `show l2vpn pseudowires` | Show pseudowires | ✅ | ✅ |
+| `show lib` | Show label info base | ✅ | ✅ |
+| `show neighbor` | Show neighbors | ✅ | ✅ |
+
+**Coverage: 100%**
+
+---
+
+## eigrpctl (EIGRP Routing)
+
+| Command | Description | NSWall CLI | NSWall API |
+|---------|-------------|------------|------------|
+| `clear neighbors` | Clear neighbor sessions | ✅ | ✅ |
+| `fib couple` | Insert routes into kernel | ✅ | ✅ |
+| `fib decouple` | Remove routes from kernel | ✅ | ✅ |
+| `log brief` | Disable verbose logging | ✅ | ✅ |
+| `log verbose` | Enable verbose logging | ✅ | ✅ |
+| `reload` | Reload configuration | ✅ | ✅ |
+| `show fib` | Show forwarding table | ✅ | ✅ |
+| `show interfaces` | Show interfaces | ✅ | ✅ |
+| `show neighbor` | Show neighbors | ✅ | ✅ |
+| `show topology` | Show topology | ✅ | ✅ |
+| `show stats` | Show statistics | ✅ | ✅ |
+
+**Coverage: 100%**
+
+---
+
+## unbound-control (DNS)
+
+| Command | Description | NSWall CLI | NSWall API |
+|---------|-------------|------------|------------|
+| `start` | Start server | N/A (use enable) | N/A |
+| `stop` | Stop server | ✅ | ✅ |
+| `reload` | Reload config (flush cache) | ✅ | ✅ |
+| `reload_keep_cache` | Reload without flushing | ✅ | ✅ |
+| `status` | Show daemon status | ✅ | ✅ |
+| `stats` | Show statistics | ✅ | ✅ |
+| `stats_noreset` | Stats without reset | ✅ | ✅ |
+| `verbosity` | Set log level | ✅ | ✅ |
+| `flush` | Flush name from cache | ✅ | ✅ |
+| `flush_type` | Flush specific RR type | ✅ | ✅ |
+| `flush_zone` | Flush entire zone | ✅ | ✅ |
+| `flush_infra` | Flush infra cache | ✅ | ✅ |
+| `dump_cache` | Dump cache contents | ✅ | ✅ |
+| `dump_infra` | Dump infra cache | ✅ | ✅ |
+| `list_stubs` | List stub zones | ✅ | ✅ |
+| `list_forwards` | List forward zones | ✅ | ✅ |
+| `list_local_zones` | List local zones | ✅ | ✅ |
+| `list_local_data` | List local data | ✅ | ✅ |
+| `list_insecure` | List insecure zones | ✅ | ✅ |
+| `list_auth_zones` | List auth zones | ✅ | ✅ |
+| `insecure_add` | Add insecure zone | ✅ | ✅ |
+| `insecure_remove` | Remove insecure zone | ✅ | ✅ |
+| `forward_add` | Add forward zone | ✅ | ✅ |
+| `forward_remove` | Remove forward zone | ✅ | ✅ |
+| `stub_add` | Add stub zone | ✅ | ✅ |
+| `stub_remove` | Remove stub zone | ✅ | ✅ |
+| `set_option` | Set runtime option | ✅ | ✅ |
+| `log_reopen` | Reopen log file | ✅ | ✅ |
+| `auth_zone_reload` | Reload auth zone | ✅ | ✅ |
+| `auth_zone_transfer` | Transfer auth zone | ✅ | ✅ |
+| `rpz_enable` | Enable RPZ zone | ✅ | ✅ |
+| `rpz_disable` | Disable RPZ zone | ✅ | ✅ |
+
+**Coverage: 100%**
+
+---
+
+## smtpctl (Mail)
+
+| Command | Description | NSWall CLI | NSWall API |
+|---------|-------------|------------|------------|
+| `discover` | Discover local user | ✅ | ✅ |
+| `encrypt` | Encrypt password | ✅ | ✅ |
+| `log brief` | Disable verbose logging | ✅ | ✅ |
+| `log verbose` | Enable verbose logging | ✅ | ✅ |
+| `monitor` | Monitor mail activity | ✅ | ✅ |
+| `pause envelope` | Pause envelope | ✅ | ✅ |
+| `pause mda` | Pause local delivery | ✅ | ✅ |
+| `pause mta` | Pause remote delivery | ✅ | ✅ |
+| `pause smtp` | Pause incoming | ✅ | ✅ |
+| `profile` | Profile subsystem | ✅ | ✅ |
+| `unprofile` | Disable profiling | ✅ | ✅ |
+| `remove` | Remove from queue | ✅ | ✅ |
+| `remove all` | Remove all from queue | ✅ | ✅ |
+| `resume envelope` | Resume envelope | ✅ | ✅ |
+| `resume mda` | Resume local delivery | ✅ | ✅ |
+| `resume mta` | Resume remote delivery | ✅ | ✅ |
+| `resume smtp` | Resume incoming | ✅ | ✅ |
+| `schedule` | Schedule delivery | ✅ | ✅ |
+| `schedule all` | Schedule all pending | ✅ | ✅ |
+| `show envelope` | Show envelope details | ✅ | ✅ |
+| `show hosts` | Show remote MX hosts | ✅ | ✅ |
+| `show hoststats` | Show host statistics | ✅ | ✅ |
+| `show message` | Show message content | ✅ | ✅ |
+| `show queue` | Show mail queue | ✅ | ✅ |
+| `show relays` | Show relay sessions | ✅ | ✅ |
+| `show routes` | Show mail routes | ✅ | ✅ |
+| `show stats` | Show statistics | ✅ | ✅ |
+| `show status` | Show daemon status | ✅ | ✅ |
+| `spf walk` | SPF record lookup | ✅ | ✅ |
+| `stop` | Stop daemon | ✅ | ✅ |
+| `trace` | Enable tracing | ✅ | ✅ |
+| `untrace` | Disable tracing | ✅ | ✅ |
+| `update table` | Update table | ✅ | ✅ |
+
+**Coverage: 100%**
+
+---
+
+## relayctl (Load Balancer)
+
+| Command | Description | NSWall CLI | NSWall API |
+|---------|-------------|------------|------------|
+| `host disable` | Disable host | ✅ | ✅ |
+| `host enable` | Enable host | ✅ | ✅ |
+| `load` | Load table entries | ✅ | ✅ |
+| `log brief` | Disable verbose logging | ✅ | ✅ |
+| `log verbose` | Enable verbose logging | ✅ | ✅ |
+| `monitor` | Monitor health checks | ✅ | ✅ |
+| `poll` | Immediate health check | ✅ | ✅ |
+| `redirect disable` | Disable redirect | ✅ | ✅ |
+| `redirect enable` | Enable redirect | ✅ | ✅ |
+| `reload` | Reload configuration | ✅ | ✅ |
+| `show hosts` | Show host status | ✅ | ✅ |
+| `show redirects` | Show redirections | ✅ | ✅ |
+| `show relays` | Show relay status | ✅ | ✅ |
+| `show routers` | Show routers | ✅ | ✅ |
+| `show sessions` | Show active sessions | ✅ | ✅ |
+| `show summary` | Show summary | ✅ | ✅ |
+| `stop` | Stop daemon | ✅ | ✅ |
+| `table disable` | Disable table | ✅ | ✅ |
+| `table enable` | Enable table | ✅ | ✅ |
+
+**Coverage: 100%**
+
+---
+
+## ikectl (IKEv2 VPN)
+
+| Command | Description | NSWall CLI | NSWall API |
+|---------|-------------|------------|------------|
+| `active` | Set active mode | ✅ | ✅ |
+| `passive` | Set passive mode | ✅ | ✅ |
+| `couple` | Load SAs into kernel | ✅ | ✅ |
+| `decouple` | Unload SAs from kernel | ✅ | ✅ |
+| `load` | Load config file | ✅ | ✅ |
+| `log brief` | Disable verbose logging | ✅ | ✅ |
+| `log verbose` | Enable verbose logging | ✅ | ✅ |
+| `monitor` | Monitor IKE events | ✅ | ✅ |
+| `reload` | Reload configuration | ✅ | ✅ |
+| `reset all` | Reset all state | ✅ | ✅ |
+| `reset ca` | Reset CA state | ✅ | ✅ |
+| `reset id` | Reset specific SA | ✅ | ✅ |
+| `reset policy` | Reset policies | ✅ | ✅ |
+| `reset sa` | Flush running SAs | ✅ | ✅ |
+| `reset user` | Reset user database | ✅ | ✅ |
+| `show sa` | Show security associations | ✅ | ✅ |
+| `show ca` | Show CA certificates | ✅ | ✅ |
+| `show certinfo` | Show certificate info | ✅ | ✅ |
+| `ca create` | Create CA | ✅ | ✅ |
+| `ca delete` | Delete CA | ✅ | ✅ |
+| `ca export` | Export CA | ✅ | ✅ |
+| `ca import` | Import CA | ✅ | ✅ |
+| `ca install` | Install CA certificate | ✅ | ✅ |
+| `ca key create` | Create CA key | ✅ | ✅ |
+| `certificate create` | Create certificate | ✅ | ✅ |
+| `certificate delete` | Delete certificate | ✅ | ✅ |
+| `certificate export` | Export certificate | ✅ | ✅ |
+| `certificate install` | Install certificate | ✅ | ✅ |
+| `certificate revoke` | Revoke certificate | ✅ | ✅ |
+
+**Coverage: 100%**
+
+---
+
+## ntpctl (NTP)
+
+| Command | Description | NSWall CLI | NSWall API |
+|---------|-------------|------------|------------|
+| `-s all` | Show all status | ✅ | ✅ |
+| `-s peers` | Show NTP peers | ✅ | ✅ |
+| `-s sensors` | Show time sensors | ✅ | ✅ |
+| `-s status` | Show sync status | ✅ | ✅ |
+
+**Coverage: 100%**
+
+---
+
+## snmpctl/snmp (SNMP)
+
+| Command | Description | NSWall CLI | NSWall API |
+|---------|-------------|------------|------------|
+| `snmp get` | Get SNMP value | ✅ | ✅ |
+| `snmp getnext` | Get next SNMP value | ✅ | ✅ |
+| `snmp walk` | Walk SNMP tree | ✅ | ✅ |
+| `snmp bulkget` | Bulk get values | ✅ | ✅ |
+| `snmp bulkwalk` | Bulk walk tree | ✅ | ✅ |
+| `snmp df` | Show MIB definitions | ✅ | ✅ |
+| `snmp mibtree` | Show MIB tree | ✅ | ✅ |
+| `trap send` | Send trap | ✅ | ✅ |
+| `log brief` | Disable verbose logging | ✅ | ✅ |
+| `log verbose` | Enable verbose logging | ✅ | ✅ |
+
+**Coverage: 100%**
+
+---
+
+## acme-client (Certificates)
+
+| Command | Description | NSWall CLI | NSWall API |
+|---------|-------------|------------|------------|
+| `(domain)` | Renew certificate | ✅ | ✅ |
+| `-F` | Force renewal | ✅ | ✅ |
+| `-f` | Alternate config file | ✅ | ✅ |
+| `-n` | Check config (no-op) | ✅ | ✅ |
+| `-r` | Revoke certificate | ✅ | ✅ |
+| `-v` | Verbose output | ✅ | ✅ |
+| `-vv` | Very verbose output | ✅ | ✅ |
+| `status` | Show certificate status | ✅ | ✅ |
+
+**Coverage: 100%**
+
+---
+
+## pflogd/tcpdump (PF Logging)
+
+| Command | Description | NSWall CLI | NSWall API |
+|---------|-------------|------------|------------|
+| Read log file | Read /var/log/pflog | ✅ | ✅ |
+| Read all | Read all log entries | ✅ | ✅ |
+| Read count | Read specific count | ✅ | ✅ |
+| Live monitoring | Monitor pflog0 | ✅ | ✅ |
+| Live interface | Monitor specific interface | ✅ | ✅ |
+| Filter expression | Filter by rule/port/etc | ✅ | ✅ |
+| `-c count` | Limit output lines | ✅ | ✅ |
+| `-e` | Print link-level header | ✅ | ✅ |
+| `-n` | Don't resolve names | ✅ | ✅ |
+| `-i interface` | Specify pflog interface | ✅ | ✅ |
+| `-s snaplen` | Set snaplen | ✅ | ✅ |
+| Filter: `ip` | IPv4 only | ✅ | ✅ |
+| Filter: `ip6` | IPv6 only | ✅ | ✅ |
+| Filter: `ifname` | By interface | ✅ | ✅ |
+| Filter: `rulenum` | By rule number | ✅ | ✅ |
+| Filter: `reason` | By reason | ✅ | ✅ |
+| Filter: `action` | By action (pass/block) | ✅ | ✅ |
+
+**Coverage: 100%**
+
+---
+
+## Summary Statistics
+
+| Category | Total Commands | CLI Implemented | API Implemented |
+|----------|----------------|-----------------|-----------------|
+| pfctl + pf.conf | 166 | 166 (100%) | 166 (100%) |
+| ospfctl | 23 | 23 (100%) | 23 (100%) |
+| bgpctl | 28 | 28 (100%) | 28 (100%) |
+| ripctl | 9 | 9 (100%) | 9 (100%) |
+| ldpctl | 13 | 13 (100%) | 13 (100%) |
+| eigrpctl | 11 | 11 (100%) | 11 (100%) |
+| unbound-control | 32 | 32 (100%) | 32 (100%) |
+| smtpctl | 33 | 33 (100%) | 33 (100%) |
+| relayctl | 19 | 19 (100%) | 19 (100%) |
+| ikectl | 29 | 29 (100%) | 29 (100%) |
+| ntpctl | 4 | 4 (100%) | 4 (100%) |
+| snmpctl | 10 | 10 (100%) | 10 (100%) |
+| acme-client | 8 | 8 (100%) | 8 (100%) |
+| pflogd | 17 | 17 (100%) | 17 (100%) |
+
+**Overall Coverage:**
+- CLI: 100% of commands implemented
+- API: 100% of commands implemented
+
+---
+
+## Configuration Syntax Testing
+
+NSWall provides configuration file syntax validation before applying changes. The following daemons support syntax testing:
+
+| Daemon | Test Command | Edit Integration | API Support |
+|--------|--------------|------------------|-------------|
+| pf | `pfctl -nf` | ✅ | ✅ |
+| ospfd | `ospfd -nf` | ✅ | ✅ |
+| bgpd | `bgpd -nf` | ✅ | ✅ |
+| ripd | `ripd -nf` | ✅ | ✅ |
+| ldpd | `ldpd -n -f` | ✅ | ✅ |
+| eigrpd | `eigrpd -n -f` | ✅ | ✅ |
+| dhcpd | `dhcpd -nc` | ✅ | ✅ |
+| snmpd | `snmpd -nf` | ✅ | ✅ |
+| ntpd | `ntpd -nf` | ✅ | ✅ |
+| sshd | `sshd -t -f` | ✅ | ✅ |
+| relayd | `relayd -nf` | ✅ | ✅ |
+| unbound | `unbound -c -d` | ✅ | ✅ |
+| httpd | `httpd -n -f` | ✅ | ✅ |
+| smtpd | `smtpd -n -f` | ✅ | ✅ |
+| ipsecctl | `ipsecctl -nf` | ✅ | ✅ |
+| iked | `iked -n -f` | ✅ | ✅ |
+| dvmrpd | `dvmrpd -nf` | ✅ | ✅ |
+| rad | `rad -n -f` | ✅ | ✅ |
+| acme-client | `acme-client -n` | ✅ | ✅ |
+| wireguard | `sh -n` (shell syntax) | ✅ | ✅ |
+
+**Daemons without syntax testing:**
+- sasyncd - No test flag available
+- inetd - No test flag available
+- ftp-proxy - No configuration file (command-line only)
+- dns (resolv.conf) - Simple file format, no daemon
+- pflogd - Read-only logging, no editable configuration
+
+**Syntax Testing Coverage: 20/25 daemons (80%)**
+
+---
+
+## New API Endpoints
+
+### Control Commands Endpoint
+
+Execute daemon-specific control commands:
+
+```
+POST /api/v1/services/{name}/control
+Content-Type: application/json
+
+{
+  "command": "reload",
+  "args": []
+}
+```
+
+### List Available Commands
+
+Get list of available commands for a service:
+
+```
+GET /api/v1/services/{name}/commands
+```
+
+### Example: Execute OSPF Command
+
+```bash
+curl -X POST http://localhost:8081/api/v1/services/ospfd/control \
+  -H "Content-Type: application/json" \
+  -d '{"command": "database-asbr"}'
+```
+
+---
+
+*Generated: December 2024*
+*OpenBSD Version: 7.6+*
+*NSWall Version: Full Feature Coverage*

@@ -1,0 +1,39 @@
+# NSWall Project Website
+# GitHub Pages configuration
+
+title: NSWall
+description: OpenBSD Network Appliance Framework - Transform OpenBSD into a Junos/IOS-like network device
+baseurl: "/NSWall"
+url: "https://northshorenetworks.github.io"
+
+# Theme
+remote_theme: pages-themes/minimal@v0.2.0
+plugins:
+  - jekyll-remote-theme
+
+# Build settings
+markdown: kramdown
+highlighter: rouge
+
+# Navigation
+nav:
+  - title: Home
+    url: /
+  - title: Features
+    url: /features/
+  - title: Documentation
+    url: /documentation/
+  - title: Installation
+    url: /installation/
+  - title: CLI Reference
+    url: /cli-reference/
+  - title: Pricing
+    url: /licensing/
+  - title: Sponsors
+    url: /sponsors/
+  - title: GitHub
+    url: https://github.com/northshorenetworks/NSWall
+
+# Project info
+version: "2.0-beta"
+license: "ISC"

@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Documentation - NSWall</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                }
+            }
+        }
+    </script>
+</head>
+<body class="font-sans antialiased bg-gray-50">
+    <!-- Navigation -->
+    <nav class="fixed w-full bg-white/80 backdrop-blur-md z-50 border-b border-gray-100">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <a href="index.html" class="text-2xl font-bold text-gray-900">NS<span class="text-sky-600">Wall</span></a>
+                <div class="hidden md:flex items-center space-x-8">
+                    <a href="index.html#features" class="text-gray-600 hover:text-gray-900">Features</a>
+                    <a href="index.html#pricing" class="text-gray-600 hover:text-gray-900">Pricing</a>
+                    <a href="docs.html" class="text-sky-600 font-medium">Docs</a>
+                    <a href="downloads.html" class="text-gray-600 hover:text-gray-900">Downloads</a>
+                    <a href="https://github.com/northshorenetworks/NSWall" class="bg-gray-900 text-white px-4 py-2 rounded-lg hover:bg-gray-800">GitHub</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="flex pt-16">
+        <!-- Sidebar -->
+        <aside class="hidden lg:block w-64 fixed h-full bg-white border-r border-gray-200 overflow-y-auto">
+            <div class="p-6">
+                <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-4">Getting Started</h3>
+                <ul class="space-y-2">
+                    <li><a href="#introduction" class="block text-sky-600 font-medium">Introduction</a></li>
+                    <li><a href="#installation" class="block text-gray-600 hover:text-gray-900">Installation</a></li>
+                    <li><a href="#quickstart" class="block text-gray-600 hover:text-gray-900">Quick Start</a></li>
+                </ul>
+
+                <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mt-8 mb-4">Core Features</h3>
+                <ul class="space-y-2">
+                    <li><a href="#firewall" class="block text-gray-600 hover:text-gray-900">Firewall (PF)</a></li>
+                    <li><a href="#vpn" class="block text-gray-600 hover:text-gray-900">VPN</a></li>
+                    <li><a href="#routing" class="block text-gray-600 hover:text-gray-900">Routing</a></li>
+                    <li><a href="#ha" class="block text-gray-600 hover:text-gray-900">High Availability</a></li>
+                </ul>
+
+                <h3 class="text-xs font-semibold text-gray-400 uppercase tracking-wider mt-8 mb-4">CLI Reference</h3>
+                <ul class="space-y-2">
+                    <li><a href="#commands" class="block text-gray-600 hover:text-gray-900">Commands</a></li>
+                    <li><a href="#interfaces" class="block text-gray-600 hover:text-gray-900">Interfaces</a></li>
+                    <li><a href="#services" class="block text-gray-600 hover:text-gray-900">Services</a></li>
+                </ul>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="lg:ml-64 flex-1 p-8 max-w-4xl">
+            <section id="introduction" class="mb-16">
+                <h1 class="text-4xl font-bold text-gray-900 mb-4">NSWall Documentation</h1>
+                <p class="text-xl text-gray-600 mb-8">Learn how to deploy and configure NSWall for your network.</p>
+
+                <div class="bg-sky-50 border border-sky-200 rounded-xl p-6 mb-8">
+                    <h3 class="font-semibold text-sky-900 mb-2">What is NSWall?</h3>
+                    <p class="text-sky-800">NSWall is an OpenBSD-based network appliance framework that provides a familiar Junos/IOS-style CLI for managing firewalls, routers, and network services.</p>
+                </div>
+            </section>
+
+            <section id="installation" class="mb-16">
+                <h2 class="text-2xl font-bold text-gray-900 mb-6">Installation</h2>
+
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Option 1: Virtual Appliance (Recommended)</h3>
+                <p class="text-gray-600 mb-4">Download a pre-built VM image for your platform:</p>
+                <div class="bg-gray-900 rounded-xl p-6 mb-6">
+                    <pre class="text-gray-300 font-mono text-sm overflow-x-auto"><code># Download OVA for VMware
+curl -LO https://downloads.nswall.io/latest/nswall-latest.ova
+
+# Import into VMware
+ovftool nswall-latest.ova</code></pre>
+                </div>
+
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Option 2: Build from Source</h3>
+                <div class="bg-gray-900 rounded-xl p-6 mb-6">
+                    <pre class="text-gray-300 font-mono text-sm overflow-x-auto"><code># Clone repository
+git clone https://github.com/northshorenetworks/NSWall.git
+cd NSWall
+
+# Build (requires OpenBSD)
+make KCONF=GENERIC-RD
+
+# The kernel image will be at bsd.gz</code></pre>
+                </div>
+            </section>
+
+            <section id="quickstart" class="mb-16">
+                <h2 class="text-2xl font-bold text-gray-900 mb-6">Quick Start</h2>
+                <p class="text-gray-600 mb-4">After booting NSWall, connect via console or SSH and run:</p>
+
+                <div class="bg-gray-900 rounded-xl p-6 mb-6">
+                    <pre class="text-gray-300 font-mono text-sm overflow-x-auto"><code><span class="text-green-400">nswall&gt;</span> enable
+<span class="text-green-400">nswall#</span> configure terminal
+
+<span class="text-gray-500"># Set hostname</span>
+<span class="text-green-400">nswall(config)#</span> hostname my-firewall
+
+<span class="text-gray-500"># Configure WAN interface</span>
+<span class="text-green-400">nswall(config)#</span> interface em0
+<span class="text-green-400">nswall(config-if)#</span> ip address dhcp
+<span class="text-green-400">nswall(config-if)#</span> no shutdown
+<span class="text-green-400">nswall(config-if)#</span> exit
+
+<span class="text-gray-500"># Configure LAN interface</span>
+<span class="text-green-400">nswall(config)#</span> interface em1
+<span class="text-green-400">nswall(config-if)#</span> ip address 192.168.1.1/24
+<span class="text-green-400">nswall(config-if)#</span> no shutdown
+<span class="text-green-400">nswall(config-if)#</span> exit
+
+<span class="text-gray-500"># Enable firewall</span>
+<span class="text-green-400">nswall(config)#</span> pf enable
+
+<span class="text-gray-500"># Save configuration</span>
+<span class="text-green-400">nswall(config)#</span> exit
+<span class="text-green-400">nswall#</span> write memory</code></pre>
+                </div>
+            </section>
+
+            <section id="firewall" class="mb-16">
+                <h2 class="text-2xl font-bold text-gray-900 mb-6">Firewall (PF)</h2>
+                <p class="text-gray-600 mb-4">NSWall uses OpenBSD's Packet Filter (PF) for firewalling.</p>
+
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Basic Rules</h3>
+                <div class="bg-gray-900 rounded-xl p-6 mb-6">
+                    <pre class="text-gray-300 font-mono text-sm overflow-x-auto"><code><span class="text-gray-500"># Allow SSH</span>
+<span class="text-green-400">nswall(config)#</span> pf add filter pass in on em0 proto tcp to port 22
+
+<span class="text-gray-500"># Allow HTTP/HTTPS</span>
+<span class="text-green-400">nswall(config)#</span> pf add filter pass in on em0 proto tcp to port { 80 443 }
+
+<span class="text-gray-500"># NAT outbound traffic</span>
+<span class="text-green-400">nswall(config)#</span> pf add nat on em0 from 192.168.1.0/24 to any -> (em0)
+
+<span class="text-gray-500"># Apply rules</span>
+<span class="text-green-400">nswall(config)#</span> pf reload</code></pre>
+                </div>
+
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Show Commands</h3>
+                <div class="bg-gray-900 rounded-xl p-6">
+                    <pre class="text-gray-300 font-mono text-sm overflow-x-auto"><code><span class="text-green-400">nswall#</span> pf show rules     <span class="text-gray-500"># Show filter rules</span>
+<span class="text-green-400">nswall#</span> pf show nat       <span class="text-gray-500"># Show NAT rules</span>
+<span class="text-green-400">nswall#</span> pf show states    <span class="text-gray-500"># Show state table</span>
+<span class="text-green-400">nswall#</span> pf show info      <span class="text-gray-500"># Show PF statistics</span></code></pre>
+                </div>
+            </section>
+
+            <section id="vpn" class="mb-16">
+                <h2 class="text-2xl font-bold text-gray-900 mb-6">VPN</h2>
+                <p class="text-gray-600 mb-4">NSWall supports IKEv2, IPSec, and OpenVPN.</p>
+
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">IKEv2 Site-to-Site</h3>
+                <div class="bg-gray-900 rounded-xl p-6 mb-6">
+                    <pre class="text-gray-300 font-mono text-sm overflow-x-auto"><code><span class="text-green-400">nswall(config)#</span> iked enable
+<span class="text-green-400">nswall(config)#</span> iked edit
+
+<span class="text-gray-500"># In editor, add:</span>
+ikev2 "site-to-site" passive esp \
+    from 10.1.0.0/24 to 10.2.0.0/24 \
+    peer 203.0.113.1 \
+    psk "your-shared-secret"</code></pre>
+                </div>
+            </section>
+
+            <section id="routing" class="mb-16">
+                <h2 class="text-2xl font-bold text-gray-900 mb-6">Routing</h2>
+
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Static Routes</h3>
+                <div class="bg-gray-900 rounded-xl p-6 mb-6">
+                    <pre class="text-gray-300 font-mono text-sm overflow-x-auto"><code><span class="text-green-400">nswall(config)#</span> route add 10.0.0.0/8 192.168.1.254
+<span class="text-green-400">nswall#</span> show route</code></pre>
+                </div>
+
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">BGP</h3>
+                <div class="bg-gray-900 rounded-xl p-6 mb-6">
+                    <pre class="text-gray-300 font-mono text-sm overflow-x-auto"><code><span class="text-green-400">nswall(config)#</span> bgp enable
+<span class="text-green-400">nswall(config)#</span> bgp edit
+
+<span class="text-gray-500"># Configure BGP peering</span>
+AS 65001
+neighbor 192.0.2.1 {
+    remote-as 65002
+    announce all
+}
+
+<span class="text-green-400">nswall#</span> show bgp summary</code></pre>
+                </div>
+            </section>
+
+            <section id="ha" class="mb-16">
+                <h2 class="text-2xl font-bold text-gray-900 mb-6">High Availability</h2>
+                <p class="text-gray-600 mb-4">Use CARP and pfsync for failover.</p>
+
+                <div class="bg-gray-900 rounded-xl p-6">
+                    <pre class="text-gray-300 font-mono text-sm overflow-x-auto"><code><span class="text-gray-500"># Primary firewall</span>
+<span class="text-green-400">nswall(config)#</span> interface carp0
+<span class="text-green-400">nswall(config-if)#</span> carp vhid 1 pass secret123
+<span class="text-green-400">nswall(config-if)#</span> carp advskew 0
+<span class="text-green-400">nswall(config-if)#</span> ip address 192.168.1.1/24
+
+<span class="text-gray-500"># State sync</span>
+<span class="text-green-400">nswall(config)#</span> interface pfsync0
+<span class="text-green-400">nswall(config-if)#</span> syncdev em2
+<span class="text-green-400">nswall(config-if)#</span> syncpeer 10.0.0.2</code></pre>
+                </div>
+            </section>
+
+            <section id="commands" class="mb-16">
+                <h2 class="text-2xl font-bold text-gray-900 mb-6">Common Commands</h2>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left">
+                        <thead>
+                            <tr class="border-b border-gray-200">
+                                <th class="py-3 px-4 font-semibold text-gray-900">Command</th>
+                                <th class="py-3 px-4 font-semibold text-gray-900">Description</th>
+                            </tr>
+                        </thead>
+                        <tbody class="font-mono text-sm">
+                            <tr class="border-b border-gray-100">
+                                <td class="py-3 px-4 text-sky-600">enable</td>
+                                <td class="py-3 px-4 text-gray-600">Enter privileged mode</td>
+                            </tr>
+                            <tr class="border-b border-gray-100">
+                                <td class="py-3 px-4 text-sky-600">configure terminal</td>
+                                <td class="py-3 px-4 text-gray-600">Enter configuration mode</td>
+                            </tr>
+                            <tr class="border-b border-gray-100">
+                                <td class="py-3 px-4 text-sky-600">show running-config</td>
+                                <td class="py-3 px-4 text-gray-600">Display current configuration</td>
+                            </tr>
+                            <tr class="border-b border-gray-100">
+                                <td class="py-3 px-4 text-sky-600">show interface</td>
+                                <td class="py-3 px-4 text-gray-600">Display interface status</td>
+                            </tr>
+                            <tr class="border-b border-gray-100">
+                                <td class="py-3 px-4 text-sky-600">show route</td>
+                                <td class="py-3 px-4 text-gray-600">Display routing table</td>
+                            </tr>
+                            <tr class="border-b border-gray-100">
+                                <td class="py-3 px-4 text-sky-600">write memory</td>
+                                <td class="py-3 px-4 text-gray-600">Save configuration</td>
+                            </tr>
+                            <tr class="border-b border-gray-100">
+                                <td class="py-3 px-4 text-sky-600">reload</td>
+                                <td class="py-3 px-4 text-gray-600">Reboot system</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Footer -->
+            <footer class="border-t border-gray-200 pt-8 mt-16">
+                <p class="text-gray-500 text-sm">
+                    &copy; 2024 North Shore Networks.
+                    <a href="https://github.com/northshorenetworks/NSWall" class="text-sky-600 hover:underline">View on GitHub</a>
+                </p>
+            </footer>
+        </main>
+    </div>
+</body>
+</html>

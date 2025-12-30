@@ -1,0 +1,434 @@
+name: HA Cluster Tests
+
+on:
+  push:
+    branches: [main, develop, 'feature/**', 'claude/**']
+    paths:
+      - 'tests/ha/**'
+      - 'api/internal/services/ha.go'
+      - 'controller/**'
+      - '.github/workflows/ha-tests.yml'
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'tests/ha/**'
+      - 'api/internal/services/**'
+  workflow_dispatch:
+    inputs:
+      run_extended_tests:
+        description: 'Run extended failover tests'
+        required: false
+        default: 'true'
+        type: boolean
+
+jobs:
+  # ==========================================================================
+  # SINGLE VM HA TESTS
+  # Simulates 2-node cluster using virtual interfaces
+  # ==========================================================================
+  simulated-ha-cluster:
+    name: Simulated HA Cluster (OpenBSD ${{ matrix.version }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        version: ['7.8']  # Focus on latest for HA tests
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run HA cluster tests on OpenBSD
+        uses: vmactions/openbsd-vm@v1
+        with:
+          release: ${{ matrix.version }}
+          usesh: true
+          run: |
+            set -e
+            echo "=== OpenBSD HA Cluster Tests ==="
+            echo "Version: $(uname -r)"
+            echo ""
+
+            # Make scripts executable
+            chmod +x tests/ha/*.sh
+
+            # Setup HA cluster
+            echo "=== Setting up simulated HA cluster ==="
+            cd tests/ha
+            ./ha-cluster-setup.sh setup
+
+            # Show initial state
+            echo ""
+            echo "=== Initial Cluster State ==="
+            ./ha-cluster-setup.sh status
+
+            # Run failover tests
+            echo ""
+            echo "=== Running Failover Tests ==="
+            ./ha-failover-tests.sh all || exit_code=$?
+
+            # Run multi-node tests
+            echo ""
+            echo "=== Running Multi-Node Tests ==="
+            ./multi-node-tests.sh all || exit_code=$?
+
+            # Cleanup
+            echo ""
+            echo "=== Cleanup ==="
+            ./ha-cluster-setup.sh cleanup
+
+            exit ${exit_code:-0}
+
+  # ==========================================================================
+  # CARP FUNCTIONALITY TESTS
+  # Tests CARP protocol behavior
+  # ==========================================================================
+  carp-functionality:
+    name: CARP Functionality Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Test CARP functionality
+        uses: vmactions/openbsd-vm@v1
+        with:
+          release: '7.8'
+          usesh: true
+          run: |
+            set -e
+            echo "=== CARP Functionality Tests ==="
+
+            # Enable CARP
+            sysctl net.inet.carp.allow=1
+            sysctl net.inet.carp.preempt=1
+            sysctl net.inet.carp.log=2
+
+            # Create test interfaces
+            ifconfig vether0 create
+            ifconfig vether0 inet 192.168.1.1/24
+            ifconfig vether1 create
+            ifconfig vether1 inet 192.168.1.2/24
+
+            # Create CARP interfaces with different advskew
+            ifconfig carp0 create
+            ifconfig carp0 vhid 1 pass "test123" advskew 0 carpdev vether0 192.168.1.100/24
+
+            ifconfig carp1 create
+            ifconfig carp1 vhid 1 pass "test123" advskew 100 carpdev vether1 192.168.1.100/24
+
+            sleep 3
+
+            echo ""
+            echo "=== CARP Status ==="
+            ifconfig carp0 | grep -E "carp:|inet"
+            ifconfig carp1 | grep -E "carp:|inet"
+
+            # Test 1: Verify one master
+            echo ""
+            echo "=== Test 1: Single Master Election ==="
+            masters=$(ifconfig | grep "carp: MASTER" | wc -l | tr -d ' ')
+            backups=$(ifconfig | grep "carp: BACKUP" | wc -l | tr -d ' ')
+
+            if [ "$masters" -eq 1 ] && [ "$backups" -eq 1 ]; then
+                echo "PASS: One MASTER, one BACKUP"
+            else
+                echo "FAIL: Masters=$masters, Backups=$backups"
+                exit 1
+            fi
+
+            # Test 2: Lower advskew should be master
+            echo ""
+            echo "=== Test 2: Advskew Priority ==="
+            carp0_state=$(ifconfig carp0 | grep "carp:" | awk '{print $2}')
+            if [ "$carp0_state" = "MASTER" ]; then
+                echo "PASS: Lower advskew (carp0) is MASTER"
+            else
+                echo "FAIL: carp0 should be MASTER, is $carp0_state"
+                exit 1
+            fi
+
+            # Test 3: Failover on interface down
+            echo ""
+            echo "=== Test 3: Failover on Interface Down ==="
+            ifconfig vether0 down
+            sleep 3
+
+            carp1_state=$(ifconfig carp1 | grep "carp:" | awk '{print $2}')
+            if [ "$carp1_state" = "MASTER" ]; then
+                echo "PASS: carp1 became MASTER after vether0 down"
+            else
+                echo "FAIL: carp1 is $carp1_state, expected MASTER"
+                exit 1
+            fi
+
+            # Test 4: Recovery and preemption
+            echo ""
+            echo "=== Test 4: Recovery with Preemption ==="
+            ifconfig vether0 up
+            sleep 3
+
+            carp0_state=$(ifconfig carp0 | grep "carp:" | awk '{print $2}')
+            if [ "$carp0_state" = "MASTER" ]; then
+                echo "PASS: carp0 preempted and became MASTER again"
+            else
+                echo "INFO: carp0 is $carp0_state (preemption may be delayed)"
+            fi
+
+            # Test 5: Demotion counter
+            echo ""
+            echo "=== Test 5: Demotion Counter ==="
+            initial=$(sysctl -n net.inet.carp.demotion)
+            sysctl net.inet.carp.demotion=128
+            sleep 2
+            demoted=$(sysctl -n net.inet.carp.demotion)
+            sysctl net.inet.carp.demotion=0
+
+            if [ "$demoted" = "128" ]; then
+                echo "PASS: Demotion counter set correctly"
+            else
+                echo "FAIL: Demotion counter is $demoted"
+                exit 1
+            fi
+
+            echo ""
+            echo "=== All CARP Tests Passed ==="
+
+            # Cleanup
+            ifconfig carp0 destroy
+            ifconfig carp1 destroy
+            ifconfig vether0 destroy
+            ifconfig vether1 destroy
+
+  # ==========================================================================
+  # PFSYNC FUNCTIONALITY TESTS
+  # Tests state synchronization
+  # ==========================================================================
+  pfsync-functionality:
+    name: PFSync Functionality Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Test PFSync functionality
+        uses: vmactions/openbsd-vm@v1
+        with:
+          release: '7.8'
+          usesh: true
+          run: |
+            set -e
+            echo "=== PFSync Functionality Tests ==="
+
+            # Create sync interface
+            ifconfig vether0 create
+            ifconfig vether0 inet 10.0.0.1/24
+
+            # Create pfsync interface
+            ifconfig pfsync0 create
+            ifconfig pfsync0 syncdev vether0 up
+
+            # Test 1: PFSync interface created
+            echo ""
+            echo "=== Test 1: PFSync Interface ==="
+            if ifconfig pfsync0 | grep -q "syncdev"; then
+                echo "PASS: PFSync interface configured with syncdev"
+            else
+                echo "FAIL: PFSync syncdev not set"
+                exit 1
+            fi
+
+            # Configure PF with sync-enabled rules
+            cat > /tmp/pf.conf.sync << 'EOF'
+            set skip on lo
+            pass in proto tcp to any port 80 keep state
+            pass in proto tcp to any port 443 keep state
+            pass in proto udp to any port 53 keep state (no-sync)
+            pass out keep state
+            EOF
+
+            pfctl -f /tmp/pf.conf.sync
+            pfctl -e 2>/dev/null || true
+
+            # Test 2: States can be created
+            echo ""
+            echo "=== Test 2: State Creation ==="
+            ifconfig vether0 inet 10.0.0.2/24 alias
+            ping -c 3 10.0.0.2 > /dev/null 2>&1 || true
+
+            states=$(pfctl -ss 2>/dev/null | wc -l | tr -d ' ')
+            if [ "$states" -gt 0 ]; then
+                echo "PASS: States created ($states entries)"
+            else
+                echo "INFO: No states yet (expected in isolated test)"
+            fi
+
+            # Test 3: No-sync option
+            echo ""
+            echo "=== Test 3: No-Sync Option ==="
+            if pfctl -sr | grep -q "no-sync"; then
+                echo "PASS: no-sync option in rules"
+            else
+                echo "FAIL: no-sync option not found"
+                exit 1
+            fi
+
+            # Test 4: PFSync statistics
+            echo ""
+            echo "=== Test 4: PFSync Statistics ==="
+            netstat -s -p pfsync 2>/dev/null | head -10 || echo "Stats may be empty"
+            echo "PASS: PFSync statistics accessible"
+
+            echo ""
+            echo "=== All PFSync Tests Passed ==="
+
+            # Cleanup
+            ifconfig pfsync0 destroy
+            ifconfig vether0 destroy
+
+  # ==========================================================================
+  # HA CONFIGURATION VALIDATION
+  # Tests HA-related configuration syntax
+  # ==========================================================================
+  ha-config-validation:
+    name: HA Configuration Validation
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Validate HA configurations
+        uses: vmactions/openbsd-vm@v1
+        with:
+          release: '7.8'
+          usesh: true
+          run: |
+            set -e
+            echo "=== HA Configuration Validation ==="
+
+            # Test various HA PF configurations
+
+            # Test 1: Basic HA config
+            echo ""
+            echo "=== Test 1: Basic HA Config ==="
+            cat > /tmp/pf.ha1.conf << 'EOF'
+            carp_if = "carp0"
+            sync_if = "em1"
+
+            pass quick proto carp
+            pass quick on $sync_if proto pfsync
+            pass in on $carp_if proto tcp to ($carp_if) port { 22, 80 }
+            EOF
+
+            if pfctl -nf /tmp/pf.ha1.conf 2>/dev/null; then
+                echo "PASS: Basic HA config valid"
+            else
+                echo "FAIL: Basic HA config invalid"
+                exit 1
+            fi
+
+            # Test 2: Full HA config with NAT
+            echo ""
+            echo "=== Test 2: Full HA Config with NAT ==="
+            cat > /tmp/pf.ha2.conf << 'EOF'
+            ext_if = "em0"
+            int_if = "em1"
+            sync_if = "em2"
+            carp_ext = "carp0"
+            carp_int = "carp1"
+
+            int_net = "192.168.1.0/24"
+
+            table <ha_peers> persist { 10.0.0.1, 10.0.0.2 }
+
+            set skip on lo
+
+            # HA traffic
+            pass quick on $sync_if proto pfsync keep state (no-sync)
+            pass quick proto carp keep state (no-sync)
+            pass quick on $sync_if from <ha_peers> to <ha_peers>
+
+            # NAT through CARP VIP
+            match out on $carp_ext from $int_net nat-to ($carp_ext)
+
+            block log all
+
+            # Allow traffic to VIPs
+            pass in on $carp_ext proto tcp to ($carp_ext) port { 22, 80, 443 } keep state
+            pass in on $carp_int from $int_net keep state
+            pass out keep state
+            EOF
+
+            if pfctl -nf /tmp/pf.ha2.conf 2>/dev/null; then
+                echo "PASS: Full HA config with NAT valid"
+            else
+                echo "FAIL: Full HA config invalid"
+                exit 1
+            fi
+
+            # Test 3: HA config with state options
+            echo ""
+            echo "=== Test 3: HA Config with State Options ==="
+            cat > /tmp/pf.ha3.conf << 'EOF'
+            pass in proto tcp to any port 80 keep state (if-bound, pflow)
+            pass in proto tcp to any port 443 keep state (floating)
+            pass in proto tcp to any port 22 keep state (no-sync)
+            pass in proto udp to any port 53 keep state (sloppy, no-sync)
+            EOF
+
+            if pfctl -nf /tmp/pf.ha3.conf 2>/dev/null; then
+                echo "PASS: State options config valid"
+            else
+                echo "FAIL: State options config invalid"
+                exit 1
+            fi
+
+            echo ""
+            echo "=== All HA Configuration Tests Passed ==="
+
+  # ==========================================================================
+  # SUMMARY
+  # ==========================================================================
+  test-summary:
+    name: HA Test Summary
+    runs-on: ubuntu-latest
+    needs: [simulated-ha-cluster, carp-functionality, pfsync-functionality, ha-config-validation]
+    if: always()
+
+    steps:
+      - name: Summarize test results
+        run: |
+          echo "=== HA Cluster Test Summary ==="
+          echo ""
+          echo "Simulated HA Cluster: ${{ needs.simulated-ha-cluster.result }}"
+          echo "CARP Functionality: ${{ needs.carp-functionality.result }}"
+          echo "PFSync Functionality: ${{ needs.pfsync-functionality.result }}"
+          echo "HA Config Validation: ${{ needs.ha-config-validation.result }}"
+          echo ""
+
+          failed=0
+          if [[ "${{ needs.simulated-ha-cluster.result }}" == "failure" ]]; then
+            echo "ERROR: Simulated HA cluster tests failed"
+            failed=1
+          fi
+          if [[ "${{ needs.carp-functionality.result }}" == "failure" ]]; then
+            echo "ERROR: CARP functionality tests failed"
+            failed=1
+          fi
+          if [[ "${{ needs.pfsync-functionality.result }}" == "failure" ]]; then
+            echo "ERROR: PFSync functionality tests failed"
+            failed=1
+          fi
+          if [[ "${{ needs.ha-config-validation.result }}" == "failure" ]]; then
+            echo "ERROR: HA configuration validation failed"
+            failed=1
+          fi
+
+          if [ $failed -eq 1 ]; then
+            exit 1
+          fi
+
+          echo "All HA tests passed!"

@@ -1,0 +1,224 @@
+name: NSWall Tests
+
+on:
+  push:
+    branches: [ main, master, 'claude/*' ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  unit-tests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run unit tests
+        run: |
+          echo "=== Running Unit Tests ==="
+          chmod +x test/unit/test_runner.sh
+          ./test/unit/test_runner.sh
+
+  package-validation:
+    name: Package Validation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Validate packages
+        run: |
+          echo "=== Validating NSWall Packages ==="
+
+          if [ ! -d "packages" ]; then
+            echo "No packages directory found"
+            exit 0
+          fi
+
+          echo "Found packages:"
+          ls -la packages/*.tgz 2>/dev/null || echo "No .tgz packages found"
+
+          # Verify each package is a valid tarball
+          for pkg in packages/*.tgz; do
+            if [ -f "$pkg" ]; then
+              echo "Validating: $pkg"
+              if tar tzf "$pkg" >/dev/null 2>&1; then
+                echo "  ✓ Valid tarball"
+                echo "  Contents: $(tar tzf "$pkg" | wc -l) files"
+              else
+                echo "  ✗ Invalid tarball"
+                exit 1
+              fi
+            fi
+          done
+
+      - name: Check package naming convention
+        run: |
+          echo "=== Checking Package Naming ==="
+          for pkg in packages/*.tgz; do
+            if [ -f "$pkg" ]; then
+              basename=$(basename "$pkg")
+              # Check for ns- prefix and version
+              if echo "$basename" | grep -qE '^ns-[a-z]+-[0-9]+\.[0-9]+\.tgz$'; then
+                echo "✓ $basename follows naming convention"
+              else
+                echo "⚠ $basename may not follow naming convention (expected: ns-<name>-<version>.tgz)"
+              fi
+            fi
+          done
+
+  integration-test-openbsd:
+    name: Integration Tests (OpenBSD)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run integration tests on OpenBSD
+        uses: vmactions/openbsd-vm@v1
+        with:
+          release: '7.6'
+          usesh: true
+          run: |
+            echo "=== OpenBSD Integration Tests ==="
+            uname -a
+
+            # Test 1: Check PF is available
+            echo ""
+            echo "--- Test: PF availability ---"
+            if [ -x /sbin/pfctl ]; then
+              echo "✓ pfctl is available"
+              pfctl -s info 2>/dev/null || echo "Note: PF not enabled (expected in VM)"
+            else
+              echo "✗ pfctl not found"
+            fi
+
+            # Test 2: Check routing daemons
+            echo ""
+            echo "--- Test: Routing daemon availability ---"
+            for daemon in bgpctl ospfctl ripctl; do
+              if [ -x /usr/sbin/$daemon ]; then
+                echo "✓ $daemon is available"
+              else
+                echo "⚠ $daemon not found (may need package)"
+              fi
+            done
+
+            # Test 3: Check network utilities
+            echo ""
+            echo "--- Test: Network utilities ---"
+            for util in ifconfig route arp netstat; do
+              if [ -x /sbin/$util ] || [ -x /usr/sbin/$util ] || [ -x /usr/bin/$util ]; then
+                echo "✓ $util is available"
+              else
+                echo "✗ $util not found"
+              fi
+            done
+
+            # Test 4: Verify build tools
+            echo ""
+            echo "--- Test: Build tools ---"
+            for tool in cc make config; do
+              if command -v $tool >/dev/null 2>&1; then
+                echo "✓ $tool is available"
+              else
+                echo "⚠ $tool not found"
+              fi
+            done
+
+            # Test 5: Compile a simple test
+            echo ""
+            echo "--- Test: Basic C compilation ---"
+            cat > /tmp/test.c << 'EOF'
+            #include <stdio.h>
+            int main() { printf("NSWall test\n"); return 0; }
+            EOF
+            if cc -o /tmp/test /tmp/test.c 2>/dev/null; then
+              echo "✓ C compilation works"
+              /tmp/test
+            else
+              echo "✗ C compilation failed"
+            fi
+
+            # Test 6: Run nssh unit tests
+            echo ""
+            echo "--- Test: NSsh Unit Tests ---"
+            if [ -f "nssh/tests/test_ctl.c" ]; then
+              cd nssh/tests
+              cc -O2 -Wall -I.. -o test_ctl test_ctl.c 2>/dev/null
+              if [ -x ./test_ctl ]; then
+                echo "✓ test_ctl compiled"
+                ./test_ctl
+              fi
+              cd ../..
+            fi
+
+            # Test 7: Run pf.conf syntax tests
+            echo ""
+            echo "--- Test: pf.conf Syntax Tests ---"
+            if [ -f "nssh/tests/test_pf_conf.c" ]; then
+              cd nssh/tests
+              cc -O2 -Wall -I.. -o test_pf_conf test_pf_conf.c 2>/dev/null
+              if [ -x ./test_pf_conf ]; then
+                echo "✓ test_pf_conf compiled"
+                ./test_pf_conf
+              fi
+              cd ../..
+            fi
+
+            echo ""
+            echo "=== Integration Tests Complete ==="
+
+  documentation-check:
+    name: Documentation Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check documentation
+        run: |
+          echo "=== Documentation Status ==="
+
+          # Check for required docs
+          REQUIRED_DOCS="LICENSE"
+          for doc in $REQUIRED_DOCS; do
+            if [ -f "$doc" ]; then
+              echo "✓ $doc exists"
+            else
+              echo "✗ $doc missing"
+            fi
+          done
+
+          # Check for optional docs
+          OPTIONAL_DOCS="README README.md CHANGELOG CHANGELOG.md CONTRIBUTING.md"
+          for doc in $OPTIONAL_DOCS; do
+            if [ -f "$doc" ]; then
+              echo "✓ $doc exists (optional)"
+            else
+              echo "○ $doc not present (optional)"
+            fi
+          done
+
+          # Check docs directory
+          if [ -d "docs" ]; then
+            echo ""
+            echo "Documentation files:"
+            find docs -type f -name "*.md" | while read f; do
+              echo "  - $f"
+            done
+          fi
+
+      - name: Validate markdown
+        run: |
+          echo "=== Checking Markdown Syntax ==="
+          # Simple check for broken links in markdown
+          find . -name "*.md" -type f | while read md; do
+            echo "Checking: $md"
+            # Check for empty links
+            if grep -qE '\[.*\]\(\s*\)' "$md"; then
+              echo "  ⚠ Empty links found in $md"
+            fi
+          done

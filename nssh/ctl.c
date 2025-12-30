@@ -1,6 +1,10 @@
-/* $nsh: ctl.c,v 1.25 2009/05/26 22:08:06 chris Exp $ */
+/* $NSWall$ */
 /*
- * Copyright (c) 2008 Chris Cappuccio <chris@nmedia.net>
+ * NSWall - Network Shell for OpenBSD firewalls
+ * Forked from NSH (Network Shell) by Chris Cappuccio
+ *
+ * Original NSH Copyright (c) 2008 Chris Cappuccio <chris@nmedia.net>
+ * NSWall Extensions Copyright (c) 2024-2025 NSWall Contributors
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -13,6 +17,20 @@
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ *
+ * ACKNOWLEDGEMENT:
+ * NSWall is a fork of NSH (Network Shell) originally created by
+ * Chris Cappuccio. NSH provides the foundation for this project's
+ * network configuration and service management capabilities.
+ * Original NSH project: https://github.com/yellowman/nsh
+ *
+ * This file contains core control functions and the daemon registry.
+ * Individual daemon control arrays are in separate files:
+ *   ctl_pf.c      - Packet Filter (pf)
+ *   ctl_routing.c - Routing protocols (ospf, bgp, rip, ldp, eigrp)
+ *   ctl_services.c - Network services (dhcp, snmp, ntp, sshd, etc.)
+ *   ctl_vpn.c     - VPN daemons (iked, ipsec, wireguard)
+ *   ctl_misc.c    - Miscellaneous (dvmrp, sasync, ftp-proxy, etc.)
  */
 
 #include <stdio.h>
@@ -25,255 +43,295 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include "externs.h"
+#include "ctl.h"
 
-/* service daemons */
-#define OSPFD		"/usr/sbin/ospfd"
-#define BGPD		"/usr/sbin/bgpd"
-#define RIPD		"/usr/sbin/ripd"
-#define ISAKMPD		"/sbin/isakmpd"
-#define DVMRPD		"/usr/sbin/dvmrpd"
-#define RELAYD		"/usr/sbin/relayd"
-#define DHCPD		"/usr/sbin/dhcpd"
-#define SASYNCD		"/usr/sbin/sasyncd"
-#define	SNMPD		"/usr/sbin/snmpd"
-#define NTPD		"/usr/sbin/ntpd"
-#define FTPPROXY	"/usr/sbin/ftp-proxy"
-#define INETD		"/usr/sbin/inetd"
-#define SSHD		"/usr/sbin/sshd"
-#define NSPFSH          "/usr/bin/nspf"
-#define PFRELOAD        "/usr/bin/pfreload"
-
-void call_editor(char *, char **, char *);
-void ctl_symlink(char *, char **, char *);
+/* Internal function prototypes */
 int rule_writeline(char *, mode_t, char *);
 int acq_lock(char *);
 void rls_lock(int);
 
-char *ctl_pf_test[] = { PFCTL, "-nf", PFCONF_TEMP, '\0' };
-struct ctl ctl_pf[] = {
-	{ "enable",	"enable service",
-	    { PFCTL, "-e", NULL }, NULL, X_ENABLE },
-	{ "disable",	"disable service",
-	    { PFCTL, "-d", NULL }, NULL, X_DISABLE },
-        { "add",   "global/filter/nat/binat",
-            { NSPFSH, REQ, OPT, OPT, OPT, NULL }, NULL, NULL },
-	{ "show",   "queue/rules/states/info/all",
-            { PFCTL, "-s", REQ, NULL }, NULL, NULL },	
-	{ "reload",	"reload service",
-	     { PFRELOAD, NULL, NULL }, NULL, NULL },	
-	{ 0, 0, { 0 }, 0, 0 }
-};
+/*
+ * Show config file contents
+ */
+void
+ctl_show_config(char *conffile, char **notused, char *notused2)
+{
+	FILE *f;
+	char line[1024];
 
-char *ctl_ospf_test[] = { OSPFD, "-nf", OSPFCONF_TEMP, '\0' };
-struct ctl ctl_ospf[] = {
-	{ "enable",     "enable service",
-	    { OSPFD, "-f", OSPFCONF_TEMP, NULL }, NULL, X_ENABLE },
-	{ "disable",    "disable service",
-	    { PKILL, "ospfd", NULL }, NULL, X_DISABLE },
-	{ "edit",       "edit configuration",
-	    { "ospf", (char *)ctl_ospf_test, NULL }, call_editor, NULL },
-	{ "reload",     "reload service",
-	    { OSPFCTL, "reload", NULL }, NULL, NULL },
-	{ "fib",        "fib couple/decouple",
-	    { OSPFCTL, "fib", REQ, NULL }, NULL, NULL },
-	{ 0, 0, { 0 }, 0, 0 }
-};
+	f = fopen(conffile, "r");
+	if (f == NULL) {
+		printf("%% Configuration file %s not found\n", conffile);
+		printf("%% Use 'init' to create default configuration\n");
+		return;
+	}
+	printf("%% Configuration: %s\n", conffile);
+	printf("%% ----------------------------------------\n");
+	while (fgets(line, sizeof(line), f) != NULL) {
+		printf("%s", line);
+	}
+	printf("%% ----------------------------------------\n");
+	fclose(f);
+}
 
-char *ctl_bgp_test[] = { BGPD, "-nf", BGPCONF_TEMP, NULL, '\0' };
-struct ctl ctl_bgp[] = {
-	{ "enable",     "enable service",
-	    { BGPD, "-f", BGPCONF_TEMP, NULL }, NULL, X_ENABLE },
-	{ "disable",    "disable service",
-	    { PKILL, "bgpd", NULL }, NULL, X_DISABLE },
-	{ "edit",       "edit configuration",
-	    { "bgp", (char *)ctl_bgp_test, NULL }, call_editor, NULL },
-	{ "reload",     "reload service",
-	    { BGPCTL, "reload", NULL }, NULL, NULL },
-	{ "fib",	"fib couple/decouple",
-	    { BGPCTL, "fib", REQ, NULL }, NULL, NULL },
-	{ "irrfilter",	"generate bgpd filters",
-	    { BGPCTL, "irrfilter", REQ, OPT, NULL }, NULL, NULL },
-	{ "neighbor",	"neighbor up/down/clear/refresh",
-	    { BGPCTL, "neighbor", OPT, OPT, NULL }, NULL, NULL },
-	{ "network",	"network add/delete/flush/show",
-	    { BGPCTL, "network", REQ, OPT, NULL }, NULL, NULL },
-        { 0, 0, { 0 }, 0, 0 }
-};
+/*
+ * Show daemon status
+ */
+void
+ctl_show_status(char *daemon, char **notused, char *notused2)
+{
+	char cmd[256];
+	FILE *f;
+	char line[64];
+	int found = 0;
 
-char *ctl_rip_test[] = { RIPD, "-nf", RIPCONF_TEMP, '\0' };
-struct ctl ctl_rip[] = {
-	{ "enable",     "enable service",
-	    { RIPD, "-f", RIPCONF_TEMP, NULL }, NULL, X_ENABLE },
-	{ "disable",    "disable service",
-	    { PKILL, "ripd", NULL }, NULL, X_DISABLE },
-	{ "edit",       "edit configuration",
-	    { "rip", (char *)ctl_rip_test, NULL }, call_editor, NULL },
-	{ "reload",     "reload service",
-	    { RIPCTL, "reload", NULL }, NULL, NULL },
-	{ "fib",        "fib couple/decouple",
-	    { RIPCTL, "fib", REQ, NULL }, NULL, NULL },
-	{ 0, 0, { 0 }, 0, 0 }
-};
+	snprintf(cmd, sizeof(cmd), "/usr/bin/pgrep -l %s 2>/dev/null", daemon);
+	f = popen(cmd, "r");
+	if (f != NULL) {
+		while (fgets(line, sizeof(line), f) != NULL) {
+			if (!found) {
+				printf("%% %s is running:\n", daemon);
+				found = 1;
+			}
+			printf("%%   PID %s", line);
+		}
+		pclose(f);
+	}
+	if (!found) {
+		printf("%% %s is not running\n", daemon);
+	}
+}
 
-char *ctl_ipsec_test[] = { IPSECCTL, "-nf", IPSECCONF_TEMP, '\0' };
-struct ctl ctl_ipsec[] = {
-	{ "enable",     "enable service",
-	    { ISAKMPD, "-Sa", NULL }, NULL, X_ENABLE },
-	{ "disable",    "disable service",                   
-	    { PKILL, "isakmpd", NULL }, NULL, X_DISABLE },
-	{ "edit",       "edit configuration",   
-	    { "ipsec", (char *)ctl_ipsec_test, NULL }, call_editor, NULL },
-	{ "reload",     "reload service",
-	    { IPSECCTL, "-f", IPSECCONF_TEMP, NULL }, NULL, NULL },
-	{ 0, 0, { 0 }, 0, 0 }
-};
+/*
+ * Set/replace a config line (key value)
+ */
+void
+ctl_set_config(char *conffile, char **args, char *notused)
+{
+	FILE *f, *tmp;
+	char tmpfile[256];
+	char line[1024];
+	char *key = args[1];
+	char *value = args[2];
+	int found = 0;
 
-char *ctl_dvmrp_test[] = { DVMRPD, "-nf", DVMRPCONF_TEMP, '\0' };
-struct ctl ctl_dvmrp[] = {
-	{ "enable",     "enable service",
-	    { DVMRPD, "-f", DVMRPCONF_TEMP, NULL }, NULL, X_ENABLE },
-	{ "disable",    "disable service",   
-	    { PKILL, "dvmrpd", NULL }, NULL, X_DISABLE },
-	{ "edit",       "edit configuration",
-	    { "dvmrp", (char *)ctl_dvmrp_test,  NULL }, call_editor, NULL },
-	{ 0, 0, { 0 }, 0, 0 }
-};
+	if (key == NULL) {
+		printf("%% Usage: set <key> <value>\n");
+		return;
+	}
 
-struct ctl ctl_sasync[] = {
-	{ "enable",     "enable service",
-	    { SASYNCD, "-c", SASYNCCONF_TEMP, NULL }, NULL, X_ENABLE },
-	{ "disable",    "disable service",
-	    { PKILL, "sasyncd", NULL }, NULL, X_DISABLE },
-	{ "edit",       "edit configuration",
-	    { "sasync", NULL, NULL }, call_editor, NULL },
-	{ 0, 0, { 0 }, 0, 0 }
-};
+	snprintf(tmpfile, sizeof(tmpfile), "%s.tmp", conffile);
 
-char *ctl_dhcp_test[] = { DHCPD, "-nc", DHCPCONF_TEMP, '\0' };
-struct ctl ctl_dhcp[] = {
-	{ "enable",     "enable service",
-	    { DHCPD, "-c", DHCPCONF_TEMP, NULL }, NULL, X_ENABLE },
-	{ "disable",    "disable service",
-	    { PKILL, "dhcpd", NULL }, NULL, X_DISABLE },
-	{ "edit",       "edit configuration",
-	    { "dhcp", (char *)ctl_dhcp_test, NULL }, call_editor, NULL },
-	{ 0, 0, { 0 }, 0, 0 }
-};
+	f = fopen(conffile, "r");
+	tmp = fopen(tmpfile, "w");
+	if (tmp == NULL) {
+		printf("%% Cannot write to %s\n", tmpfile);
+		if (f) fclose(f);
+		return;
+	}
 
-char *ctl_snmp_test[] = { SNMPD, "-nf", SNMPCONF_TEMP, '\0' };
-struct ctl ctl_snmp[] = {
-	{ "enable",     "enable service",
-	    { SNMPD, "-f", SNMPCONF_TEMP, NULL }, NULL, X_ENABLE },
-	{ "disable",    "disable service",
-	    { PKILL, "snmpd", NULL }, NULL, X_DISABLE },
-	{ "edit",       "edit configuration",
-	    { "snmp", (char *)ctl_snmp_test, NULL }, call_editor, NULL },
-	{ "trap",	"send traps",
-	    { SNMPCTL, "trap", "send", REQ, OPT, NULL }, NULL, NULL },
-	{ 0, 0, { 0 }, 0, 0 }
-};
+	/* Read existing config and replace matching line */
+	if (f != NULL) {
+		while (fgets(line, sizeof(line), f) != NULL) {
+			if (strncmp(line, key, strlen(key)) == 0 &&
+			    (line[strlen(key)] == ' ' || line[strlen(key)] == '\t')) {
+				found = 1;
+				if (value)
+					fprintf(tmp, "%s %s\n", key, value);
+				else
+					fprintf(tmp, "%s\n", key);
+			} else {
+				fprintf(tmp, "%s", line);
+			}
+		}
+		fclose(f);
+	}
 
-struct ctl ctl_sshd[] = {
-	{ "enable",	"enable service",
-	    { SSHD, "-f", SSHDCONF_TEMP, NULL }, NULL, X_ENABLE },
-	{ "disable",	"disable service",
-	    { PKILL, "-f", SSHD, "-f", SSHDCONF_TEMP, NULL }, NULL, X_DISABLE },
-	{ "edit",	"edit configuration",
-	    { "sshd", NULL, NULL }, call_editor, NULL },
-	{ 0, 0, { 0 }, 0, 0 }
-};
+	/* Append if not found */
+	if (!found) {
+		if (value)
+			fprintf(tmp, "%s %s\n", key, value);
+		else
+			fprintf(tmp, "%s\n", key);
+	}
 
-char *ctl_ntp_test[] = { NTPD, "-nf", NTPCONF_TEMP, '\0' };
-struct ctl ctl_ntp[] = {
-	{ "enable",     "enable service",
-	    { NTPD, "-sf", NTPCONF_TEMP, NULL }, NULL, X_ENABLE },
-	{ "disable",    "disable service",
-	    { PKILL, "ntpd", NULL }, NULL, X_DISABLE },
-	{ "edit",       "edit configuration",
-	    { "ntp", (char *)ctl_ntp_test, NULL }, call_editor, NULL },
-	{ 0, 0, { 0 }, 0, 0 }
-};
+	fclose(tmp);
+	rename(tmpfile, conffile);
+	chmod(conffile, 0600);
+	printf("%% Configuration updated\n");
+}
 
-char *ctl_relay_test[] = { RELAYD, "-nf", RELAYCONF_TEMP, '\0' };
-struct ctl ctl_relay[] = {
-	{ "enable",	"enable service",
-	    { RELAYD, "-f", RELAYCONF_TEMP, NULL }, NULL, X_ENABLE },
-        { "disable",	"disable service",
-	    { PKILL, "relayd", NULL }, NULL, X_DISABLE },
-        { "edit",	"edit configuration",
-	    { "relay", (char *)ctl_relay_test, NULL }, call_editor, NULL },
-        { "reload",	"reload configuration",
-	    { RELAYCTL, "reload", NULL }, NULL, NULL },
-	{ "host",	"per-host control",
-	    { RELAYCTL, "host", OPT, OPT, NULL }, NULL, NULL },
-	{ "table",	"per-table control",
-	    { RELAYCTL, "table", OPT, OPT, NULL }, NULL, NULL },
-	{ "redirect",	"per-redirect control",
-	    { RELAYCTL, "redirect", OPT, OPT, NULL }, NULL, NULL },
-	{ "monitor",	"monitor mode",
-	    { RELAYCTL, "monitor", NULL }, NULL, NULL },
-	{ "poll",	"poll mode",
-	    { RELAYCTL, "poll", NULL }, NULL, NULL},
-	{ 0, 0, { 0 }, 0, 0 }
-};
+/*
+ * Remove a config line
+ */
+void
+ctl_unset_config(char *conffile, char **args, char *notused)
+{
+	FILE *f, *tmp;
+	char tmpfile[256];
+	char line[1024];
+	char *key = args[1];
+	int removed = 0;
 
-struct ctl ctl_ftpproxy[] = {
-	{ "enable",	"enable service",
-	    { FTPPROXY, "-T", "ftp-proxy", "-D", "2", NULL }, NULL, X_ENABLE },
-	{ "disable",	"disable service",
-	    { PKILL, "ftp-proxy", NULL }, NULL, X_DISABLE },
-	{ 0, 0, { 0 }, 0, 0 }
-};
+	if (key == NULL) {
+		printf("%% Usage: unset <key>\n");
+		return;
+	}
 
-struct ctl ctl_dns[] = {
-	{ "local-control", "local control over DNS settings",
-	    { RESOLVCONF_SYM, NULL, RESOLVCONF_TEMP, NULL }, ctl_symlink,
-	    X_LOCAL },
-	{ "dhcp-control",   "DHCP client control over DNS settings",
-	    { RESOLVCONF_SYM, NULL, RESOLVCONF_DHCP, NULL }, ctl_symlink,
-	    X_OTHER },
-	{ "edit",	    "edit DNS settings",
-	    { "dns", NULL, NULL }, call_editor, NULL },
-	{ 0, 0, { 0 }, 0, 0 }
-};
+	snprintf(tmpfile, sizeof(tmpfile), "%s.tmp", conffile);
 
-struct ctl ctl_inet[] = {
-	{ "enable",     "enable service",
-	    { INETD, INETCONF_TEMP, NULL }, NULL, X_ENABLE },
-	{ "disable",    "disable service",
-	    { PKILL, "inetd", NULL }, NULL, X_DISABLE },
-	{ "edit",       "edit configuration",
-	    { "inet", NULL, NULL }, call_editor, NULL },
-	{ 0, 0, { 0 }, 0, 0 }
-};
+	f = fopen(conffile, "r");
+	if (f == NULL) {
+		printf("%% Configuration file not found\n");
+		return;
+	}
 
+	tmp = fopen(tmpfile, "w");
+	if (tmp == NULL) {
+		printf("%% Cannot write to %s\n", tmpfile);
+		fclose(f);
+		return;
+	}
+
+	while (fgets(line, sizeof(line), f) != NULL) {
+		if (strncmp(line, key, strlen(key)) == 0 &&
+		    (line[strlen(key)] == ' ' || line[strlen(key)] == '\t' ||
+		     line[strlen(key)] == '\n')) {
+			removed = 1;
+			continue;
+		}
+		fprintf(tmp, "%s", line);
+	}
+
+	fclose(f);
+	fclose(tmp);
+	rename(tmpfile, conffile);
+	chmod(conffile, 0600);
+
+	if (removed)
+		printf("%% Configuration line removed\n");
+	else
+		printf("%% Key not found in configuration\n");
+}
+
+/*
+ * Append a line to config
+ */
+void
+ctl_append_config(char *conffile, char **args, char *notused)
+{
+	FILE *f;
+	char *line = args[1];
+	int i;
+
+	if (line == NULL) {
+		printf("%% Usage: append <config line>\n");
+		return;
+	}
+
+	f = fopen(conffile, "a");
+	if (f == NULL) {
+		printf("%% Cannot open %s for writing\n", conffile);
+		return;
+	}
+
+	/* Write all remaining args as one line */
+	for (i = 1; args[i] != NULL; i++) {
+		fprintf(f, "%s", args[i]);
+		if (args[i+1] != NULL)
+			fprintf(f, " ");
+	}
+	fprintf(f, "\n");
+	fclose(f);
+	chmod(conffile, 0600);
+	printf("%% Configuration line appended\n");
+}
+
+/*
+ * Initialize config with defaults
+ */
+void
+ctl_init_config(char *conffile, char **defaults, char *notused)
+{
+	FILE *f;
+	struct stat sb;
+
+	if (stat(conffile, &sb) == 0) {
+		printf("%% Configuration file already exists\n");
+		printf("%% Use 'show' to view or 'set'/'unset' to modify\n");
+		return;
+	}
+
+	f = fopen(conffile, "w");
+	if (f == NULL) {
+		printf("%% Cannot create %s\n", conffile);
+		return;
+	}
+
+	/* Write default config passed in defaults array */
+	if (defaults != NULL && defaults[1] != NULL) {
+		fprintf(f, "%s", defaults[1]);
+	} else {
+		fprintf(f, "# Default configuration\n");
+	}
+
+	fclose(f);
+	chmod(conffile, 0600);
+	printf("%% Default configuration created at %s\n", conffile);
+}
+
+/*
+ * Master daemon registry
+ * References control arrays from ctl_*.c files
+ */
 struct daemons ctl_daemons[] = {
+	/* Packet Filter */
 	{ "pf",		"PF",	ctl_pf,		PFCONF_TEMP,	0600, 1 },
+	/* Routing protocols */
 	{ "ospf",	"OSPF", ctl_ospf,	OSPFCONF_TEMP,	0600, 0 },
 	{ "bgp",	"BGP",	ctl_bgp,	BGPCONF_TEMP,	0600, 0 },
 	{ "rip",	"RIP",	ctl_rip,	RIPCONF_TEMP,	0600, 0 },
+	{ "ldp",	"MPLS LDP", ctl_ldp,	LDPDCONF_TEMP,	0600, 0 },
+	{ "eigrp",	"EIGRP", ctl_eigrp,	EIGRPDCONF_TEMP, 0600, 0 },
+	/* Network services */
 	{ "relay",	"Relay", ctl_relay,	RELAYCONF_TEMP,	0600, 0 },
-	{ "ipsec",	"IPsec", ctl_ipsec,	IPSECCONF_TEMP,	0600, 1 },
-	{ "dvmrp",	"DVMRP", ctl_dvmrp,	DVMRPCONF_TEMP, 0600, 0 },
-	{ "sasync",	"SAsync", ctl_sasync,	SASYNCCONF_TEMP,0600, 0 },
 	{ "dhcp",	"DHCP",	ctl_dhcp,	DHCPCONF_TEMP,	0600, 0 },
 	{ "snmp",	"SNMP",	ctl_snmp,	SNMPCONF_TEMP,	0600, 0 },
 	{ "sshd",	"SSH",	ctl_sshd,	SSHDCONF_TEMP,	0600, 0 },
 	{ "ntp",	"NTP",	ctl_ntp,	NTPCONF_TEMP,	0600, 0 },
+	{ "unbound",	"DNS Resolver", ctl_unbound, UNBOUNDCONF_TEMP, 0600, 0 },
+	{ "httpd",	"HTTP Server", ctl_httpd, HTTPDCONF_TEMP, 0600, 0 },
+	{ "smtpd",	"Mail", ctl_smtpd,	SMTPDCONF_TEMP,	0600, 0 },
+	{ "acme",	"ACME/LE", ctl_acme,	ACMECONF_TEMP,	0600, 0 },
+	/* VPN */
+	{ "ipsec",	"IPsec", ctl_ipsec,	IPSECCONF_TEMP,	0600, 1 },
+	{ "iked",	"IKEv2 VPN", ctl_iked,	IKEDCONF_TEMP,	0600, 0 },
+	{ "wireguard",	"WireGuard", ctl_wg,	WGCONF_TEMP,	0600, 0 },
+	/* Miscellaneous */
+	{ "dvmrp",	"DVMRP", ctl_dvmrp,	DVMRPCONF_TEMP, 0600, 0 },
+	{ "sasync",	"SAsync", ctl_sasync,	SASYNCCONF_TEMP,0600, 0 },
 	{ "ftp-proxy",  "FTP proxy", ctl_ftpproxy, FTPPROXY_TEMP, 0600, 0 },
 	{ "dns", 	"DNS", ctl_dns,		RESOLVCONF_TEMP,0644, 0 },
 	{ "inet",	"Inet", ctl_inet,	INETCONF_TEMP,	0600, 0 },
+	{ "rad",	"Router Adv", ctl_rad,	RADCONF_TEMP,	0600, 0 },
+	{ "pflog",	"PF Log", ctl_pflog,	PFLOGD_LOGFILE, 0600, 0 },
 	{ 0, 0, 0, 0, 0 }
 };
 
+/*
+ * Symlink management for DNS control
+ */
 void
 ctl_symlink(char *temp, char **z, char *real)
 {
 	rmtemp(temp);
-	symlink(real,temp);
+	symlink(real, temp);
 }
 
-/* flag to other nsh sessions or nsh conf() that actions have been taken with parameter in text file*/
+/*
+ * Flag to other nsh sessions or nsh conf() that actions have been taken
+ * with parameter in text file
+ */
 void
 flag_x(char *fname, int *y, char *data)
 {
@@ -302,7 +360,7 @@ flag_x(char *fname, int *y, char *data)
 		chmod(fother, 0600);
 		if (data)
 			fprintf(file, "%s", data);
-		fclose(file);   
+		fclose(file);
 	} else if (y == X_LOCAL) {
 		rmtemp(fother);
 		if ((file = fopen(flocal, "w")) == NULL)
@@ -314,6 +372,10 @@ flag_x(char *fname, int *y, char *data)
 	}
 }
 
+/*
+ * Main control handler
+ * Dispatches commands to appropriate daemon control tables
+ */
 int
 ctlhandler(int argc, char **argv, char *modhvar)
 {
@@ -380,6 +442,9 @@ ctlhandler(int argc, char **argv, char *modhvar)
 	return 1;
 }
 
+/*
+ * Call editor for configuration files
+ */
 void
 call_editor(char *name, char **args, char *z)
 {
@@ -413,6 +478,9 @@ call_editor(char *name, char **args, char *z)
 		    daemons->propername);
 }
 
+/*
+ * Write a rule line to configuration file
+ */
 int
 rule_writeline(char *fname, mode_t mode, char *writeline)
 {
@@ -431,6 +499,9 @@ rule_writeline(char *fname, mode_t mode, char *writeline)
 	return(0);
 }
 
+/*
+ * Acquire file lock for configuration editing
+ */
 int
 acq_lock(char *fname)
 {
@@ -454,6 +525,9 @@ acq_lock(char *fname)
 	}
 }
 
+/*
+ * Release file lock
+ */
 void
 rls_lock(int fd)
 {
@@ -463,6 +537,9 @@ rls_lock(int fd)
 	return;
 }
 
+/*
+ * Remove temporary file
+ */
 void
 rmtemp(char *file)
 {

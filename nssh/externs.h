@@ -116,6 +116,16 @@ extern char metricnames[];
 #define RESOLVCONF_DHCP	"/var/run/resolv.conf.dhcp"
 #define INETCONF_TEMP	"/var/run/inetd.conf"
 #define SSHDCONF_TEMP	"/var/run/sshd.conf"
+/* OpenBSD base system services temp configs */
+#define UNBOUNDCONF_TEMP "/var/run/unbound.conf"
+#define HTTPDCONF_TEMP	"/var/run/httpd.conf"
+#define IKEDCONF_TEMP	"/var/run/iked.conf"
+#define RADCONF_TEMP	"/var/run/rad.conf"
+#define SMTPDCONF_TEMP	"/var/run/smtpd.conf"
+#define ACMECONF_TEMP	"/var/run/acme-client.conf"
+#define LDPDCONF_TEMP	"/var/run/ldpd.conf"
+#define PFLOGD_LOGFILE	"/var/log/pflog"
+#define EIGRPDCONF_TEMP	"/var/run/eigrpd.conf"
 /* flag_x flags */
 #define X_ENABLE  (void *)1
 #define X_DISABLE (void *)2
@@ -137,6 +147,8 @@ void rmtemp(char *);
 #define DVMRPCTL	"/usr/sbin/dvmrpctl"
 #define RELAYCTL	"/usr/sbin/relayctl"
 #define SNMPCTL		"/usr/sbin/snmpctl"
+#define LDPCTL		"/usr/sbin/ldpctl"
+#define EIGRPCTL	"/usr/sbin/eigrpctl"
 struct ctl {
 	char *name;
 	char *help;
@@ -168,6 +180,17 @@ extern struct ctl ctl_ntp[];
 extern struct ctl ctl_ftpproxy[];
 extern struct ctl ctl_dns[];
 extern struct ctl ctl_inet[];
+/* OpenBSD base system services */
+extern struct ctl ctl_unbound[];
+extern struct ctl ctl_httpd[];
+extern struct ctl ctl_iked[];
+extern struct ctl ctl_rad[];
+extern struct ctl ctl_smtpd[];
+extern struct ctl ctl_acme[];
+extern struct ctl ctl_ldp[];
+extern struct ctl ctl_pflog[];
+extern struct ctl ctl_eigrp[];
+extern struct ctl ctl_wg[];
 void flag_x(char *, int *, char *);
 
 /* commands.c */
@@ -434,3 +457,13 @@ void inithist(void);
 void endhist(void);
 void initedit(void);
 void endedit(void);
+
+/* wg.c */
+#define IFCONFIG	"/sbin/ifconfig"
+#define WGCONF_TEMP	"/var/run/wg.conf"
+int intwg(char *, int, int, char **);
+int intwgkey(char *, int, int, char **);
+int intwgrtable(char *, int, int, char **);
+int show_wg(int, char **);
+void wg_stats(void);
+int conf_wg(FILE *, int, char *);

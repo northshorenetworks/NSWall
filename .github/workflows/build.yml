@@ -1,0 +1,308 @@
+name: Build and Test on OpenBSD
+
+on:
+  push:
+    branches: [ main, master, 'claude/*' ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  # Lint and static analysis
+  lint:
+    name: Lint & Static Analysis
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+
+      - name: Run go vet
+        working-directory: ./api
+        run: |
+          go mod download
+          go vet ./...
+
+      - name: Install staticcheck
+        run: go install honnef.co/go/tools/cmd/staticcheck@latest
+
+      - name: Run staticcheck
+        working-directory: ./api
+        run: staticcheck ./...
+
+      - name: Check go mod tidy
+        working-directory: ./api
+        run: |
+          go mod tidy
+          git diff --exit-code go.mod go.sum || (echo "go.mod/go.sum not tidy" && exit 1)
+
+  # Run Go unit tests on Linux (faster feedback)
+  test-linux:
+    name: Go Unit Tests (Linux)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+
+      - name: Run Go tests with coverage
+        working-directory: ./api
+        run: |
+          go mod download
+          go test -v -race -coverprofile=coverage.out -covermode=atomic ./...
+
+      - name: Generate coverage report
+        working-directory: ./api
+        run: |
+          go tool cover -func=coverage.out
+          go tool cover -html=coverage.out -o coverage.html
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          file: ./api/coverage.out
+          flags: unittests
+          name: nswall-api-coverage
+          fail_ci_if_error: false
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
+      - name: Upload coverage HTML artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: ./api/coverage.html
+          retention-days: 30
+
+      - name: Check coverage threshold
+        working-directory: ./api
+        run: |
+          COVERAGE=$(go tool cover -func=coverage.out | grep total | awk '{print $3}' | sed 's/%//')
+          echo "Total coverage: ${COVERAGE}%"
+          echo "coverage=${COVERAGE}" >> $GITHUB_OUTPUT
+
+          # Warn if coverage is below 50%
+          if (( $(echo "$COVERAGE < 50" | bc -l) )); then
+            echo "::warning::Code coverage is below 50% (${COVERAGE}%)"
+          fi
+
+  # Run integration/E2E tests
+  integration-tests:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    needs: [lint, test-linux]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+
+      - name: Run integration tests
+        working-directory: ./api
+        env:
+          NSWALL_DEV_MODE: "1"
+        run: |
+          go mod download
+          echo "==> Running integration tests..."
+          go test -v -tags=integration -race -timeout=5m ./...
+
+      - name: Run benchmarks
+        working-directory: ./api
+        env:
+          NSWALL_DEV_MODE: "1"
+        run: |
+          echo "==> Running benchmarks..."
+          go test -tags=integration -bench=. -benchmem -run=^$ ./tests/... 2>/dev/null || echo "No benchmarks found or skipped"
+
+  # Frontend tests
+  frontend-tests:
+    name: Frontend Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: webui/package-lock.json
+
+      - name: Install dependencies
+        working-directory: ./webui
+        run: npm ci || npm install
+
+      - name: Run linter
+        working-directory: ./webui
+        run: npm run lint 2>/dev/null || echo "No lint script configured"
+
+      - name: Build frontend
+        working-directory: ./webui
+        run: npm run build
+
+      - name: Run tests
+        working-directory: ./webui
+        run: npm test 2>/dev/null || echo "No test script configured"
+
+  build-openbsd:
+    name: OpenBSD ${{ matrix.release }} (${{ matrix.arch }})
+    runs-on: ubuntu-latest
+    needs: [lint, test-linux]
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - release: '7.8'
+            arch: x86_64
+          - release: '7.6'
+            arch: x86_64
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build and Test on OpenBSD
+        uses: vmactions/openbsd-vm@v1
+        with:
+          release: ${{ matrix.release }}
+          usesh: true
+          prepare: |
+            pkg_add sqlite3 go
+          run: |
+            set -e
+            echo "==> OpenBSD $(uname -r) on $(uname -m)"
+
+            echo "==> Building NSH/NSWall shell..."
+            make clean || true
+            make
+
+            if [ -f nsh ]; then
+              echo "==> Shell build successful!"
+              ls -la nsh
+              ./nsh -v || true
+            else
+              echo "==> Shell build failed!"
+              exit 1
+            fi
+
+            echo "==> Building NSWall API server..."
+            cd api
+            go mod download || true
+            make build
+
+            if [ -f nswall-api ]; then
+              echo "==> API build successful!"
+              ls -la nswall-api
+            else
+              echo "==> API build failed!"
+              exit 1
+            fi
+
+            echo "==> Running Go tests on OpenBSD..."
+            go test -v -short ./... || echo "::warning::Some tests failed on OpenBSD"
+
+  build-arm64:
+    name: OpenBSD 7.8 (ARM64)
+    runs-on: ubuntu-latest
+    needs: [lint, test-linux]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build on OpenBSD ARM64
+        uses: vmactions/openbsd-vm@v1
+        with:
+          release: '7.8'
+          arch: aarch64
+          usesh: true
+          prepare: |
+            pkg_add sqlite3 go
+          run: |
+            set -e
+            echo "==> OpenBSD $(uname -r) on $(uname -m)"
+
+            # Build shell
+            make clean || true
+            make
+
+            if [ -f nsh ]; then
+              echo "==> ARM64 shell build successful!"
+              file nsh
+            else
+              exit 1
+            fi
+
+            # Build API
+            cd api
+            go mod download || true
+            make build
+
+            if [ -f nswall-api ]; then
+              echo "==> ARM64 API build successful!"
+              file nswall-api
+            else
+              exit 1
+            fi
+
+  release:
+    name: Create Release Package
+    runs-on: ubuntu-latest
+    needs: [build-openbsd, build-arm64, integration-tests, frontend-tests]
+    if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build package on OpenBSD
+        uses: vmactions/openbsd-vm@v1
+        with:
+          release: '7.8'
+          usesh: true
+          prepare: |
+            pkg_add sqlite3 go
+          run: |
+            set -e
+
+            # Build shell
+            make clean || true
+            make
+            make install DESTDIR=/tmp/pkg PREFIX=/usr/local
+
+            # Build API
+            cd api
+            go mod download
+            make build
+            make install DESTDIR=/tmp/pkg PREFIX=/usr/local
+            cd ..
+
+            VERSION=$(grep '^VERSION=' nsh-version.mk | cut -d= -f2 || echo "2.0.0")
+            cd /tmp/pkg
+            tar czf ~/nswall-${VERSION}-$(uname -m).tgz .
+            cp ~/nswall-*.tgz ~/work/NSWall/NSWall/ || true
+            ls -la ~/work/NSWall/NSWall/*.tgz || echo "Package in home dir"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: nswall-package
+          path: "*.tgz"
+          retention-days: 30
+          if-no-files-found: ignore

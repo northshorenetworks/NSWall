@@ -5,13 +5,24 @@ PROG= nsh
 CFLAGS=-O -Wmissing-prototypes -Wformat -Wall -Wpointer-arith -Wbad-function-cast #-W
 
 SRCS=arp.c compile.c main.c genget.c commands.c stats.c routesys.c
-SRCS+=ctl.c show.c if.c version.c route.c conf.c complete.c ieee80211.c
+SRCS+=ctl.c ctl_pf.c ctl_routing.c ctl_services.c ctl_vpn.c ctl_misc.c
+SRCS+=show.c if.c version.c route.c conf.c complete.c ieee80211.c
 SRCS+=bridge.c tunnel.c media.c sysctl.c passwd.c pfsync.c carp.c
-SRCS+=trunk.c who.c timeslot.c more.c stringlist.c
+SRCS+=trunk.c who.c timeslot.c more.c stringlist.c wg.c
 CLEANFILES+=compile.c
 LDADD=-ledit -ltermcap #-static
 
 NOMAN=1
+
+# Test targets
+test:
+	@echo "================================"
+	@echo "NSsh Unit and Integration Tests"
+	@echo "================================"
+	cd ${.CURDIR}/tests && make test
+
+test-clean:
+	cd ${.CURDIR}/tests && make clean
 
 compile.c: compile.sh
 	sh ${.CURDIR}/misc-precompile.sh

@@ -1,0 +1,17 @@
+enable
+config 
+flush arp
+flush ndp
+flush history
+flush bridge-all bridge101
+flush pf all
+flush pf filter
+flush pf os-fingerprint
+flush pf reset
+flush pf source-table
+flush pf states
+flush pf stats
+flush pf tables
+flush line stty0
+exit
+disable

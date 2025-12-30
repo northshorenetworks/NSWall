@@ -1,0 +1,57 @@
+# NSWall Configuration File
+# /etc/nswall/nswall.conf
+#
+# This file is read by nswall on startup and can be reloaded
+# with 'configure terminal' followed by the config commands
+#
+# Basic syntax follows Junos/IOS style:
+#   interface em0
+#     ip 10.0.0.1/24
+#     description "WAN Interface"
+#   !
+#
+# Lines starting with ! are comments in running config
+# Lines starting with # are stripped on save
+#
+
+# System Configuration
+hostname nswall
+
+# Enable IP forwarding
+ip forwarding
+
+# Interface Configuration
+interface em0
+  description "External/WAN Interface"
+  ! ip address configured via DHCP or set manually
+  ! ip 192.168.1.1/24
+!
+
+interface em1
+  description "Internal/LAN Interface"
+  ip 10.0.0.1/24
+!
+
+# Packet Filter (Firewall) Configuration
+# pf enable
+# pf rules are managed via 'pf' commands
+
+# Routing Configuration
+# route add default 192.168.1.254
+
+# BGP Configuration (if needed)
+# bgp enable
+# bgp edit
+
+# OSPF Configuration (if needed)
+# ospf enable
+# ospf edit
+
+# High Availability (if needed)
+# interface carp0
+#   vhid 1
+#   advskew 100
+#   cpass "secretpassword"
+#   carpdev em0
+#   ip 10.0.0.254/24
+# !

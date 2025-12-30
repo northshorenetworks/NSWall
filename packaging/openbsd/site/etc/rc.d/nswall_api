@@ -1,0 +1,28 @@
+#!/bin/ksh
+#
+# NSWall API Service
+
+daemon="/usr/local/bin/nswall-api"
+daemon_flags="-listen :443 -tls -cert /etc/ssl/nswall.crt -key /etc/ssl/private/nswall.key"
+daemon_user="_nswall"
+
+. /etc/rc.d/rc.subr
+
+rc_bg=YES
+rc_reload=NO
+
+rc_start() {
+	# Check for initial config import (nsh.conf is the single source of truth)
+	if [ -f /var/nswall/import-config.nsh ]; then
+		echo "Importing NSH configuration..."
+		cp /var/nswall/import-config.nsh /etc/nsh/nsh.conf
+		chmod 600 /etc/nsh/nsh.conf
+		rm -f /var/nswall/import-config.nsh
+		# Apply the imported config (regenerates pf.conf, etc.)
+		nsh -c "write-config" 2>/dev/null || true
+	fi
+
+	${rcexec} "${daemon} ${daemon_flags}"
+}
+
+rc_cmd $1

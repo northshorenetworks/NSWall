@@ -153,10 +153,13 @@ Menu showlist[] = {
 	{ "rip",	"RIP information",	CMPL(ta) (char **)rics, sizeof(struct prot1), 0, 3, pr_prot1 },
 	{ "dvmrp",	"DVMRP information",	CMPL(ta) (char **)dvcs, sizeof(struct prot1), 0, 2, pr_prot1 },
 	{ "relay",	"Relay server",		CMPL(ta) (char **)rlcs, sizeof(struct prot1), 0, 1, pr_prot1 },
+	{ "ldp",	"MPLS LDP information",	CMPL(ta) (char **)ldcs, sizeof(struct prot1), 0, 3, pr_prot1 },
+	{ "eigrp",	"EIGRP information",	CMPL(ta) (char **)eics, sizeof(struct prot1), 0, 3, pr_prot1 },
 	{ "dhcp",	"DHCP server",		CMPL(ta) (char **)dhcs, sizeof(struct prot1), 0, 1, pr_dhcp },
 	{ "monitor",	"Monitor routing/arp table changes", CMPL0 0, 0, 0, 0, monitor },
 	{ "version",	"Software information",	CMPL0 0, 0, 0, 0, version },
 	{ "users",	"System users",		CMPL0 0, 0, 0, 0, who },
+	{ "wireguard",	"WireGuard VPN status",	CMPL(i) 0, 0, 1, 1, show_wg },
 	{ "running-config",	"Operating configuration", CMPL0 0, 0, 0, 0, pr_conf },
 	{ "startup-config", "Startup configuration", CMPL0 0, 0, 0, 0, pr_s_conf },
 	{ "?",		"Options",		CMPL0 0, 0, 0, 0, show_help },
@@ -450,6 +453,14 @@ struct intlist Intlist[] = {
 	{ "cpass",	"CARP passphrase",			CMPL0 0, 0, intcpass, 0 },
 	{ "carpdev",	"CARP device",				CMPL0 0, 0, intcdev, 0 },
 	{ "carpnode",	"CARP additional vhid/advskew",		CMPL0 0, 0, intcnode, 0 },
+	{ "wgport",	"WireGuard listen port",		CMPL0 0, 0, intwg, 0 },
+	{ "wgkey",	"WireGuard private key",		CMPL0 0, 0, intwgkey, 0 },
+	{ "wgpeer",	"WireGuard peer public key",		CMPL0 0, 0, intwg, 0 },
+	{ "wgaip",	"WireGuard allowed IPs for peer",	CMPL0 0, 0, intwg, 0 },
+	{ "wgendpoint",	"WireGuard peer endpoint",		CMPL0 0, 0, intwg, 0 },
+	{ "wgpsk",	"WireGuard preshared key",		CMPL0 0, 0, intwg, 0 },
+	{ "wgpka",	"WireGuard persistent keepalive",	CMPL0 0, 0, intwg, 0 },
+	{ "wgrtable",	"WireGuard routing table",		CMPL0 0, 0, intwgrtable, 0 },
 	{ "vlan",	"802.1Q vlan tag and parent",		CMPL0 0, 0, intvlan, 0 },
 	{ "timeslots",	"TDM timeslots",			CMPL0 0, 0, inttimeslot, 0},
 	{ "debug",	"Driver dependent debugging",		CMPL0 0, 0, intflags, 0 },
@@ -767,6 +778,17 @@ Command cmdtab[] = {
 	{ "ftp-proxy",  ftpproxyhelp,	CMPL(t) (char **)ctl_ftpproxy, ssctl, ctlhandler,  1, 0, 0, 1 },
 	{ "dns",	dnshelp,	CMPL(t) (char **)ctl_dns, ssctl, ctlhandler,	1, 0, 0, 1 },
 	{ "inet",	inethelp,	CMPL(t) (char **)ctl_inet, ssctl, ctlhandler,	1, 0, 0, 1 },
+	{ "wireguard",	"WireGuard VPN control",	CMPL(t) (char **)ctl_wg, ssctl, ctlhandler,	1, 0, 0, 1 },
+	/* OpenBSD base system services */
+	{ "unbound",	"DNS resolver (DNSSEC)",	CMPL(t) (char **)ctl_unbound, ssctl, ctlhandler,	1, 0, 0, 1 },
+	{ "httpd",	"HTTP server control",		CMPL(t) (char **)ctl_httpd, ssctl, ctlhandler,	1, 0, 0, 1 },
+	{ "iked",	"IKEv2 VPN control",		CMPL(t) (char **)ctl_iked, ssctl, ctlhandler,	1, 0, 0, 1 },
+	{ "rad",	"IPv6 Router Advertisement",	CMPL(t) (char **)ctl_rad, ssctl, ctlhandler,	1, 0, 0, 1 },
+	{ "smtpd",	"OpenSMTPD mail control",	CMPL(t) (char **)ctl_smtpd, ssctl, ctlhandler,	1, 0, 0, 1 },
+	{ "acme",	"ACME/Let's Encrypt certs",	CMPL(t) (char **)ctl_acme, ssctl, ctlhandler,	1, 0, 0, 1 },
+	{ "ldp",	"MPLS LDP control",		CMPL(t) (char **)ctl_ldp, ssctl, ctlhandler,	1, 0, 0, 1 },
+	{ "pflog",	"PF logging control",		CMPL(t) (char **)ctl_pflog, ssctl, ctlhandler,	1, 0, 0, 1 },
+	{ "eigrp",	"EIGRP routing control",	CMPL(t) (char **)ctl_eigrp, ssctl, ctlhandler,	1, 0, 0, 1 },
 	{ "ping",	pinghelp,	CMPL0 0, 0, ping,	0, 0, 0, 0 },
 	{ "traceroute", tracerthelp,	CMPL0 0, 0, traceroute,	0, 0, 0, 0 },
 	{ "ssh",	sshhelp,	CMPL0 0, 0, ssh,	0, 0, 0, 0 },
@@ -1830,7 +1852,7 @@ step_optreq(char **xargs, char **args, int argc, char **argv, int skip)
 	/* copy xargs to args, replace OPT/REQ args with argv past skip */
 	for (i = 0; i < NOPTFILL - 2; i++) {
 		if (xargs[i] == NULL) {
-			args[i] = '\0';
+			args[i] = NULL;
 			if (i > 1)
 			/*
 			 * all **args passed must have at least two arguments
@@ -1849,7 +1871,7 @@ step_optreq(char **xargs, char **args, int argc, char **argv, int skip)
 				printf("%% Missing required argument\n");
 				return NULL;
 			} else {
-				args[i] = '\0';
+				args[i] = NULL;
 				break;
 			}
 		} else {

@@ -48,6 +48,7 @@ static struct stt {
 	{ "carp",	"Common Address Redundancy Protocol",	carp_stats },
 	{ "mbuf",	"Packet memory buffer",			mbpr },
 	{ "pf",		"Packet Filter",			pf_stats },
+	{ "wireguard",	"WireGuard VPN",			wg_stats },
 	{ 0,		0,					0 }
 };
 
@@ -143,6 +144,32 @@ struct prot1 dhcs[] = {
 	{ 0, 0, { 0 } }
 };
 
+struct prot1 ldcs[] = {
+	{ "fib",        "MPLS Forward Information Base",
+	    { LDPCTL, "show", "fib", OPT, NULL } },
+	{ "interfaces", "LDP Interfaces",
+	    { LDPCTL, "show", "interfaces", NULL } },
+	{ "neighbor",   "LDP Neighbors",
+	    { LDPCTL, "show", "neighbor", OPT, NULL } },
+	{ "lib",        "Label Information Base",
+	    { LDPCTL, "show", "lib", OPT, NULL } },
+	{ "discovery",  "LDP Discovery",
+	    { LDPCTL, "show", "discovery", NULL } },
+	{ 0, 0, { 0 } }
+};
+
+struct prot1 eics[] = {
+	{ "fib",        "EIGRP Forward Information Base",
+	    { EIGRPCTL, "show", "fib", OPT, NULL } },
+	{ "interfaces", "EIGRP Interfaces",
+	    { EIGRPCTL, "show", "interfaces", OPT, NULL } },
+	{ "neighbor",   "EIGRP Neighbors",
+	    { EIGRPCTL, "show", "neighbor", OPT, NULL } },
+	{ "topology",   "EIGRP Topology",
+	    { EIGRPCTL, "show", "topology", OPT, NULL } },
+	{ 0, 0, { 0 } }
+};
+
 /* show yyy zzz */
 struct prot prots[] = {
 	{ "bgp",	bgcs },
@@ -150,5 +177,7 @@ struct prot prots[] = {
 	{ "rip",	rics },
 	{ "dvmrp",	dvcs },
 	{ "relay",	rlcs },
+	{ "ldp",	ldcs },
+	{ "eigrp",	eics },
 	{ 0,		0 }
 };
