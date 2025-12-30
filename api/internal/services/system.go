@@ -8,12 +8,12 @@ import (
 	"os"
 	"os/exec"
 	"regexp"
-	"runtime"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/northshorenetworks/nswall/api/internal/models"
+	"github.com/northshorenetworks/nswall/api/internal/openbsd"
 )
 
 // SystemService handles system-related operations
@@ -26,33 +26,39 @@ func NewSystemService(nshPath string) *SystemService {
 	return &SystemService{nshPath: nshPath}
 }
 
-// GetSystemInfo returns system information
+// GetSystemInfo returns system information using native syscalls
 func (s *SystemService) GetSystemInfo() (*models.SystemInfo, error) {
-	hostname, _ := os.Hostname()
+	// Use native openbsd package - no command parsing needed
+	hostname, _ := openbsd.GetHostname()
+	if hostname == "" {
+		hostname, _ = os.Hostname() // fallback
+	}
 
-	// Get OS version
-	osVersion, _ := exec.Command("uname", "-r").Output()
-
-	// Get architecture
-	arch, _ := exec.Command("uname", "-m").Output()
-
-	// Get boot time via sysctl
-	bootTimeRaw, _ := exec.Command("sysctl", "-n", "kern.boottime").Output()
-	bootTime := parseBootTime(string(bootTimeRaw))
+	osVersion, _ := openbsd.GetOSRelease()
+	arch, _ := openbsd.GetMachine()
+	bootTime, _ := openbsd.GetBootTime()
+	cpuInfo, _ := openbsd.GetCPUInfo()
 
 	uptime := time.Since(bootTime)
 
-	// Get load average
-	loadAvg := getLoadAverage()
+	// Get load average - native sysctl
+	var loadAvg []float64
+	if load, err := openbsd.GetLoadAvg(); err == nil {
+		loadAvg = []float64{load.Load1, load.Load5, load.Load15}
+	} else {
+		loadAvg = []float64{0, 0, 0}
+	}
 
-	// Get CPU count
-	cpuCount := runtime.NumCPU()
+	cpuCount := 1
+	if cpuInfo != nil && cpuInfo.NCPUs > 0 {
+		cpuCount = cpuInfo.NCPUs
+	}
 
 	info := &models.SystemInfo{
 		Hostname:    hostname,
 		OS:          "OpenBSD",
-		Version:     strings.TrimSpace(string(osVersion)),
-		Arch:        strings.TrimSpace(string(arch)),
+		Version:     osVersion,
+		Arch:        arch,
 		Uptime:      int64(uptime.Seconds()),
 		UptimeHuman: formatDuration(uptime),
 		BootTime:    bootTime,
@@ -65,17 +71,31 @@ func (s *SystemService) GetSystemInfo() (*models.SystemInfo, error) {
 	return info, nil
 }
 
-// GetMemoryInfo returns memory usage information
+// GetMemoryInfo returns memory usage information using native syscalls
 func (s *SystemService) GetMemoryInfo() (*models.MemoryInfo, error) {
-	// Use sysctl to get memory info
-	physMem, _ := exec.Command("sysctl", "-n", "hw.physmem").Output()
-	total, _ := strconv.ParseUint(strings.TrimSpace(string(physMem)), 10, 64)
+	// Use native sysctl for total memory
+	total, err := openbsd.GetPhysMem()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get physical memory: %w", err)
+	}
 
-	// Parse vmstat for memory details
-	vmstat, _ := exec.Command("vmstat", "-s").Output()
-	used, free, cached := parseVmstat(string(vmstat))
+	// Get VM stats from sysctl
+	var used, free, cached uint64
+	if vmStats, err := openbsd.GetVMStats(); err == nil && vmStats != nil {
+		pageSize := uint64(vmStats.PageSize)
+		if pageSize == 0 {
+			pageSize = 4096
+		}
+		free = uint64(vmStats.FreePages) * pageSize
+		used = uint64(vmStats.ActivePages) * pageSize
+		cached = uint64(vmStats.InactivePages) * pageSize
+	} else {
+		// Fallback to vmstat parsing if sysctl fails
+		vmstat, _ := exec.Command("vmstat", "-s").Output()
+		used, free, cached = parseVmstat(string(vmstat))
+	}
 
-	// Get swap info
+	// Get swap info (still requires swapctl)
 	swapTotal, swapUsed := getSwapInfo()
 
 	var usedPct float64
@@ -95,6 +115,7 @@ func (s *SystemService) GetMemoryInfo() (*models.MemoryInfo, error) {
 }
 
 // GetDiskInfo returns disk usage information
+// Note: Could use statvfs syscall, but df is reliable and portable
 func (s *SystemService) GetDiskInfo() ([]models.DiskInfo, error) {
 	output, err := exec.Command("df", "-k").Output()
 	if err != nil {
@@ -209,44 +230,8 @@ func (s *SystemService) GetLogs(facility string, lines int) ([]models.LogEntry, 
 
 // Helper functions
 
-func parseBootTime(raw string) time.Time {
-	// OpenBSD format: sec = 1234567890, usec = 123456
-	re := regexp.MustCompile(`sec\s*=\s*(\d+)`)
-	matches := re.FindStringSubmatch(raw)
-	if len(matches) >= 2 {
-		sec, _ := strconv.ParseInt(matches[1], 10, 64)
-		return time.Unix(sec, 0)
-	}
-	return time.Now()
-}
-
-func getLoadAverage() []float64 {
-	output, err := exec.Command("sysctl", "-n", "vm.loadavg").Output()
-	if err != nil {
-		return []float64{0, 0, 0}
-	}
-
-	// Parse: "1.23 2.34 3.45"
-	fields := strings.Fields(string(output))
-	var loads []float64
-	for _, f := range fields {
-		val, err := strconv.ParseFloat(f, 64)
-		if err == nil {
-			loads = append(loads, val)
-		}
-		if len(loads) >= 3 {
-			break
-		}
-	}
-
-	for len(loads) < 3 {
-		loads = append(loads, 0)
-	}
-
-	return loads
-}
-
 func getTimezone() string {
+	// Could use time.Now().Zone() but date gives the abbrev
 	tz, _ := exec.Command("date", "+%Z").Output()
 	return strings.TrimSpace(string(tz))
 }
@@ -265,6 +250,7 @@ func formatDuration(d time.Duration) string {
 	return fmt.Sprintf("%dm", minutes)
 }
 
+// parseVmstat is kept as fallback for when sysctl vm.uvmexp fails
 func parseVmstat(output string) (used, free, cached uint64) {
 	lines := strings.Split(output, "\n")
 	for _, line := range lines {

@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/northshorenetworks/nswall/api/internal/models"
+	"github.com/northshorenetworks/nswall/api/internal/openbsd"
 )
 
 // FirewallService handles PF firewall operations
@@ -23,7 +24,39 @@ func NewFirewallService(nshPath string) *FirewallService {
 }
 
 // GetInfo returns PF status information
+// Uses native ioctl when possible, falls back to pfctl parsing
 func (f *FirewallService) GetInfo(ctx context.Context) (*models.PFInfo, error) {
+	// Try native ioctl first - much faster, no parsing
+	pf, err := openbsd.OpenPF()
+	if err == nil {
+		defer pf.Close()
+
+		status, err := pf.GetStatus()
+		if err == nil {
+			info := &models.PFInfo{
+				Enabled:    status.Running,
+				Running:    status.Running,
+				StateCount: int(status.States),
+				SrcNodes:   int(status.SrcNodes),
+				Debug:      fmt.Sprintf("%d", status.Debug),
+				Hostid:     fmt.Sprintf("0x%08x", status.Hostid),
+			}
+
+			// Get limits for StateLimit
+			if limits, err := pf.GetLimits(); err == nil {
+				for _, l := range limits {
+					if l.Name == "states" {
+						info.StateLimit = int(l.Limit)
+						break
+					}
+				}
+			}
+
+			return info, nil
+		}
+	}
+
+	// Fallback to pfctl parsing
 	output, err := exec.CommandContext(ctx, "pfctl", "-si").Output()
 	if err != nil {
 		// PF might be disabled
@@ -289,16 +322,38 @@ func (f *FirewallService) FlushTable(ctx context.Context, table string) error {
 }
 
 // Enable enables PF
+// Uses native ioctl when possible, falls back to pfctl
 func (f *FirewallService) Enable(ctx context.Context) error {
+	// Try native ioctl first
+	pf, err := openbsd.OpenPF()
+	if err == nil {
+		defer pf.Close()
+		if err := pf.Enable(); err == nil {
+			return nil
+		}
+	}
+
+	// Fallback to pfctl
 	cmd := exec.CommandContext(ctx, "pfctl", "-e")
-	_, err := cmd.CombinedOutput()
+	_, err = cmd.CombinedOutput()
 	return err
 }
 
 // Disable disables PF
+// Uses native ioctl when possible, falls back to pfctl
 func (f *FirewallService) Disable(ctx context.Context) error {
+	// Try native ioctl first
+	pf, err := openbsd.OpenPF()
+	if err == nil {
+		defer pf.Close()
+		if err := pf.Disable(); err == nil {
+			return nil
+		}
+	}
+
+	// Fallback to pfctl
 	cmd := exec.CommandContext(ctx, "pfctl", "-d")
-	_, err := cmd.CombinedOutput()
+	_, err = cmd.CombinedOutput()
 	return err
 }
 

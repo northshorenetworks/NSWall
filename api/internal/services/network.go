@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/northshorenetworks/nswall/api/internal/models"
+	"github.com/northshorenetworks/nswall/api/internal/openbsd"
 )
 
 // NetworkService handles network-related operations
@@ -24,31 +25,186 @@ func NewNetworkService(nshPath string) *NetworkService {
 }
 
 // GetInterfaces returns all network interfaces
+// Uses native Go net package for basic info, ifconfig for details
 func (n *NetworkService) GetInterfaces(ctx context.Context) ([]models.Interface, error) {
+	// Try native method first for basic info
+	nativeIfaces, err := openbsd.GetInterfaces()
+	if err != nil {
+		// Fallback to ifconfig parsing
+		return n.getInterfacesIfconfig(ctx)
+	}
+
+	// Convert to models and enrich with ifconfig details
+	interfaces := make([]models.Interface, 0, len(nativeIfaces))
+	for _, ni := range nativeIfaces {
+		iface := models.Interface{
+			Name:   ni.Name,
+			MTU:    ni.MTU,
+			MAC:    ni.HardwareAddr,
+			Status: "down",
+		}
+
+		if ni.Up {
+			iface.Status = "up"
+			iface.AdminStatus = "up"
+		} else {
+			iface.AdminStatus = "down"
+		}
+
+		// Parse native flags
+		iface.Flags = strings.Split(ni.Flags, "|")
+
+		// Convert IPs
+		for _, ip := range ni.IPv4Addrs {
+			parts := strings.Split(ip, "/")
+			addr := parts[0]
+			prefix := 32
+			if len(parts) > 1 {
+				prefix, _ = strconv.Atoi(parts[1])
+			}
+			iface.IPv4 = append(iface.IPv4, models.IPAddr{
+				Address: addr,
+				Prefix:  prefix,
+				CIDR:    ip,
+			})
+		}
+
+		for _, ip := range ni.IPv6Addrs {
+			parts := strings.Split(ip, "/")
+			addr := parts[0]
+			prefix := 128
+			if len(parts) > 1 {
+				prefix, _ = strconv.Atoi(parts[1])
+			}
+			iface.IPv6 = append(iface.IPv6, models.IPAddr{
+				Address: addr,
+				Prefix:  prefix,
+				CIDR:    ip,
+			})
+		}
+
+		interfaces = append(interfaces, iface)
+	}
+
+	// Enrich with ifconfig details (media, description, etc.)
+	n.enrichInterfaceDetails(ctx, interfaces)
+
+	return interfaces, nil
+}
+
+// enrichInterfaceDetails adds ifconfig-specific details like media and description
+func (n *NetworkService) enrichInterfaceDetails(ctx context.Context, interfaces []models.Interface) {
+	for i := range interfaces {
+		output, err := exec.CommandContext(ctx, "ifconfig", interfaces[i].Name).Output()
+		if err != nil {
+			continue
+		}
+
+		lines := strings.Split(string(output), "\n")
+		for _, line := range lines {
+			line = strings.TrimSpace(line)
+
+			if strings.HasPrefix(line, "description:") {
+				interfaces[i].Description = strings.TrimSpace(strings.TrimPrefix(line, "description:"))
+			} else if strings.HasPrefix(line, "groups:") {
+				parts := strings.Fields(line)
+				if len(parts) >= 2 {
+					interfaces[i].Group = parts[1]
+				}
+			} else if strings.HasPrefix(line, "media:") {
+				if speedMatch := regexp.MustCompile(`\((\d+\w+)\s+(\w+-duplex)\)`).FindStringSubmatch(line); len(speedMatch) > 2 {
+					interfaces[i].Speed = speedMatch[1]
+					interfaces[i].Duplex = speedMatch[2]
+				}
+			} else if strings.HasPrefix(line, "vlan:") {
+				if vlanMatch := regexp.MustCompile(`vlan:\s+(\d+)`).FindStringSubmatch(line); len(vlanMatch) > 1 {
+					interfaces[i].VlanID, _ = strconv.Atoi(vlanMatch[1])
+				}
+				if parentMatch := regexp.MustCompile(`parent interface:\s+(\w+)`).FindStringSubmatch(line); len(parentMatch) > 1 {
+					interfaces[i].Parent = parentMatch[1]
+				}
+			}
+		}
+	}
+}
+
+// getInterfacesIfconfig is the fallback method using ifconfig parsing
+func (n *NetworkService) getInterfacesIfconfig(ctx context.Context) ([]models.Interface, error) {
 	output, err := exec.CommandContext(ctx, "ifconfig", "-a").Output()
 	if err != nil {
 		return nil, err
 	}
-
 	return parseIfconfig(string(output)), nil
 }
 
 // GetInterface returns a specific interface
 func (n *NetworkService) GetInterface(ctx context.Context, name string) (*models.Interface, error) {
-	output, err := exec.CommandContext(ctx, "ifconfig", name).Output()
+	// Try native first
+	ni, err := openbsd.GetInterface(name)
 	if err != nil {
-		return nil, fmt.Errorf("interface not found: %s", name)
+		// Fallback to ifconfig
+		output, err := exec.CommandContext(ctx, "ifconfig", name).Output()
+		if err != nil {
+			return nil, fmt.Errorf("interface not found: %s", name)
+		}
+		ifaces := parseIfconfig(string(output))
+		if len(ifaces) == 0 {
+			return nil, fmt.Errorf("interface not found: %s", name)
+		}
+		ifaces[0].Statistics = n.getInterfaceStats(ctx, name)
+		return &ifaces[0], nil
 	}
 
-	ifaces := parseIfconfig(string(output))
-	if len(ifaces) == 0 {
-		return nil, fmt.Errorf("interface not found: %s", name)
+	// Convert native to model
+	iface := &models.Interface{
+		Name:   ni.Name,
+		MTU:    ni.MTU,
+		MAC:    ni.HardwareAddr,
+		Status: "down",
+		Flags:  strings.Split(ni.Flags, "|"),
 	}
 
-	// Get statistics
-	ifaces[0].Statistics = n.getInterfaceStats(ctx, name)
+	if ni.Up {
+		iface.Status = "up"
+		iface.AdminStatus = "up"
+	} else {
+		iface.AdminStatus = "down"
+	}
 
-	return &ifaces[0], nil
+	for _, ip := range ni.IPv4Addrs {
+		parts := strings.Split(ip, "/")
+		addr := parts[0]
+		prefix := 32
+		if len(parts) > 1 {
+			prefix, _ = strconv.Atoi(parts[1])
+		}
+		iface.IPv4 = append(iface.IPv4, models.IPAddr{
+			Address: addr,
+			Prefix:  prefix,
+			CIDR:    ip,
+		})
+	}
+
+	for _, ip := range ni.IPv6Addrs {
+		parts := strings.Split(ip, "/")
+		addr := parts[0]
+		prefix := 128
+		if len(parts) > 1 {
+			prefix, _ = strconv.Atoi(parts[1])
+		}
+		iface.IPv6 = append(iface.IPv6, models.IPAddr{
+			Address: addr,
+			Prefix:  prefix,
+			CIDR:    ip,
+		})
+	}
+
+	// Enrich with ifconfig details and stats
+	interfaces := []models.Interface{*iface}
+	n.enrichInterfaceDetails(ctx, interfaces)
+	interfaces[0].Statistics = n.getInterfaceStats(ctx, name)
+
+	return &interfaces[0], nil
 }
 
 // ConfigureInterface configures an interface
@@ -91,7 +247,24 @@ func (n *NetworkService) ConfigureInterface(ctx context.Context, name string, co
 }
 
 // GetRoutes returns the routing table
+// Tries native routing socket first, falls back to netstat
 func (n *NetworkService) GetRoutes(ctx context.Context) ([]models.Route, error) {
+	// Try native method first
+	nativeRoutes, err := openbsd.GetRoutes()
+	if err == nil && len(nativeRoutes) > 0 {
+		routes := make([]models.Route, 0, len(nativeRoutes))
+		for _, nr := range nativeRoutes {
+			routes = append(routes, models.Route{
+				Destination: nr.Destination,
+				Gateway:     nr.Gateway,
+				Flags:       nr.Flags,
+				Priority:    nr.Priority,
+			})
+		}
+		return routes, nil
+	}
+
+	// Fallback to netstat parsing
 	output, err := exec.CommandContext(ctx, "netstat", "-rn").Output()
 	if err != nil {
 		return nil, err
