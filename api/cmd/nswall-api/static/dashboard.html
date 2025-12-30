@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NSWall Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: #1a1a2e;
+            color: #eee;
+            min-height: 100vh;
+        }
+
+        .header {
+            background: #16213e;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #0f3460;
+        }
+
+        .header h1 {
+            font-size: 1.5rem;
+            color: #e94560;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #4ade80;
+            animation: pulse 2s infinite;
+        }
+
+        .status-dot.disconnected {
+            background: #ef4444;
+            animation: none;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1rem;
+            padding: 1rem;
+        }
+
+        .card {
+            background: #16213e;
+            border-radius: 8px;
+            padding: 1rem;
+            border: 1px solid #0f3460;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid #0f3460;
+        }
+
+        .card-title {
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #888;
+        }
+
+        .card-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #e94560;
+        }
+
+        .metric-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+        }
+
+        .metric {
+            text-align: center;
+        }
+
+        .metric-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #4ade80;
+        }
+
+        .metric-label {
+            font-size: 0.75rem;
+            color: #888;
+            margin-top: 0.25rem;
+        }
+
+        .chart-container {
+            height: 200px;
+            position: relative;
+        }
+
+        .interface-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .interface-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem;
+            border-bottom: 1px solid #0f3460;
+        }
+
+        .interface-item:last-child {
+            border-bottom: none;
+        }
+
+        .interface-name {
+            font-weight: 500;
+        }
+
+        .interface-status {
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+        }
+
+        .interface-status.up {
+            background: rgba(74, 222, 128, 0.2);
+            color: #4ade80;
+        }
+
+        .interface-status.down {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+        }
+
+        .interface-ips {
+            font-size: 0.75rem;
+            color: #888;
+        }
+
+        .wide {
+            grid-column: span 2;
+        }
+
+        @media (max-width: 768px) {
+            .wide {
+                grid-column: span 1;
+            }
+        }
+
+        .pf-status {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .pf-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .pf-badge.enabled {
+            background: rgba(74, 222, 128, 0.2);
+            color: #4ade80;
+        }
+
+        .pf-badge.disabled {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+        }
+
+        .load-bars {
+            display: flex;
+            gap: 0.5rem;
+            align-items: flex-end;
+            height: 60px;
+        }
+
+        .load-bar {
+            flex: 1;
+            background: #0f3460;
+            border-radius: 4px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .load-bar-fill {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(to top, #e94560, #4ade80);
+            transition: height 0.3s ease;
+        }
+
+        .load-bar-label {
+            text-align: center;
+            font-size: 0.625rem;
+            color: #888;
+            margin-top: 0.25rem;
+        }
+
+        .uptime {
+            font-size: 1.25rem;
+            color: #4ade80;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>NSWall Dashboard</h1>
+        <div class="status-indicator">
+            <div class="status-dot" id="connectionStatus"></div>
+            <span id="connectionText">Connecting...</span>
+        </div>
+    </div>
+
+    <div class="dashboard">
+        <!-- System Info -->
+        <div class="card">
+            <div class="card-header">
+                <span class="card-title">System</span>
+                <span class="uptime" id="uptime">--</span>
+            </div>
+            <div class="load-bars">
+                <div>
+                    <div class="load-bar" style="height: 60px;">
+                        <div class="load-bar-fill" id="load1" style="height: 0%"></div>
+                    </div>
+                    <div class="load-bar-label">1m</div>
+                </div>
+                <div>
+                    <div class="load-bar" style="height: 60px;">
+                        <div class="load-bar-fill" id="load5" style="height: 0%"></div>
+                    </div>
+                    <div class="load-bar-label">5m</div>
+                </div>
+                <div>
+                    <div class="load-bar" style="height: 60px;">
+                        <div class="load-bar-fill" id="load15" style="height: 0%"></div>
+                    </div>
+                    <div class="load-bar-label">15m</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- PF Status -->
+        <div class="card">
+            <div class="card-header">
+                <span class="card-title">PF Firewall</span>
+                <span class="pf-badge" id="pfStatus">--</span>
+            </div>
+            <div class="metric-grid">
+                <div class="metric">
+                    <div class="metric-value" id="pfStates">--</div>
+                    <div class="metric-label">States</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-value" id="pfSrcNodes">--</div>
+                    <div class="metric-label">Src Nodes</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- PF Traffic Chart -->
+        <div class="card wide">
+            <div class="card-header">
+                <span class="card-title">PF Traffic</span>
+            </div>
+            <div class="chart-container">
+                <canvas id="trafficChart"></canvas>
+            </div>
+        </div>
+
+        <!-- States Chart -->
+        <div class="card wide">
+            <div class="card-header">
+                <span class="card-title">State Table</span>
+            </div>
+            <div class="chart-container">
+                <canvas id="statesChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Interfaces -->
+        <div class="card">
+            <div class="card-header">
+                <span class="card-title">Interfaces</span>
+            </div>
+            <div class="interface-list" id="interfaceList">
+                <div class="interface-item">
+                    <span>Loading...</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Memory -->
+        <div class="card">
+            <div class="card-header">
+                <span class="card-title">Memory</span>
+            </div>
+            <div class="metric-grid">
+                <div class="metric">
+                    <div class="metric-value" id="memTotal">--</div>
+                    <div class="metric-label">Total</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-value" id="memFree">--</div>
+                    <div class="metric-label">Free</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Configuration
+        const API_BASE = window.location.origin;
+        const MAX_DATA_POINTS = 60;
+
+        // Chart data
+        const trafficData = {
+            labels: [],
+            packetsIn: [],
+            packetsOut: []
+        };
+
+        const statesData = {
+            labels: [],
+            states: []
+        };
+
+        // Initialize charts
+        const trafficChart = new Chart(document.getElementById('trafficChart'), {
+            type: 'line',
+            data: {
+                labels: trafficData.labels,
+                datasets: [
+                    {
+                        label: 'Packets In',
+                        data: trafficData.packetsIn,
+                        borderColor: '#4ade80',
+                        backgroundColor: 'rgba(74, 222, 128, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    },
+                    {
+                        label: 'Packets Out',
+                        data: trafficData.packetsOut,
+                        borderColor: '#e94560',
+                        backgroundColor: 'rgba(233, 69, 96, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                        labels: { color: '#888' }
+                    }
+                },
+                scales: {
+                    x: {
+                        display: false
+                    },
+                    y: {
+                        grid: { color: '#0f3460' },
+                        ticks: { color: '#888' }
+                    }
+                }
+            }
+        });
+
+        const statesChart = new Chart(document.getElementById('statesChart'), {
+            type: 'line',
+            data: {
+                labels: statesData.labels,
+                datasets: [
+                    {
+                        label: 'Active States',
+                        data: statesData.states,
+                        borderColor: '#f59e0b',
+                        backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                        labels: { color: '#888' }
+                    }
+                },
+                scales: {
+                    x: {
+                        display: false
+                    },
+                    y: {
+                        grid: { color: '#0f3460' },
+                        ticks: { color: '#888' }
+                    }
+                }
+            }
+        });
+
+        // Helper functions
+        function formatBytes(bytes) {
+            if (bytes === 0) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+        }
+
+        function formatUptime(seconds) {
+            const days = Math.floor(seconds / 86400);
+            const hours = Math.floor((seconds % 86400) / 3600);
+            const mins = Math.floor((seconds % 3600) / 60);
+
+            if (days > 0) return `${days}d ${hours}h`;
+            if (hours > 0) return `${hours}h ${mins}m`;
+            return `${mins}m`;
+        }
+
+        function formatNumber(num) {
+            if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
+            if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
+            return num.toString();
+        }
+
+        function setConnectionStatus(connected) {
+            const dot = document.getElementById('connectionStatus');
+            const text = document.getElementById('connectionText');
+
+            if (connected) {
+                dot.classList.remove('disconnected');
+                text.textContent = 'Connected';
+            } else {
+                dot.classList.add('disconnected');
+                text.textContent = 'Disconnected';
+            }
+        }
+
+        // Previous values for rate calculation
+        let prevPacketsIn = 0;
+        let prevPacketsOut = 0;
+
+        // Update functions
+        function updateSystem(data) {
+            if (data.uptime_seconds) {
+                document.getElementById('uptime').textContent = formatUptime(data.uptime_seconds);
+            }
+
+            if (data.load) {
+                const maxLoad = 4; // Assume 4 CPUs for scaling
+                document.getElementById('load1').style.height =
+                    Math.min(100, (data.load.Load1 / maxLoad) * 100) + '%';
+                document.getElementById('load5').style.height =
+                    Math.min(100, (data.load.Load5 / maxLoad) * 100) + '%';
+                document.getElementById('load15').style.height =
+                    Math.min(100, (data.load.Load15 / maxLoad) * 100) + '%';
+            }
+
+            if (data.memory_total) {
+                document.getElementById('memTotal').textContent = formatBytes(data.memory_total);
+            }
+
+            if (data.vm_stats) {
+                const freeBytes = data.vm_stats.FreePages * data.vm_stats.PageSize;
+                document.getElementById('memFree').textContent = formatBytes(freeBytes);
+            }
+        }
+
+        function updatePF(data) {
+            const statusEl = document.getElementById('pfStatus');
+            if (data.Running) {
+                statusEl.textContent = 'Enabled';
+                statusEl.className = 'pf-badge enabled';
+            } else {
+                statusEl.textContent = 'Disabled';
+                statusEl.className = 'pf-badge disabled';
+            }
+
+            document.getElementById('pfStates').textContent = formatNumber(data.States || 0);
+            document.getElementById('pfSrcNodes').textContent = formatNumber(data.SrcNodes || 0);
+        }
+
+        function updatePFStates(data) {
+            const now = new Date().toLocaleTimeString();
+
+            // Calculate packet rate (packets per second since last update)
+            const packetsInRate = data.packets_in - prevPacketsIn;
+            const packetsOutRate = data.packets_out - prevPacketsOut;
+            prevPacketsIn = data.packets_in;
+            prevPacketsOut = data.packets_out;
+
+            // Update traffic chart
+            trafficData.labels.push(now);
+            trafficData.packetsIn.push(packetsInRate > 0 ? packetsInRate : 0);
+            trafficData.packetsOut.push(packetsOutRate > 0 ? packetsOutRate : 0);
+
+            if (trafficData.labels.length > MAX_DATA_POINTS) {
+                trafficData.labels.shift();
+                trafficData.packetsIn.shift();
+                trafficData.packetsOut.shift();
+            }
+
+            trafficChart.update('none');
+
+            // Update states chart
+            statesData.labels.push(now);
+            statesData.states.push(data.states);
+
+            if (statesData.labels.length > MAX_DATA_POINTS) {
+                statesData.labels.shift();
+                statesData.states.shift();
+            }
+
+            statesChart.update('none');
+
+            // Update state count
+            document.getElementById('pfStates').textContent = formatNumber(data.states);
+        }
+
+        function updateInterfaces(interfaces) {
+            const list = document.getElementById('interfaceList');
+            list.innerHTML = '';
+
+            for (const iface of interfaces) {
+                // Skip loopback and system interfaces
+                if (iface.Name.startsWith('lo') ||
+                    iface.Name.startsWith('pflog') ||
+                    iface.Name.startsWith('enc')) {
+                    continue;
+                }
+
+                const item = document.createElement('div');
+                item.className = 'interface-item';
+
+                const statusClass = iface.Up ? 'up' : 'down';
+                const ips = [...(iface.IPv4Addrs || []), ...(iface.IPv6Addrs || [])].slice(0, 2);
+
+                item.innerHTML = `
+                    <div>
+                        <div class="interface-name">${iface.Name}</div>
+                        <div class="interface-ips">${ips.join(', ') || 'No IP'}</div>
+                    </div>
+                    <span class="interface-status ${statusClass}">${statusClass}</span>
+                `;
+
+                list.appendChild(item);
+            }
+        }
+
+        // Start SSE connection
+        function connectStreams() {
+            // Combined stream for all data
+            const eventSource = new EventSource(`${API_BASE}/api/v1/stream/all?interval=1`);
+
+            eventSource.onopen = () => {
+                setConnectionStatus(true);
+            };
+
+            eventSource.onerror = () => {
+                setConnectionStatus(false);
+                // Reconnect after 5 seconds
+                setTimeout(() => {
+                    eventSource.close();
+                    connectStreams();
+                }, 5000);
+            };
+
+            eventSource.addEventListener('all', (e) => {
+                try {
+                    const event = JSON.parse(e.data);
+                    const data = event.data;
+
+                    if (data.interfaces) {
+                        updateInterfaces(data.interfaces);
+                    }
+
+                    if (data.pf) {
+                        updatePF(data.pf);
+                    }
+
+                    if (data.load) {
+                        updateSystem({ load: data.load, uptime_seconds: data.uptime });
+                    }
+                } catch (err) {
+                    console.error('Parse error:', err);
+                }
+            });
+
+            // Separate stream for high-frequency PF state data
+            const statesSource = new EventSource(`${API_BASE}/api/v1/stream/pf/states?interval=1`);
+
+            statesSource.addEventListener('pf_states', (e) => {
+                try {
+                    const event = JSON.parse(e.data);
+                    updatePFStates(event.data);
+                } catch (err) {
+                    console.error('Parse error:', err);
+                }
+            });
+
+            // System metrics stream
+            const systemSource = new EventSource(`${API_BASE}/api/v1/stream/system?interval=2`);
+
+            systemSource.addEventListener('system', (e) => {
+                try {
+                    const event = JSON.parse(e.data);
+                    updateSystem(event.data);
+                } catch (err) {
+                    console.error('Parse error:', err);
+                }
+            });
+        }
+
+        // Start connection when page loads
+        connectStreams();
+    </script>
+</body>
+</html>

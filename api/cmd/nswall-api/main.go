@@ -4,8 +4,10 @@ package main
 
 import (
 	"context"
+	"embed"
 	"flag"
 	"fmt"
+	"io/fs"
 	"log"
 	"net/http"
 	"os"
@@ -20,6 +22,9 @@ import (
 	"github.com/northshorenetworks/nswall/api/internal/middleware"
 	"github.com/northshorenetworks/nswall/api/internal/services"
 )
+
+//go:embed static/*
+var staticFiles embed.FS
 
 var (
 	listenAddr     = flag.String("listen", "127.0.0.1:8080", "API listen address")
@@ -287,6 +292,19 @@ func main() {
 	r.Get("/api/v1/stream/pf/states", h.StreamPFStates)
 	r.Get("/api/v1/stream/system", h.StreamSystem)
 	r.Get("/api/v1/stream/all", h.StreamAll)
+
+	// Dashboard - serve static files
+	staticFS, _ := fs.Sub(staticFiles, "static")
+	r.Handle("/static/*", http.StripPrefix("/static/", http.FileServer(http.FS(staticFS))))
+	r.Get("/dashboard", func(w http.ResponseWriter, r *http.Request) {
+		data, err := staticFiles.ReadFile("static/dashboard.html")
+		if err != nil {
+			http.Error(w, "Dashboard not found", http.StatusNotFound)
+			return
+		}
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		w.Write(data)
+	})
 
 	// Server with graceful shutdown
 	srv := &http.Server{
