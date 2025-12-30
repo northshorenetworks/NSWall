@@ -1,2 +1,0 @@
-/dev/rd0a	/	ffs	rw				0 0
-/dev/wd0d /conf   ffs ro,sync,noatime     0 1
