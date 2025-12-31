@@ -466,6 +466,106 @@ func (h *Handler) StreamPFRules(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// WireGuardPeerThroughput represents calculated throughput for a WireGuard peer
+type WireGuardPeerThroughput struct {
+	Interface     string   `json:"interface"`
+	PublicKey     string   `json:"public_key"`
+	Endpoint      string   `json:"endpoint,omitempty"`
+	AllowedIPs    []string `json:"allowed_ips,omitempty"`
+	BytesInRate   float64  `json:"bytes_in_rate"`  // bytes/sec received
+	BytesOutRate  float64  `json:"bytes_out_rate"` // bytes/sec sent
+	TotalBytesIn  uint64   `json:"total_bytes_in"`
+	TotalBytesOut uint64   `json:"total_bytes_out"`
+	LastHandshake string   `json:"last_handshake,omitempty"`
+}
+
+// StreamWireGuard streams WireGuard peer throughput rates
+// Query params:
+//   - interval: polling interval in seconds (default 2)
+//   - interface: filter by interface name (e.g., wg0)
+func (h *Handler) StreamWireGuard(w http.ResponseWriter, r *http.Request) {
+	h.setupSSE(w)
+
+	interval := 2 * time.Second
+	if i := r.URL.Query().Get("interval"); i != "" {
+		if secs, err := strconv.Atoi(i); err == nil && secs > 0 {
+			interval = time.Duration(secs) * time.Second
+		}
+	}
+
+	filterIface := r.URL.Query().Get("interface")
+
+	// Track previous values for rate calculation (key: interface:pubkey)
+	type prevStats struct {
+		bytesIn   uint64
+		bytesOut  uint64
+		timestamp time.Time
+	}
+	previous := make(map[string]prevStats)
+
+	ticker := time.NewTicker(interval)
+	defer ticker.Stop()
+
+	ctx := r.Context()
+
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			wgStats, err := openbsd.GetWireGuardStats()
+			if err != nil {
+				h.sendSSE(w, "error", map[string]string{"error": err.Error()})
+				continue
+			}
+
+			now := time.Now()
+			var throughputs []WireGuardPeerThroughput
+
+			for _, iface := range wgStats {
+				// Apply interface filter
+				if filterIface != "" && iface.Name != filterIface {
+					continue
+				}
+
+				for _, peer := range iface.Peers {
+					key := iface.Name + ":" + peer.PublicKey
+
+					tp := WireGuardPeerThroughput{
+						Interface:     iface.Name,
+						PublicKey:     peer.PublicKey,
+						Endpoint:      peer.Endpoint,
+						AllowedIPs:    peer.AllowedIPs,
+						TotalBytesIn:  peer.BytesReceived,
+						TotalBytesOut: peer.BytesSent,
+						LastHandshake: peer.LastHandshake,
+					}
+
+					// Calculate rates if we have previous data
+					if prev, ok := previous[key]; ok {
+						elapsed := now.Sub(prev.timestamp).Seconds()
+						if elapsed > 0 {
+							tp.BytesInRate = float64(peer.BytesReceived-prev.bytesIn) / elapsed
+							tp.BytesOutRate = float64(peer.BytesSent-prev.bytesOut) / elapsed
+						}
+					}
+
+					// Store current values for next iteration
+					previous[key] = prevStats{
+						bytesIn:   peer.BytesReceived,
+						bytesOut:  peer.BytesSent,
+						timestamp: now,
+					}
+
+					throughputs = append(throughputs, tp)
+				}
+			}
+
+			h.sendSSE(w, "wireguard", throughputs)
+		}
+	}
+}
+
 // Helper to add context timeout for streaming
 func withStreamTimeout(ctx context.Context, timeout time.Duration) (context.Context, context.CancelFunc) {
 	if timeout <= 0 {

@@ -297,6 +297,7 @@ func main() {
 	r.Get("/api/v1/stream/pf/rules", h.StreamPFRules)
 	r.Get("/api/v1/stream/system", h.StreamSystem)
 	r.Get("/api/v1/stream/throughput", h.StreamInterfaceThroughput)
+	r.Get("/api/v1/stream/wireguard", h.StreamWireGuard)
 	r.Get("/api/v1/stream/all", h.StreamAll)
 
 	// Dashboard - serve static files

@@ -281,3 +281,124 @@ func GetCARPInterfaces() ([]Interface, error) {
 	}
 	return carp, nil
 }
+
+// WireGuardPeerStats contains transfer statistics for a WireGuard peer
+type WireGuardPeerStats struct {
+	Interface     string   `json:"interface"`
+	PublicKey     string   `json:"public_key"`
+	Endpoint      string   `json:"endpoint,omitempty"`
+	AllowedIPs    []string `json:"allowed_ips,omitempty"`
+	BytesReceived uint64   `json:"bytes_received"`
+	BytesSent     uint64   `json:"bytes_sent"`
+	LastHandshake string   `json:"last_handshake,omitempty"`
+}
+
+// WireGuardInterfaceStats contains stats for a WireGuard interface and its peers
+type WireGuardInterfaceStats struct {
+	Name       string               `json:"name"`
+	PublicKey  string               `json:"public_key,omitempty"`
+	ListenPort int                  `json:"listen_port,omitempty"`
+	Peers      []WireGuardPeerStats `json:"peers"`
+}
+
+// GetWireGuardStats returns transfer statistics for all WireGuard peers
+func GetWireGuardStats() ([]WireGuardInterfaceStats, error) {
+	// Find all wg interfaces
+	ifaces, err := GetWireGuardInterfaces()
+	if err != nil {
+		return nil, err
+	}
+
+	var results []WireGuardInterfaceStats
+
+	for _, iface := range ifaces {
+		stats, err := GetWireGuardInterfaceStats(iface.Name)
+		if err != nil {
+			continue
+		}
+		results = append(results, *stats)
+	}
+
+	return results, nil
+}
+
+// GetWireGuardInterfaceStats returns stats for a specific WireGuard interface
+func GetWireGuardInterfaceStats(name string) (*WireGuardInterfaceStats, error) {
+	output, err := exec.Command("ifconfig", name).Output()
+	if err != nil {
+		return nil, err
+	}
+
+	stats := &WireGuardInterfaceStats{
+		Name: name,
+	}
+
+	lines := strings.Split(string(output), "\n")
+	var currentPeer *WireGuardPeerStats
+
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+
+		if strings.HasPrefix(line, "wgpubkey") {
+			parts := strings.Fields(line)
+			if len(parts) >= 2 {
+				stats.PublicKey = parts[1]
+			}
+		} else if strings.HasPrefix(line, "wgport") {
+			parts := strings.Fields(line)
+			if len(parts) >= 2 {
+				stats.ListenPort, _ = strconv.Atoi(parts[1])
+			}
+		} else if strings.HasPrefix(line, "wgpeer") {
+			// Save previous peer
+			if currentPeer != nil {
+				stats.Peers = append(stats.Peers, *currentPeer)
+			}
+
+			currentPeer = &WireGuardPeerStats{
+				Interface: name,
+			}
+			parts := strings.Fields(line)
+			if len(parts) >= 2 {
+				currentPeer.PublicKey = parts[1]
+			}
+		} else if currentPeer != nil {
+			if strings.HasPrefix(line, "wgendpoint") {
+				parts := strings.Fields(line)
+				if len(parts) >= 2 {
+					currentPeer.Endpoint = parts[1]
+				}
+			} else if strings.HasPrefix(line, "wgaip") {
+				parts := strings.Fields(line)
+				if len(parts) >= 2 {
+					currentPeer.AllowedIPs = append(currentPeer.AllowedIPs, parts[1])
+				}
+			} else if strings.HasPrefix(line, "tx:") {
+				// Parse "tx: 12345, rx: 67890"
+				parts := strings.Split(line, ",")
+				for _, part := range parts {
+					part = strings.TrimSpace(part)
+					if strings.HasPrefix(part, "tx:") {
+						val := strings.TrimPrefix(part, "tx:")
+						val = strings.TrimSpace(val)
+						currentPeer.BytesSent, _ = strconv.ParseUint(val, 10, 64)
+					} else if strings.HasPrefix(part, "rx:") {
+						val := strings.TrimPrefix(part, "rx:")
+						val = strings.TrimSpace(val)
+						currentPeer.BytesReceived, _ = strconv.ParseUint(val, 10, 64)
+					}
+				}
+			} else if strings.HasPrefix(line, "last handshake:") {
+				currentPeer.LastHandshake = strings.TrimPrefix(line, "last handshake:")
+				currentPeer.LastHandshake = strings.TrimSpace(currentPeer.LastHandshake)
+			}
+		}
+	}
+
+	// Save last peer
+	if currentPeer != nil {
+		stats.Peers = append(stats.Peers, *currentPeer)
+	}
+
+	return stats, nil
+}

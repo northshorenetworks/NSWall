@@ -434,6 +434,19 @@
                 </div>
             </div>
         </div>
+
+        <!-- WireGuard Tunnels -->
+        <div class="card wide">
+            <div class="card-header">
+                <span class="card-title">WireGuard Tunnels</span>
+                <span class="metric-label" id="wgTotal">--</span>
+            </div>
+            <div class="rules-list" id="wgList">
+                <div class="rule-item">
+                    <span>No WireGuard tunnels</span>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -888,6 +901,71 @@
                 `${formatBytesRate(totalBytesRate)} | ${formatNumber(Math.round(totalPacketsRate))}/s`;
         }
 
+        function updateWireGuard(peers) {
+            const list = document.getElementById('wgList');
+            list.innerHTML = '';
+
+            if (!peers || peers.length === 0) {
+                list.innerHTML = '<div class="rule-item"><span>No WireGuard tunnels</span></div>';
+                document.getElementById('wgTotal').textContent = '--';
+                return;
+            }
+
+            // Sort by total bytes (highest first)
+            peers.sort((a, b) => (b.bytes_in_rate + b.bytes_out_rate) - (a.bytes_in_rate + a.bytes_out_rate));
+
+            // Find max rate for bar scaling
+            const maxRate = Math.max(...peers.map(p => p.bytes_in_rate + p.bytes_out_rate), 1);
+
+            let totalIn = 0;
+            let totalOut = 0;
+
+            for (const peer of peers) {
+                totalIn += peer.bytes_in_rate;
+                totalOut += peer.bytes_out_rate;
+
+                const item = document.createElement('div');
+                item.className = 'rule-item';
+
+                // Truncate public key for display
+                const shortKey = peer.public_key.substring(0, 8) + '...';
+                const endpoint = peer.endpoint || 'No endpoint';
+                const allowedIPs = peer.allowed_ips ? peer.allowed_ips.join(', ') : '';
+
+                const barWidth = ((peer.bytes_in_rate + peer.bytes_out_rate) / maxRate) * 100;
+
+                item.innerHTML = `
+                    <div class="rule-info">
+                        <div class="rule-label">${peer.interface}: ${shortKey}</div>
+                        <div class="rule-text" title="${peer.public_key}">${endpoint} → ${allowedIPs || 'any'}</div>
+                        <div class="throughput-bar">
+                            <div class="throughput-bar-fill" style="width: ${barWidth}%"></div>
+                        </div>
+                    </div>
+                    <div class="rule-stats">
+                        <div class="rule-stat">
+                            <div class="rule-stat-value">${formatBytesRate(peer.bytes_in_rate)}</div>
+                            <div class="rule-stat-label">In</div>
+                        </div>
+                        <div class="rule-stat">
+                            <div class="rule-stat-value">${formatBytesRate(peer.bytes_out_rate)}</div>
+                            <div class="rule-stat-label">Out</div>
+                        </div>
+                        <div class="rule-stat">
+                            <div class="rule-stat-value">${peer.last_handshake || 'never'}</div>
+                            <div class="rule-stat-label">Handshake</div>
+                        </div>
+                    </div>
+                `;
+
+                list.appendChild(item);
+            }
+
+            // Update totals
+            document.getElementById('wgTotal').textContent =
+                `In: ${formatBytesRate(totalIn)} | Out: ${formatBytesRate(totalOut)}`;
+        }
+
         // Start SSE connection
         function connectStreams() {
             // Combined stream for all data
@@ -970,6 +1048,18 @@
                 try {
                     const event = JSON.parse(e.data);
                     updateRules(event.data);
+                } catch (err) {
+                    console.error('Parse error:', err);
+                }
+            });
+
+            // WireGuard throughput stream
+            const wgSource = new EventSource(`${API_BASE}/api/v1/stream/wireguard?interval=2`);
+
+            wgSource.addEventListener('wireguard', (e) => {
+                try {
+                    const event = JSON.parse(e.data);
+                    updateWireGuard(event.data);
                 } catch (err) {
                     console.error('Parse error:', err);
                 }
