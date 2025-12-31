@@ -927,8 +927,8 @@
                 const item = document.createElement('div');
                 item.className = 'rule-item';
 
-                // Truncate public key for display
-                const shortKey = peer.public_key.substring(0, 8) + '...';
+                // Use description if available, otherwise truncate public key
+                const peerName = peer.description || (peer.public_key.substring(0, 8) + '...');
                 const endpoint = peer.endpoint || 'No endpoint';
                 const allowedIPs = peer.allowed_ips ? peer.allowed_ips.join(', ') : '';
 
@@ -936,7 +936,7 @@
 
                 item.innerHTML = `
                     <div class="rule-info">
-                        <div class="rule-label">${peer.interface}: ${shortKey}</div>
+                        <div class="rule-label">${peer.interface}: ${peerName}</div>
                         <div class="rule-text" title="${peer.public_key}">${endpoint} → ${allowedIPs || 'any'}</div>
                         <div class="throughput-bar">
                             <div class="throughput-bar-fill" style="width: ${barWidth}%"></div>

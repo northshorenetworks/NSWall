@@ -286,6 +286,7 @@ func GetCARPInterfaces() ([]Interface, error) {
 type WireGuardPeerStats struct {
 	Interface     string   `json:"interface"`
 	PublicKey     string   `json:"public_key"`
+	Description   string   `json:"description,omitempty"` // Peer description (OpenBSD 7.4+)
 	Endpoint      string   `json:"endpoint,omitempty"`
 	AllowedIPs    []string `json:"allowed_ips,omitempty"`
 	BytesReceived uint64   `json:"bytes_received"`
@@ -363,7 +364,19 @@ func GetWireGuardInterfaceStats(name string) (*WireGuardInterfaceStats, error) {
 				currentPeer.PublicKey = parts[1]
 			}
 		} else if currentPeer != nil {
-			if strings.HasPrefix(line, "wgendpoint") {
+			if strings.HasPrefix(line, "wgpeerdesc") {
+				// Parse peer description (OpenBSD 7.4+)
+				// Format: wgpeerdesc "description string"
+				parts := strings.SplitN(line, " ", 2)
+				if len(parts) >= 2 {
+					desc := parts[1]
+					// Remove surrounding quotes if present
+					if len(desc) >= 2 && desc[0] == '"' && desc[len(desc)-1] == '"' {
+						desc = desc[1 : len(desc)-1]
+					}
+					currentPeer.Description = desc
+				}
+			} else if strings.HasPrefix(line, "wgendpoint") {
 				parts := strings.Fields(line)
 				if len(parts) >= 2 {
 					currentPeer.Endpoint = parts[1]

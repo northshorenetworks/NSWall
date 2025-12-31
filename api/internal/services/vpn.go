@@ -185,6 +185,16 @@ func (v *VPNService) AddWireGuardPeer(ctx context.Context, name string, peer *mo
 		}
 	}
 
+	// Set peer description (OpenBSD 7.4+)
+	if peer.Description != "" {
+		cmd = exec.CommandContext(ctx, "ifconfig", name, "wgpeer", peer.PublicKey, "wgpeerdesc", peer.Description)
+		if output, err := cmd.CombinedOutput(); err != nil {
+			// Non-fatal - older OpenBSD versions don't support wgpeerdesc
+			// Just log and continue
+			_ = output
+		}
+	}
+
 	return nil
 }
 

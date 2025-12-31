@@ -280,6 +280,7 @@ type WireGuardInterface struct {
 // WireGuardPeer represents a WireGuard peer
 type WireGuardPeer struct {
 	PublicKey           string   `json:"public_key"`
+	Description         string   `json:"description,omitempty"` // Peer description (OpenBSD 7.4+)
 	Endpoint            string   `json:"endpoint,omitempty"`
 	AllowedIPs          []string `json:"allowed_ips"`
 	LatestHandshake     string   `json:"latest_handshake,omitempty"`
@@ -297,6 +298,7 @@ type WireGuardConfig struct {
 // WireGuardPeerConfig is used to add/modify WireGuard peers
 type WireGuardPeerConfig struct {
 	PublicKey           string   `json:"public_key"`
+	Description         string   `json:"description,omitempty"` // Peer description (OpenBSD 7.4+)
 	Endpoint            string   `json:"endpoint,omitempty"`
 	AllowedIPs          []string `json:"allowed_ips"`
 	PresharedKey        string   `json:"preshared_key,omitempty"`
